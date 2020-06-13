@@ -174,6 +174,19 @@ __declspec(naked) void * __fastcall internal_memchr386(const void *buffer, unsig
 		jmp     modulo3
 
 		align   16
+	modulo1:
+		mov     ecx, dword ptr [esi + eax - 1]              // read 4 bytes
+		mov     edi, -01010100H
+		xor     ecx, edx                                    // edx is byte\byte\byte\byte
+		dec     eax
+		add     edi, ecx
+		xor     ecx, -1
+		and     edi, 80808000H
+		and     ecx, edi
+		jz      loop_begin
+		jmp     has_char
+
+		align   16
 	modulo2:
 		mov     cx, word ptr [esi + eax]
 		cmp     cl, dl
@@ -186,19 +199,6 @@ __declspec(naked) void * __fastcall internal_memchr386(const void *buffer, unsig
 		inc     eax
 		jnz     loop_entry
 		jmp     epilogue
-
-		align   16
-	modulo1:
-		mov     ecx, dword ptr [esi + eax - 1]              // read 4 bytes
-		mov     edi, -01010100H
-		xor     ecx, edx                                    // edx is byte\byte\byte\byte
-		dec     eax
-		add     edi, ecx
-		xor     ecx, -1
-		and     edi, 80808000H
-		and     ecx, edi
-		jz      loop_begin
-		jmp     has_char
 
 		align   16
 	loop_begin:

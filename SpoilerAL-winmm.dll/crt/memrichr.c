@@ -224,21 +224,6 @@ __declspec(naked) void * __fastcall internal_memrichr386(const void *buffer, uns
 		jmp     modulo1
 
 		align   16
-	modulo2:
-		mov     cx, word ptr [esi + eax - 1]
-		or      cx, 2020H
-		cmp     ch, dl
-		je      found
-		dec     eax
-		jz      epilogue
-	modulo1:
-		cmp     cl, dl
-		je      found
-		dec     eax
-		jnz     loop_entry
-		jmp     epilogue
-
-		align   16
 	modulo3:
 		mov     ecx, dword ptr [esi + eax - 2]              // read 4 bytes
 		mov     edi, -00010101H
@@ -252,6 +237,21 @@ __declspec(naked) void * __fastcall internal_memrichr386(const void *buffer, uns
 		and     ebx, edi
 		jz      loop_begin
 		jmp     byte_0_to_2
+
+		align   16
+	modulo2:
+		mov     cx, word ptr [esi + eax - 1]
+		or      cx, 2020H
+		cmp     ch, dl
+		je      found
+		dec     eax
+		jz      epilogue
+	modulo1:
+		cmp     cl, dl
+		je      found
+		dec     eax
+		jnz     loop_entry
+		jmp     epilogue
 
 		align   16
 	loop_begin:

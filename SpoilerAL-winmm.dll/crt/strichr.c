@@ -129,23 +129,8 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		dec     ecx
 		jz      modulo1
 		dec     ecx
-		jnz     modulo3
-		mov     cl, byte ptr [eax]
-		inc     eax
-		test    cl, cl
-		jz      retnull
-		or      cl, 'a' - 'A'
-		cmp     cl, bl
-		je      found
-	modulo3:
-		mov     cl, byte ptr [eax]
-		inc     eax
-		test    cl, cl
-		jz      retnull
-		or      cl, 'a' - 'A'
-		cmp     cl, bl
-		jne     loop_begin
-		jmp     found
+		jz      modulo2
+		jmp     modulo3
 
 		align   16
 	modulo1:
@@ -168,6 +153,24 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		jmp     has_char
 
 		align   16
+	modulo2:
+		mov     cl, byte ptr [eax]
+		inc     eax
+		test    cl, cl
+		jz      retnull
+		or      cl, 'a' - 'A'
+		cmp     cl, bl
+		je      found
+	modulo3:
+		mov     cl, byte ptr [eax]
+		inc     eax
+		test    cl, cl
+		jz      retnull
+		or      cl, 'a' - 'A'
+		cmp     cl, bl
+		je      found
+
+		align   16                                          // already aligned
 	loop_begin:
 		mov     ecx, dword ptr [eax]
 		add     eax, 4

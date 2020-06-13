@@ -136,13 +136,13 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 	modulo1:
 		mov     ecx, dword ptr [eax - 1]
 		add     eax, 3
-		mov     edx, ecx
-		or      ecx, 20202000H
 		mov     esi, ecx
+		or      ecx, 20202000H
+		mov     edx, ecx
 		xor     ecx, ebx
-		sub     edx, 01010100H
+		sub     esi, 01010100H
 		lea     edi, [ecx - 01010100H]
-		xor     esi, -1
+		xor     edx, -1
 		xor     ecx, -1
 		and     edx, esi
 		and     ecx, edi
@@ -174,13 +174,13 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 	loop_begin:
 		mov     ecx, dword ptr [eax]
 		add     eax, 4
-		mov     edx, ecx
-		or      ecx, 20202020H
 		mov     esi, ecx
+		or      ecx, 20202020H
+		mov     edx, ecx
 		xor     ecx, ebx
-		sub     edx, 01010101H
+		sub     esi, 01010101H
 		lea     edi, [ecx - 01010101H]
-		xor     esi, -1
+		xor     edx, -1
 		xor     ecx, -1
 		and     edx, esi
 		and     ecx, edi
@@ -189,8 +189,10 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		and     ecx, 80808080H
 		jz      loop_begin
 	has_char:
-		and     ecx, 00808080H
-		jnz     byte_0_to_2
+		test    cx, cx
+		jnz     byte_0_or_1
+		and     ecx, 00800000H
+		jnz     byte_2
 	found:
 		dec     eax
 		pop     edi
@@ -218,19 +220,9 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		ret
 
 		align   16
-	byte_0_to_2:
+	byte_0_or_1:
 		test    cl, cl
-		jnz     byte_0
-		test    ch, ch
-		jnz     byte_1
-	byte_2:
-		sub     eax, 2
-		pop     edi
-		pop     esi
-		pop     ebx
-		ret
-
-		align   16
+		jz      byte_1
 	byte_0:
 		sub     eax, 4
 		pop     edi
@@ -241,6 +233,14 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		align   16
 	byte_1:
 		sub     eax, 3
+		pop     edi
+		pop     esi
+		pop     ebx
+		ret
+
+		align   16
+	byte_2:
+		sub     eax, 2
 		pop     edi
 		pop     esi
 		pop     ebx

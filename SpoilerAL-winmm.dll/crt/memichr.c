@@ -155,14 +155,14 @@ __declspec(naked) static void * __cdecl memichr386(const void *buffer, int c, si
 		sub     ecx, 'a'
 		cmp     cl, 'z' - 'a' + 1
 		jae     memchr386
-		push    eax
-		                                                    // set all 4 bytes of edx to [value]
+		push    eax                                         // set all 4 bytes of edx to [value]
 		mov     eax, edx                                    // eax = 0/0/0/c
 		shl     edx, 8                                      // edx = 0/0/c/0
+		mov     ecx, eax                                    // ecx = 0/0/0/c
+		or      eax, edx                                    // eax = 0/0/c/c
+		or      edx, ecx                                    // edx = 0/0/c/c
+		shl     eax, 16                                     // eax = c/c/0/0
 		mov     ecx, dword ptr [buffer + 4]                 // ecx = buffer
-		or      edx, eax                                    // edx = 0/0/c/c
-		mov     eax, edx                                    // eax = 0/0/c/c
-		shl     edx, 16                                     // eax = c/c/0/0
 		or      edx, eax                                    // edx = all 4 bytes = [search char]
 		call    internal_memichr386
 	retnull:
@@ -191,31 +191,42 @@ __declspec(naked) void * __fastcall internal_memichr386(const void *buffer, unsi
 		inc     eax                                         // eax = -count
 		and     ecx, 3
 		jz      loop_entry
-		xor     ecx, 3
-		jz      modulo3
+		dec     ecx
+		jz      modulo1
 		dec     ecx
 		jz      modulo2
-		mov     cl, byte ptr [esi + eax]
-		or      cl, 'a' - 'A'
-		cmp     cl, dl
-		je      found
-		inc     eax
-		jz      epilogue
+		mov     ch, byte ptr [esi + eax]
+		or      ch, 'a' - 'A'
+		jmp     modulo3
+
+		align   16
 	modulo2:
-		mov     cl, byte ptr [esi + eax]
-		or      cl, 'a' - 'A'
+		mov     cx, word ptr [esi + eax]
+		or      cx, 2020H
 		cmp     cl, dl
 		je      found
 		inc     eax
 		jz      epilogue
 	modulo3:
-		mov     cl, byte ptr [esi + eax]
-		or      cl, 'a' - 'A'
-		cmp     cl, dl
+		cmp     ch, dl
 		je      found
 		inc     eax
 		jnz     loop_entry
 		jmp     epilogue
+
+		align   16
+	modulo1:
+		mov     ecx, dword ptr [esi + eax - 1]              // read 4 bytes
+		mov     edi, -01010100H
+		or      ecx, 20202000H
+		dec     eax
+		xor     ecx, edx                                    // edx is byte\byte\byte\byte
+		add     edi, ecx
+		xor     ecx, -1
+		and     edi, 80808080H
+		and     ecx, edi
+		jz      loop_begin
+		jmp     has_char
 
 		align   16
 	loop_begin:
@@ -228,11 +239,14 @@ __declspec(naked) void * __fastcall internal_memichr386(const void *buffer, unsi
 		xor     ecx, edx                                    // edx is byte\byte\byte\byte
 		add     edi, ecx
 		xor     ecx, -1
+		and     edi, 80808080H
 		and     ecx, edi
-		and     ecx, 80808080H
 		jz      loop_begin
-		and     ecx, 00808080H
-		jnz     byte_0_to_2
+	has_char:
+		test    cx, cx
+		jnz     byte_0_or_1
+		and     ecx, 00800000H
+		jnz     byte_2
 		add     eax, 3
 		jnc     found
 	retnull:
@@ -240,14 +254,16 @@ __declspec(naked) void * __fastcall internal_memichr386(const void *buffer, unsi
 		jmp     epilogue
 
 		align   16
-	byte_0_to_2:
+	byte_2:
+		add     eax, 2
+		jnc     found
+		xor     eax, eax
+		jmp     epilogue
+
+		align   16
+	byte_0_or_1:
 		test    cl, cl
 		jnz     found
-		test    ch, ch
-		jnz     byte_1
-		inc     eax
-		jz      epilogue
-	byte_1:
 		inc     eax
 		jz      epilogue
 	found:

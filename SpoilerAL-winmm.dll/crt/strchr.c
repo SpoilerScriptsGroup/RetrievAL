@@ -116,17 +116,10 @@ __declspec(naked) char * __cdecl strchr386(const char *string, int c)
 		mov     eax, ecx                                    // v eax = string
 		and     ecx, 3
 		jz      loop_begin
-		xor     ecx, 3
-		jz      modulo3
 		dec     ecx
-		jz      modulo2
-		mov     cl, byte ptr [eax]
-		inc     eax
-		cmp     cl, bl
-		je      found
-		test    cl, cl
-		jz      retnull
-	modulo2:
+		jz      modulo1
+		dec     ecx
+		jnz     modulo3
 		mov     cl, byte ptr [eax]
 		inc     eax
 		cmp     cl, bl
@@ -154,6 +147,23 @@ __declspec(naked) char * __cdecl strchr386(const char *string, int c)
 		ret
 
 		align   16
+	modulo1:
+		mov     ecx, dword ptr [eax - 1]
+		add     eax, 3
+		mov     esi, ecx
+		xor     ecx, ebx
+		lea     edx, [esi - 01010100H]
+		lea     edi, [ecx - 01010100H]
+		xor     esi, -1
+		xor     ecx, -1
+		and     edx, esi
+		and     ecx, edi
+		and     edx, 80808000H
+		jnz     null_is_found
+		and     ecx, 80808000H
+		jnz     has_char
+
+		align   16                                          // already aligned
 	loop_begin:
 		mov     ecx, dword ptr [eax]
 		add     eax, 4
@@ -169,6 +179,7 @@ __declspec(naked) char * __cdecl strchr386(const char *string, int c)
 		jnz     null_is_found
 		and     ecx, 80808080H
 		jz      loop_begin
+	has_char:
 		and     ecx, 00808080H
 		jnz     byte_0_to_2
 	found:

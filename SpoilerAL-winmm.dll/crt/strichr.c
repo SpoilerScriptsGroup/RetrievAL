@@ -126,18 +126,10 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		nop                                                 // v nop
 		and     ecx, 3
 		jz      loop_begin
-		xor     ecx, 3
-		jz      modulo3
 		dec     ecx
-		jz      modulo2
-		mov     cl, byte ptr [eax]
-		inc     eax
-		test    cl, cl
-		jz      retnull
-		or      cl, 'a' - 'A'
-		cmp     cl, bl
-		je      found
-	modulo2:
+		jz      modulo1
+		dec     ecx
+		jnz     modulo3
 		mov     cl, byte ptr [eax]
 		inc     eax
 		test    cl, cl
@@ -154,6 +146,26 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		cmp     cl, bl
 		jne     loop_begin
 		jmp     found
+
+		align   16
+	modulo1:
+		mov     ecx, dword ptr [eax - 1]
+		add     eax, 3
+		mov     edx, ecx
+		or      ecx, 20202000H
+		mov     esi, ecx
+		xor     ecx, ebx
+		sub     edx, 01010100H
+		lea     edi, [ecx - 01010100H]
+		xor     esi, -1
+		xor     ecx, -1
+		and     edx, esi
+		and     ecx, edi
+		and     edx, 80808000H
+		jnz     null_is_found
+		and     ecx, 80808000H
+		jz      loop_begin
+		jmp     has_char
 
 		align   16
 	loop_begin:
@@ -173,6 +185,7 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		jnz     null_is_found
 		and     ecx, 80808080H
 		jz      loop_begin
+	has_char:
 		and     ecx, 00808080H
 		jnz     byte_0_to_2
 	found:

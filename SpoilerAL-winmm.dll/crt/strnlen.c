@@ -186,7 +186,7 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 		shr     ecx, 16                                     // 000000A0 _ C1. E9, 10
 	found_at_low_word:
 		sub     eax, edi                                    // 000000A3 _ 2B. C7
-		cmp     cl, 80H                                     // 000000A5 _ 80. F9, 80
+		cmp     cl, 1                                       // 000000A5 _ 80. F9, 01
 		pop     edi                                         // 000000A8 _ 5F
 		adc     eax, 0                                      // 000000A9 _ 83. D0, 00
 		pop     esi                                         // 000000AC _ 5E

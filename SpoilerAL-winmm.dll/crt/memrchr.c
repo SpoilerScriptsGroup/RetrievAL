@@ -177,11 +177,10 @@ __declspec(naked) void * __fastcall internal_memrchr386(const void *buffer, unsi
 
 		push    ebx                                         // preserve ebx
 		push    esi                                         // preserve esi
-		push    edi                                         // preserve edi
-		mov     eax, dword ptr [count + 12]                 // eax = count
-		mov     esi, ecx                                    // esi = buffer
+		mov     eax, dword ptr [count + 8]                  // eax = count
+		lea     esi, [ecx - 1]                              // esi = buffer - 1
 		add     ecx, eax                                    // ecx = end of buffer
-		dec     esi                                         // esi = buffer - 1
+		push    edi                                         // preserve edi
 		and     ecx, 3
 		jz      loop_entry
 		xor     ecx, 3
@@ -194,17 +193,19 @@ __declspec(naked) void * __fastcall internal_memrchr386(const void *buffer, unsi
 		align   16
 	modulo3:
 		mov     ecx, dword ptr [esi + eax - 2]              // read 4 bytes
-		mov     edi, -00010101H
-		xor     ecx, edx                                    // edx is byte\byte\byte\byte
+		mov     edi, -01010100H
+		shl     ecx, 8
 		or      ebx, -1
+		xor     ecx, edx                                    // edx is byte\byte\byte\byte
 		add     edi, ecx
 		xor     ebx, ecx
-		and     edi, 00808080H
-		inc     eax
+		and     edi, 80808000H
 		and     ebx, edi
-		jz      loop_begin
-		shr     ecx, 8
-		jmp     byte_0_to_2
+		jnz     has_char
+		sub     eax, 3
+		ja      loop_entry
+		xor     eax, eax
+		jmp     epilogue
 
 		align   16
 	modulo2:
@@ -234,10 +235,10 @@ __declspec(naked) void * __fastcall internal_memrchr386(const void *buffer, unsi
 		and     edi, 80808080H
 		and     ebx, edi
 		jz      loop_begin
+	has_char:
 		cmp     ecx, 01000000H
 		jb      found
 		shr     ecx, 8
-	byte_0_to_2:
 		test    ch, ch
 		jz      byte_2
 		test    cl, cl

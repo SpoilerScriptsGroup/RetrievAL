@@ -225,19 +225,22 @@ __declspec(naked) void * __fastcall internal_memrichr386(const void *buffer, uns
 		align   16
 	modulo3:
 		mov     ecx, dword ptr [esi + eax - 2]              // read 4 bytes
-		mov     edi, -01010100H
-		shl     ecx, 8
+		mov     edi, -00010101H
+		or      ecx, 00202020H
 		or      ebx, -1
-		or      ecx, 20202000H
 		xor     ecx, edx                                    // edx is byte\byte\byte\byte
 		add     edi, ecx
 		xor     ebx, ecx
-		and     edi, 80808000H
+		and     edi, 00808080H
 		and     ebx, edi
-		jnz     has_char
+		jnz     byte_0_to_2
 		sub     eax, 3
 		ja      loop_entry
 		jmp     retnull
+
+	byte_0_to_2:
+		shl     ecx, 8
+		jmp     has_char
 
 		align   16
 	modulo2:

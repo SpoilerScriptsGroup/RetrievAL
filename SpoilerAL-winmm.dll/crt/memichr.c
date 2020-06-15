@@ -216,7 +216,7 @@ __declspec(naked) void * __fastcall internal_memichr386(const void *buffer, unsi
 		align   16
 	modulo2:
 		mov     cx, word ptr [esi + eax]
-		or      cx, 2020H
+		or      ecx, 00002020H
 		cmp     cl, dl
 		je      found
 		inc     eax

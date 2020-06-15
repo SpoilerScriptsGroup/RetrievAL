@@ -178,7 +178,7 @@ __declspec(naked) void * __fastcall internal_memrchr386(const void *buffer, unsi
 		push    ebx                                         // preserve ebx
 		push    esi                                         // preserve esi
 		mov     eax, dword ptr [count + 8]                  // eax = count
-		lea     esi, [ecx - 1]                              // esi = buffer - 1
+		lea     esi, [ecx - 4]                              // esi = buffer - 4
 		add     ecx, eax                                    // ecx = end of buffer
 		push    edi                                         // preserve edi
 		and     ecx, 3
@@ -187,32 +187,29 @@ __declspec(naked) void * __fastcall internal_memrchr386(const void *buffer, unsi
 		jz      modulo3
 		dec     ecx
 		jz      modulo2
-		mov     cl, byte ptr [esi + eax]
+		mov     cl, byte ptr [esi + eax + 3]
 		jmp     modulo1
 
 		align   16
 	modulo3:
-		mov     ecx, dword ptr [esi + eax - 2]              // read 4 bytes
+		mov     ecx, dword ptr [esi + eax + 1]              // read 4 bytes
 		mov     edi, -00010101H
 		xor     ecx, edx                                    // edx is byte\byte\byte\byte
 		or      ebx, -1
 		add     edi, ecx
 		xor     ebx, ecx
 		and     edi, 00808080H
+		and     ecx, 00FFFFFFH
 		and     ebx, edi
-		jnz     byte_0_to_2
+		jnz     has_char
 		sub     eax, 3
 		ja      loop_entry
 		xor     eax, eax
 		jmp     epilogue
 
-	byte_0_to_2:
-		shl     ecx, 8
-		jmp     has_char
-
 		align   16
 	modulo2:
-		mov     cx, word ptr [esi + eax - 1]
+		mov     cx, word ptr [esi + eax + 2]
 		cmp     ch, dl
 		je      found
 		dec     eax
@@ -229,19 +226,19 @@ __declspec(naked) void * __fastcall internal_memrchr386(const void *buffer, unsi
 		sub     eax, 4
 		jbe     retnull
 	loop_entry:
-		mov     ecx, dword ptr [esi + eax - 3]              // read 4 bytes
+		mov     ecx, dword ptr [esi + eax]                  // read 4 bytes
 		mov     edi, -01010101H
 		xor     ecx, edx                                    // edx is byte\byte\byte\byte
 		or      ebx, -1
 		add     edi, ecx
 		xor     ebx, ecx
+		shr     ecx, 8
 		and     edi, 80808080H
 		and     ebx, edi
 		jz      loop_begin
 	has_char:
-		cmp     ecx, 01000000H
+		cmp     ecx, 00010000H
 		jb      found
-		shr     ecx, 8
 		test    ch, ch
 		jz      byte_2
 		test    cl, cl
@@ -264,7 +261,7 @@ __declspec(naked) void * __fastcall internal_memrchr386(const void *buffer, unsi
 		dec     eax
 		jz      epilogue
 	found:
-		add     eax, esi
+		lea     eax, [esi + eax + 3]
 	epilogue:
 		pop     edi                                         // restore edi
 		pop     esi                                         // restore esi

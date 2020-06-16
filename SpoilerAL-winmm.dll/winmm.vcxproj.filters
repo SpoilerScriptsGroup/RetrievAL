@@ -711,9 +711,6 @@
     <ClCompile Include="crt\memicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\memimem.c">
-      <Filter>crt</Filter>
-    </ClCompile>
     <ClCompile Include="crt\memmem.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -724,9 +721,6 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\memrichr.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\memrimem.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\memrmem.c">
@@ -975,9 +969,6 @@
     <ClCompile Include="crt\wmemicmp.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\wmemimem.c">
-      <Filter>crt</Filter>
-    </ClCompile>
     <ClCompile Include="crt\wmemmem.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -991,9 +982,6 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wmemrichr.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\wmemrimem.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\wmemrmem.c">
@@ -2137,9 +2125,6 @@
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tgetenv.h">
-      <Filter>crt</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\tmemimem.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\tmemmem.h">

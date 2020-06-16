@@ -128,18 +128,18 @@ __declspec(naked) char * __cdecl strrchr386(const char *string, int c)
 		test    al, al
 		jz      char_is_null
 		                                                    // set all 4 bytes of ebx to [value]
-		mov     edx, eax                                    // u edx = 0/0/0/c
-		push    ebp                                         // v preserve ebp
-		shl     edx, 8                                      // u edx = 0/0/c/0
+		push    ebp                                         // u preserve ebp
 		push    esi                                         // v preserve esi
-		or      edx, eax                                    // u edx = 0/0/c/c
-		push    edi                                         // v preserve edi
-		mov     ebx, edx                                    // u ebx = 0/0/c/c
-		xor     ebp, ebp                                    // v ebp = NULL
+		push    edi                                         // u preserve edi
+		mov     edx, eax                                    // v edx = 0/0/0/c
+		shl     eax, 8                                      // u eax = 0/0/c/0
+		mov     ebx, edx                                    // v ebx = 0/0/0/c
+		or      edx, eax                                    // u eax = 0/0/c/c
+		or      ebx, eax                                    // v ebx = 0/0/c/c
 		shl     edx, 16                                     // u edx = c/c/0/0
 		mov     eax, ecx                                    // v eax = string
 		or      ebx, edx                                    // u ebx = all 4 bytes = [search char]
-		nop                                                 // v nop
+		xor     ebp, ebp                                    // v ebp = NULL
 		and     ecx, 3
 		jz      loop_begin
 		dec     ecx

@@ -161,7 +161,7 @@ __declspec(naked) void * __vectorcall internal_memrichrSSE2(const void *buffer, 
 
 __declspec(naked) static void * __cdecl memrichr386(const void *buffer, int c, size_t count)
 {
-	extern void * __cdecl memchr386(const void *buffer, int c, size_t count);
+	extern void * __cdecl memrchr386(const void *buffer, int c, size_t count);
 
 	__asm
 	{
@@ -178,7 +178,7 @@ __declspec(naked) static void * __cdecl memrichr386(const void *buffer, int c, s
 		mov     dl, cl
 		sub     ecx, 'a'
 		cmp     cl, 'z' - 'a' + 1
-		jae     memchr386
+		jae     memrchr386
 		push    eax                                         // set all 4 bytes of edx to [value]
 		mov     eax, edx                                    // eax = 0/0/0/c
 		shl     edx, 8                                      // edx = 0/0/c/0

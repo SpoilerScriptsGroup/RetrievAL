@@ -113,16 +113,16 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 		jae     strchr386
 		                                                    // set all 4 bytes of ebx to [value]
 		push    ebx                                         // u preserve ebx
-		mov     ebx, eax                                    // v ebx = 0/0/0/c
-		shl     ebx, 8                                      // u ebx = 0/0/c/0
 		push    esi                                         // v preserve esi
-		mov     esi, ebx                                    // u esi = 0/0/c/0
-		or      ebx, eax                                    // v ebx = 0/0/c/c
-		shl     ebx, 16                                     // u ebx = c/c/0/0
-		or      eax, esi                                    // v eax = 0/0/c/c
-		or      ebx, eax                                    // u ebx = all 4 bytes = [search char]
-		mov     eax, ecx                                    // v eax = string
 		push    edi                                         // u preserve edi
+		mov     edx, eax                                    // v edx = 0/0/0/c
+		shl     eax, 8                                      // u eax = 0/0/c/0
+		mov     ebx, edx                                    // v ebx = 0/0/0/c
+		or      edx, eax                                    // u eax = 0/0/c/c
+		or      ebx, eax                                    // v ebx = 0/0/c/c
+		shl     edx, 16                                     // u edx = c/c/0/0
+		mov     eax, ecx                                    // v eax = string
+		or      ebx, edx                                    // u ebx = all 4 bytes = [search char]
 		nop                                                 // v nop
 		and     ecx, 3
 		jz      loop_begin

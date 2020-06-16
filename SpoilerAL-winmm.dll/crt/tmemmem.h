@@ -338,8 +338,8 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, in
 		sub     esp, 32
 
 		#undef c
-		#undef memchr
 		#undef memcmp
+		#undef memchr
 		#undef reserved
 		#undef haystack
 		#undef haystacklen
@@ -347,8 +347,8 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, in
 		#undef needlelen
 
 		#define c           (ebp + 16)
-		#define memchr      (ebp + 20)
-		#define memcmp      (ebp + 24)
+		#define memcmp      (ebp + 20)
+		#define memchr      (ebp + 24)
 		#define reserved    (ebp + 28)
 		#define haystack    (ebp + 32)
 		#define haystacklen (ebp + 36)
@@ -418,8 +418,8 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, in
 		ret
 
 		#undef c
-		#undef memchr
 		#undef memcmp
+		#undef memchr
 		#undef reserved
 		#undef haystack
 		#undef haystacklen
@@ -654,8 +654,8 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, int
 		ret
 
 		#undef c
-		#undef memchr
 		#undef memcmp
+		#undef memchr
 		#undef reserved
 		#undef haystack
 		#undef haystacklen

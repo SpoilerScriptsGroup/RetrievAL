@@ -78,7 +78,7 @@ __declspec(naked) static int __cdecl strnicmpSSE2(const char *string1, const cha
 		cmovb   edx, ecx
 		sub     eax, edx
 		jnz     epilogue
-		cmp     edx, -'A'
+		cmp     edx, '\0' - 'A'
 		je      epilogue
 	byte_loop_increment:
 		inc     ebx

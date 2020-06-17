@@ -58,7 +58,7 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		movdqa  xmm4, xmmword ptr [upper]
 		movdqa  xmm5, xmmword ptr [azrange]
 		movdqa  xmm6, xmmword ptr [casebit]                 // bit to change
-		jmp     word_loop_increment
+		jmp     word_loop_entry
 
 		align   16
 	word_loop:
@@ -74,22 +74,23 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		cmovb   edx, ecx
 		sub     eax, edx
 		jnz     epilogue
-	word_loop_increment:
+	word_loop_entry:
 		inc     ebx
 		jz      epilogue
 		lea     edx, [edi + ebx * 2 + 1]
-		lea     ecx, [esi + ebx * 2]
 		and     edx, 14
 		jnz     word_loop
-		mov     edx, edi
-		and     ecx, PAGE_SIZE - 1
-		and     edx, 1
-		jnz     unaligned_xmmword_loop
+		mov     ecx, edi
+		or      edx, 7
+		sub     esi, 14
+		sub     edi, 14
+		and     ecx, 1
+		jnz     unaligned_xmmword_loop_entry
+		add     ebx, edx
+		jc      aligned_xmmword_loop_last
 
 		align   16
 	aligned_xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 16
-		ja      word_loop                                   // jump if cross pages
 		movdqu  xmm0, xmmword ptr [esi + ebx * 2]           // load 16 byte
 		movdqa  xmm1, xmmword ptr [edi + ebx * 2]           //
 		movdqa  xmm2, xmm0                                  // copy
@@ -103,19 +104,32 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		por     xmm0, xmm2                                  // negation of the 5th bit - lowercase letters
 		por     xmm1, xmm3                                  //
 		pcmpeqw xmm0, xmm1                                  // compare
-		pmovmskb edx, xmm0                                  // get one bit for each byte result
-		xor     edx, 0FFFFH
+		pmovmskb ecx, xmm0                                  // get one bit for each byte result
+		xor     ecx, 0FFFFH
 		jnz     xmmword_not_equal
 		add     ebx, 8
-		jc      epilogue
-		lea     ecx, [esi + ebx * 2]
+		jnc     aligned_xmmword_loop
+	aligned_xmmword_loop_last:
+		sub     ebx, edx
+		jae     epilogue
+		lea     ecx, [ebx + ebx]
+		add     esi, 14
+		add     ecx, esi
+		add     edi, 14
 		and     ecx, PAGE_SIZE - 1
-		jmp     aligned_xmmword_loop
+		xor     edx, edx
+		cmp     ecx, PAGE_SIZE - 16
+		jbe     aligned_xmmword_loop
+		jmp     word_loop                                   // jump if cross pages
+
+		align   8
+		nop __asm nop __asm nop __asm nop                   // padding 4 byte
+	unaligned_xmmword_loop_entry:
+		add     ebx, edx
+		jc      unaligned_xmmword_loop_last
 
 		align   16
 	unaligned_xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 16
-		ja      word_loop                                   // jump if cross pages
 		movdqu  xmm0, xmmword ptr [esi + ebx * 2]           // load 16 byte
 		movdqu  xmm1, xmmword ptr [edi + ebx * 2]           //
 		movdqa  xmm2, xmm0                                  // copy
@@ -129,23 +143,37 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		por     xmm0, xmm2                                  // negation of the 5th bit - lowercase letters
 		por     xmm1, xmm3                                  //
 		pcmpeqw xmm0, xmm1                                  // compare
-		pmovmskb edx, xmm0                                  // get one bit for each byte result
-		xor     edx, 0FFFFH
+		pmovmskb ecx, xmm0                                  // get one bit for each byte result
+		xor     ecx, 0FFFFH
 		jnz     xmmword_not_equal
 		add     ebx, 8
-		jc      epilogue
-		lea     ecx, [esi + ebx * 2]
+		jnc     unaligned_xmmword_loop
+	unaligned_xmmword_loop_last:
+		sub     ebx, edx
+		jae     epilogue
+		lea     ecx, [ebx + ebx]
+		add     esi, 14
+		add     ecx, esi
+		add     edi, 14
 		and     ecx, PAGE_SIZE - 1
-		jmp     unaligned_xmmword_loop
+		xor     edx, edx
+		cmp     ecx, PAGE_SIZE - 16
+		jbe     unaligned_xmmword_loop
+		jmp     word_loop                                   // jump if cross pages
 
 		align   16
 	xmmword_not_equal:
-		bsf     edx, edx
-		shr     edx, 1
-		add     ebx, edx
+		bsf     ecx, ecx
+		sub     ebx, edx
+		add     edx, edx
+		shr     ecx, 1
+		add     esi, edx
+		add     ebx, ecx
 		jc      epilogue
-		movzx   eax, word ptr [esi + ebx * 2]
-		movzx   edx, word ptr [edi + ebx * 2]
+		add     edi, edx
+		xor     edx, edx
+		mov     ax, word ptr [esi + ebx * 2]
+		mov     dx, word ptr [edi + ebx * 2]
 		sub     eax, 'A'
 		sub     edx, 'A'
 		cmp     eax, 'Z' - 'A' + 1

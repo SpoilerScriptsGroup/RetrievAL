@@ -77,7 +77,7 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 		cmovb   edx, ecx
 		sub     eax, edx
 		jnz     epilogue
-		cmp     edx, -'A'
+		cmp     edx, '\0' - 'A'
 		je      epilogue
 	word_loop_increment:
 		inc     ebx

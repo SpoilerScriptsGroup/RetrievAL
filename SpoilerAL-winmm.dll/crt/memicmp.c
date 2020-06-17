@@ -59,7 +59,7 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		movdqa  xmm4, xmmword ptr [upper]
 		movdqa  xmm5, xmmword ptr [azrange]
 		movdqa  xmm6, xmmword ptr [casebit]                 // bit to change
-		jmp     byte_loop_increment
+		jmp     byte_loop_entry
 
 		align   16
 	byte_loop:
@@ -75,19 +75,20 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		cmovb   edx, ecx
 		sub     eax, edx
 		jnz     epilogue
-	byte_loop_increment:
+	byte_loop_entry:
 		inc     ebx
 		jz      epilogue
 		lea     edx, [edi + ebx]
-		lea     ecx, [esi + ebx]
 		and     edx, 15
 		jnz     byte_loop
-		and     ecx, PAGE_SIZE - 1
+		or      edx, 15
+		sub     esi, 15
+		sub     edi, 15
+		add     ebx, edx
+		jc      xmmword_loop_last
 
 		align   16
 	xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 16
-		ja      byte_loop                                   // jump if cross pages
 		movdqu  xmm0, xmmword ptr [esi + ebx]               // load 16 byte
 		movdqa  xmm1, xmmword ptr [edi + ebx]               //
 		movdqa  xmm2, xmm0                                  // copy
@@ -101,22 +102,35 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		por     xmm0, xmm2                                  // negation of the 5th bit - lowercase letters
 		por     xmm1, xmm3                                  //
 		pcmpeqb xmm0, xmm1                                  // compare
-		pmovmskb edx, xmm0                                  // get one bit for each byte result
-		xor     edx, 0FFFFH
+		pmovmskb ecx, xmm0                                  // get one bit for each byte result
+		xor     ecx, 0FFFFH
 		jnz     xmmword_not_equal
 		add     ebx, 16
-		jc      epilogue
-		lea     ecx, [esi + ebx]
+		jnc     xmmword_loop
+	xmmword_loop_last:
+		sub     ebx, edx
+		jae     epilogue
+		mov     ecx, ebx
+		add     esi, edx
+		add     ecx, esi
+		add     edi, edx
 		and     ecx, PAGE_SIZE - 1
-		jmp     xmmword_loop
+		xor     edx, edx
+		cmp     ecx, PAGE_SIZE - 16
+		jbe     xmmword_loop
+		jmp     byte_loop                                   // jump if cross pages
 
 		align   16
 	xmmword_not_equal:
-		bsf     edx, edx
-		add     ebx, edx
+		bsf     ecx, ecx
+		sub     ebx, edx
+		add     esi, edx
+		add     ebx, ecx
 		jc      epilogue
-		movzx   eax, byte ptr [esi + ebx]
-		movzx   edx, byte ptr [edi + ebx]
+		add     edi, edx
+		xor     edx, edx
+		mov     al, byte ptr [esi + ebx]
+		mov     dl, byte ptr [edi + ebx]
 		sub     eax, 'A'
 		sub     edx, 'A'
 		cmp     eax, 'Z' - 'A' + 1

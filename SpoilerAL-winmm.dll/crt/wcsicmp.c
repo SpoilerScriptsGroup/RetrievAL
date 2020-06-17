@@ -47,7 +47,7 @@ __declspec(naked) static int __cdecl wcsicmpSSE2(const wchar_t *string1, const w
 		mov     esi, dword ptr [string1 + 8]                // esi = string1
 		mov     edi, dword ptr [string2 + 8]                // edi = string2
 		lea     edx, [edi + 1]                              // edx = (size_t)string2 + 1
-		sub     edi, esi                                    // edi = (size_t)string2 - (size_t)string1
+		sub     esi, edi                                    // edi = (size_t)string1 - (size_t)string2
 		movdqa  xmm4, xmmword ptr [upper]
 		movdqa  xmm5, xmmword ptr [azrange]
 		movdqa  xmm6, xmmword ptr [casebit]                 // bit to change
@@ -56,8 +56,8 @@ __declspec(naked) static int __cdecl wcsicmpSSE2(const wchar_t *string1, const w
 
 		align   16
 	word_loop:
-		movzx   eax, word ptr [esi]
-		movzx   edx, word ptr [esi + edi]
+		movzx   eax, word ptr [esi + edi]
+		movzx   edx, word ptr [edi]
 		sub     eax, 'A'
 		sub     edx, 'A'
 		cmp     eax, 'Z' - 'A' + 1
@@ -68,25 +68,25 @@ __declspec(naked) static int __cdecl wcsicmpSSE2(const wchar_t *string1, const w
 		cmovb   edx, ecx
 		sub     eax, edx
 		jnz     epilogue
-		cmp     edx, -'A'
+		cmp     edx, '\0' - 'A'
 		je      epilogue
-		lea     edx, [esi + edi + 3]
-		add     esi, 2
+		lea     edx, [edi + 3]
+		add     edi, 2
 	word_loop_entry:
 		and     edx, 14
 		jnz     word_loop
-		mov     ecx, esi
 		lea     edx, [esi + edi]
-		and     ecx, PAGE_SIZE - 1
-		and     edx, 1
+		mov     ecx, edi
+		and     edx, PAGE_SIZE - 1
+		and     ecx, 1
 		jnz     unaligned_xmmword_loop
 
 		align   16
 	aligned_xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 16
+		cmp     edx, PAGE_SIZE - 16
 		ja      word_loop                                   // jump if cross pages
-		movdqu  xmm0, xmmword ptr [esi]                     // load 16 byte
-		movdqa  xmm1, xmmword ptr [esi + edi]               //
+		movdqu  xmm0, xmmword ptr [esi + edi]               // load 16 byte
+		movdqa  xmm1, xmmword ptr [edi]                     //
 		movdqa  xmm2, xmm0                                  // copy
 		movdqa  xmm3, xmm1                                  //
 		paddw   xmm0, xmm4                                  // all words greater than 'Z' if negative
@@ -105,17 +105,17 @@ __declspec(naked) static int __cdecl wcsicmpSSE2(const wchar_t *string1, const w
 		jnz     xmmword_not_equal
 		test    ecx, ecx
 		jnz     epilogue
-		lea     ecx, [esi + 16]
-		add     esi, 16
-		and     ecx, PAGE_SIZE - 1
+		add     edx, 16
+		add     edi, 16
+		and     edx, PAGE_SIZE - 1
 		jmp     aligned_xmmword_loop
 
 		align   16
 	unaligned_xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 16
+		cmp     edx, PAGE_SIZE - 16
 		ja      word_loop                                   // jump if cross pages
-		movdqu  xmm0, xmmword ptr [esi]                     // load 16 byte
-		movdqu  xmm1, xmmword ptr [esi + edi]               //
+		movdqu  xmm0, xmmword ptr [esi + edi]               // load 16 byte
+		movdqu  xmm1, xmmword ptr [edi]                     //
 		movdqa  xmm2, xmm0                                  // copy
 		movdqa  xmm3, xmm1                                  //
 		paddw   xmm0, xmm4                                  // all words greater than 'Z' if negative
@@ -134,9 +134,9 @@ __declspec(naked) static int __cdecl wcsicmpSSE2(const wchar_t *string1, const w
 		jnz     xmmword_not_equal
 		test    ecx, ecx
 		jnz     epilogue
-		lea     ecx, [esi + 16]
-		add     esi, 16
-		and     ecx, PAGE_SIZE - 1
+		add     edx, 16
+		add     edi, 16
+		and     edx, PAGE_SIZE - 1
 		jmp     unaligned_xmmword_loop
 
 		align   16
@@ -151,9 +151,9 @@ __declspec(naked) static int __cdecl wcsicmpSSE2(const wchar_t *string1, const w
 		jz      epilogue
 	xmmword_has_not_null:
 		bsf     eax, eax
-		add     esi, eax
-		movzx   eax, word ptr [esi]
-		movzx   edx, word ptr [esi + edi]
+		add     edi, eax
+		movzx   eax, word ptr [esi + edi]
+		movzx   edx, word ptr [edi]
 		sub     eax, 'A'
 		sub     edx, 'A'
 		cmp     eax, 'Z' - 'A' + 1
@@ -182,15 +182,15 @@ __declspec(naked) static int __cdecl wcsicmp386(const wchar_t *string1, const wc
 
 		push    esi
 		xor     eax, eax                                    // eax = 0
-		mov     ecx, dword ptr [string1 + 4]                // ecx = string1
-		mov     esi, dword ptr [string2 + 4]                // esi = string2
-		sub     esi, ecx                                    // esi = (size_t)string2 - (size_t)string1
+		mov     esi, dword ptr [string1 + 4]                // esi = string1
+		mov     ecx, dword ptr [string2 + 4]                // ecx = string2
+		sub     esi, ecx                                    // esi = (size_t)string1 - (size_t)string2
 
 		align   16
 	loop_begin:
 		xor     edx, edx
-		mov     ax, word ptr [ecx]
-		mov     dx, word ptr [ecx + esi]
+		mov     ax, word ptr [ecx + esi]
+		mov     dx, word ptr [ecx]
 		add     ecx, 2
 		sub     eax, edx
 		jnz     compare_insensitive

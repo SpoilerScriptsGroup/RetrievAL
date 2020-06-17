@@ -47,7 +47,7 @@ __declspec(naked) static int __cdecl stricmpSSE2(const char *string1, const char
 		mov     esi, dword ptr [string1 + 8]                // esi = string1
 		mov     edi, dword ptr [string2 + 8]                // edi = string2
 		mov     ecx, edi                                    // ecx = string2
-		sub     edi, esi                                    // edi = string2 - string1
+		sub     esi, edi                                    // esi = string1 - string2
 		movdqa  xmm4, xmmword ptr [upper]
 		movdqa  xmm5, xmmword ptr [azrange]
 		movdqa  xmm6, xmmword ptr [casebit]                 // bit to change
@@ -56,8 +56,8 @@ __declspec(naked) static int __cdecl stricmpSSE2(const char *string1, const char
 
 		align   16
 	byte_loop:
-		movzx   eax, byte ptr [esi]
-		movzx   edx, byte ptr [esi + edi]
+		movzx   eax, byte ptr [esi + edi]
+		movzx   edx, byte ptr [edi]
 		sub     eax, 'A'
 		sub     edx, 'A'
 		cmp     eax, 'Z' - 'A' + 1
@@ -68,22 +68,22 @@ __declspec(naked) static int __cdecl stricmpSSE2(const char *string1, const char
 		cmovb   edx, ecx
 		sub     eax, edx
 		jnz     epilogue
-		cmp     edx, -'A'
+		cmp     edx, '\0' - 'A'
 		je      epilogue
-		lea     ecx, [esi + edi + 1]
-		inc     esi
+		lea     ecx, [edi + 1]
+		inc     edi
 	byte_loop_entry:
 		and     ecx, 15
 		jnz     byte_loop
-		mov     ecx, esi
-		and     ecx, PAGE_SIZE - 1
+		lea     edx, [esi + edi]
+		and     edx, PAGE_SIZE - 1
 
 		align   16
 	xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 16
+		cmp     edx, PAGE_SIZE - 16
 		ja      byte_loop                                   // jump if cross pages
-		movdqu  xmm0, xmmword ptr [esi]                     // load 16 byte
-		movdqa  xmm1, xmmword ptr [esi + edi]               //
+		movdqu  xmm0, xmmword ptr [esi + edi]               // load 16 byte
+		movdqa  xmm1, xmmword ptr [edi]                     //
 		movdqa  xmm2, xmm0                                  // copy
 		movdqa  xmm3, xmm1                                  //
 		paddb   xmm0, xmm4                                  // all bytes greater than 'Z' if negative
@@ -102,9 +102,9 @@ __declspec(naked) static int __cdecl stricmpSSE2(const char *string1, const char
 		jnz     xmmword_not_equal
 		test    ecx, ecx
 		jnz     epilogue
-		lea     ecx, [esi + 16]
-		add     esi, 16
-		and     ecx, PAGE_SIZE - 1
+		add     edx, 16
+		add     edi, 16
+		and     edx, PAGE_SIZE - 1
 		jmp     xmmword_loop
 
 		align   16
@@ -119,9 +119,9 @@ __declspec(naked) static int __cdecl stricmpSSE2(const char *string1, const char
 		jz      epilogue
 	xmmword_has_not_null:
 		bsf     eax, eax
-		add     esi, eax
-		movzx   eax, byte ptr [esi]
-		movzx   edx, byte ptr [esi + edi]
+		add     edi, eax
+		movzx   eax, byte ptr [esi + edi]
+		movzx   edx, byte ptr [edi]
 		sub     eax, 'A'
 		sub     edx, 'A'
 		cmp     eax, 'Z' - 'A' + 1
@@ -150,15 +150,15 @@ __declspec(naked) static int __cdecl stricmp386(const char *string1, const char 
 
 		push    esi
 		xor     eax, eax                                    // eax = 0
-		mov     ecx, dword ptr [string1 + 4]                // ecx = string1
-		mov     esi, dword ptr [string2 + 4]                // esi = string2
-		sub     esi, ecx                                    // esi = string2 - string1
+		mov     esi, dword ptr [string1 + 4]                // esi = string1
+		mov     ecx, dword ptr [string2 + 4]                // ecx = string2
+		sub     esi, ecx                                    // esi = string1 - string2
 
 		align   16
 	loop_begin:
 		xor     edx, edx
-		mov     al, byte ptr [ecx]
-		mov     dl, byte ptr [ecx + esi]
+		mov     al, byte ptr [ecx + esi]
+		mov     dl, byte ptr [ecx]
 		inc     ecx
 		sub     eax, edx
 		jnz     compare_insensitive
@@ -222,11 +222,11 @@ __declspec(naked) static int __cdecl stricmpCPUDispatch(const char *string1, con
 	__asm
 	{
 		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
-		jne     L1
+		//jne     L1
 		mov     dword ptr [stricmpDispatch], offset stricmp386
 		jmp     stricmp386
 
-	L1:
+	//L1:
 		mov     dword ptr [stricmpDispatch], offset stricmpSSE2
 		jmp     stricmpSSE2
 	}

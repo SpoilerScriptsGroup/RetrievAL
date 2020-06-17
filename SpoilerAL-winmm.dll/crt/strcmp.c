@@ -44,7 +44,6 @@ __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char
 		push    edi
 		mov     esi, dword ptr [string1 + 8]                // esi = string1
 		mov     eax, dword ptr [string2 + 8]                // eax = string2
-		mov     edi, esi                                    // edi = string1
 		sub     esi, eax                                    // esi = string1 - string2
 		jmp     byte_loop_entry
 
@@ -56,11 +55,11 @@ __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char
 		jne     return_not_equal
 		test    cl, cl
 		jz      return_equal
-		lea     edi, [eax + esi + 1]
 		inc     eax
 	byte_loop_entry:
 		test    eax, 3                                      // use only eax for 'test reg, imm'
 		jnz     byte_loop
+		lea     edi, [eax + esi]
 		and     edi, PAGE_SIZE - 1
 
 		align   16
@@ -74,13 +73,13 @@ __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char
 		mov     edx, dword ptr [eax]
 		cmp     ecx, edx
 		jne     byte_loop                                   // not equal
-		add     eax, 4
 		sub     ecx, 01010101H
 		xor     edx, -1
-		lea     edi, [eax + esi]
 		and     ecx, 80808080H
+		add     edi, 4
+		add     eax, 4
 		and     edi, PAGE_SIZE - 1
-		and     edx, ecx
+		and     ecx, edx
 		jz      dword_loop
 	return_equal:
 		xor     eax, eax                                    // strings are equal
@@ -104,7 +103,7 @@ __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char
 		pcmpistri xmm0, xmmword ptr [eax], 00011000B        // unsigned bytes, equal each, invert. returns index in ecx
 		jc      xmmword_not_equal
 		jz      return_equal
-		lea     edi, [eax + esi + 16]
+		add     edi, 16
 		add     eax, 16
 		and     edi, PAGE_SIZE - 1
 		jmp     xmmword_loop
@@ -113,10 +112,10 @@ __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char
 	xmmword_not_equal:
 		// strings are not equal
 		add     ecx, eax                                    // offset to first differing byte
+		pop     edi
 		movzx   eax, byte ptr [ecx + esi]                   // compare bytes
 		movzx   edx, byte ptr [ecx]
 		sub     eax, edx
-		pop     edi
 		pop     esi
 		ret
 
@@ -137,7 +136,6 @@ __declspec(naked) static int __cdecl strcmpSSE2(const char *string1, const char 
 		push    edi
 		mov     esi, dword ptr [string1 + 8]                // esi = string1
 		mov     eax, dword ptr [string2 + 8]                // eax = string2
-		mov     edi, esi                                    // edi = string1
 		sub     esi, eax                                    // esi = string1 - string2
 		pxor    xmm2, xmm2
 		jmp     byte_loop_entry
@@ -150,11 +148,11 @@ __declspec(naked) static int __cdecl strcmpSSE2(const char *string1, const char 
 		jne     return_not_equal
 		test    cl, cl
 		jz      return_equal
-		lea     edi, [eax + esi + 1]
 		inc     eax
 	byte_loop_entry:
 		test    eax, 3                                      // use only eax for 'test reg, imm'
 		jnz     byte_loop
+		lea     edi, [eax + esi]
 		and     edi, PAGE_SIZE - 1
 
 		align   16
@@ -168,13 +166,13 @@ __declspec(naked) static int __cdecl strcmpSSE2(const char *string1, const char 
 		mov     edx, dword ptr [eax]
 		cmp     ecx, edx
 		jne     byte_loop                                   // not equal
-		add     eax, 4
 		sub     ecx, 01010101H
 		xor     edx, -1
-		lea     edi, [eax + esi]
 		and     ecx, 80808080H
+		add     edi, 4
+		add     eax, 4
 		and     edi, PAGE_SIZE - 1
-		and     edx, ecx
+		and     ecx, edx
 		jz      dword_loop
 	return_equal:
 		xor     eax, eax                                    // strings are equal
@@ -204,7 +202,7 @@ __declspec(naked) static int __cdecl strcmpSSE2(const char *string1, const char 
 		jnz     xmmword_not_equal
 		test    ecx, ecx
 		jnz     return_equal
-		lea     edi, [eax + esi + 16]
+		add     edi, 16
 		add     eax, 16
 		and     edi, PAGE_SIZE - 1
 		jmp     xmmword_loop
@@ -248,7 +246,6 @@ __declspec(naked) static int __cdecl strcmpGeneric(const char *string1, const ch
 		push    edi
 		mov     esi, dword ptr [string1 + 8]                // esi = string1
 		mov     eax, dword ptr [string2 + 8]                // eax = string2
-		mov     edi, esi                                    // edi = string1
 		sub     esi, eax                                    // esi = string1 - string2
 		jmp     byte_loop_entry
 
@@ -260,11 +257,11 @@ __declspec(naked) static int __cdecl strcmpGeneric(const char *string1, const ch
 		jne     return_not_equal
 		test    cl, cl
 		jz      return_equal
-		lea     edi, [eax + esi + 1]
 		inc     eax
 	byte_loop_entry:
 		test    eax, 3                                      // use only eax for 'test reg, imm'
 		jnz     byte_loop
+		lea     edi, [eax + esi]
 		and     edi, PAGE_SIZE - 1
 
 		align   16
@@ -275,13 +272,13 @@ __declspec(naked) static int __cdecl strcmpGeneric(const char *string1, const ch
 		mov     edx, dword ptr [eax]
 		cmp     ecx, edx
 		jne     byte_loop                                   // not equal
+		sub     ecx, 01010101H
+		xor     edx, -1
+		and     ecx, 80808080H
+		add     edi, 4
 		add     eax, 4
-		sub     edx, 01010101H
-		xor     ecx, -1
-		lea     edi, [eax + esi]
-		and     edx, 80808080H
 		and     edi, PAGE_SIZE - 1
-		and     edx, ecx
+		and     ecx, edx
 		jz      dword_loop
 	return_equal:
 		xor     eax, eax

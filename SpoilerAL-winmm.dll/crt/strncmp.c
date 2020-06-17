@@ -67,17 +67,17 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		inc     ebp
 		jz      epilogue
 		lea     eax, [edi + ebp]
-		lea     ecx, [esi + ebp]
+		lea     ebx, [esi + ebp]
 		test    eax, 3                                      // use only eax for 'test reg, imm'
 		jnz     byte_loop
-		and     ecx, PAGE_SIZE - 1
+		and     ebx, PAGE_SIZE - 1
 
 		align   16
 	dword_loop:
 		and     eax, 15
 		jz      xmmword_loop
 	dword_check_cross_pages:
-		cmp     ecx, PAGE_SIZE - 4
+		cmp     ebx, PAGE_SIZE - 4
 		ja      byte_loop                                   // jump if cross pages
 		mov     eax, dword ptr [esi + ebp]
 		mov     edx, dword ptr [edi + ebp]
@@ -85,13 +85,13 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		jnz     byte_loop                                   // not equal
 		add     ebp, 4
 		jc      epilogue
-		lea     ebx, [edx - 01010101H]
-		lea     ecx, [esi + ebp]
+		add     ebx, 4
+		lea     ecx, [edx - 01010101H]
 		xor     edx, -1
-		and     ebx, 80808080H
-		and     ecx, PAGE_SIZE - 1
+		and     ecx, 80808080H
+		and     ebx, PAGE_SIZE - 1
 		lea     eax, [edi + ebp]
-		and     edx, ebx
+		and     edx, ecx
 		jz      dword_loop
 		xor     eax, eax
 	epilogue:
@@ -103,7 +103,7 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 
 		align   16
 	xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 16
+		cmp     ebx, PAGE_SIZE - 16
 		ja      dword_check_cross_pages                     // jump if cross pages
 		movdqu  xmm0, xmmword ptr [esi + ebp]
 		movdqa  xmm1, xmmword ptr [edi + ebp]
@@ -117,8 +117,8 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		jnz     epilogue
 		add     ebp, 16
 		jc      epilogue
-		lea     ecx, [esi + ebp]
-		and     ecx, PAGE_SIZE - 1
+		add     ebx, 16
+		and     ebx, PAGE_SIZE - 1
 		jmp     xmmword_loop
 
 		align   16

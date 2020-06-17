@@ -42,35 +42,35 @@ __declspec(naked) static int __cdecl wcscmpSSE2(const wchar_t *string1, const wc
 		mov     esi, dword ptr [string1 + 8]                // esi = string1
 		mov     edi, dword ptr [string2 + 8]                // edi = string2
 		lea     edx, [edi + 1]                              // edx = (size_t)string2 + 1
-		sub     edi, esi                                    // edi = (size_t)string2 - (size_t)string1
+		sub     esi, edi                                    // edi = (size_t)string1 - (size_t)string2
 		pxor    xmm2, xmm2
 		jmp     word_loop_entry
 
 		align   16
 	word_loop:
-		movzx   eax, word ptr [esi]
-		movzx   edx, word ptr [esi + edi]
+		movzx   eax, word ptr [esi + edi]
+		movzx   edx, word ptr [edi]
 		sub     eax, edx
 		jnz     epilogue
 		test    edx, edx
 		jz      epilogue
-		lea     edx, [esi + edi + 3]
-		add     esi, 2
+		lea     edx, [edi + 3]
+		add     edi, 2
 	word_loop_entry:
 		and     edx, 14
 		jnz     word_loop
-		mov     ecx, esi
 		lea     edx, [esi + edi]
-		and     ecx, PAGE_SIZE - 1
-		and     edx, 1
+		mov     ecx, edi
+		and     edx, PAGE_SIZE - 1
+		and     ecx, 1
 		jnz     unaligned_xmmword_loop
 
 		align   16
 	aligned_xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 16
+		cmp     edx, PAGE_SIZE - 16
 		ja      word_loop                                   // jump if cross pages
-		movdqu  xmm0, xmmword ptr [esi]
-		movdqa  xmm1, xmmword ptr [esi + edi]
+		movdqu  xmm0, xmmword ptr [esi + edi]
+		movdqa  xmm1, xmmword ptr [edi]
 		pcmpeqw xmm0, xmm1
 		pcmpeqw xmm1, xmm2
 		pmovmskb eax, xmm0
@@ -79,17 +79,17 @@ __declspec(naked) static int __cdecl wcscmpSSE2(const wchar_t *string1, const wc
 		jnz     xmmword_not_equal
 		test    ecx, ecx
 		jnz     epilogue
-		lea     ecx, [esi + 16]
-		add     esi, 16
-		and     ecx, PAGE_SIZE - 1
+		add     edx, 16
+		add     edi, 16
+		and     edx, PAGE_SIZE - 1
 		jmp     aligned_xmmword_loop
 
 		align   16
 	unaligned_xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 16
+		cmp     edx, PAGE_SIZE - 16
 		ja      word_loop                                   // jump if cross pages
-		movdqu  xmm0, xmmword ptr [esi]
-		movdqu  xmm1, xmmword ptr [esi + edi]
+		movdqu  xmm0, xmmword ptr [esi + edi]
+		movdqu  xmm1, xmmword ptr [edi]
 		pcmpeqw xmm0, xmm1
 		pcmpeqw xmm1, xmm2
 		pmovmskb eax, xmm0
@@ -98,9 +98,9 @@ __declspec(naked) static int __cdecl wcscmpSSE2(const wchar_t *string1, const wc
 		jnz     xmmword_not_equal
 		test    ecx, ecx
 		jnz     epilogue
-		lea     ecx, [esi + 16]
-		add     esi, 16
-		and     ecx, PAGE_SIZE - 1
+		add     edx, 16
+		add     edi, 16
+		and     edx, PAGE_SIZE - 1
 		jmp     unaligned_xmmword_loop
 
 		align   16
@@ -115,9 +115,9 @@ __declspec(naked) static int __cdecl wcscmpSSE2(const wchar_t *string1, const wc
 		jz      epilogue
 	xmmword_has_not_null:
 		bsf     eax, eax
-		add     esi, eax
-		movzx   eax, word ptr [esi]
-		movzx   edx, word ptr [esi + edi]
+		add     edi, eax
+		movzx   eax, word ptr [esi + edi]
+		movzx   edx, word ptr [edi]
 		sub     eax, edx
 	epilogue:
 		pop     edi

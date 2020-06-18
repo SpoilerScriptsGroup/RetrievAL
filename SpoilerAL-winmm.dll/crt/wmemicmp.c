@@ -57,7 +57,7 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		lea     esi, [esi + ebx * 2]                        // esi = end of buffer1
 		lea     edi, [edi + ebx * 2]                        // edi = end of buffer2
 		xor     ebx, -1                                     // ebx = -count - 1
-		and     ebp, 14                                     // ebp = -buffer2 & 15
+		and     ebp, 14                                     // ebp = -buffer2 & 14
 		xor     eax, eax                                    // eax = 0
 		movdqa  xmm4, xmmword ptr [upper]
 		movdqa  xmm5, xmmword ptr [azrange]

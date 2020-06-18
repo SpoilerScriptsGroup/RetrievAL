@@ -46,15 +46,19 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		#define count   (esp + 12)
 
 		push    ebx
+		push    ebp
 		push    esi
 		push    edi
-		xor     eax, eax                                    // eax = 0
-		mov     ebx, dword ptr [count + 12]                 // ebx = count
-		mov     edi, dword ptr [buffer2 + 12]               // edi = buffer2
-		mov     esi, dword ptr [buffer1 + 12]               // esi = buffer1
-		lea     edi, [edi + ebx * 2]                        // edi = end of buffer2
+		xor     ebp, ebp                                    // ebp = 0
+		mov     esi, dword ptr [buffer1 + 16]               // esi = buffer1
+		mov     edi, dword ptr [buffer2 + 16]               // edi = buffer2
+		mov     ebx, dword ptr [count + 16]                 // ebx = count
+		sub     ebp, edi                                    // ebp = -buffer2
 		lea     esi, [esi + ebx * 2]                        // esi = end of buffer1
+		lea     edi, [edi + ebx * 2]                        // edi = end of buffer2
 		xor     ebx, -1                                     // ebx = -count - 1
+		and     ebp, 15                                     // ebp = -buffer2 & 15
+		xor     eax, eax                                    // eax = 0
 		movdqa  xmm4, xmmword ptr [upper]
 		movdqa  xmm5, xmmword ptr [azrange]
 		movdqa  xmm6, xmmword ptr [casebit]                 // bit to change
@@ -77,11 +81,10 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 	word_loop_entry:
 		inc     ebx
 		jz      epilogue
-		lea     edx, [edi + ebx * 2 + 1]
-		and     edx, 14
-		jnz     word_loop
+		sub     ebp, 2
+		jae     word_loop
 		mov     ecx, edi
-		or      edx, 7
+		mov     edx, 7
 		sub     esi, 14
 		sub     edi, 14
 		and     ecx, 1
@@ -186,6 +189,7 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 	epilogue:
 		pop     edi
 		pop     esi
+		pop     ebp
 		pop     ebx
 		ret
 

@@ -58,10 +58,10 @@ unsigned int __favor         = 0;
 
 void __cdecl __isa_available_init()
 {
-	#define C1_AVX                   (CF_OSXSAVE | CF_AVX)
-	#define C7_AVX512                (CX_AVX512F | CX_AVX512DQ | CX_AVX512CD | CX_AVX512BW | CX_AVX512VL)
-	#define XCR_AVX_ENABLED_MASK     (XSTATE_SSE | XSTATE_YMM)
-	#define XCR_AVX512F_ENABLED_MASK (XSTATE_OPMASK | XSTATE_ZMM | XSTATE_HI_ZMM)
+	#define C1_AVX      (CF_OSXSAVE | CF_AVX)
+	#define C7_AVX512   (CX_AVX512F | CX_AVX512DQ | CX_AVX512CD | CX_AVX512BW | CX_AVX512VL)
+	#define XCR_AVX     (XSTATE_SSE | XSTATE_YMM)
+	#define XCR_AVX512F (XSTATE_OPMASK | XSTATE_ZMM | XSTATE_HI_ZMM)
 
 	struct {
 		uint32_t eax;
@@ -102,9 +102,9 @@ void __cdecl __isa_available_init()
 		__favor |= ((cpuid_7_ebx = cpuInfo.ebx) & CX_ERMS) >> (BSF32(CX_ERMS) - __FAVOR_ENFSTRG);
 	}
 	if (cpuid_1_ecx & CF_SSE42)
-		if ((cpuid_1_ecx & C1_AVX) == C1_AVX && ((xgetbv_eax = (uint32_t)_xgetbv(0)) & XCR_AVX_ENABLED_MASK) == XCR_AVX_ENABLED_MASK)
+		if ((cpuid_1_ecx & C1_AVX) == C1_AVX && ((xgetbv_eax = (uint32_t)_xgetbv(0)) & XCR_AVX) == XCR_AVX)
 			if (cpuid_7_ebx & CX_AVX2)
-				if ((cpuid_7_ebx & C7_AVX512) == C7_AVX512 && (xgetbv_eax & XCR_AVX512F_ENABLED_MASK) == XCR_AVX512F_ENABLED_MASK)
+				if ((cpuid_7_ebx & C7_AVX512) == C7_AVX512 && (xgetbv_eax & XCR_AVX512F) == XCR_AVX512F)
 					goto ISA_AVAILABLE_AVX512;
 				else
 					goto ISA_AVAILABLE_AVX2;
@@ -147,18 +147,18 @@ ISA_AVAILABLE_AVX512:
 
 	#undef C1_AVX
 	#undef C7_AVX512
-	#undef XCR_AVX_ENABLED_MASK
-	#undef XCR_AVX512F_ENABLED_MASK
+	#undef XCR_AVX
+	#undef XCR_AVX512F
 }
 #else
 __declspec(naked) void __cdecl __isa_available_init()
 {
 	__asm
 	{
-		#define C1_AVX                   (CF_OSXSAVE or CF_AVX)
-		#define C7_AVX512                (CX_AVX512F or CX_AVX512DQ or CX_AVX512CD or CX_AVX512BW or CX_AVX512VL)
-		#define XCR_AVX_ENABLED_MASK     (XSTATE_SSE or XSTATE_YMM)
-		#define XCR_AVX512F_ENABLED_MASK (XSTATE_OPMASK or XSTATE_ZMM or XSTATE_HI_ZMM)
+		#define C1_AVX      (CF_OSXSAVE or CF_AVX)
+		#define C7_AVX512   (CX_AVX512F or CX_AVX512DQ or CX_AVX512CD or CX_AVX512BW or CX_AVX512VL)
+		#define XCR_AVX     (XSTATE_SSE or XSTATE_YMM)
+		#define XCR_AVX512F (XSTATE_OPMASK or XSTATE_ZMM or XSTATE_HI_ZMM)
 
 		#define cpuid_0_eax eax
 		#define cpuid_1_ecx ecx
@@ -231,21 +231,19 @@ __declspec(naked) void __cdecl __isa_available_init()
 		jnz     ISA_AVAILABLE_SSE42
 		xgetbv
 		mov     ecx, eax
-		and     eax, XCR_AVX_ENABLED_MASK
-		cmp     eax, XCR_AVX_ENABLED_MASK
+		and     eax, XCR_AVX
+		cmp     eax, XCR_AVX
 		jne     ISA_AVAILABLE_SSE42
 		test    cpuid_7_ebx, CX_AVX2
 		jz      ISA_AVAILABLE_AVX
 		and     ebx, C7_AVX512
-		and     ecx, XCR_AVX512F_ENABLED_MASK
+		and     ecx, XCR_AVX512F
 		cmp     ebx, C7_AVX512
 		jne     ISA_AVAILABLE_AVX2
-		cmp     ecx, XCR_AVX512F_ENABLED_MASK
+		cmp     ecx, XCR_AVX512F
 		jne     ISA_AVAILABLE_AVX2
-		mov     dword ptr [__isa_available], __ISA_AVAILABLE_AVX512
-		mov     dword ptr [__isa_enabled], __ISA_ENABLED_X86 or __ISA_ENABLED_SSE2 or __ISA_ENABLED_SSE42 or __ISA_ENABLED_AVX or __ISA_ENABLED_AVX2 or __ISA_ENABLED_AVX512
 		pop     ebx
-		ret
+		jmp     ISA_AVAILABLE_AVX512
 
 		align   16
 	ISA_AVAILABLE_X86:
@@ -281,10 +279,16 @@ __declspec(naked) void __cdecl __isa_available_init()
 		pop     ebx
 		ret
 
+		align   16
+	ISA_AVAILABLE_AVX512:
+		mov     dword ptr [__isa_available], __ISA_AVAILABLE_AVX512
+		mov     dword ptr [__isa_enabled], __ISA_ENABLED_X86 or __ISA_ENABLED_SSE2 or __ISA_ENABLED_SSE42 or __ISA_ENABLED_AVX or __ISA_ENABLED_AVX2 or __ISA_ENABLED_AVX512
+		ret
+
 		#undef C1_AVX
 		#undef C7_AVX512
-		#undef XCR_AVX_ENABLED_MASK
-		#undef XCR_AVX512F_ENABLED_MASK
+		#undef XCR_AVX
+		#undef XCR_AVX512F
 		#undef cpuid_0_eax
 		#undef cpuid_1_ecx
 		#undef cpuid_7_ebx

@@ -47,15 +47,19 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		#define count   (esp + 12)
 
 		push    ebx
+		push    ebp
 		push    esi
 		push    edi
-		xor     eax, eax                                    // eax = 0
-		mov     ebx, dword ptr [count + 12]                 // ebx = count
-		mov     edi, dword ptr [buffer2 + 12]               // edi = buffer2
-		mov     esi, dword ptr [buffer1 + 12]               // esi = buffer1
-		add     edi, ebx                                    // edi = end of buffer2
+		xor     ebp, ebp                                    // ebp = 0
+		mov     esi, dword ptr [buffer1 + 16]               // esi = buffer1
+		mov     edi, dword ptr [buffer2 + 16]               // edi = buffer2
+		mov     ebx, dword ptr [count + 16]                 // ebx = count
+		sub     ebp, edi                                    // ebp = -buffer2
 		add     esi, ebx                                    // esi = end of buffer1
+		add     edi, ebx                                    // edi = end of buffer2
 		xor     ebx, -1                                     // ebx = -count - 1
+		and     ebp, 15                                     // ebp = -buffer2 & 15
+		xor     eax, eax                                    // eax = 0
 		movdqa  xmm4, xmmword ptr [upper]
 		movdqa  xmm5, xmmword ptr [azrange]
 		movdqa  xmm6, xmmword ptr [casebit]                 // bit to change
@@ -78,13 +82,12 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 	byte_loop_entry:
 		inc     ebx
 		jz      epilogue
-		lea     edx, [edi + ebx]
-		and     edx, 15
-		jnz     byte_loop
-		or      edx, 15
+		sub     ebp, 1
+		jae     byte_loop
+		mov     edx, 15
 		sub     esi, 15
 		sub     edi, 15
-		add     ebx, edx
+		add     ebx, 15
 		jc      xmmword_loop_last
 
 		align   16
@@ -143,6 +146,7 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 	epilogue:
 		pop     edi
 		pop     esi
+		pop     ebp
 		pop     ebx
 		ret
 

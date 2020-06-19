@@ -106,7 +106,7 @@ __declspec(naked) void * __vectorcall internal_memrchrSSE2(const void *buffer, _
 		xor     ecx, 15
 		or      edi, -1
 		sub     ecx, edx
-		ja      mask_first_xmmword
+		ja      mask_result
 		jmp     found
 
 		align   16
@@ -117,7 +117,7 @@ __declspec(naked) void * __vectorcall internal_memrchrSSE2(const void *buffer, _
 		or      edi, -1
 		and     ecx, 15
 		jz      found
-	mask_first_xmmword:
+	mask_result:
 		shl     edi, cl
 		and     eax, edi
 		jz      retnull

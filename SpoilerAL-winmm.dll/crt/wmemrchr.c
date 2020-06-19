@@ -144,7 +144,7 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrchrSSE2(const wchar_t *bu
 		sub     ecx, edi
 		jbe     found
 		or      edi, -1
-		jmp     mask_first_xmmword
+		jmp     mask_result
 
 		align   16
 	has_char:
@@ -154,7 +154,7 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrchrSSE2(const wchar_t *bu
 		or      edi, -1
 		and     ecx, 14
 		jz      found
-	mask_first_xmmword:
+	mask_result:
 		shl     edi, cl
 		and     edx, edi
 		jz      retnull

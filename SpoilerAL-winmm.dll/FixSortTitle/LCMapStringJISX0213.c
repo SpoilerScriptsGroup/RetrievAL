@@ -778,8 +778,8 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        #define offset      ebp
 	        #define src         esi
 	        #define dest        edi
-	        #define c1          al
-	        #define c2          cl
+	        #define c1          cl
+	        #define c2          dl
 
 	        #define LCMAP_FLAGS (LCMAP_FULLWIDTH or LCMAP_HALFWIDTH or LCMAP_KATAKANA or LCMAP_HIRAGANA)
 
@@ -791,7 +791,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        mov     edx, dword ptr [dwMapFlags]         //
 	        cmp     ecx, LANG_JAPANESE                  //     if (PRIMARYLANGID(LANGIDFROMLCID(Locale)) != LANG_JAPANESE ||
 	        jne     L100                                //         !(dwMapFlags & (LCMAP_FULLWIDTH | LCMAP_HALFWIDTH | LCMAP_KATAKANA | LCMAP_HIRAGANA)))
-	        test    edx, LCMAP_FLAGS                    //
+	        and     edx, LCMAP_FLAGS                    //
 	        jnz     L101                                //
 	L100:   jmp     LCMapStringA                        //         return LCMapStringA(Locale, dwMapFlags, lpSrcStr, cchSrc, lpDestStr, cchDest);
 
@@ -823,52 +823,52 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        push    esi                                 //
 	        push    edi                                 //
 	        mov     edi, eax                            //     dest = lpBufferStr;
-	        mov     edx, dword ptr [dwMapFlags + 16]    //
+	        mov     eax, dword ptr [dwMapFlags + 16]    //
 	        mov     esi, dword ptr [lpSrcStr + 16]      //     src = lpSrcStr + cchBuffer;
-	        mov     dword ptr [lpBufferStr + 16], eax   //
+	        mov     dword ptr [lpBufferStr + 16], edi   //
 	        lea     ebp, [ebx - 1]                      //     offset = -(ptrdiff_t)cchBuffer;
 	        add     esi, ebx                            //
 	        xor     ebp, -1                             //
-	        xor     eax, eax                            //
 	        xor     ecx, ecx                            //
-	        test    edx, LCMAP_FULLWIDTH                //     if (dwMapFlags & LCMAP_FULLWIDTH)
+	        xor     edx, edx                            //
+	        test    eax, LCMAP_FULLWIDTH                //     if (dwMapFlags & LCMAP_FULLWIDTH)
 	        jz      L105                                //
-	        test    edx, LCMAP_HIRAGANA                 //         if (dwMapFlags & LCMAP_HIRAGANA)
+	        test    eax, LCMAP_HIRAGANA                 //         if (dwMapFlags & LCMAP_HIRAGANA)
 	        jnz     L200                                //             goto FULLWIDTH_HIRAGANA;
-	        test    edx, LCMAP_KATAKANA                 //         else if (dwMapFlags & LCMAP_KATAKANA)
+	        test    eax, LCMAP_KATAKANA                 //         else if (dwMapFlags & LCMAP_KATAKANA)
 	        jnz     L300                                //             goto FULLWIDTH_KATAKANA;
 	                                                    //         else
 	        jmp     L400                                //             goto FULLWIDTH;
 
-	L105:   test    edx, LCMAP_HIRAGANA                 //     else if (dwMapFlags & LCMAP_HIRAGANA)
+	L105:   test    eax, LCMAP_HIRAGANA                 //     else if (dwMapFlags & LCMAP_HIRAGANA)
 	        jnz     L500                                //         goto HIRAGANA;
-	        test    edx, LCMAP_HALFWIDTH                //     else if (!(dwMapFlags & LCMAP_HALFWIDTH))
+	        test    eax, LCMAP_HALFWIDTH                //     else if (!(dwMapFlags & LCMAP_HALFWIDTH))
 	        jz      L600                                //         goto KATAKANA;
-	        test    edx, LCMAP_KATAKANA                 //     else if (dwMapFlags & LCMAP_KATAKANA)
+	        test    eax, LCMAP_KATAKANA                 //     else if (dwMapFlags & LCMAP_KATAKANA)
 	        jnz     L700                                //         goto KATAKANA_HALFWIDTH;
 	                                                    //     else
 	        jmp     L800                                //         goto HALFWIDTH;
 
 	        align16                                     // FULLWIDTH_HIRAGANA:
 	                                                    //     for (; ; ) {
-	L200:   mov     cl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
+	L200:   mov     dl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
-	        mov     byte ptr [edi], cl                  //
+	        mov     byte ptr [edi], dl                  //
 	        jz      L900                                //             break;
-	        mov     al, cl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
-	        sub     cl, 0x81                            //
-	        cmp     cl, 0x9F - 0x81 + 1                 //
+	        mov     cl, dl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
+	        sub     dl, 0x81                            //
+	        cmp     dl, 0x9F - 0x81 + 1                 //
 	        jb      L204                                //
-	        sub     cl, 0xE0 - 0x81                     //
-	        cmp     cl, 0xFC - 0xE0 + 1                 //
+	        sub     dl, 0xE0 - 0x81                     //
+	        cmp     dl, 0xFC - 0xE0 + 1                 //
 	        jb      L204                                //
-	        cmp     al, 0xB3                            //             if (c1 >= 0xB3/*'≥'*/) {
+	        cmp     cl, 0xB3                            //             if (c1 >= 0xB3/*'≥'*/) {
 	        jb      L203                                //
-	        mov     cl, byte ptr [esi + ebp]            //                 c2 = src[offset];
+	        mov     dl, byte ptr [esi + ebp]            //                 c2 = src[offset];
 	        jne     L201                                //                 if (c1 == 0xB3/*'≥'*/) {
-	        cmp     cl, 0xDE                            //                     if (c2 == 0xDE/*'ﬁ'*/)
+	        cmp     dl, 0xDE                            //                     if (c2 == 0xDE/*'ﬁ'*/)
 	        je      L210                                //                         goto FULLWIDTH_HIRAGANA_82F2_4;
-	        cmp     cl, 0x81                            //                     if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/)
+	        cmp     dl, 0x81                            //                     if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/)
 	        jne     L203                                //
 	        cmp     ebp, -1                             //
 	        je      L203                                //
@@ -876,13 +876,13 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        jne     L203                                //
 	        jmp     L208                                //                         goto FULLWIDTH_HIRAGANA_82F2_2;
 
-	L201:   cmp     al, 0xB6                            //                 } else if (c1 >= 0xB6/*'∂'*/ && c1 <= 0xBA/*'∫'*/) {
+	L201:   cmp     cl, 0xB6                            //                 } else if (c1 >= 0xB6/*'∂'*/ && c1 <= 0xBA/*'∫'*/) {
 	        jb      L203                                //
-	        cmp     al, 0xBA                            //
+	        cmp     cl, 0xBA                            //
 	        ja      L203                                //
-	        cmp     cl, 0xDF                            //                     if (c2 == 0xDF/*'ﬂ'*/)
+	        cmp     dl, 0xDF                            //                     if (c2 == 0xDF/*'ﬂ'*/)
 	        je      L202                                //                         goto FULLWIDTH_HIRAGANA_82F5_1;
-	        cmp     cl, 0x81                            //                     if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
+	        cmp     dl, 0x81                            //                     if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
 	        jne     L203                                //
 	        cmp     ebp, -1                             //
 	        je      L203                                //
@@ -893,7 +893,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	                                                    //                     FULLWIDTH_HIRAGANA_82F5_1:
 	L202:   inc     ebp                                 //                         offset++;
 	        mov     byte ptr [edi], 0x82                //                         dest[0] = 0x82;
-	        lea     ecx, [eax + 0xF5 - 0xB6]            //                         c2 = c1 + 0xF5/*(JISX0213('Ç©ﬂ') - 0x8200)*/ - 0xB6/*'∂'*/;
+	        lea     edx, [ecx + 0xF5 - 0xB6]            //                         c2 = c1 + 0xF5/*(JISX0213('Ç©ﬂ') - 0x8200)*/ - 0xB6/*'∂'*/;
 	        jmp     L214                                //                         goto FULLWIDTH_HIRAGANA_CONTINUE_1;
 	                                                    //                     }
 	                                                    //                 }
@@ -902,24 +902,24 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        jmp     L200                                //             continue;
 	                                                    //         }
 	        align16                                     //
-	L204:   mov     cl, byte ptr [esi + ebp]            //         c2 = src[offset];
+	L204:   mov     dl, byte ptr [esi + ebp]            //         c2 = src[offset];
 	        inc     ebp                                 //         offset++;
-	        cmp     al, 0x82                            //         if (c1 == 0x82) {
+	        cmp     cl, 0x82                            //         if (c1 == 0x82) {
 	        jne     L206                                //
 	        test    ebp, ebp                            //             if (offset && c2 >= 0xA4/*('Ç§' - 0x8200)*/) {
 	        jz      L214                                //
-	        cmp     cl, 0xA4                            //
+	        cmp     dl, 0xA4                            //
 	        jb      L214                                //
-	        mov     al, byte ptr [esi + ebp]            //                 c1 = src[offset];
+	        mov     cl, byte ptr [esi + ebp]            //                 c1 = src[offset];
 	                                                    //                 if (c2 == 0xA4/*('Ç§' - 0x8200)*/)
 	        je      L207                                //                     goto FULLWIDTH_HIRAGANA_82F2_1;
-	        cmp     cl, 0xA9                            //                 if (c2 >= 0xA9/*('Ç©' - 0x8200)*/ && c2 <= 0xB1/*('Ç±' - 0x8200)*/) {
+	        cmp     dl, 0xA9                            //                 if (c2 >= 0xA9/*('Ç©' - 0x8200)*/ && c2 <= 0xB1/*('Ç±' - 0x8200)*/) {
 	        jb      L214                                //
-	        cmp     cl, 0xB1                            //
+	        cmp     dl, 0xB1                            //
 	        ja      L214                                //
-	        cmp     al, 0xDF                            //                     if (c1 == 0xDF/*'ﬂ'*/)
+	        cmp     cl, 0xDF                            //                     if (c1 == 0xDF/*'ﬂ'*/)
 	        je      L205                                //                         goto FULLWIDTH_HIRAGANA_82F5_2;
-	        cmp     al, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
+	        cmp     cl, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
 	        jne     L214                                //
 	        cmp     ebp, -1                             //
 	        je      L214                                //
@@ -930,22 +930,22 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	                                                    //                     FULLWIDTH_HIRAGANA_82F5_2:
 	L205:   dec     ebx                                 //                         cchBuffer--;
 	        inc     ebp                                 //                         offset++;
-	        add     cl, 0xF5 - 0xA9                     //                         c2 += 0xF5/*(JISX0213('Ç©ﬂ') - 0x8200)*/ - 0xA9/*('Ç©' - 0x8200)*/;
+	        add     dl, 0xF5 - 0xA9                     //                         c2 += 0xF5/*(JISX0213('Ç©ﬂ') - 0x8200)*/ - 0xA9/*('Ç©' - 0x8200)*/;
 	        jmp     L214                                //                     }
 	                                                    //                 }
 	                                                    //             }
-	L206:   cmp     al, 0x83                            //         } else if (c1 == 0x83) {
+	L206:   cmp     cl, 0x83                            //         } else if (c1 == 0x83) {
 	        jne     L214                                //
 	        test    ebp, ebp                            //             if (!offset)
 	        jz      L213                                //                 goto FULLWIDTH_HIRAGANA_82F2_82F9;
-	        cmp     cl, 0x45                            //             if (c2 >= 0x45/*('ÉE' - 0x8300)*/) {
+	        cmp     dl, 0x45                            //             if (c2 >= 0x45/*('ÉE' - 0x8300)*/) {
 	        jb      L214                                //
-	        mov     al, byte ptr [esi + ebp]            //                 c1 = src[offset];
+	        mov     cl, byte ptr [esi + ebp]            //                 c1 = src[offset];
 	        jne     L211                                //                 if (c2 == 0x45/*('ÉE' - 0x8300)*/) {
 	                                                    //                 FULLWIDTH_HIRAGANA_82F2_1:
-	L207:   cmp     al, 0xDE                            //                     if (c1 == 0xDE/*'ﬁ'*/)
+	L207:   cmp     cl, 0xDE                            //                     if (c1 == 0xDE/*'ﬁ'*/)
 	        je      L209                                //                         goto FULLWIDTH_HIRAGANA_82F2_3;
-	        cmp     al, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
+	        cmp     cl, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
 	        jne     L214                                //
 	        cmp     ebp, -1                             //
 	        je      L214                                //
@@ -961,13 +961,13 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        mov     word ptr [edi], 0xF282              //                         *(unsigned short *)dest = 0xF282/*BSWAP16(JISX0213('Ç§ﬁ'))*/;
 	        jmp     L215                                //                         goto FULLWIDTH_HIRAGANA_CONTINUE_2;
 	                                                    //                     }
-	L211:   cmp     cl, 0x4A                            //                 } else if (c2 >= 0x4A/*('ÉJ' - 0x8300)*/) {
+	L211:   cmp     dl, 0x4A                            //                 } else if (c2 >= 0x4A/*('ÉJ' - 0x8300)*/) {
 	        jb      L214                                //
-	        cmp     cl, 0x52                            //                     if (c2 <= 0x52/*('ÉR' - 0x8300)*/) {
+	        cmp     dl, 0x52                            //                     if (c2 <= 0x52/*('ÉR' - 0x8300)*/) {
 	        ja      L213                                //
-	        cmp     al, 0xDF                            //                         if (c1 == 0xDF/*'ﬂ'*/)
+	        cmp     cl, 0xDF                            //                         if (c1 == 0xDF/*'ﬂ'*/)
 	        je      L212                                //                             goto FULLWIDTH_HIRAGANA_82F5_3;
-	        cmp     al, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
+	        cmp     cl, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
 	        jne     L214                                //
 	        cmp     ebp, -1                             //
 	        je      L214                                //
@@ -979,23 +979,23 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	L212:   dec     ebx                                 //                             cchBuffer--;
 	        inc     ebp                                 //                             offset++;
 	        mov     byte ptr [edi], 0x82                //                             dest[0] = 0x82;
-	        add     cl, 0xF5 - 0x4A                     //                             c2 += 0xF5/*(JISX0213('Ç©ﬂ') - 0x8200)*/ - 0x4A/*('ÉJ' - 0x8300)*/;
+	        add     dl, 0xF5 - 0x4A                     //                             c2 += 0xF5/*(JISX0213('Ç©ﬂ') - 0x8200)*/ - 0x4A/*('ÉJ' - 0x8300)*/;
 	        jmp     L214                                //                         }
 	                                                    //                     } else {
 	                                                    //                     FULLWIDTH_HIRAGANA_82F2_82F9:
-	L213:   cmp     cl, 0x94                            //                         if (c2 >= 0x94/*('Éî' - 0x8300)*/ && c2 <= 0x9B/*(JISX0213('ÉRﬂ') - 0x8300)*/) {
+	L213:   cmp     dl, 0x94                            //                         if (c2 >= 0x94/*('Éî' - 0x8300)*/ && c2 <= 0x9B/*(JISX0213('ÉRﬂ') - 0x8300)*/) {
 	        jb      L214                                //
-	        cmp     cl, 0x9B                            //
+	        cmp     dl, 0x9B                            //
 	        ja      L214                                //
 	        mov     byte ptr [edi], 0x82                //                             dest[0] = 0x82;
-	        add     cl, 0xF2 - 0x94                     //                             c2 += 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/ - 0x94/*('Éî' - 0x8300)*/;
+	        add     dl, 0xF2 - 0x94                     //                             c2 += 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/ - 0x94/*('Éî' - 0x8300)*/;
 	                                                    //                         }
 	                                                    //                     }
 	                                                    //                 }
 	                                                    //             }
 	                                                    //         }
 	                                                    //     FULLWIDTH_HIRAGANA_CONTINUE_1:
-	L214:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
+	L214:   mov     byte ptr [edi + 1], dl              //         dest[1] = c2;
 	                                                    //     FULLWIDTH_HIRAGANA_CONTINUE_2:
 	L215:   add     edi, 2                              //         dest += 2;
 	        test    ebp, ebp                            //         if (offset)
@@ -1006,24 +1006,24 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 
 	        align16                                     // FULLWIDTH_KATAKANA:
 	                                                    //     for (; ; ) {
-	L300:   mov     cl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
+	L300:   mov     dl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
-	        mov     byte ptr [edi], cl                  //
+	        mov     byte ptr [edi], dl                  //
 	        jz      L900                                //             break;
-	        mov     al, cl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
-	        sub     cl, 0x81                            //
-	        cmp     cl, 0x9F - 0x81 + 1                 //
+	        mov     cl, dl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
+	        sub     dl, 0x81                            //
+	        cmp     dl, 0x9F - 0x81 + 1                 //
 	        jb      L310                                //
-	        sub     cl, 0xE0 - 0x81                     //
-	        cmp     cl, 0xFC - 0xE0 + 1                 //
+	        sub     dl, 0xE0 - 0x81                     //
+	        cmp     dl, 0xFC - 0xE0 + 1                 //
 	        jb      L310                                //
-	        cmp     al, 0xA6                            //             if (c1 >= 0xA6/*'¶'*/) {
+	        cmp     cl, 0xA6                            //             if (c1 >= 0xA6/*'¶'*/) {
 	        jb      L309                                //
-	        mov     cl, byte ptr [esi + ebp]            //                 c2 = src[offset];
+	        mov     dl, byte ptr [esi + ebp]            //                 c2 = src[offset];
 	        jne     L302                                //                 if (c1 == 0xA6/*'¶'*/) {
-	        cmp     cl, 0xDE                            //                     if (c2 == 0xDE/*'ﬁ'*/)
+	        cmp     dl, 0xDE                            //                     if (c2 == 0xDE/*'ﬁ'*/)
 	        je      L301                                //                         goto FULLWIDTH_KATAKANA_8495;
-	        cmp     cl, 0x81                            //                     if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
+	        cmp     dl, 0x81                            //                     if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
 	        jne     L309                                //
 	        cmp     ebp, -1                             //
 	        je      L309                                //
@@ -1036,13 +1036,13 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        mov     word ptr [edi], 0x9584              //                         *(unsigned short *)dest = 0x9584/*BSWAP16(JISX0213('Éíﬁ'))*/;
 	        jmp     L335                                //                         goto FULLWIDTH_KATAKANA_CONTINUE_2;
 	                                                    //                     }
-	L302:   cmp     al, 0xB6                            //                 } else if (c1 >= 0xB6/*'∂'*/) {
+	L302:   cmp     cl, 0xB6                            //                 } else if (c1 >= 0xB6/*'∂'*/) {
 	        jb      L309                                //
-	        cmp     al, 0xBA                            //                     if (c1 <= 0xBA/*'∫'*/) {
+	        cmp     cl, 0xBA                            //                     if (c1 <= 0xBA/*'∫'*/) {
 	        ja      L304                                //
-	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
+	        cmp     dl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
 	        je      L303                                //                             goto FULLWIDTH_KATAKANA_8397_1;
-	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
+	        cmp     dl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
 	        jne     L309                                //
 	        cmp     ebp, -1                             //
 	        je      L309                                //
@@ -1053,14 +1053,14 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	                                                    //                         FULLWIDTH_KATAKANA_8397_1:
 	L303:   inc     ebp                                 //                             offset++;
 	        mov     byte ptr [edi], 0x83                //                             dest[0] = 0x83;
-	        lea     ecx, [eax - 0xB6 + 0x97]            //                             c2 = c1 - 0xB6/*'∂'*/ + 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/;
+	        lea     edx, [ecx - 0xB6 + 0x97]            //                             c2 = c1 - 0xB6/*'∂'*/ + 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/;
 	        jmp     L334                                //                             goto FULLWIDTH_KATAKANA_CONTINUE_1;
 	                                                    //                         }
-	L304:   cmp     al, 0xBE                            //                     } else if (c1 == 0xBE/*'æ'*/) {
+	L304:   cmp     cl, 0xBE                            //                     } else if (c1 == 0xBE/*'æ'*/) {
 	        jne     L305                                //
-	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
+	        cmp     dl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
 	        je      L321                                //                             goto FULLWIDTH_KATAKANA_839C_4;
-	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/)
+	        cmp     dl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/)
 	        jne     L309                                //
 	        cmp     ebp, -1                             //
 	        je      L309                                //
@@ -1068,11 +1068,11 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        jne     L309                                //
 	        jmp     L319                                //                             goto FULLWIDTH_KATAKANA_839C_2;
 
-	L305:   cmp     al, 0xC2                            //                     } else if (c1 == 0xC2/*'¬'*/) {
+	L305:   cmp     cl, 0xC2                            //                     } else if (c1 == 0xC2/*'¬'*/) {
 	        jne     L306                                //
-	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
+	        cmp     dl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
 	        je      L326                                //                             goto FULLWIDTH_KATAKANA_839D_4;
-	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/)
+	        cmp     dl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/)
 	        jne     L309                                //
 	        cmp     ebp, -1                             //
 	        je      L309                                //
@@ -1080,11 +1080,11 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        jne     L309                                //
 	        jmp     L324                                //                             goto FULLWIDTH_KATAKANA_839D_2;
 
-	L306:   cmp     al, 0xC4                            //                     } else if (c1 == 0xC4/*'ƒ'*/) {
+	L306:   cmp     cl, 0xC4                            //                     } else if (c1 == 0xC4/*'ƒ'*/) {
 	        jne     L307                                //
-	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
+	        cmp     dl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
 	        je      L331                                //                             goto FULLWIDTH_KATAKANA_839E_4;
-	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/)
+	        cmp     dl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/)
 	        jne     L309                                //
 	        cmp     ebp, -1                             //
 	        je      L309                                //
@@ -1092,11 +1092,11 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        jne     L309                                //
 	        jmp     L329                                //                             goto FULLWIDTH_KATAKANA_839E_2;
 
-	L307:   cmp     al, 0xDC                            //                     } else if (c1 == 0xDC/*'‹'*/) {
+	L307:   cmp     cl, 0xDC                            //                     } else if (c1 == 0xDC/*'‹'*/) {
 	        jne     L309                                //
-	        cmp     cl, 0xDE                            //                         if (c2 == 0xDE/*'ﬁ'*/)
+	        cmp     dl, 0xDE                            //                         if (c2 == 0xDE/*'ﬁ'*/)
 	        je      L308                                //                             goto FULLWIDTH_KATAKANA_8492_1;
-	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
+	        cmp     dl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
 	        jne     L309                                //
 	        cmp     ebp, -1                             //
 	        je      L309                                //
@@ -1116,20 +1116,20 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        jmp     L300                                //             continue;
 	                                                    //         }
 	        align16                                     //
-	L310:   mov     cl, byte ptr [esi + ebp]            //         c2 = src[offset];
+	L310:   mov     dl, byte ptr [esi + ebp]            //         c2 = src[offset];
 	        inc     ebp                                 //         offset++;
-	        cmp     al, 0x82                            //         if (c1 == 0x82) {
+	        cmp     cl, 0x82                            //         if (c1 == 0x82) {
 	        jne     L315                                //
 	        test    ebp, ebp                            //             if (!offset)
 	        jz      L314                                //                 goto FULLWIDTH_KATAKANA_8394_829B;
-	        cmp     cl, 0xA9                            //             if (c2 >= 0xA9/*('Ç©' - 0x8200)*/) {
+	        cmp     dl, 0xA9                            //             if (c2 >= 0xA9/*('Ç©' - 0x8200)*/) {
 	        jb      L334                                //
-	        cmp     cl, 0xB1                            //                 if (c2 <= 0xB1/*('Ç±' - 0x8200)*/) {
+	        cmp     dl, 0xB1                            //                 if (c2 <= 0xB1/*('Ç±' - 0x8200)*/) {
 	        ja      L312                                //
-	        mov     al, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
-	        cmp     al, 0xDF                            //
+	        mov     cl, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
+	        cmp     cl, 0xDF                            //
 	        je      L311                                //                         goto FULLWIDTH_KATAKANA_8397_2;
-	        cmp     al, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
+	        cmp     cl, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
 	        jne     L334                                //
 	        cmp     ebp, -1                             //
 	        je      L334                                //
@@ -1141,23 +1141,23 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	L311:   dec     ebx                                 //                         cchBuffer--;
 	        inc     ebp                                 //                         offset++;
 	        mov     byte ptr [edi], 0x83                //                         dest[0] = 0x83;
-	        sub     cl, 0xA9 - 0x97                     //                         c2 -= 0xA9/*('Ç©' - 0x8200)*/ - 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/;
+	        sub     dl, 0xA9 - 0x97                     //                         c2 -= 0xA9/*('Ç©' - 0x8200)*/ - 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/;
 	        jmp     L334                                //                     }
 
-	L312:   cmp     cl, 0xB9                            //                 } else if (c2 == 0xB9/*('Çπ' - 0x8200)*/)
+	L312:   cmp     dl, 0xB9                            //                 } else if (c2 == 0xB9/*('Çπ' - 0x8200)*/)
 	        je      L318                                //                     goto FULLWIDTH_KATAKANA_839C_1;
-	        cmp     cl, 0xC2                            //                 else if (c2 == 0xC2/*('Ç¬' - 0x8200)*/)
+	        cmp     dl, 0xC2                            //                 else if (c2 == 0xC2/*('Ç¬' - 0x8200)*/)
 	        je      L323                                //                     goto FULLWIDTH_KATAKANA_839D_1;
-	        cmp     cl, 0xC6                            //                 else if (c2 == 0xC6/*('Ç∆' - 0x8200)*/)
+	        cmp     dl, 0xC6                            //                 else if (c2 == 0xC6/*('Ç∆' - 0x8200)*/)
 	        je      L328                                //                     goto FULLWIDTH_KATAKANA_839E_1;
-	        cmp     cl, 0xED                            //                 else if (c2 >= 0xED/*('ÇÌ' - 0x8200)*/) {
+	        cmp     dl, 0xED                            //                 else if (c2 >= 0xED/*('ÇÌ' - 0x8200)*/) {
 	        jb      L334                                //
-	        cmp     cl, 0xF0                            //                     if (c2 <= 0xF0/*('Ç' - 0x8200)*/) {
+	        cmp     dl, 0xF0                            //                     if (c2 <= 0xF0/*('Ç' - 0x8200)*/) {
 	        ja      L314                                //
-	        mov     al, byte ptr [esi + ebp]            //                         if ((c1 = src[offset]) == 0xDE/*'ﬁ'*/)
-	        cmp     al, 0xDE                            //
+	        mov     cl, byte ptr [esi + ebp]            //                         if ((c1 = src[offset]) == 0xDE/*'ﬁ'*/)
+	        cmp     cl, 0xDE                            //
 	        je      L313                                //                             goto FULLWIDTH_KATAKANA_8492_2;
-	        cmp     al, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
+	        cmp     cl, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
 	        jne     L334                                //
 	        cmp     ebp, -1                             //
 	        je      L334                                //
@@ -1169,32 +1169,32 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	L313:   dec     ebx                                 //                             cchBuffer--;
 	        inc     ebp                                 //                             offset++;
 	        mov     byte ptr [edi], 0x84                //                             dest[0] = 0x84;
-	        sub     cl, 0xED - 0x92                     //                             c2 -= 0xED/*('ÇÌ' - 0x8200)*/ - 0x92/*(JISX0213('Éèﬁ') - 0x8400)*/;
+	        sub     dl, 0xED - 0x92                     //                             c2 -= 0xED/*('ÇÌ' - 0x8200)*/ - 0x92/*(JISX0213('Éèﬁ') - 0x8400)*/;
 	        jmp     L334                                //                         }
 	                                                    //                     } else {
 	                                                    //                     FULLWIDTH_KATAKANA_8394_829B:
-	L314:   cmp     cl, 0xF2                            //                         if (c2 >= 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/ && c2 <= 0xF9/*(JISX0213('Ç±ﬂ') - 0x8200)*/) {
+	L314:   cmp     dl, 0xF2                            //                         if (c2 >= 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/ && c2 <= 0xF9/*(JISX0213('Ç±ﬂ') - 0x8200)*/) {
 	        jb      L334                                //
-	        cmp     cl, 0xF9                            //
+	        cmp     dl, 0xF9                            //
 	        ja      L334                                //
 	        mov     byte ptr [edi], 0x83                //                             dest[0] = 0x83;
-	        sub     cl, 0xF2 - 0x94                     //                             c2 -= 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/ - 0x94/*('Éî' - 0x8300)*/;
+	        sub     dl, 0xF2 - 0x94                     //                             c2 -= 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/ - 0x94/*('Éî' - 0x8300)*/;
 	        jmp     L334                                //                         }
 	                                                    //                     }
 	                                                    //                 }
 	                                                    //             }
 	L315:   test    ebp, ebp                            //         } else if (offset && c1 == 0x83) {
 	        jz      L334                                //
-	        cmp     al, 0x83                            //
+	        cmp     cl, 0x83                            //
 	        jne     L334                                //
-	        cmp     cl, 0x4A                            //             if (c2 >= 0x4A/*('ÉJ' - 0x8300)*/) {
+	        cmp     dl, 0x4A                            //             if (c2 >= 0x4A/*('ÉJ' - 0x8300)*/) {
 	        jb      L334                                //
-	        cmp     cl, 0x52                            //                 if (c2 <= 0x52/*('ÉR' - 0x8300)*/) {
+	        cmp     dl, 0x52                            //                 if (c2 <= 0x52/*('ÉR' - 0x8300)*/) {
 	        ja      L317                                //
-	        mov     al, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
-	        cmp     al, 0xDF                            //
+	        mov     cl, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
+	        cmp     cl, 0xDF                            //
 	        je      L316                                //                         goto FULLWIDTH_KATAKANA_8397_3;
-	        cmp     al, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
+	        cmp     cl, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
 	        jne     L334                                //
 	        cmp     ebp, -1                             //
 	        je      L334                                //
@@ -1205,16 +1205,16 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	                                                    //                     FULLWIDTH_KATAKANA_8397_3:
 	L316:   dec     ebx                                 //                         cchBuffer--;
 	        inc     ebp                                 //                         offset++;
-	        add     cl, 0x97 - 0x4A                     //                         c2 += 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/ - 0x4A/*('ÉJ' - 0x8300)*/;
+	        add     dl, 0x97 - 0x4A                     //                         c2 += 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/ - 0x4A/*('ÉJ' - 0x8300)*/;
 	        jmp     L334                                //                     }
 
-	L317:   cmp     cl, 0x5A                            //                 } else if (c2 == 0x5A/*('ÉZ' - 0x8300)*/) {
+	L317:   cmp     dl, 0x5A                            //                 } else if (c2 == 0x5A/*('ÉZ' - 0x8300)*/) {
 	        jne     L322                                //
 	                                                    //                 FULLWIDTH_KATAKANA_839C_1:
-	L318:   mov     al, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
-	        cmp     al, 0xDF                            //
+	L318:   mov     cl, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
+	        cmp     cl, 0xDF                            //
 	        je      L320                                //                         goto FULLWIDTH_KATAKANA_839C_3;
-	        cmp     al, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
+	        cmp     cl, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
 	        jne     L334                                //
 	        cmp     ebp, -1                             //
 	        je      L334                                //
@@ -1230,13 +1230,13 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        mov     word ptr [edi], 0x9C83              //                         *(unsigned short *)dest = 0x9C83/*BSWAP16(JISX0213('ÉZﬂ'))*/;
 	        jmp     L335                                //                         goto FULLWIDTH_KATAKANA_CONTINUE_2;
 	                                                    //                     }
-	L322:   cmp     cl, 0x63                            //                 } else if (c2 == 0x63/*('Éc' - 0x8300)*/) {
+	L322:   cmp     dl, 0x63                            //                 } else if (c2 == 0x63/*('Éc' - 0x8300)*/) {
 	        jne     L327                                //
 	                                                    //                 FULLWIDTH_KATAKANA_839D_1:
-	L323:   mov     al, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
-	        cmp     al, 0xDF                            //
+	L323:   mov     cl, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
+	        cmp     cl, 0xDF                            //
 	        je      L325                                //                         goto FULLWIDTH_KATAKANA_839D_3;
-	        cmp     al, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
+	        cmp     cl, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
 	        jne     L334                                //
 	        cmp     ebp, -1                             //
 	        je      L334                                //
@@ -1252,13 +1252,13 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        mov     word ptr [edi], 0x9D83              //                         *(unsigned short *)dest = 0x9D83/*BSWAP16(JISX0213('Écﬂ'))*/;
 	        jmp     L335                                //                         goto FULLWIDTH_KATAKANA_CONTINUE_2;
 	                                                    //                     }
-	L327:   cmp     cl, 0x63                            //                 } else if (c2 == 0x67/*('Ég' - 0x8300)*/) {
+	L327:   cmp     dl, 0x63                            //                 } else if (c2 == 0x67/*('Ég' - 0x8300)*/) {
 	        jne     L332                                //
 	                                                    //                 FULLWIDTH_KATAKANA_839E_1:
-	L328:   mov     al, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
-	        cmp     al, 0xDF                            //
+	L328:   mov     cl, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
+	        cmp     cl, 0xDF                            //
 	        je      L330                                //                         goto FULLWIDTH_KATAKANA_839E_3;
-	        cmp     al, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
+	        cmp     cl, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
 	        jne     L334                                //
 	        cmp     ebp, -1                             //
 	        je      L334                                //
@@ -1274,14 +1274,14 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        mov     word ptr [edi], 0x9E83              //                         *(unsigned short *)dest = 0x9E83/*BSWAP16(JISX0213('Égﬂ'))*/;
 	        jmp     L335                                //                         goto FULLWIDTH_KATAKANA_CONTINUE_2;
 	                                                    //                     }
-	L332:   cmp     cl, 0x8F                            //                 } else if (c2 >= 0x8F/*('Éè' - 0x8300)*/ && c2 <= 0x92/*('Éí' - 0x8300)*/) {
+	L332:   cmp     dl, 0x8F                            //                 } else if (c2 >= 0x8F/*('Éè' - 0x8300)*/ && c2 <= 0x92/*('Éí' - 0x8300)*/) {
 	        jb      L334                                //
-	        cmp     cl, 0x92                            //
+	        cmp     dl, 0x92                            //
 	        ja      L334                                //
-	        mov     al, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDE/*'ﬁ'*/)
-	        cmp     al, 0xDE                            //
+	        mov     cl, byte ptr [esi + ebp]            //                     if ((c1 = src[offset]) == 0xDE/*'ﬁ'*/)
+	        cmp     cl, 0xDE                            //
 	        je      L333                                //                         goto FULLWIDTH_KATAKANA_8492_3;
-	        cmp     al, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
+	        cmp     cl, 0x81                            //                     if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
 	        jne     L334                                //
 	        cmp     ebp, -1                             //
 	        je      L334                                //
@@ -1293,13 +1293,13 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	L333:   dec     ebx                                 //                         cchBuffer--;
 	        inc     ebp                                 //                         offset++;
 	        mov     byte ptr [edi], 0x84                //                         dest[0] = 0x84;
-	        add     cl, 0x92 - 0x8F                     //                         c2 += 0x92/*(JISX0213('Éèﬁ') - 0x8400)*/ - 0x8F/*('Éè' - 0x8300)*/;
+	        add     dl, 0x92 - 0x8F                     //                         c2 += 0x92/*(JISX0213('Éèﬁ') - 0x8400)*/ - 0x8F/*('Éè' - 0x8300)*/;
 	                                                    //                     }
 	                                                    //                 }
 	                                                    //             }
 	                                                    //         }
 	                                                    //     FULLWIDTH_KATAKANA_CONTINUE_1:
-	L334:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
+	L334:   mov     byte ptr [edi + 1], dl              //         dest[1] = c2;
 	                                                    //     FULLWIDTH_KATAKANA_CONTINUE_2:
 	L335:   add     edi, 2                              //         dest += 2;
 	        test    ebp, ebp                            //         if (offset)
@@ -1310,24 +1310,24 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 
 	        align16                                     // FULLWIDTH:
 	                                                    //     for (; ; ) {
-	L400:   mov     cl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
+	L400:   mov     dl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
-	        mov     byte ptr [edi], cl                  //
+	        mov     byte ptr [edi], dl                  //
 	        jz      L900                                //             break;
-	        mov     al, cl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
-	        sub     cl, 0x81                            //
-	        cmp     cl, 0x9F - 0x81 + 1                 //
+	        mov     cl, dl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
+	        sub     dl, 0x81                            //
+	        cmp     dl, 0x9F - 0x81 + 1                 //
 	        jb      L410                                //
-	        sub     cl, 0xE0 - 0x81                     //
-	        cmp     cl, 0xFC - 0xE0 + 1                 //
+	        sub     dl, 0xE0 - 0x81                     //
+	        cmp     dl, 0xFC - 0xE0 + 1                 //
 	        jb      L410                                //
-	        cmp     al, 0xA6                            //             if (c1 >= 0xA6/*'¶'*/) {
+	        cmp     cl, 0xA6                            //             if (c1 >= 0xA6/*'¶'*/) {
 	        jb      L409                                //
-	        mov     cl, byte ptr [esi + ebp]            //                 c2 = src[offset];
+	        mov     dl, byte ptr [esi + ebp]            //                 c2 = src[offset];
 	        jne     L402                                //                 if (c1 == 0xA6/*'¶'*/) {
-	        cmp     cl, 0xDE                            //                     if (c2 == 0xDE/*'ﬁ'*/)
+	        cmp     dl, 0xDE                            //                     if (c2 == 0xDE/*'ﬁ'*/)
 	        je      L401                                //                         goto FULLWIDTH_8495;
-	        cmp     cl, 0x81                            //                     if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
+	        cmp     dl, 0x81                            //                     if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
 	        jne     L409                                //
 	        cmp     ebp, -1                             //
 	        je      L409                                //
@@ -1340,13 +1340,13 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        mov     word ptr [edi], 0x9584              //                         *(unsigned short *)dest = 0x9584/*BSWAP16(JISX0213('Éíﬁ'))*/;
 	        jmp     L436                                //                         goto FULLWIDTH_CONTINUE_2;
 	                                                    //                     }
-	L402:   cmp     al, 0xB6                            //                 } else if (c1 >= 0xB6/*'∂'*/) {
+	L402:   cmp     cl, 0xB6                            //                 } else if (c1 >= 0xB6/*'∂'*/) {
 	        jb      L409                                //
-	        cmp     al, 0xBA                            //                     if (c1 <= 0xBA/*'∫'*/) {
+	        cmp     cl, 0xBA                            //                     if (c1 <= 0xBA/*'∫'*/) {
 	        ja      L404                                //
-	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
+	        cmp     dl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
 	        je      L403                                //                             goto FULLWIDTH_8397_1;
-	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
+	        cmp     dl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
 	        jne     L409                                //
 	        cmp     ebp, -1                             //
 	        je      L409                                //
@@ -1357,14 +1357,14 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	                                                    //                         FULLWIDTH_8397_1:
 	L403:   inc     ebp                                 //                             offset++;
 	        mov     byte ptr [edi], 0x83                //                             dest[0] = 0x83;
-	        lea     ecx, [eax - 0xB6 + 0x97]            //                             c2 = c1 - 0xB6/*'∂'*/ + 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/;
+	        lea     edx, [ecx - 0xB6 + 0x97]            //                             c2 = c1 - 0xB6/*'∂'*/ + 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/;
 	        jmp     L435                                //                             goto FULLWIDTH_CONTINUE_1;
 	                                                    //                         }
-	L404:   cmp     al, 0xBE                            //                     } else if (c1 == 0xBE/*'æ'*/) {
+	L404:   cmp     cl, 0xBE                            //                     } else if (c1 == 0xBE/*'æ'*/) {
 	        jne     L405                                //
-	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
+	        cmp     dl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
 	        je      L422                                //                             goto FULLWIDTH_839C_4;
-	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/)
+	        cmp     dl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/)
 	        jne     L409                                //
 	        cmp     ebp, -1                             //
 	        je      L409                                //
@@ -1372,11 +1372,11 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        jne     L409                                //
 	        jmp     L420                                //                             goto FULLWIDTH_839C_2;
 
-	L405:   cmp     al, 0xC2                            //                     } else if (c1 == 0xC2/*'¬'*/) {
+	L405:   cmp     cl, 0xC2                            //                     } else if (c1 == 0xC2/*'¬'*/) {
 	        jne     L406                                //
-	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
+	        cmp     dl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
 	        je      L427                                //                             goto FULLWIDTH_839D_4;
-	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/)
+	        cmp     dl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/)
 	        jne     L409                                //
 	        cmp     ebp, -1                             //
 	        je      L409                                //
@@ -1384,11 +1384,11 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        jne     L409                                //
 	        jmp     L425                                //                             goto FULLWIDTH_839D_2;
 
-	L406:   cmp     al, 0xC4                            //                     } else if (c1 == 0xC4/*'ƒ'*/) {
+	L406:   cmp     cl, 0xC4                            //                     } else if (c1 == 0xC4/*'ƒ'*/) {
 	        jne     L407                                //
-	        cmp     cl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
+	        cmp     dl, 0xDF                            //                         if (c2 == 0xDF/*'ﬂ'*/)
 	        je      L432                                //                             goto FULLWIDTH_839E_4;
-	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/)
+	        cmp     dl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/)
 	        jne     L409                                //
 	        cmp     ebp, -1                             //
 	        je      L409                                //
@@ -1396,11 +1396,11 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        jne     L409                                //
 	        jmp     L430                                //                             goto FULLWIDTH_839E_2;
 
-	L407:   cmp     al, 0xDC                            //                     } else if (c1 == 0xDC/*'‹'*/) {
+	L407:   cmp     cl, 0xDC                            //                     } else if (c1 == 0xDC/*'‹'*/) {
 	        jne     L409                                //
-	        cmp     cl, 0xDE                            //                         if (c2 == 0xDE/*'ﬁ'*/)
+	        cmp     dl, 0xDE                            //                         if (c2 == 0xDE/*'ﬁ'*/)
 	        je      L408                                //                             goto FULLWIDTH_8492_1;
-	        cmp     cl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
+	        cmp     dl, 0x81                            //                         if (c2 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
 	        jne     L409                                //
 	        cmp     ebp, -1                             //
 	        je      L409                                //
@@ -1420,18 +1420,18 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        jmp     L400                                //             continue;
 	                                                    //         }
 	        align16                                     //
-	L410:   mov     cl, byte ptr [esi + ebp]            //         c2 = src[offset];
+	L410:   mov     dl, byte ptr [esi + ebp]            //         c2 = src[offset];
 	        inc     ebp                                 //         if (++offset) {
 	        jz      L435                                //
-	        cmp     al, 0x82                            //             if (c1 == 0x82) {
+	        cmp     cl, 0x82                            //             if (c1 == 0x82) {
 	        jne     L416                                //
-	        cmp     cl, 0xA4                            //                 if (c2 >= 0xA4/*('Ç§' - 0x8200)*/) {
+	        cmp     dl, 0xA4                            //                 if (c2 >= 0xA4/*('Ç§' - 0x8200)*/) {
 	        jb      L435                                //
-	        mov     al, byte ptr [esi + ebp]            //                     c1 = src[offset];
+	        mov     cl, byte ptr [esi + ebp]            //                     c1 = src[offset];
 	        jne     L412                                //                     if (c2 == 0xA4/*('Ç§' - 0x8200)*/) {
-	        cmp     al, 0xDE                            //                         if (c1 == 0xDE/*'ﬁ'*/)
+	        cmp     cl, 0xDE                            //                         if (c1 == 0xDE/*'ﬁ'*/)
 	        je      L411                                //                             goto FULLWIDTH_82F2;
-	        cmp     al, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
+	        cmp     cl, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
 	        jne     L435                                //
 	        cmp     ebp, -1                             //
 	        je      L435                                //
@@ -1442,16 +1442,16 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	                                                    //                         FULLWIDTH_82F2:
 	L411:   dec     ebx                                 //                             cchBuffer--;
 	        inc     ebp                                 //                             offset++;
-	        mov     cl, 0xF2                            //                             c2 = 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/;
+	        mov     dl, 0xF2                            //                             c2 = 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/;
 	        jmp     L435                                //                             goto FULLWIDTH_CONTINUE_1;
 	                                                    //                         }
-	L412:   cmp     cl, 0xA9                            //                     } else if (c2 >= 0xA9/*('Ç©' - 0x8200)*/) {
+	L412:   cmp     dl, 0xA9                            //                     } else if (c2 >= 0xA9/*('Ç©' - 0x8200)*/) {
 	        jb      L435                                //
-	        cmp     cl, 0xB1                            //                         if (c2 <= 0xB1/*('Ç±' - 0x8200)*/) {
+	        cmp     dl, 0xB1                            //                         if (c2 <= 0xB1/*('Ç±' - 0x8200)*/) {
 	        ja      L414                                //
-	        cmp     al, 0xDF                            //                             if (c1 == 0xDF/*'ﬂ'*/)
+	        cmp     cl, 0xDF                            //                             if (c1 == 0xDF/*'ﬂ'*/)
 	        je      L413                                //                                 goto FULLWIDTH_82F5;
-	        cmp     al, 0x81                            //                             if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
+	        cmp     cl, 0x81                            //                             if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
 	        jne     L435                                //
 	        cmp     ebp, -1                             //
 	        je      L435                                //
@@ -1462,22 +1462,22 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	                                                    //                             FULLWIDTH_82F5:
 	L413:   dec     ebx                                 //                                 cchBuffer--;
 	        inc     ebp                                 //                                 offset++;
-	        add     cl, 0xF5 - 0xA9                     //                                 c2 += 0xF5/*(JISX0213('Ç©ﬂ') - 0x8200)*/ - 0xA9/*('Ç©' - 0x8200)*/;
+	        add     dl, 0xF5 - 0xA9                     //                                 c2 += 0xF5/*(JISX0213('Ç©ﬂ') - 0x8200)*/ - 0xA9/*('Ç©' - 0x8200)*/;
 	        jmp     L435                                //                             }
 
-	L414:   cmp     cl, 0xB9                            //                         } else if (c2 == 0xB9/*('Çπ' - 0x8200)*/)
+	L414:   cmp     dl, 0xB9                            //                         } else if (c2 == 0xB9/*('Çπ' - 0x8200)*/)
 	        je      L419                                //                             goto FULLWIDTH_839C_1;
-	        cmp     cl, 0xC2                            //                         else if (c2 == 0xC2/*('Ç¬' - 0x8200)*/)
+	        cmp     dl, 0xC2                            //                         else if (c2 == 0xC2/*('Ç¬' - 0x8200)*/)
 	        je      L424                                //                             goto FULLWIDTH_839D_1;
-	        cmp     cl, 0xC6                            //                         else if (c2 == 0xC6/*('Ç∆' - 0x8200)*/)
+	        cmp     dl, 0xC6                            //                         else if (c2 == 0xC6/*('Ç∆' - 0x8200)*/)
 	        je      L429                                //                             goto FULLWIDTH_839E_1;
-	        cmp     cl, 0xED                            //                         else if (c2 >= 0xED/*('ÇÌ' - 0x8200)*/ && c2 <= 0xF0/*('Ç' - 0x8200)*/) {
+	        cmp     dl, 0xED                            //                         else if (c2 >= 0xED/*('ÇÌ' - 0x8200)*/ && c2 <= 0xF0/*('Ç' - 0x8200)*/) {
 	        jb      L435                                //
-	        cmp     cl, 0xF0                            //
+	        cmp     dl, 0xF0                            //
 	        ja      L435                                //
-	        cmp     al, 0xDE                            //                             if (c1 == 0xDE/*'ﬁ'*/)
+	        cmp     cl, 0xDE                            //                             if (c1 == 0xDE/*'ﬁ'*/)
 	        je      L415                                //                                 goto FULLWIDTH_8492_2;
-	        cmp     al, 0x81                            //                             if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
+	        cmp     cl, 0x81                            //                             if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
 	        jne     L435                                //
 	        cmp     ebp, -1                             //
 	        je      L435                                //
@@ -1489,21 +1489,21 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	L415:   dec     ebx                                 //                                 cchBuffer--;
 	        inc     ebp                                 //                                 offset++;
 	        mov     byte ptr [edi], 0x84                //                                 dest[0] = 0x84;
-	        sub     cl, 0xED - 0x92                     //                                 c2 -= 0xED/*('ÇÌ' - 0x8200)*/ - 0x92/*(JISX0213('Éèﬁ') - 0x8400)*/;
+	        sub     dl, 0xED - 0x92                     //                                 c2 -= 0xED/*('ÇÌ' - 0x8200)*/ - 0x92/*(JISX0213('Éèﬁ') - 0x8400)*/;
 	        jmp     L435                                //                             }
 	                                                    //                         }
 	                                                    //                     }
 	                                                    //                 }
-	L416:   cmp     al, 0x83                            //             } else if (c1 == 0x83) {
+	L416:   cmp     cl, 0x83                            //             } else if (c1 == 0x83) {
 	        jne     L435                                //
-	        cmp     cl, 0x4A                            //                 if (c2 >= 0x4A/*('ÉJ' - 0x8300)*/) {
+	        cmp     dl, 0x4A                            //                 if (c2 >= 0x4A/*('ÉJ' - 0x8300)*/) {
 	        jb      L435                                //
-	        cmp     cl, 0x52                            //                     if (c2 <= 0x52/*('ÉR' - 0x8300)*/) {
+	        cmp     dl, 0x52                            //                     if (c2 <= 0x52/*('ÉR' - 0x8300)*/) {
 	        ja      L418                                //
-	        mov     al, byte ptr [esi + ebp]            //                         if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
-	        cmp     al, 0xDF                            //
+	        mov     cl, byte ptr [esi + ebp]            //                         if ((c1 = src[offset]) == 0xDF/*'ﬂ'*/)
+	        cmp     cl, 0xDF                            //
 	        je      L417                                //                             goto FULLWIDTH_8397_2;
-	        cmp     al, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
+	        cmp     cl, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
 	        jne     L435                                //
 	        cmp     ebp, -1                             //
 	        je      L435                                //
@@ -1514,16 +1514,16 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	                                                    //                         FULLWIDTH_8397_2:
 	L417:   dec     ebx                                 //                             cchBuffer--;
 	        inc     ebp                                 //                             offset++;
-	        add     cl, 0x97 - 0x4A                     //                             c2 += 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/ - 0x4A/*('ÉJ' - 0x8300)*/;
+	        add     dl, 0x97 - 0x4A                     //                             c2 += 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/ - 0x4A/*('ÉJ' - 0x8300)*/;
 	        jmp     L435                                //                         }
 
-	L418:   cmp     cl, 0x5A                            //                     } else if (c2 == 0x5A/*('ÉZ' - 0x8300)*/) {
+	L418:   cmp     dl, 0x5A                            //                     } else if (c2 == 0x5A/*('ÉZ' - 0x8300)*/) {
 	        jne     L423                                //
-	        mov     al, byte ptr [esi + ebp]            //                         c1 = src[offset];
+	        mov     cl, byte ptr [esi + ebp]            //                         c1 = src[offset];
 	                                                    //                     FULLWIDTH_839C_1:
-	L419:   cmp     al, 0xDF                            //                         if (c1 == 0xDF/*'ﬂ'*/)
+	L419:   cmp     cl, 0xDF                            //                         if (c1 == 0xDF/*'ﬂ'*/)
 	        je      L421                                //                             goto FULLWIDTH_839C_3;
-	        cmp     al, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
+	        cmp     cl, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
 	        jne     L435                                //
 	        cmp     ebp, -1                             //
 	        je      L435                                //
@@ -1539,13 +1539,13 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        mov     word ptr [edi], 0x9C83              //                             *(unsigned short *)dest = 0x9C83/*BSWAP16(JISX0213('ÉZﬂ'))*/;
 	        jmp     L436                                //                             goto FULLWIDTH_CONTINUE_2;
 	                                                    //                         }
-	L423:   cmp     cl, 0x63                            //                     } else if (c2 == 0x63/*('Éc' - 0x8300)*/) {
+	L423:   cmp     dl, 0x63                            //                     } else if (c2 == 0x63/*('Éc' - 0x8300)*/) {
 	        jne     L428                                //
-	        mov     al, byte ptr [esi + ebp]            //                         c1 = src[offset];
+	        mov     cl, byte ptr [esi + ebp]            //                         c1 = src[offset];
 	                                                    //                     FULLWIDTH_839D_1:
-	L424:   cmp     al, 0xDF                            //                         if (c1 == 0xDF/*'ﬂ'*/)
+	L424:   cmp     cl, 0xDF                            //                         if (c1 == 0xDF/*'ﬂ'*/)
 	        je      L426                                //                             goto FULLWIDTH_839D_3;
-	        cmp     al, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
+	        cmp     cl, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
 	        jne     L435                                //
 	        cmp     ebp, -1                             //
 	        je      L435                                //
@@ -1561,13 +1561,13 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        mov     word ptr [edi], 0x9D83              //                             *(unsigned short *)dest = 0x9D83/*BSWAP16(JISX0213('Écﬂ'))*/;
 	        jmp     L436                                //                             goto FULLWIDTH_CONTINUE_2;
 	                                                    //                         }
-	L428:   cmp     cl, 0x63                            //                     } else if (c2 == 0x67/*('Ég' - 0x8300)*/) {
+	L428:   cmp     dl, 0x63                            //                     } else if (c2 == 0x67/*('Ég' - 0x8300)*/) {
 	        jne     L433                                //
-	        mov     al, byte ptr [esi + ebp]            //                         c1 = src[offset];
+	        mov     cl, byte ptr [esi + ebp]            //                         c1 = src[offset];
 	                                                    //                     FULLWIDTH_839E_1:
-	L429:   cmp     al, 0xDF                            //                         if (c1 == 0xDF/*'ﬂ'*/)
+	L429:   cmp     cl, 0xDF                            //                         if (c1 == 0xDF/*'ﬂ'*/)
 	        je      L431                                //                             goto FULLWIDTH_839E_3;
-	        cmp     al, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
+	        cmp     cl, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4B/*('ÅK' - 0x8100)*/) {
 	        jne     L435                                //
 	        cmp     ebp, -1                             //
 	        je      L435                                //
@@ -1583,14 +1583,14 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        mov     word ptr [edi], 0x9E83              //                             *(unsigned short *)dest = 0x9E83/*BSWAP16(JISX0213('Égﬂ'))*/;
 	        jmp     L436                                //                             goto FULLWIDTH_CONTINUE_2;
 	                                                    //                         }
-	L433:   cmp     cl, 0x8F                            //                     } else if (c2 >= 0x8F/*('Éè' - 0x8300)*/ && c2 <= 0x92/*('Éí' - 0x8300)*/) {
+	L433:   cmp     dl, 0x8F                            //                     } else if (c2 >= 0x8F/*('Éè' - 0x8300)*/ && c2 <= 0x92/*('Éí' - 0x8300)*/) {
 	        jb      L435                                //
-	        cmp     cl, 0x92                            //
+	        cmp     dl, 0x92                            //
 	        ja      L435                                //
-	        mov     al, byte ptr [esi + ebp]            //                         if ((c1 = src[offset]) == 0xDE/*'ﬁ'*/)
-	        cmp     al, 0xDE                            //
+	        mov     cl, byte ptr [esi + ebp]            //                         if ((c1 = src[offset]) == 0xDE/*'ﬁ'*/)
+	        cmp     cl, 0xDE                            //
 	        je      L434                                //                             goto FULLWIDTH_8492_3;
-	        cmp     al, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
+	        cmp     cl, 0x81                            //                         if (c1 == 0x81 && offset != -1 && src[offset + 1] == 0x4A/*('ÅJ' - 0x8100)*/) {
 	        jne     L435                                //
 	        cmp     ebp, -1                             //
 	        je      L435                                //
@@ -1602,14 +1602,14 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	L434:   dec     ebx                                 //                             cchBuffer--;
 	        inc     ebp                                 //                             offset++;
 	        mov     byte ptr [edi], 0x84                //                             dest[0] = 0x84;
-	        add     cl, 0x92 - 0x8F                     //                             c2 += 0x92/*(JISX0213('Éèﬁ') - 0x8400)*/ - 0x8F/*('Éè' - 0x8300)*/;
+	        add     dl, 0x92 - 0x8F                     //                             c2 += 0x92/*(JISX0213('Éèﬁ') - 0x8400)*/ - 0x8F/*('Éè' - 0x8300)*/;
 	                                                    //                         }
 	                                                    //                     }
 	                                                    //                 }
 	                                                    //             }
 	                                                    //         }
 	                                                    //     FULLWIDTH_CONTINUE_1:
-	L435:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
+	L435:   mov     byte ptr [edi + 1], dl              //         dest[1] = c2;
 	                                                    //     FULLWIDTH_CONTINUE_2:
 	L436:   add     edi, 2                              //         dest += 2;
 	        test    ebp, ebp                            //         if (offset)
@@ -1620,33 +1620,33 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 
 	        align16                                     // HIRAGANA:
 	                                                    //     for (; ; ) {
-	L500:   mov     cl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
+	L500:   mov     dl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
-	        mov     byte ptr [edi], cl                  //
+	        mov     byte ptr [edi], dl                  //
 	        jz      L900                                //             break;
-	        mov     al, cl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
-	        sub     cl, 0x81                            //
-	        cmp     cl, 0x9F - 0x81 + 1                 //
+	        mov     cl, dl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
+	        sub     dl, 0x81                            //
+	        cmp     dl, 0x9F - 0x81 + 1                 //
 	        jb      L501                                //
-	        sub     cl, 0xE0 - 0x81                     //
-	        cmp     cl, 0xFC - 0xE0 + 1                 //
+	        sub     dl, 0xE0 - 0x81                     //
+	        cmp     dl, 0xFC - 0xE0 + 1                 //
 	        jb      L501                                //
 	        inc     edi                                 //             dest++;
 	        jmp     L500                                //             continue;
 	                                                    //         }
 	        align16                                     //
-	L501:   mov     cl, byte ptr [esi + ebp]            //         c2 = src[offset];
-	        cmp     al, 0x83                            //         if (c1 == 0x83) {
+	L501:   mov     dl, byte ptr [esi + ebp]            //         c2 = src[offset];
+	        cmp     cl, 0x83                            //         if (c1 == 0x83) {
 	        jne     L502                                //
-	        cmp     cl, 0x94                            //             if (c2 >= 0x94/*('Éî' - 0x8300)*/ && c2 <= 0x9B/*(JISX0213('ÉRﬂ') - 0x8300)*/) {
+	        cmp     dl, 0x94                            //             if (c2 >= 0x94/*('Éî' - 0x8300)*/ && c2 <= 0x9B/*(JISX0213('ÉRﬂ') - 0x8300)*/) {
 	        jb      L502                                //
-	        cmp     cl, 0x9B                            //
+	        cmp     dl, 0x9B                            //
 	        ja      L502                                //
 	        mov     byte ptr [edi], 0x82                //                 dest[0] = 0x82;
-	        add     cl, 0xF2 - 0x94                     //                 c2 += 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/ - 0x94/*('Éî' - 0x8300)*/;
+	        add     dl, 0xF2 - 0x94                     //                 c2 += 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/ - 0x94/*('Éî' - 0x8300)*/;
 	                                                    //             }
 	                                                    //         }
-	L502:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
+	L502:   mov     byte ptr [edi + 1], dl              //         dest[1] = c2;
 	        add     edi, 2                              //         dest += 2;
 	        inc     ebp                                 //         if (++offset)
 	        jnz     L500                                //             continue;
@@ -1656,33 +1656,33 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 
 	        align16                                     // KATAKANA:
 	                                                    //     for (; ; ) {
-	L600:   mov     cl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
+	L600:   mov     dl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
-	        mov     byte ptr [edi], cl                  //
+	        mov     byte ptr [edi], dl                  //
 	        jz      L900                                //             break;
-	        mov     al, cl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
-	        sub     cl, 0x81                            //
-	        cmp     cl, 0x9F - 0x81 + 1                 //
+	        mov     cl, dl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
+	        sub     dl, 0x81                            //
+	        cmp     dl, 0x9F - 0x81 + 1                 //
 	        jb      L601                                //
-	        sub     cl, 0xE0 - 0x81                     //
-	        cmp     cl, 0xFC - 0xE0 + 1                 //
+	        sub     dl, 0xE0 - 0x81                     //
+	        cmp     dl, 0xFC - 0xE0 + 1                 //
 	        jb      L601                                //
 	        inc     edi                                 //             dest++;
 	        jmp     L600                                //             continue;
 	                                                    //         }
 	        align16                                     //
-	L601:   mov     cl, byte ptr [esi + ebp]            //         c2 = src[offset];
-	        cmp     al, 0x82                            //         if (c1 == 0x82) {
+	L601:   mov     dl, byte ptr [esi + ebp]            //         c2 = src[offset];
+	        cmp     cl, 0x82                            //         if (c1 == 0x82) {
 	        jne     L602                                //
-	        cmp     cl, 0xF2                            //             if (c2 >= 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/ && c2 <= 0xF9/*(JISX0213('Ç±ﬂ') - 0x8200)*/) {
+	        cmp     dl, 0xF2                            //             if (c2 >= 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/ && c2 <= 0xF9/*(JISX0213('Ç±ﬂ') - 0x8200)*/) {
 	        jb      L602                                //
-	        cmp     cl, 0xF9                            //
+	        cmp     dl, 0xF9                            //
 	        ja      L602                                //
 	        mov     byte ptr [edi], 0x83                //                 dest[0] = 0x83;
-	        sub     cl, 0xF2 - 0x94                     //                 c2 -= 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/ - 0x94/*('Éî' - 0x8300)*/;
+	        sub     dl, 0xF2 - 0x94                     //                 c2 -= 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/ - 0x94/*('Éî' - 0x8300)*/;
 	                                                    //             }
 	                                                    //         }
-	L602:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
+	L602:   mov     byte ptr [edi + 1], dl              //         dest[1] = c2;
 	        add     edi, 2                              //         dest += 2;
 	        inc     ebp                                 //         if (++offset)
 	        jnz     L600                                //             continue;
@@ -1692,81 +1692,81 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 
 	        align16                                     // KATAKANA_HALFWIDTH:
 	                                                    //     for (; ; ) {
-	L700:   mov     cl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
+	L700:   mov     dl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
-	        mov     byte ptr [edi], cl                  //
+	        mov     byte ptr [edi], dl                  //
 	        jz      L900                                //             break;
-	        mov     al, cl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
-	        sub     cl, 0x81                            //
-	        cmp     cl, 0x9F - 0x81 + 1                 //
+	        mov     cl, dl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
+	        sub     dl, 0x81                            //
+	        cmp     dl, 0x9F - 0x81 + 1                 //
 	        jb      L701                                //
-	        sub     cl, 0xE0 - 0x81                     //
-	        cmp     cl, 0xFC - 0xE0 + 1                 //
+	        sub     dl, 0xE0 - 0x81                     //
+	        cmp     dl, 0xFC - 0xE0 + 1                 //
 	        jb      L701                                //
 	        inc     edi                                 //             dest++;
 	        jmp     L700                                //             continue;
 	                                                    //         }
 	        align16                                     //
-	L701:   xor     ecx, ecx                            //         c2 = src[offset];
-	        cmp     al, 0x82                            //         if (c1 == 0x82) {
-	        mov     cl, byte ptr [esi + ebp]            //
+	L701:   xor     edx, edx                            //         c2 = src[offset];
+	        cmp     cl, 0x82                            //         if (c1 == 0x82) {
+	        mov     dl, byte ptr [esi + ebp]            //
 	        jne     L703                                //
-	        cmp     cl, 0xF2                            //             if (c2 >= 0xF2) {
+	        cmp     dl, 0xF2                            //             if (c2 >= 0xF2) {
 	        jb      L709                                //
-	        cmp     cl, 0xF2                            //                 if (c2 == 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/) {
+	        cmp     dl, 0xF2                            //                 if (c2 == 0xF2/*(JISX0213('Ç§ﬁ') - 0x8200)*/) {
 	        jne     L702                                //
 	        mov     word ptr [edi], 0xDEB3              //                     *(unsigned short *)dest = 0xDEB3/*BSWAP16('≥ﬁ')*/;
 	        jmp     L710                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
 
-	L702:   cmp     cl, 0xF5                            //                 } else if (c2 >= 0xF5/*(JISX0213('Ç©ﬂ') - 0x8200)*/ && c2 <= 0xF9/*(JISX0213('Ç±ﬂ') - 0x8200)*/) {
+	L702:   cmp     dl, 0xF5                            //                 } else if (c2 >= 0xF5/*(JISX0213('Ç©ﬂ') - 0x8200)*/ && c2 <= 0xF9/*(JISX0213('Ç±ﬂ') - 0x8200)*/) {
 	        jb      L709                                //
-	        cmp     cl, 0xF9                            //
+	        cmp     dl, 0xF9                            //
 	        ja      L709                                //
-	        add     cx, 0xDFB6 - 0xF5                   //                     *(unsigned short *)dest = c2 + 0xDFB6/*BSWAP16('∂ﬂ')*/ - 0xF5/*(JISX0213('Ç©ﬂ') - 0x8200)*/;
-	        mov     word ptr [edi], cx                  //
+	        add     dx, 0xDFB6 - 0xF5                   //                     *(unsigned short *)dest = c2 + 0xDFB6/*BSWAP16('∂ﬂ')*/ - 0xF5/*(JISX0213('Ç©ﬂ') - 0x8200)*/;
+	        mov     word ptr [edi], dx                  //
 	        jmp     L710                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
 	                                                    //                 }
 	                                                    //             }
-	L703:   cmp     al, 0x83                            //         } else if (c1 == 0x83) {
+	L703:   cmp     cl, 0x83                            //         } else if (c1 == 0x83) {
 	        jne     L707                                //
-	        cmp     cl, 0x97                            //             if (c2 >= 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/) {
+	        cmp     dl, 0x97                            //             if (c2 >= 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/) {
 	        jb      L709                                //
-	        cmp     cl, 0x9B                            //                 if (c2 <= 0x9B/*(JISX0213('ÉRﬂ') - 0x8300)*/) {
+	        cmp     dl, 0x9B                            //                 if (c2 <= 0x9B/*(JISX0213('ÉRﬂ') - 0x8300)*/) {
 	        ja      L704                                //
-	        add     cx, 0xDFB6 - 0x97                   //                     *(unsigned short *)dest = c2 + 0xDFB6/*BSWAP16('∂ﬂ')*/ - 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/;
-	        mov     word ptr [edi], cx                  //
+	        add     dx, 0xDFB6 - 0x97                   //                     *(unsigned short *)dest = c2 + 0xDFB6/*BSWAP16('∂ﬂ')*/ - 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/;
+	        mov     word ptr [edi], dx                  //
 	        jmp     L710                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
 
-	L704:   cmp     cl, 0x9C                            //                 } else if (c2 == 0x9C/*(JISX0213('ÉZﬂ') - 0x8300)*/) {
+	L704:   cmp     dl, 0x9C                            //                 } else if (c2 == 0x9C/*(JISX0213('ÉZﬂ') - 0x8300)*/) {
 	        jne     L705                                //
 	        mov     word ptr [edi], 0xDFBE              //                     *(unsigned short *)dest = 0xDFBE/*BSWAP16('æﬂ')*/;
 	        jmp     L710                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
 
-	L705:   cmp     cl, 0x9D                            //                 } else if (c2 == 0x9D/*(JISX0213('Écﬂ') - 0x8300)*/) {
+	L705:   cmp     dl, 0x9D                            //                 } else if (c2 == 0x9D/*(JISX0213('Écﬂ') - 0x8300)*/) {
 	        jne     L706                                //
 	        mov     word ptr [edi], 0xDFC2              //                     *(unsigned short *)dest = 0xDFC2/*BSWAP16('¬ﬂ')*/;
 	        jmp     L710                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
 
-	L706:   cmp     cl, 0x9E                            //                 } else if (c2 == 0x9E/*(JISX0213('Égﬂ') - 0x8300)*/) {
+	L706:   cmp     dl, 0x9E                            //                 } else if (c2 == 0x9E/*(JISX0213('Égﬂ') - 0x8300)*/) {
 	        jne     L709                                //
 	        mov     word ptr [edi], 0xDFC4              //                     *(unsigned short *)dest = 0xDFC4/*BSWAP16('ƒﬂ')*/;
 	        jmp     L710                                //                     goto KATAKANA_HALFWIDTH_CONTINUE;
 	                                                    //                 }
 	                                                    //             }
-	L707:   cmp     al, 0x84                            //         } else if (c1 == 0x84) {
+	L707:   cmp     cl, 0x84                            //         } else if (c1 == 0x84) {
 	        jne     L709                                //
-	        cmp     cl, 0x92                            //             if (c2 == 0x92/*(JISX0213('Éèﬁ') - 0x8400)*/) {
+	        cmp     dl, 0x92                            //             if (c2 == 0x92/*(JISX0213('Éèﬁ') - 0x8400)*/) {
 	        jne     L708                                //
 	        mov     word ptr [edi], 0xDEDC              //                 *(unsigned short *)dest = 0xDEDC/*BSWAP16('‹ﬁ')*/;
 	        jmp     L710                                //                 goto KATAKANA_HALFWIDTH_CONTINUE;
 
-	L708:   cmp     cl, 0x95                            //             } else if (c2 == 0x95/*(JISX0213('Éíﬁ') - 0x8400)*/) {
+	L708:   cmp     dl, 0x95                            //             } else if (c2 == 0x95/*(JISX0213('Éíﬁ') - 0x8400)*/) {
 	        jne     L709                                //
 	        mov     word ptr [edi], 0xDEA6              //                 *(unsigned short *)dest = 0xDEA6/*BSWAP16('¶ﬁ')*/;
 	        jmp     L710                                //                 goto KATAKANA_HALFWIDTH_CONTINUE;
 	                                                    //             }
 	                                                    //         }
-	L709:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
+	L709:   mov     byte ptr [edi + 1], dl              //         dest[1] = c2;
 	                                                    //     KATAKANA_HALFWIDTH_CONTINUE:
 	L710:   add     edi, 2                              //         dest += 2;
 	        inc     ebp                                 //         if (++offset)
@@ -1777,63 +1777,63 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 
 	        align16                                     // HALFWIDTH:
 	                                                    //     for (; ; ) {
-	L800:   mov     cl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
+	L800:   mov     dl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
-	        mov     byte ptr [edi], cl                  //
+	        mov     byte ptr [edi], dl                  //
 	        jz      L900                                //             break;
-	        mov     al, cl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
-	        sub     cl, 0x81                            //
-	        cmp     cl, 0x9F - 0x81 + 1                 //
+	        mov     cl, dl                              //         if ((unsigned char)(c1 - 0x81) >= 0x9F - 0x81 + 1 && (unsigned char)(c1 - 0xE0) >= 0xFC - 0xE0 + 1) {
+	        sub     dl, 0x81                            //
+	        cmp     dl, 0x9F - 0x81 + 1                 //
 	        jb      L801                                //
-	        sub     cl, 0xE0 - 0x81                     //
-	        cmp     cl, 0xFC - 0xE0 + 1                 //
+	        sub     dl, 0xE0 - 0x81                     //
+	        cmp     dl, 0xFC - 0xE0 + 1                 //
 	        jb      L801                                //
 	        inc     edi                                 //             dest++;
 	        jmp     L800                                //             continue;
 	                                                    //         }
 	        align16                                     //
-	L801:   xor     ecx, ecx                            //         c2 = src[offset];
-	        cmp     al, 0x83                            //         if (c1 == 0x83) {
-	        mov     cl, byte ptr [esi + ebp]            //
+	L801:   xor     edx, edx                            //         c2 = src[offset];
+	        cmp     cl, 0x83                            //         if (c1 == 0x83) {
+	        mov     dl, byte ptr [esi + ebp]            //
 	        jne     L805                                //
-	        cmp     cl, 0x97                            //             if (c2 >= 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/) {
+	        cmp     dl, 0x97                            //             if (c2 >= 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/) {
 	        jb      L807                                //
-	        cmp     cl, 0x9B                            //                 if (c2 <= 0x9B/*(JISX0213('ÉRﬂ') - 0x8300)*/) {
+	        cmp     dl, 0x9B                            //                 if (c2 <= 0x9B/*(JISX0213('ÉRﬂ') - 0x8300)*/) {
 	        ja      L802                                //
-	        add     cx, 0xDFB6 - 0x97                   //                     *(unsigned short *)dest = c2 + 0xDFB6/*BSWAP16('∂ﬂ')*/ - 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/;
-	        mov     word ptr [edi], cx                  //
+	        add     dx, 0xDFB6 - 0x97                   //                     *(unsigned short *)dest = c2 + 0xDFB6/*BSWAP16('∂ﬂ')*/ - 0x97/*(JISX0213('ÉJﬂ') - 0x8300)*/;
+	        mov     word ptr [edi], dx                  //
 	        jmp     L808                                //                     goto HALFWIDTH_CONTINUE;
 
-	L802:   cmp     cl, 0x9C                            //                 } else if (c2 == 0x9C/*(JISX0213('ÉZﬂ') - 0x8300)*/) {
+	L802:   cmp     dl, 0x9C                            //                 } else if (c2 == 0x9C/*(JISX0213('ÉZﬂ') - 0x8300)*/) {
 	        jne     L803                                //
 	        mov     word ptr [edi], 0xDFBE              //                     *(unsigned short *)dest = 0xDFBE/*BSWAP16('æﬂ')*/;
 	        jmp     L808                                //                     goto HALFWIDTH_CONTINUE;
 
-	L803:   cmp     cl, 0x9D                            //                 } else if (c2 == 0x9D/*(JISX0213('Écﬂ') - 0x8300)*/) {
+	L803:   cmp     dl, 0x9D                            //                 } else if (c2 == 0x9D/*(JISX0213('Écﬂ') - 0x8300)*/) {
 	        jne     L804                                //
 	        mov     word ptr [edi], 0xDFC2              //                     *(unsigned short *)dest = 0xDFC2/*BSWAP16('¬ﬂ')*/;
 	        jmp     L808                                //                     goto HALFWIDTH_CONTINUE;
 
-	L804:   cmp     cl, 0x9E                            //                 } else if (c2 == 0x9E/*(JISX0213('Égﬂ') - 0x8300)*/) {
+	L804:   cmp     dl, 0x9E                            //                 } else if (c2 == 0x9E/*(JISX0213('Égﬂ') - 0x8300)*/) {
 	        jne     L807                                //
 	        mov     word ptr [edi], 0xDFC4              //                     *(unsigned short *)dest = 0xDFC4/*BSWAP16('ƒﬂ')*/;
 	        jmp     L808                                //                     goto HALFWIDTH_CONTINUE;
 	                                                    //                 }
 	                                                    //             }
-	L805:   cmp     al, 0x84                            //         } else if (c1 == 0x84) {
+	L805:   cmp     cl, 0x84                            //         } else if (c1 == 0x84) {
 	        jne     L807                                //
-	        cmp     cl, 0x92                            //             if (c2 == 0x92/*(JISX0213('Éèﬁ') - 0x8400)*/) {
+	        cmp     dl, 0x92                            //             if (c2 == 0x92/*(JISX0213('Éèﬁ') - 0x8400)*/) {
 	        jne     L806                                //
 	        mov     word ptr [edi], 0xDEDC              //                 *(unsigned short *)dest = 0xDEDC/*BSWAP16('‹ﬁ')*/;
 	        jmp     L808                                //                 goto HALFWIDTH_CONTINUE;
 
-	L806:   cmp     cl, 0x95                            //             } else if (c2 == 0x95/*(JISX0213('Éíﬁ') - 0x8400)*/) {
+	L806:   cmp     dl, 0x95                            //             } else if (c2 == 0x95/*(JISX0213('Éíﬁ') - 0x8400)*/) {
 	        jne     L807                                //
 	        mov     word ptr [edi], 0xDEA6              //                 *(unsigned short *)dest = 0xDEA6/*BSWAP16('¶ﬁ')*/;
 	        jmp     L808                                //                 goto HALFWIDTH_CONTINUE;
 	                                                    //             }
 	                                                    //         }
-	L807:   mov     byte ptr [edi + 1], cl              //         dest[1] = c2;
+	L807:   mov     byte ptr [edi + 1], dl              //         dest[1] = c2;
 	                                                    //     HALFWIDTH_CONTINUE:
 	L808:   add     edi, 2                              //         dest += 2;
 	        inc     ebp                                 //         if (++offset)

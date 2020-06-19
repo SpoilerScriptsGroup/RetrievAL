@@ -6,7 +6,7 @@
 #include <windows.h>
 #include "intrinsic.h"
 #include "IsBadPtr.h"
-#include "PageSize.h"
+#include "page.h"
 
 #pragma intrinsic(__debugbreak)
 
@@ -48,7 +48,7 @@ BOOL __stdcall FillProcessMemory(
 						return TRUE;
 					(LPBYTE)lpDest += nAlign;
 				}
-				if (nCount = nSize >> BSF_PAGE_SIZE)
+				if (nCount = nSize >> PAGE_SHIFT)
 				{
 					do
 					{
@@ -117,7 +117,7 @@ BOOL __stdcall FillProcessMemory16(
 						return TRUE;
 					(LPBYTE)lpDest += nAlign;
 				}
-				if (nCount = nSize >> BSF_PAGE_SIZE)
+				if (nCount = nSize >> PAGE_SHIFT)
 				{
 					do
 					{
@@ -189,7 +189,7 @@ BOOL __stdcall FillProcessMemory32(
 						return TRUE;
 					(LPBYTE)lpDest += nAlign;
 				}
-				if (nCount = nSize >> BSF_PAGE_SIZE)
+				if (nCount = nSize >> PAGE_SHIFT)
 				{
 					do
 					{
@@ -258,7 +258,7 @@ BOOL __stdcall FillProcessMemory64(
 						return TRUE;
 					(LPBYTE)lpDest += nAlign;
 				}
-				if (nCount = nSize >> BSF_PAGE_SIZE)
+				if (nCount = nSize >> PAGE_SHIFT)
 				{
 					do
 					{

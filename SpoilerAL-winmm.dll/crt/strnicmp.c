@@ -17,7 +17,7 @@ int __cdecl _strnicmp(const char *string1, const char *string2, size_t count)
 	return 0;
 }
 #else
-#include "PageSize.h"
+#include "page.h"
 
 static int __cdecl strnicmpSSE2(const char *string1, const char *string2, size_t count);
 static int __cdecl strnicmp386(const char *string1, const char *string2, size_t count);
@@ -87,12 +87,12 @@ __declspec(naked) static int __cdecl strnicmpSSE2(const char *string1, const cha
 		lea     ecx, [esi + ebx]
 		and     edx, 15
 		jnz     byte_loop
-		and     ecx, PAGE_SIZE - 1
+		shl     ecx, 32 - PAGE_SHIFT
 
 		align   16
 	xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 16
-		ja      byte_loop                                   // jump if cross pages
+		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
+		jae     byte_loop                                   // jump if cross pages
 		movdqu  xmm0, xmmword ptr [esi + ebx]               // load 16 byte
 		movdqa  xmm1, xmmword ptr [edi + ebx]               //
 		movdqa  xmm2, xmm0                                  // copy
@@ -116,7 +116,7 @@ __declspec(naked) static int __cdecl strnicmpSSE2(const char *string1, const cha
 		test    ecx, ecx
 		jnz     epilogue
 		lea     ecx, [esi + ebx]
-		and     ecx, PAGE_SIZE - 1
+		shl     ecx, 32 - PAGE_SHIFT
 		jmp     xmmword_loop
 
 		align   16

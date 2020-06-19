@@ -1,5 +1,5 @@
 #include <windows.h>
-#include "PageSize.h"
+#include "page.h"
 
 #ifdef _DEBUG
 #include <assert.h>

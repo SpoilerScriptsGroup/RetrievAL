@@ -2,7 +2,7 @@
 #include "noinline_wchar.h"
 #endif
 #include "FindProcessMemory.h"
-#include "PageSize.h"
+#include "page.h"
 #include <tchar.h>
 
 #ifdef _UNICODE

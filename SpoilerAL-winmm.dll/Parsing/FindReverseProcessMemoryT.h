@@ -1,5 +1,5 @@
 #include "FindReverseProcessMemory.h"
-#include "PageSize.h"
+#include "page.h"
 #include "intrinsic.h"
 #include <tchar.h>
 

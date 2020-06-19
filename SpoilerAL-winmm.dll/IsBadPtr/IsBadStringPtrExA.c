@@ -1,5 +1,5 @@
 #include <windows.h>
-#include "PageSize.h"
+#include "page.h"
 
 #ifdef __BORLANDC__
 EXTERN_C DWORD __stdcall GetProcessId(IN HANDLE Process);

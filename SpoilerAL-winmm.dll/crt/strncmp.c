@@ -17,7 +17,7 @@ int __cdecl strncmp(const char *string1, const char *string2, size_t count)
 	return 0;
 }
 #else
-#include "PageSize.h"
+#include "page.h"
 
 static int __cdecl strncmpSSE2(const char *string1, const char *string2, size_t count);
 static int __cdecl strncmp386(const char *string1, const char *string2, size_t count);
@@ -77,8 +77,8 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		and     eax, 15
 		jz      xmmword_loop
 	dword_check_cross_pages:
-		cmp     ebx, PAGE_SIZE - 4
-		ja      byte_loop                                   // jump if cross pages
+		cmp     ebx, PAGE_SIZE - 3
+		jae     byte_loop                                   // jump if cross pages
 		mov     eax, dword ptr [esi + ebp]
 		mov     edx, dword ptr [edi + ebp]
 		sub     eax, edx
@@ -103,8 +103,8 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 
 		align   16
 	xmmword_loop:
-		cmp     ebx, PAGE_SIZE - 16
-		ja      dword_check_cross_pages                     // jump if cross pages
+		cmp     ebx, PAGE_SIZE - 15
+		jae     dword_check_cross_pages                     // jump if cross pages
 		movdqu  xmm0, xmmword ptr [esi + ebp]
 		movdqa  xmm1, xmmword ptr [edi + ebp]
 		pcmpeqb xmm0, xmm1
@@ -185,12 +185,12 @@ __declspec(naked) static int __cdecl strncmp386(const char *string1, const char 
 		lea     ecx, [esi + ebx]
 		and     eax, 3
 		jnz     byte_loop
-		shl     ecx, 32 - BSF_PAGE_SIZE
+		shl     ecx, 16 - PAGE_SHIFT
 
 		align   16
 	dword_loop:
-		cmp     ecx, (PAGE_SIZE - 4) shl (32 - BSF_PAGE_SIZE)
-		ja      byte_loop                                   // jump if cross pages
+		cmp     cx, -3 shl (16 - PAGE_SHIFT)
+		jae     byte_loop                                   // jump if cross pages
 		mov     eax, dword ptr [esi + ebx]
 		mov     edx, dword ptr [edi + ebx]
 		cmp     eax, edx
@@ -201,7 +201,7 @@ __declspec(naked) static int __cdecl strncmp386(const char *string1, const char 
 		sub     eax, 01010101H
 		add     ecx, ebx
 		xor     edx, -1
-		shl     ecx, 32 - BSF_PAGE_SIZE
+		shl     ecx, 16 - PAGE_SHIFT
 		and     eax, 80808080H
 		and     edx, eax
 		jz      dword_loop

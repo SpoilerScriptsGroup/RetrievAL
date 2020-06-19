@@ -4,7 +4,6 @@
 #include "TMainForm.h"
 #undef MainForm
 #include "verbose.h"
-#include "PageSize.h"
 
 extern void __cdecl ClearGuideBuffer();
 extern void __cdecl DeleteWaitCursor();

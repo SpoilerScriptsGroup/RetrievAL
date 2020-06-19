@@ -16,7 +16,7 @@ char * __cdecl strstr(const char *haystack, const char *needle)
 	return NULL;
 }
 #else
-#include "PageSize.h"
+#include "page.h"
 
 static char * __cdecl strstrSSE42(const char *string1, const char *string2);
 static char * __cdecl strstrSSE2(const char *string1, const char *string2);
@@ -122,8 +122,8 @@ __declspec(naked) static char * __cdecl strstrSSE42(const char *string1, const c
 		add     edi, 16
 		and     ecx, edi
 		add     eax, 16
-		cmp     ecx, PAGE_SIZE - 16
-		ja      byte_compare_loop_entry                     // jump if cross pages
+		cmp     ecx, PAGE_SIZE - 15
+		jae     byte_compare_loop_entry                     // jump if cross pages
 		movdqa  xmm0, xmmword ptr [eax]                     // read 16 bytes of needle
 		pcmpistri xmm0, xmmword ptr [edi], 00011000B        // unsigned bytes, equal each, invert. returns index in ecx
 		jnbe    xmmword_compare_loop                        // jump if not carry flag and not zero flag
@@ -234,8 +234,8 @@ __declspec(naked) static char * __cdecl strstrSSE2(const char *string1, const ch
 		add     edi, 16
 		and     ecx, edi
 		add     eax, 16
-		cmp     ecx, PAGE_SIZE - 16
-		ja      byte_compare_loop_entry                     // jump if cross pages
+		cmp     ecx, PAGE_SIZE - 15
+		jae     byte_compare_loop_entry                     // jump if cross pages
 		movdqu  xmm0, xmmword ptr [edi]
 		movdqa  xmm1, xmmword ptr [eax]
 		pcmpeqb xmm0, xmm1

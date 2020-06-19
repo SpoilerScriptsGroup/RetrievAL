@@ -1586,7 +1586,7 @@
     <ClInclude Include="include\ApplicationMessage.h" />
     <ClInclude Include="include\BuildDate.h" />
     <ClInclude Include="include\noinline_wchar.h" />
-    <ClInclude Include="include\PageSize.h" />
+    <ClInclude Include="include\page.h" />
     <ClInclude Include="intrinsic.h" />
     <ClInclude Include="IsBadPtr\IsBadPtr.h" />
     <ClInclude Include="IsBadPtr\IsBadPtrSource.h" />

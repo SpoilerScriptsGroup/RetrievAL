@@ -2,7 +2,7 @@
 #include "tlhelp32fix.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "TProcessCtrl.h"
-#include "PageSize.h"
+#include "page.h"
 
 BOOL __cdecl VerifyInternalSpecificationOfHeapID()
 {

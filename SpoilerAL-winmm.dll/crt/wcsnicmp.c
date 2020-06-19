@@ -16,7 +16,7 @@ int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *string2, size_t cou
 	return 0;
 }
 #else
-#include "PageSize.h"
+#include "page.h"
 
 static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const wchar_t *string2, size_t count);
 static int __cdecl wcsnicmp386(const wchar_t *string1, const wchar_t *string2, size_t count);
@@ -86,15 +86,15 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 		lea     ecx, [esi + ebx * 2]
 		and     edx, 14
 		jnz     word_loop
+		shl     ecx, 32 - PAGE_SHIFT
 		mov     edx, edi
-		and     ecx, PAGE_SIZE - 1
 		and     edx, 1
 		jnz     unaligned_xmmword_loop
 
 		align   16
 	aligned_xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 16
-		ja      word_loop                                   // jump if cross pages
+		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
+		jae     word_loop                                   // jump if cross pages
 		movdqu  xmm0, xmmword ptr [esi + ebx * 2]           // load 16 byte
 		movdqa  xmm1, xmmword ptr [edi + ebx * 2]           //
 		movdqa  xmm2, xmm0                                  // copy
@@ -118,13 +118,13 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 		test    ecx, ecx
 		jnz     epilogue
 		lea     ecx, [esi + ebx * 2]
-		and     ecx, PAGE_SIZE - 1
+		shl     ecx, 32 - PAGE_SHIFT
 		jmp     aligned_xmmword_loop
 
 		align   16
 	unaligned_xmmword_loop:
-		cmp     ecx, PAGE_SIZE - 16
-		ja      word_loop                                   // jump if cross pages
+		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
+		jae     word_loop                                   // jump if cross pages
 		movdqu  xmm0, xmmword ptr [esi + ebx * 2]           // load 16 byte
 		movdqu  xmm1, xmmword ptr [edi + ebx * 2]           //
 		movdqa  xmm2, xmm0                                  // copy
@@ -148,7 +148,7 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 		test    ecx, ecx
 		jnz     epilogue
 		lea     ecx, [esi + ebx * 2]
-		and     ecx, PAGE_SIZE - 1
+		shl     ecx, 32 - PAGE_SHIFT
 		jmp     unaligned_xmmword_loop
 
 		align   16

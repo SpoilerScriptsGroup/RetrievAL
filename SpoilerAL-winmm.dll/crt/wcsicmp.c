@@ -12,7 +12,7 @@ int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *string2)
 	return ret;
 }
 #else
-#include "PageSize.h"
+#include "page.h"
 
 static int __cdecl wcsicmpSSE2(const wchar_t *string1, const wchar_t *string2);
 static int __cdecl wcsicmp386(const wchar_t *string1, const wchar_t *string2);
@@ -83,8 +83,8 @@ __declspec(naked) static int __cdecl wcsicmpSSE2(const wchar_t *string1, const w
 
 		align   16
 	aligned_xmmword_loop:
-		cmp     edx, PAGE_SIZE - 16
-		ja      word_loop                                   // jump if cross pages
+		cmp     edx, PAGE_SIZE - 15
+		jae     word_loop                                   // jump if cross pages
 		movdqu  xmm0, xmmword ptr [esi + edi]               // load 16 byte
 		movdqa  xmm1, xmmword ptr [edi]                     //
 		movdqa  xmm2, xmm0                                  // copy
@@ -112,8 +112,8 @@ __declspec(naked) static int __cdecl wcsicmpSSE2(const wchar_t *string1, const w
 
 		align   16
 	unaligned_xmmword_loop:
-		cmp     edx, PAGE_SIZE - 16
-		ja      word_loop                                   // jump if cross pages
+		cmp     edx, PAGE_SIZE - 15
+		jae     word_loop                                   // jump if cross pages
 		movdqu  xmm0, xmmword ptr [esi + edi]               // load 16 byte
 		movdqu  xmm1, xmmword ptr [edi]                     //
 		movdqa  xmm2, xmm0                                  // copy

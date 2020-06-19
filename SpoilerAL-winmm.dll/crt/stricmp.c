@@ -12,7 +12,7 @@ int __cdecl _stricmp(const char *string1, const char *string2)
 	return ret;
 }
 #else
-#include "PageSize.h"
+#include "page.h"
 
 static int __cdecl stricmpSSE2(const char *string1, const char *string2);
 static int __cdecl stricmp386(const char *string1, const char *string2);
@@ -80,8 +80,8 @@ __declspec(naked) static int __cdecl stricmpSSE2(const char *string1, const char
 
 		align   16
 	xmmword_loop:
-		cmp     edx, PAGE_SIZE - 16
-		ja      byte_loop                                   // jump if cross pages
+		cmp     edx, PAGE_SIZE - 15
+		jae     byte_loop                                   // jump if cross pages
 		movdqu  xmm0, xmmword ptr [esi + edi]               // load 16 byte
 		movdqa  xmm1, xmmword ptr [edi]                     //
 		movdqa  xmm2, xmm0                                  // copy
@@ -222,11 +222,11 @@ __declspec(naked) static int __cdecl stricmpCPUDispatch(const char *string1, con
 	__asm
 	{
 		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
-		//jne     L1
+		jne     L1
 		mov     dword ptr [stricmpDispatch], offset stricmp386
 		jmp     stricmp386
 
-	//L1:
+	L1:
 		mov     dword ptr [stricmpDispatch], offset stricmpSSE2
 		jmp     stricmpSSE2
 	}

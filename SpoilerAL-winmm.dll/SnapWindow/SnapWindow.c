@@ -9,7 +9,7 @@
 #define SNAP_PIXELS 8
 
 #if !FIXED_ARRAY
-#include "PageSize.h"
+#include "page.h"
 #endif
 
 #ifdef _MSC_VER

@@ -1,7 +1,7 @@
 #include "MoveProcessMemory.h"
 #include "intrinsic.h"
 #include "IsBadPtr.h"
-#include "PageSize.h"
+#include "page.h"
 
 #ifdef __BORLANDC__
 #pragma warn -8060
@@ -134,7 +134,7 @@ static NTSTATUS __stdcall InternalMoveProcessMemory(
 			{
 				size_t nCount;
 
-				if (nCount = nStep >> BSF_PAGE_SIZE)
+				if (nCount = nStep >> PAGE_SHIFT)
 				{
 					nSize--;
 					do

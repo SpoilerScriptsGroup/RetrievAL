@@ -41,7 +41,7 @@
 #include "FillProcessMemory.h"
 #include "FindProcessMemory.h"
 #include "FindReverseProcessMemory.h"
-#include "PageSize.h"
+#include "page.h"
 #include "TranscodeMultiByte.h"
 #include "atoitbl.h"
 #include <assert.h>

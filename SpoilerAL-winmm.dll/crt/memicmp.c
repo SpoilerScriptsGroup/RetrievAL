@@ -15,7 +15,7 @@ int __cdecl _memicmp(const void *buffer1, const void *buffer2, size_t count)
 	return 0;
 }
 #else
-#include "PageSize.h"
+#include "page.h"
 
 static int __cdecl memicmpSSE2(const void *buffer1, const void *buffer2, size_t count);
 static int __cdecl memicmp386(const void *buffer1, const void *buffer2, size_t count);
@@ -60,9 +60,6 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		xor     ebx, -1                                     // ebx = -count - 1
 		and     ebp, 15                                     // ebp = -buffer2 & 15
 		xor     eax, eax                                    // eax = 0
-		movdqa  xmm4, xmmword ptr [upper]
-		movdqa  xmm5, xmmword ptr [azrange]
-		movdqa  xmm6, xmmword ptr [casebit]                 // bit to change
 		jmp     byte_loop_entry
 
 		align   16
@@ -84,11 +81,26 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		jz      epilogue
 		sub     ebp, 1
 		jae     byte_loop
+		movdqa  xmm4, xmmword ptr [upper]
+		movdqa  xmm5, xmmword ptr [azrange]
+		movdqa  xmm6, xmmword ptr [casebit]                 // bit to change
 		mov     edx, 15
 		sub     esi, 15
 		sub     edi, 15
 		add     ebx, 15
-		jc      xmmword_loop_last
+		jnc     xmmword_loop
+		sub     ebx, 15
+
+		align   16
+	xmmword_loop_last:
+		mov     ecx, ebx
+		add     esi, 15
+		add     ecx, esi
+		add     edi, 15
+		shl     ecx, 32 - PAGE_SHIFT
+		xor     edx, edx
+		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
+		jae     byte_loop                                   // jump if cross pages
 
 		align   16
 	xmmword_loop:
@@ -110,18 +122,9 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		jnz     xmmword_not_equal
 		add     ebx, 16
 		jnc     xmmword_loop
-	xmmword_loop_last:
 		sub     ebx, edx
-		jae     epilogue
-		mov     ecx, ebx
-		add     esi, edx
-		add     ecx, esi
-		add     edi, edx
-		and     ecx, PAGE_SIZE - 1
-		xor     edx, edx
-		cmp     ecx, PAGE_SIZE - 16
-		jbe     xmmword_loop
-		jmp     byte_loop                                   // jump if cross pages
+		jb      xmmword_loop_last
+		jmp     epilogue
 
 		align   16
 	xmmword_not_equal:

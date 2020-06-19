@@ -14,7 +14,7 @@ int __cdecl _wmemicmp(const wchar_t *buffer1, const wchar_t *buffer2, size_t cou
 	return 0;
 }
 #else
-#include "PageSize.h"
+#include "page.h"
 
 static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const wchar_t *buffer2, size_t count);
 static int __cdecl wmemicmp386(const wchar_t *buffer1, const wchar_t *buffer2, size_t count);
@@ -59,9 +59,6 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		xor     ebx, -1                                     // ebx = -count - 1
 		and     ebp, 14                                     // ebp = -buffer2 & 14
 		xor     eax, eax                                    // eax = 0
-		movdqa  xmm4, xmmword ptr [upper]
-		movdqa  xmm5, xmmword ptr [azrange]
-		movdqa  xmm6, xmmword ptr [casebit]                 // bit to change
 		jmp     word_loop_entry
 
 		align   16
@@ -83,14 +80,29 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		jz      epilogue
 		sub     ebp, 2
 		jae     word_loop
+		movdqa  xmm4, xmmword ptr [upper]
+		movdqa  xmm5, xmmword ptr [azrange]
+		movdqa  xmm6, xmmword ptr [casebit]                 // bit to change
 		mov     ecx, edi
 		mov     edx, 7
 		sub     esi, 14
 		sub     edi, 14
 		and     ecx, 1
 		jnz     unaligned_xmmword_loop_entry
-		add     ebx, edx
-		jc      aligned_xmmword_loop_last
+		add     ebx, 7
+		jnc     aligned_xmmword_loop
+		sub     ebx, 7
+
+		align   16
+	aligned_xmmword_loop_last:
+		lea     ecx, [ebx + ebx]
+		add     esi, 14
+		add     ecx, esi
+		add     edi, 14
+		shl     ecx, 32 - PAGE_SHIFT
+		xor     edx, edx
+		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
+		jae     word_loop                                   // jump if cross pages
 
 		align   16
 	aligned_xmmword_loop:
@@ -112,24 +124,26 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		jnz     xmmword_not_equal
 		add     ebx, 8
 		jnc     aligned_xmmword_loop
-	aligned_xmmword_loop_last:
 		sub     ebx, edx
-		jae     epilogue
+		jb      aligned_xmmword_loop_last
+		jmp     epilogue
+
+		align   8
+	unaligned_xmmword_loop_entry:
+		add     ebx, 7
+		jnc     unaligned_xmmword_loop
+		sub     ebx, 7
+
+		align   16
+	unaligned_xmmword_loop_last:
 		lea     ecx, [ebx + ebx]
 		add     esi, 14
 		add     ecx, esi
 		add     edi, 14
-		and     ecx, PAGE_SIZE - 1
+		shl     ecx, 32 - PAGE_SHIFT
 		xor     edx, edx
-		cmp     ecx, PAGE_SIZE - 16
-		jbe     aligned_xmmword_loop
-		jmp     word_loop                                   // jump if cross pages
-
-		align   8
-		nop __asm nop __asm nop __asm nop                   // padding 4 byte
-	unaligned_xmmword_loop_entry:
-		add     ebx, edx
-		jc      unaligned_xmmword_loop_last
+		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
+		jae     word_loop                                   // jump if cross pages
 
 		align   16
 	unaligned_xmmword_loop:
@@ -151,18 +165,9 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		jnz     xmmword_not_equal
 		add     ebx, 8
 		jnc     unaligned_xmmword_loop
-	unaligned_xmmword_loop_last:
 		sub     ebx, edx
-		jae     epilogue
-		lea     ecx, [ebx + ebx]
-		add     esi, 14
-		add     ecx, esi
-		add     edi, 14
-		and     ecx, PAGE_SIZE - 1
-		xor     edx, edx
-		cmp     ecx, PAGE_SIZE - 16
-		jbe     unaligned_xmmword_loop
-		jmp     word_loop                                   // jump if cross pages
+		jb      unaligned_xmmword_loop_last
+		jmp     epilogue
 
 		align   16
 	xmmword_not_equal:

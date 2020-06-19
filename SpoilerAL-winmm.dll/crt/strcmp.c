@@ -13,7 +13,7 @@ int __cdecl strcmp(const char *string1, const char *string2)
 	return (int)c1 - (int)c2;
 }
 #else
-#include "PageSize.h"
+#include "page.h"
 
 static int __cdecl strcmpSSE42(const char *string1, const char *string2);
 static int __cdecl strcmpSSE2(const char *string1, const char *string2);
@@ -67,8 +67,8 @@ __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char
 		test    eax, 15                                     // use only eax for 'test reg, imm'
 		jz      xmmword_loop
 	dword_check_cross_pages:
-		cmp     edi, PAGE_SIZE - 4
-		ja      byte_loop                                   // jump if cross pages
+		cmp     edi, PAGE_SIZE - 3
+		jae     byte_loop                                   // jump if cross pages
 		mov     ecx, dword ptr [eax + esi]
 		mov     edx, dword ptr [eax]
 		cmp     ecx, edx
@@ -97,8 +97,8 @@ __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char
 
 		align   16
 	xmmword_loop:
-		cmp     edi, PAGE_SIZE - 16
-		ja      dword_check_cross_pages                     // jump if cross pages
+		cmp     edi, PAGE_SIZE - 15
+		jae     dword_check_cross_pages                     // jump if cross pages
 		movdqu  xmm0, xmmword ptr [eax + esi]               // read 16 bytes of string1
 		pcmpistri xmm0, xmmword ptr [eax], 00011000B        // unsigned bytes, equal each, invert. returns index in ecx
 		jc      xmmword_not_equal
@@ -160,8 +160,8 @@ __declspec(naked) static int __cdecl strcmpSSE2(const char *string1, const char 
 		test    eax, 15                                     // use only eax for 'test reg, imm'
 		jz      xmmword_loop
 	dword_check_cross_pages:
-		cmp     edi, PAGE_SIZE - 4
-		ja      byte_loop                                   // jump if cross pages
+		cmp     edi, PAGE_SIZE - 3
+		jae     byte_loop                                   // jump if cross pages
 		mov     ecx, dword ptr [eax + esi]
 		mov     edx, dword ptr [eax]
 		cmp     ecx, edx
@@ -190,8 +190,8 @@ __declspec(naked) static int __cdecl strcmpSSE2(const char *string1, const char 
 
 		align   16
 	xmmword_loop:
-		cmp     edi, PAGE_SIZE - 16
-		ja      dword_check_cross_pages                     // jump if cross pages
+		cmp     edi, PAGE_SIZE - 15
+		jae     dword_check_cross_pages                     // jump if cross pages
 		movdqu  xmm0, xmmword ptr [eax + esi]
 		movdqa  xmm1, xmmword ptr [eax]
 		pcmpeqb xmm0, xmm1
@@ -266,8 +266,8 @@ __declspec(naked) static int __cdecl strcmpGeneric(const char *string1, const ch
 
 		align   16
 	dword_loop:
-		cmp     edi, PAGE_SIZE - 4
-		ja      byte_loop                                   // jump if cross pages
+		cmp     edi, PAGE_SIZE - 3
+		jae     byte_loop                                   // jump if cross pages
 		mov     ecx, dword ptr [eax + esi]
 		mov     edx, dword ptr [eax]
 		cmp     ecx, edx

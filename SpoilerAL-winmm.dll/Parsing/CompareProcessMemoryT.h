@@ -3,7 +3,7 @@
 #endif
 #include "CompareProcessMemory.h"
 #include "intrinsic.h"
-#include "PageSize.h"
+#include "page.h"
 #include "IsBadPtr.h"
 #include <tchar.h>
 

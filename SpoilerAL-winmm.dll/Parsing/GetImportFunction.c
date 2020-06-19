@@ -7,7 +7,7 @@
 #define PSAPI_VERSION 1
 #include <psapi.h>
 #pragma comment(lib, "psapi.lib")
-#include "PageSize.h"
+#include "page.h"
 
 #ifdef _DEBUG
 #include <assert.h>

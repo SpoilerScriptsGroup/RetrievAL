@@ -1,6 +1,6 @@
 #include <windows.h>
 #include <assert.h>
-#include "PageSize.h"
+#include "page.h"
 
 #define IsReadableProtect(Protect) ( \
     ((Protect) & (                   \

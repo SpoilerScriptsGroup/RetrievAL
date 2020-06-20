@@ -317,12 +317,12 @@ do                                      \
 #define NPAD2(addr) \
     *(LPWORD)(addr) = OPCODE_NOP_X2
 
-// db 0FH, 1FH, 00H
-#define NPAD3(addr)                                                                       \
-do                                                                                        \
-{                                                                                         \
-    if (~(addr) & 3) { *(LPWORD)(addr) = BSWAP16(0x0F1F); *(LPBYTE)((addr) + 2) = 0x00; } \
-    else             { *(LPBYTE)(addr) = 0x0F; *(LPWORD)((addr) + 1) = BSWAP16(0x1F00); } \
+// db 66H, 66H, 90H
+#define NPAD3(addr)                                                                             \
+do                                                                                              \
+{                                                                                               \
+    if (((addr) & 3) != 3) { *(LPWORD)(addr) = BSWAP16(0x6666); *(LPBYTE)((addr) + 2) = 0x90; } \
+    else                   { *(LPBYTE)(addr) = 0x66; *(LPWORD)((addr) + 1) = BSWAP16(0x6690); } \
 } while (0)
 
 // db 0FH, 1FH, 40H, 00H
@@ -330,11 +330,11 @@ do                                                                              
     *(LPDWORD)(addr) = OPCODE_NOP_X4
 
 // db 0FH, 1FH, 44H, 00H, 00H
-#define NPAD5(addr)                                                                            \
-do                                                                                             \
-{                                                                                              \
-    if (~(addr) & 3) { *(LPDWORD)(addr) = BSWAP32(0x0F1F4400); *(LPBYTE)((addr) + 4) = 0x00; } \
-    else             { *(LPBYTE)(addr) = 0x0F; *(LPDWORD)((addr) + 1) = BSWAP32(0x1F440000); } \
+#define NPAD5(addr)                                                                                  \
+do                                                                                                   \
+{                                                                                                    \
+    if (((addr) & 3) != 3) { *(LPDWORD)(addr) = BSWAP32(0x0F1F4400); *(LPBYTE)((addr) + 4) = 0x00; } \
+    else                   { *(LPBYTE)(addr) = 0x0F; *(LPDWORD)((addr) + 1) = BSWAP32(0x1F440000); } \
 } while (0)
 
 // db 66H, 0FH, 1FH, 44H, 00H, 00H
@@ -364,11 +364,11 @@ do                                                \
 } while (0)
 
 // db 66H, 0FH, 1FH, 84H, 00H, 00H, 00H, 00H, 00H
-#define NPAD9(addr)                                                                                                                          \
-do                                                                                                                                           \
-{                                                                                                                                            \
-    if (~(addr) & 3) { *(LPDWORD)(addr) = BSWAP32(0x660F1F84); *(LPDWORD)((addr) + 4) = BSWAP32(0x00000000); *(LPBYTE)((addr) + 8) = 0x00; } \
-    else             { *(LPBYTE)(addr) = 0x66; *(LPDWORD)((addr) + 1) = BSWAP32(0x0F1F8400); *(LPDWORD)((addr) + 5) = BSWAP32(0x00000000); } \
+#define NPAD9(addr)                                                                                                                                \
+do                                                                                                                                                 \
+{                                                                                                                                                  \
+    if (((addr) & 3) != 3) { *(LPDWORD)(addr) = BSWAP32(0x660F1F84); *(LPDWORD)((addr) + 4) = BSWAP32(0x00000000); *(LPBYTE)((addr) + 8) = 0x00; } \
+    else                   { *(LPBYTE)(addr) = 0x66; *(LPDWORD)((addr) + 1) = BSWAP32(0x0F1F8400); *(LPDWORD)((addr) + 5) = BSWAP32(0x00000000); } \
 } while (0)
 
 // db 66H, 66H, 0FH, 1FH, 84H, 00H, 00H, 00H, 00H, 00H
@@ -399,11 +399,11 @@ do                                                \
 } while (0)
 
 // db 0FH, 1FH, 40H, 00H, 66H, 0FH, 1FH, 84H, 00H, 00H, 00H, 00H, 00H
-#define NPAD13(addr)                                                                                                                                                                        \
-do                                                                                                                                                                                          \
-{                                                                                                                                                                                           \
-    if (~(addr) & 3) { *(LPDWORD)(addr) = BSWAP32(0x0F1F4000); *(LPDWORD)((addr) + 4) = BSWAP32(0x660F1F84); *(LPDWORD)((addr) + 8) = BSWAP32(0x00000000); *(LPBYTE)((addr) + 12) = 0x00; } \
-    else             { *(LPBYTE)(addr) = 0x0F; *(LPDWORD)((addr) + 1) = BSWAP32(0x1F400066); *(LPDWORD)((addr) + 5) = BSWAP32(0x0F1F8400); *(LPDWORD)((addr) + 9) = BSWAP32(0x00000000);  } \
+#define NPAD13(addr)                                                                                                                                                                              \
+do                                                                                                                                                                                                \
+{                                                                                                                                                                                                 \
+    if (((addr) & 3) != 3) { *(LPDWORD)(addr) = BSWAP32(0x0F1F4000); *(LPDWORD)((addr) + 4) = BSWAP32(0x660F1F84); *(LPDWORD)((addr) + 8) = BSWAP32(0x00000000); *(LPBYTE)((addr) + 12) = 0x00; } \
+    else                   { *(LPBYTE)(addr) = 0x0F; *(LPDWORD)((addr) + 1) = BSWAP32(0x1F400066); *(LPDWORD)((addr) + 5) = BSWAP32(0x0F1F8400); *(LPDWORD)((addr) + 9) = BSWAP32(0x00000000);  } \
 } while (0)
 
 // db 0FH, 1FH, 40H, 00H, 66H, 66H, 0FH, 1FH, 84H, 00H, 00H, 00H, 00H, 00H
@@ -1881,7 +1881,7 @@ static __inline void AttachStringReference() {
 
 	// TSSGCtrl::AddressAttributeFilter
 	SET_PROC(0x005041B3, TSSGCtrl_AddressAttributeFilter_GetOffsetCode);
-	*(LPBYTE)0x005041EE = OPCODE_JMP_REL8;// omit dtor AddressStr	
+	*(LPBYTE)0x005041EE = OPCODE_JMP_REL8;// omit dtor AddressStr
 }
 
 void __cdecl Attach_SubjectStringTable()

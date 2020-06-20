@@ -143,7 +143,7 @@ void __fastcall ShowToolTip(LPCSTR lpText, HICON hIcon)
 		dwTrackPos = ToClientPos(GetMessagePos());
 		lpTitle = hIcon == (HICON)TTI_INFO ? "èÓïÒ" : NULL;
 	}
-	SetWindowPos(hToolTip, dwTrackPos ? HWND_NOTOPMOST : HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+	SetWindowPos(hToolTip, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 	SendMessageA(hToolTip, TTM_SETTITLEA, (WPARAM)hIcon, (LPARAM)lpTitle);
 	ti.lpszText = (LPSTR)lpText;
 	SendMessageA(hToolTip, TTM_UPDATETIPTEXTA, 0, (LPARAM)&ti);

@@ -45,13 +45,12 @@ __declspec(naked) static LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LP
 		#define offsetof_RECT_right           8
 		#define offsetof_RECT_bottom          12
 
-		mov     eax, dword ptr [nCode]                                      // if (nCode < 0)
-		sub     esp, 16                                                     //     return CallNextHookEx(hHook, nCode, wParam, lParam);
-		test    eax, eax
-		js      L1
+		cmp     dword ptr [nCode], 0                                        // if (nCode < 0)
+		jl      L1                                                          //     return CallNextHookEx(hHook, nCode, wParam, lParam);
 		call    GetCapture                                                  // if (GetCapture() == hWnd)
-		cmp     eax, dword ptr [hWnd]
+		cmp     dword ptr [hWnd], eax
 		jne     L3                                                          // {
+		sub     esp, 16                                                     //     RECT rc;
 		push    esp                                                         //     if (GetWindowRect(hWnd, &rc) && PtInRect(&rc, ((MOUSEHOOKSTRUCT *)lParam)->pt))
 		push    eax
 		call    GetWindowRect
@@ -68,31 +67,29 @@ __declspec(naked) static LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LP
 		jl      L2
 		cmp     ecx, dword ptr [esp + offsetof_RECT_bottom]
 		jge     L2
+		add     esp, 16
+
+		align   16
 	L1:
 		mov     eax, dword ptr [hHook]                                      //         return CallNextHookEx(hHook, nCode, wParam, lParam);
-		mov     ecx, dword ptr [nCode + 16]
-		mov     dword ptr [esp     ], eax
-		mov     dword ptr [esp +  4], ecx
-		mov     eax, dword ptr [wParam + 16]
-		mov     ecx, dword ptr [lParam + 16]
-		mov     dword ptr [esp +  8], eax
-		mov     dword ptr [esp + 12], ecx
-		call    CallNextHookEx
-		ret     12
+		pop     ecx
+		push    eax
+		push    ecx
+		jmp     CallNextHookEx
 
 		align   16
 	L2:
-		call    ReleaseCapture                                              //     ReleaseCapture();
-		                                                                    // }
+		add     esp, 16                                                     //     ReleaseCapture();
+		call    ReleaseCapture                                              // }
 	L3:
-		mov     eax, dword ptr [hHook]                                      // lResult = CallNextHookEx(hHook, nCode, wParam, lParam);
-		mov     ecx, dword ptr [nCode + 16]
-		mov     dword ptr [esp     ], eax
-		mov     dword ptr [esp +  4], ecx
-		mov     eax, dword ptr [wParam + 16]
-		mov     ecx, dword ptr [lParam + 16]
-		mov     dword ptr [esp +  8], eax
-		mov     dword ptr [esp + 12], ecx
+		mov     eax, dword ptr [lParam]                                     // lResult = CallNextHookEx(hHook, nCode, wParam, lParam);
+		mov     ecx, dword ptr [wParam]
+		push    eax
+		push    ecx
+		mov     eax, dword ptr [nCode + 8]
+		mov     ecx, dword ptr [hHook]
+		push    eax
+		push    ecx
 		call    CallNextHookEx
 		mov     ecx, dword ptr [hHook]                                      // UnhookWindowsHookEx(hHook);
 		push    eax

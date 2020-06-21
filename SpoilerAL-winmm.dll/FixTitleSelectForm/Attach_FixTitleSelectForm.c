@@ -6,8 +6,13 @@
 EXTERN_C void __cdecl TTitleSelectForm_TitleDGridActivateHint();
 EXTERN_C void __cdecl TTitleSelectForm_FindLBoxActivateHint();
 
-#define JMP_REL32 (BYTE)0xE9
+#define PUSH_ECX  (BYTE)0x51
 #define NOP       (BYTE)0x90
+#define RET_IMM16 (BYTE)0xC2
+#define JMP_REL32 (BYTE)0xE9
+#define JMP_REL8  (BYTE)0xEB
+
+#define MAKEDWORD(a, b, c, d) (DWORD)MAKELONG(MAKEWORD(a, b), MAKEWORD(c, d))
 
 EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 {
@@ -26,9 +31,21 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	*(LPBYTE )0x004783CB = 0x85;
 
 	/*
+		jmp     004783F0H                               ; 004783E2 _ EB, 0C
+	*/
+	*(LPWORD )0x004783E2 = MAKEWORD(JMP_REL8, 0x004783F0 - (0x004783E2 + 2));
+	*(LPDWORD)0x004783E4 = MAKEDWORD(NOP, NOP, NOP, NOP);
+
+	/*
 		call    TTitleSelectForm_TitleDGridActivateHint ; 00479066 _ E8, ????????
 	*/
 	*(LPDWORD)(0x00479066 + 1) = (DWORD)TTitleSelectForm_TitleDGridActivateHint - (0x00479066 + 1 + sizeof(DWORD));
+
+	// TTitleSelectForm::KeyDGridMouseMove
+	/*
+		ret     8                                       ; 0047937C _ C2, 0008
+	*/
+	*(LPDWORD)0x0047937C = RET_IMM16 | (0x0008 << 8) | (PUSH_ECX << 24);
 
 	// TTitleSelectForm::FindLBoxMouseMove
 	/*

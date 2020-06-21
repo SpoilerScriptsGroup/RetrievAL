@@ -144,19 +144,19 @@ static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 			{
 				do	// do { ... } while (0);
 				{
-					if (!(flags & HORZ) || pRect->top > rect.bottom || pRect->bottom < rect.top)
+					if (!(flags & HORZ) || pRect->top >= rect.bottom || pRect->bottom < rect.top)
 						break;
 					if (fwSide == WMSZ_LEFT || fwSide == WMSZ_TOPLEFT || fwSide == WMSZ_BOTTOMLEFT)
-						if (pRect->left >= rect.left - SNAP_PIXELS && pRect->left <= rect.left + SNAP_PIXELS)
+						if (pRect->left >= rect.left - SNAP_PIXELS && pRect->left < rect.left + SNAP_PIXELS)
 							pRect->left = rect.left;
-						else if (pRect->left >= rect.right - SNAP_PIXELS && pRect->left <= rect.right + SNAP_PIXELS)
+						else if (pRect->left >= rect.right - SNAP_PIXELS && pRect->left < rect.right + SNAP_PIXELS)
 							pRect->left = rect.right;
 						else
 							break;
 					else if (fwSide == WMSZ_RIGHT || fwSide == WMSZ_TOPRIGHT || fwSide == WMSZ_BOTTOMRIGHT)
-						if (pRect->right >= rect.left - SNAP_PIXELS && pRect->right <= rect.left + SNAP_PIXELS)
+						if (pRect->right >= rect.left - SNAP_PIXELS && pRect->right < rect.left + SNAP_PIXELS)
 							pRect->right = rect.left;
-						else if (pRect->right >= rect.right - SNAP_PIXELS && pRect->right <= rect.right + SNAP_PIXELS)
+						else if (pRect->right >= rect.right - SNAP_PIXELS && pRect->right < rect.right + SNAP_PIXELS)
 							pRect->right = rect.right;
 						else
 							break;
@@ -164,19 +164,19 @@ static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 						break;
 					flags &= ~HORZ;
 				} while (0);
-				if (!(flags & VERT) || pRect->left > rect.right || pRect->right < rect.left)
+				if (!(flags & VERT) || pRect->left >= rect.right || pRect->right < rect.left)
 					break;
 				if (fwSide >= WMSZ_TOP && fwSide <= WMSZ_TOPRIGHT)
-					if (pRect->top >= rect.top - SNAP_PIXELS && pRect->top <= rect.top + SNAP_PIXELS)
+					if (pRect->top >= rect.top - SNAP_PIXELS && pRect->top < rect.top + SNAP_PIXELS)
 						pRect->top = rect.top;
-					else if (pRect->top >= rect.bottom - SNAP_PIXELS && pRect->top <= rect.bottom + SNAP_PIXELS)
+					else if (pRect->top >= rect.bottom - SNAP_PIXELS && pRect->top < rect.bottom + SNAP_PIXELS)
 						pRect->top = rect.bottom;
 					else
 						break;
 				else if (fwSide >= WMSZ_BOTTOM && fwSide <= WMSZ_BOTTOMRIGHT)
-					if (pRect->bottom >= rect.top - SNAP_PIXELS && pRect->bottom <= rect.top + SNAP_PIXELS)
+					if (pRect->bottom >= rect.top - SNAP_PIXELS && pRect->bottom < rect.top + SNAP_PIXELS)
 						pRect->bottom = rect.top;
-					else if (pRect->bottom >= rect.bottom - SNAP_PIXELS && pRect->bottom <= rect.bottom + SNAP_PIXELS)
+					else if (pRect->bottom >= rect.bottom - SNAP_PIXELS && pRect->bottom < rect.bottom + SNAP_PIXELS)
 						pRect->bottom = rect.bottom;
 					else
 						break;
@@ -207,22 +207,22 @@ static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 		{
 			if (fwSide == WMSZ_LEFT || fwSide == WMSZ_TOPLEFT || fwSide == WMSZ_BOTTOMLEFT)
 			{
-				if (pRect->left >= mi.rcWork.left - SNAP_PIXELS && pRect->left <= mi.rcWork.left + SNAP_PIXELS)
+				if (pRect->left >= mi.rcWork.left - SNAP_PIXELS && pRect->left < mi.rcWork.left + SNAP_PIXELS)
 					pRect->left = mi.rcWork.left;
 			}
 			else if (fwSide == WMSZ_RIGHT || fwSide == WMSZ_TOPRIGHT || fwSide == WMSZ_BOTTOMRIGHT)
 			{
-				if (pRect->right >= mi.rcWork.right - SNAP_PIXELS && pRect->right <= mi.rcWork.right + SNAP_PIXELS)
+				if (pRect->right >= mi.rcWork.right - SNAP_PIXELS && pRect->right < mi.rcWork.right + SNAP_PIXELS)
 					pRect->right = mi.rcWork.right;
 			}
 			if (fwSide >= WMSZ_TOP && fwSide <= WMSZ_TOPRIGHT)
 			{
-				if (pRect->top >= mi.rcWork.top - SNAP_PIXELS && pRect->top <= mi.rcWork.top + SNAP_PIXELS)
+				if (pRect->top >= mi.rcWork.top - SNAP_PIXELS && pRect->top < mi.rcWork.top + SNAP_PIXELS)
 					pRect->top = mi.rcWork.top;
 			}
 			else if (fwSide >= WMSZ_BOTTOM && fwSide <= WMSZ_BOTTOMRIGHT)
 			{
-				if (pRect->bottom >= mi.rcWork.bottom - SNAP_PIXELS && pRect->bottom <= mi.rcWork.bottom + SNAP_PIXELS)
+				if (pRect->bottom >= mi.rcWork.bottom - SNAP_PIXELS && pRect->bottom < mi.rcWork.bottom + SNAP_PIXELS)
 					pRect->bottom = mi.rcWork.bottom;
 			}
 		}
@@ -295,24 +295,24 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 			{
 				do	// do { ... } while (0);
 				{
-					if (!(flags & HORZ) || pRect->top > rect.bottom || pRect->bottom < rect.top)
+					if (!(flags & HORZ) || pRect->top >= rect.bottom || pRect->bottom < rect.top)
 						break;
-					if (pRect->left >= rect.left - SNAP_PIXELS && pRect->left <= rect.left + SNAP_PIXELS)
+					if (pRect->left >= rect.left - SNAP_PIXELS && pRect->left < rect.left + SNAP_PIXELS)
 					{
 						pRect->right += rect.left - pRect->left;
 						pRect->left = rect.left;
 					}
-					else if (pRect->left >= rect.right - SNAP_PIXELS && pRect->left <= rect.right + SNAP_PIXELS)
+					else if (pRect->left >= rect.right - SNAP_PIXELS && pRect->left < rect.right + SNAP_PIXELS)
 					{
 						pRect->right += rect.right - pRect->left;
 						pRect->left = rect.right;
 					}
-					else if (pRect->right >= rect.left - SNAP_PIXELS && pRect->right <= rect.left + SNAP_PIXELS)
+					else if (pRect->right >= rect.left - SNAP_PIXELS && pRect->right < rect.left + SNAP_PIXELS)
 					{
 						pRect->left += rect.left - pRect->right;
 						pRect->right = rect.left;
 					}
-					else if (pRect->right >= rect.right - SNAP_PIXELS && pRect->right <= rect.right + SNAP_PIXELS)
+					else if (pRect->right >= rect.right - SNAP_PIXELS && pRect->right < rect.right + SNAP_PIXELS)
 					{
 						pRect->left += rect.right - pRect->right;
 						pRect->right = rect.right;
@@ -321,24 +321,24 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 						break;
 					flags &= ~HORZ;
 				} while (0);
-				if (!(flags & VERT) || pRect->left > rect.right || pRect->right < rect.left)
+				if (!(flags & VERT) || pRect->left >= rect.right || pRect->right < rect.left)
 					break;
-				if (pRect->top >= rect.top - SNAP_PIXELS && pRect->top <= rect.top + SNAP_PIXELS)
+				if (pRect->top >= rect.top - SNAP_PIXELS && pRect->top < rect.top + SNAP_PIXELS)
 				{
 					pRect->bottom += rect.top - pRect->top;
 					pRect->top = rect.top;
 				}
-				else if (pRect->top >= rect.bottom - SNAP_PIXELS && pRect->top <= rect.bottom + SNAP_PIXELS)
+				else if (pRect->top >= rect.bottom - SNAP_PIXELS && pRect->top < rect.bottom + SNAP_PIXELS)
 				{
 					pRect->bottom += rect.bottom - pRect->top;
 					pRect->top = rect.bottom;
 				}
-				else if (pRect->bottom >= rect.top - SNAP_PIXELS && pRect->bottom <= rect.top + SNAP_PIXELS)
+				else if (pRect->bottom >= rect.top - SNAP_PIXELS && pRect->bottom < rect.top + SNAP_PIXELS)
 				{
 					pRect->top += rect.top - pRect->bottom;
 					pRect->bottom = rect.top;
 				}
-				else if (pRect->bottom >= rect.bottom - SNAP_PIXELS && pRect->bottom <= rect.bottom + SNAP_PIXELS)
+				else if (pRect->bottom >= rect.bottom - SNAP_PIXELS && pRect->bottom < rect.bottom + SNAP_PIXELS)
 				{
 					pRect->top += rect.bottom - pRect->bottom;
 					pRect->bottom = rect.bottom;
@@ -368,22 +368,22 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 		mi.cbSize = sizeof(mi);
 		if (GetMonitorInfo(hMonitor, &mi))
 		{
-			if (pRect->left >= mi.rcWork.left - SNAP_PIXELS && pRect->left <= mi.rcWork.left + SNAP_PIXELS)
+			if (pRect->left >= mi.rcWork.left - SNAP_PIXELS && pRect->left < mi.rcWork.left + SNAP_PIXELS)
 			{
 				pRect->right += mi.rcWork.left - pRect->left;
 				pRect->left = mi.rcWork.left;
 			}
-			else if (pRect->right >= mi.rcWork.right - SNAP_PIXELS && pRect->right <= mi.rcWork.right + SNAP_PIXELS)
+			else if (pRect->right >= mi.rcWork.right - SNAP_PIXELS && pRect->right < mi.rcWork.right + SNAP_PIXELS)
 			{
 				pRect->left += mi.rcWork.right - pRect->right;
 				pRect->right = mi.rcWork.right;
 			}
-			if (pRect->top >= mi.rcWork.top - SNAP_PIXELS && pRect->top <= mi.rcWork.top + SNAP_PIXELS)
+			if (pRect->top >= mi.rcWork.top - SNAP_PIXELS && pRect->top < mi.rcWork.top + SNAP_PIXELS)
 			{
 				pRect->bottom += mi.rcWork.top - pRect->top;
 				pRect->top = mi.rcWork.top;
 			}
-			else if (pRect->bottom >= mi.rcWork.bottom - SNAP_PIXELS && pRect->bottom <= mi.rcWork.bottom + SNAP_PIXELS)
+			else if (pRect->bottom >= mi.rcWork.bottom - SNAP_PIXELS && pRect->bottom < mi.rcWork.bottom + SNAP_PIXELS)
 			{
 				pRect->top += mi.rcWork.bottom - pRect->bottom;
 				pRect->bottom = mi.rcWork.bottom;

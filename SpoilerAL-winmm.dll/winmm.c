@@ -317,7 +317,7 @@ static BOOL __cdecl ModifyCodeSection()
 	EXTERN_C void __cdecl Attach_FixFindName();
 	EXTERN_C void __cdecl Attach_FixClearChild();
 	EXTERN_C void __cdecl FixMaskBytes();
-	EXTERN_C void __cdecl Attach_FixSortTitle();
+	EXTERN_C void __cdecl Attach_FixTitleSelectForm();
 
 	DWORD dwProtect;
 
@@ -368,7 +368,7 @@ static BOOL __cdecl ModifyCodeSection()
 	Attach_FixFindName();
 	Attach_FixClearChild();
 	FixMaskBytes();
-	Attach_FixSortTitle();
+	Attach_FixTitleSelectForm();
 	return VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_EXECUTE_READ, &dwProtect);
 }
 

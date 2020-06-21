@@ -133,11 +133,11 @@
     <Filter Include="FixSingleInstance">
       <UniqueIdentifier>{79d94f2e-07ec-400c-9674-8139adef3831}</UniqueIdentifier>
     </Filter>
-    <Filter Include="FixSortTitle">
-      <UniqueIdentifier>{a1d8747c-74de-4262-8fe0-b6ef5536bfbe}</UniqueIdentifier>
-    </Filter>
     <Filter Include="FixSplitElement">
       <UniqueIdentifier>{ba219a63-7d67-4397-888d-dfc517d753e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FixTitleSelectForm">
+      <UniqueIdentifier>{a1d8747c-74de-4262-8fe0-b6ef5536bfbe}</UniqueIdentifier>
     </Filter>
     <Filter Include="FixToggleByteArray">
       <UniqueIdentifier>{3fb32ca3-98f5-4a95-8b4a-f7b6c0cddc4a}</UniqueIdentifier>
@@ -1422,17 +1422,23 @@
     <ClCompile Include="FixSingleInstance\IsSingleInstance.c">
       <Filter>FixSingleInstance</Filter>
     </ClCompile>
-    <ClCompile Include="FixSortTitle\Attach_FixSortTitle.c">
-      <Filter>FixSortTitle</Filter>
-    </ClCompile>
-    <ClCompile Include="FixSortTitle\LCMapStringJISX0213.c">
-      <Filter>FixSortTitle</Filter>
-    </ClCompile>
     <ClCompile Include="FixSplitElement\Attach_FixSplitElement.c">
       <Filter>FixSplitElement</Filter>
     </ClCompile>
     <ClCompile Include="FixSplitElement\SplitElement.c">
       <Filter>FixSplitElement</Filter>
+    </ClCompile>
+    <ClCompile Include="FixTitleSelectForm\Attach_FixTitleSelectForm.c">
+      <Filter>FixTitleSelectForm</Filter>
+    </ClCompile>
+    <ClCompile Include="FixTitleSelectForm\LCMapStringJISX0213.c">
+      <Filter>FixTitleSelectForm</Filter>
+    </ClCompile>
+    <ClCompile Include="FixTitleSelectForm\TTitleSelectForm_FindLBoxActivateHint.c">
+      <Filter>FixTitleSelectForm</Filter>
+    </ClCompile>
+    <ClCompile Include="FixTitleSelectForm\TTitleSelectForm_TitleDGridActivateHint.c">
+      <Filter>FixTitleSelectForm</Filter>
     </ClCompile>
     <ClCompile Include="FixToggleByteArray\Attach_FixToggleByteArray.c">
       <Filter>FixToggleByteArray</Filter>

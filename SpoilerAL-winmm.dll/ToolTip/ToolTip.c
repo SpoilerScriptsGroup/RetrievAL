@@ -50,7 +50,7 @@ void __cdecl DestroyToolTip()
 	bActive = FALSE;
 }
 
-DWORD __stdcall ToClientPos(DWORD dwPos)
+static DWORD __stdcall ToClientPos(DWORD dwPos)
 {
 	HWND hWnd;
 
@@ -69,7 +69,7 @@ DWORD __stdcall ToClientPos(DWORD dwPos)
 	return dwPos;
 }
 
-__inline DWORD GetFocusedPos()
+static __inline DWORD GetFocusedPos()
 {
 	DWORD  dwMessagePos;
 	HWND   hWnd;
@@ -154,7 +154,7 @@ void __fastcall ShowToolTip(LPCSTR lpText, HICON hIcon)
 	hHook = SetWindowsHookExA(WH_CBT, CBTProc, GetModuleHandleA(NULL), GetCurrentThreadId());
 }
 
-__inline void HideToolTip()
+static __inline void HideToolTip()
 {
 	if (bActive)
 		SendMessageA(hToolTip, TTM_TRACKACTIVATE, bActive = FALSE, (LPARAM)&ti);
@@ -173,7 +173,7 @@ static LRESULT CALLBACK CBTProc(int nCode, WPARAM wParam, LPARAM lParam)
 			break;
 	case HCBT_CLICKSKIPPED:
 		HideToolTip();
-		return FALSE;
+		return 0;
 	}
 	return CallNextHookEx(hHook, nCode, wParam, lParam);
 }

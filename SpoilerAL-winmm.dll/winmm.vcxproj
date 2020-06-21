@@ -1035,10 +1035,12 @@
     <ClCompile Include="FixRepeat\TSSGCtrl_ReadSSRFile_DestReserve.c" />
     <ClCompile Include="FixSingleInstance\Attach_FixSingleInstance.c" />
     <ClCompile Include="FixSingleInstance\IsSingleInstance.c" />
-    <ClCompile Include="FixSortTitle\Attach_FixSortTitle.c" />
-    <ClCompile Include="FixSortTitle\LCMapStringJISX0213.c" />
     <ClCompile Include="FixSplitElement\Attach_FixSplitElement.c" />
     <ClCompile Include="FixSplitElement\SplitElement.c" />
+    <ClCompile Include="FixTitleSelectForm\Attach_FixTitleSelectForm.c" />
+    <ClCompile Include="FixTitleSelectForm\LCMapStringJISX0213.c" />
+    <ClCompile Include="FixTitleSelectForm\TTitleSelectForm_FindLBoxActivateHint.c" />
+    <ClCompile Include="FixTitleSelectForm\TTitleSelectForm_TitleDGridActivateHint.c" />
     <ClCompile Include="FixToggleByteArray\Attach_FixToggleByteArray.c" />
     <ClCompile Include="FixToggleByteArray\FixToggleByteArray.c" />
     <ClCompile Include="FixTraceAndCopy\Attach_FixTraceAndCopy.c" />

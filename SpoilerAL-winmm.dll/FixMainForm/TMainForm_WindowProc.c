@@ -20,7 +20,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 		int x;
 
 		x = GET_X_LPARAM(lParam);
-		if (x >= MainForm->Splitter->Left && x <= MainForm->Splitter->Left + MainForm->Splitter->Width)
+		if (x >= MainForm->Splitter->Left && x < MainForm->Splitter->Left + MainForm->Splitter->Width)
 			TMainForm_SplitterLButtonDownX = LOWORD(lParam);
 		else
 			TMainForm_SplitterLButtonDownX = MAXDWORD;
@@ -33,7 +33,9 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 		TMainForm_SplitterLButtonDownX = MAXDWORD;
 		if (x <= MAXWORD && (WORD)x != LOWORD(lParam) && GetCapture() == hWnd)
 		{
-			LRESULT lResult = CallWindowProcA(TMainForm_PrevWindowProc, hwnd, WM_LBUTTONUP, wParam, lParam);
+			LRESULT lResult;
+
+			lResult = CallWindowProcA(TMainForm_PrevWindowProc, hwnd, WM_LBUTTONUP, wParam, lParam);
 			TMainForm_SplitterMoved();
 			return lResult;
 		}
@@ -98,7 +100,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 		jl      OnLButtonDown2
 		add     ecx, edx
 		cmp     eax, ecx
-		jg      OnLButtonDown2
+		jge     OnLButtonDown2
 		and     eax, 0FFFFH
 		jmp     OnLButtonDown3
 

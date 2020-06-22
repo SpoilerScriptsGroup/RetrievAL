@@ -964,6 +964,8 @@
     <ClCompile Include="FixGetModuleFromName\FixGetModuleFromName.c" />
     <ClCompile Include="FixGetSSGDataFile\Attach_FixGetSSGDataFile.c" />
     <ClCompile Include="FixGetSSGDataFile\FixGetSSGDataFile.c" />
+    <ClCompile Include="FixHintWindow\Attach_FixHintWindow.c" />
+    <ClCompile Include="FixHintWindow\TApplication_ActivateHint_epilogue.c" />
     <ClCompile Include="FixListFEP\Attach_FixListFEP.c" />
     <ClCompile Include="FixListFEP\TSSGCtrl_OneRead_with_CheckIO_FEP.c" />
     <ClCompile Include="FixListFEP\TSSGCtrl_OneWrite_with_CheckIO_FEP.c" />
@@ -1039,8 +1041,6 @@
     <ClCompile Include="FixSplitElement\SplitElement.c" />
     <ClCompile Include="FixTitleSelectForm\Attach_FixTitleSelectForm.c" />
     <ClCompile Include="FixTitleSelectForm\LCMapStringJISX0213.c" />
-    <ClCompile Include="FixTitleSelectForm\TTitleSelectForm_FindLBoxActivateHint.c" />
-    <ClCompile Include="FixTitleSelectForm\TTitleSelectForm_TitleDGridActivateHint.c" />
     <ClCompile Include="FixToggleByteArray\Attach_FixToggleByteArray.c" />
     <ClCompile Include="FixToggleByteArray\FixToggleByteArray.c" />
     <ClCompile Include="FixTraceAndCopy\Attach_FixTraceAndCopy.c" />

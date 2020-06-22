@@ -15,18 +15,20 @@ static LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT lResult;
 	RECT    rc;
+	HANDLE  hPrevHook;
 
 	if (nCode < 0)
-		return CallNextHookEx(hHook, nCode, wParam, lParam);
+		goto PASS_MESSAGE;
 	if (GetCapture() == hWnd)
-	{
 		if (GetWindowRect(hWnd, &rc) && PtInRect(&rc, ((MOUSEHOOKSTRUCT *)lParam)->pt))
+		PASS_MESSAGE:
 			return CallNextHookEx(hHook, nCode, wParam, lParam);
-		ReleaseCapture();
-	}
-	lResult = CallNextHookEx(hHook, nCode, wParam, lParam);
-	UnhookWindowsHookEx(hHook);
+		else
+			ReleaseCapture();
+	hPrevHook = hHook;
 	hHook = NULL;
+	lResult = CallNextHookEx(hPrevHook, nCode, wParam, lParam);
+	UnhookWindowsHookEx(hPrevHook);
 	return lResult;
 }
 #else
@@ -44,34 +46,43 @@ __declspec(naked) static LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LP
 		#define offsetof_RECT_right           8
 		#define offsetof_RECT_bottom          12
 
-		cmp     dword ptr [nCode], 0                                        // if (nCode < 0)
-		jl      L1                                                          //     return CallNextHookEx(hHook, nCode, wParam, lParam);
+		push    esi
+		push    edi
+		mov     esi, dword ptr [hHook]
+		mov     edi, dword ptr [lParam + 8]
+		cmp     dword ptr [nCode + 8], 0                                    // if (nCode < 0)
+		jl      L1                                                          //     goto PASS_MESSAGE;
 		call    GetCapture                                                  // if (GetCapture() == hWnd)
 		mov     ecx, dword ptr [hWnd]
 		sub     esp, 16
 		cmp     eax, ecx
-		jne     L3                                                          // {
+		jne     L3
 		push    esp                                                         //     if (GetWindowRect(hWnd, &rc) && PtInRect(&rc, ((MOUSEHOOKSTRUCT *)lParam)->pt))
 		push    eax
 		call    GetWindowRect
 		test    eax, eax
 		jz      L2
-		mov     ecx, dword ptr [lParam + 16]
-		mov     eax, dword ptr [ecx + offsetof_MOUSEHOOKSTRUCT_pt_x]
-		mov     ecx, dword ptr [ecx + offsetof_MOUSEHOOKSTRUCT_pt_y]
-		cmp     eax, dword ptr [esp + offsetof_RECT_left]
+		mov     eax, dword ptr [edi + offsetof_MOUSEHOOKSTRUCT_pt_x]
+		mov     ecx, dword ptr [esp + offsetof_RECT_left]
+		cmp     eax, ecx
 		jl      L2
-		cmp     eax, dword ptr [esp + offsetof_RECT_right]
+		mov     ecx, dword ptr [esp + offsetof_RECT_right]
+		mov     edx, dword ptr [esp + offsetof_RECT_top]
+		cmp     eax, ecx
 		jge     L2
-		cmp     ecx, dword ptr [esp + offsetof_RECT_top]
+		mov     eax, dword ptr [edi + offsetof_MOUSEHOOKSTRUCT_pt_y]
+		mov     ecx, dword ptr [esp + offsetof_RECT_bottom]
+		cmp     eax, edx
 		jl      L2
-		cmp     ecx, dword ptr [esp + offsetof_RECT_bottom]
+		cmp     eax, ecx
 		jge     L2
 		add     esp, 16
 
-		align   16
+		align   16                                                          //     PASS_MESSAGE:
 	L1:
-		mov     eax, dword ptr [hHook]                                      //         return CallNextHookEx(hHook, nCode, wParam, lParam);
+		mov     eax, esi                                                    //         return CallNextHookEx(hHook, nCode, wParam, lParam);
+		pop     edi
+		pop     esi
 		pop     ecx
 		push    eax
 		push    ecx
@@ -79,25 +90,24 @@ __declspec(naked) static LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LP
 
 		align   16
 	L2:
-		call    ReleaseCapture                                              //     ReleaseCapture();
-		                                                                    // }
+		                                                                    //     else
+		call    ReleaseCapture                                              //         ReleaseCapture();
 	L3:
-		mov     eax, dword ptr [hHook      ]                                // lResult = CallNextHookEx(hHook, nCode, wParam, lParam);
-		mov     ecx, dword ptr [nCode  + 16]
-		mov     dword ptr [esp        ], eax
-		mov     dword ptr [esp    +  4], ecx
-		mov     eax, dword ptr [wParam + 16]
-		mov     ecx, dword ptr [lParam + 16]
-		mov     dword ptr [esp    +  8], eax
-		mov     dword ptr [esp    + 12], ecx
-		call    CallNextHookEx
-		mov     ecx, dword ptr [hHook]                                      // UnhookWindowsHookEx(hHook);
+		mov     eax, dword ptr [wParam + 24]                                // hPrevHook = hHook;
+		mov     ecx, dword ptr [nCode  + 24]
+		add     esp, 16
+		mov     dword ptr [hHook], 0                                        // hHook = NULL;
+		push    edi                                                         // lResult = CallNextHookEx(hPrevHook, nCode, wParam, lParam);
 		push    eax
 		push    ecx
+		push    esi
+		call    CallNextHookEx
+		push    eax
+		push    esi                                                         // UnhookWindowsHookEx(hPrevHook);
 		call    UnhookWindowsHookEx
-		pop     eax                                                         // hHook = NULL;
-		xor     ecx, ecx                                                    // return lResult;
-		mov     dword ptr [hHook], ecx
+		pop     eax                                                         // return lResult;
+		pop     edi
+		pop     esi
 		ret     12
 
 		#undef nCode
@@ -113,24 +123,21 @@ __declspec(naked) static LRESULT CALLBACK MouseProc(int nCode, WPARAM wParam, LP
 }
 #endif
 
-__declspec(naked) void __cdecl TTitleSelectForm_FindLBoxActivateHint()
+__declspec(naked) void __cdecl TApplication_ActivateHint_epilogue()
 {
-	EXTERN_C const DWORD _TApplication_ActivateHint;
 	EXTERN_C const DWORD _TWinControl_GetHandle;
 
 	__asm
 	{
-		#define Application                        eax
-		#define MousePos                           edx
-		#define this                               (ebx - 4)
-		#define offsetof_TTitleSelectForm_FindLBox 816
+		#define this ebx
 
-		call    dword ptr [_TApplication_ActivateHint]                      // Application->ActivateHint(MousePos);
-		mov     eax, dword ptr [hHook]                                      // if (hHook)
-		mov     ecx, dword ptr [this]                                       //     return;
+		mov     eax, dword ptr [hHook]
+		mov     ecx, dword ptr [ebx]
 		test    eax, eax
-		jnz     L1
-		mov     eax, dword ptr [ecx + offsetof_TTitleSelectForm_FindLBox]   // hWnd = this->FindLBox->Handle;
+		jnz     epilogue
+		mov     eax, dword ptr [ecx + 96]
+		test    eax, eax
+		jz      epilogue
 		call    dword ptr [_TWinControl_GetHandle]
 		mov     dword ptr [hWnd], eax
 		push    eax                                                         // SetCapture(hWnd);
@@ -144,12 +151,14 @@ __declspec(naked) void __cdecl TTitleSelectForm_FindLBoxActivateHint()
 		push    WH_MOUSE
 		call    SetWindowsHookExA
 		mov     dword ptr [hHook], eax
-	L1:
+	epilogue:
+		pop     edi
+		pop     esi
+		pop     ebx
+		mov     esp, ebp
+		pop     ebp
 		ret
 
-		#undef Application
-		#undef MousePos
 		#undef this
-		#undef offsetof_TTitleSelectForm_FindLBox
 	}
 }

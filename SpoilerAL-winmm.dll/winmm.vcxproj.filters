@@ -97,6 +97,9 @@
     <Filter Include="FixGetSSGDataFile">
       <UniqueIdentifier>{ac81c1e7-5b5b-41b3-87c3-c0109dfd244c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FixHintWindow">
+      <UniqueIdentifier>{e661b2dc-793f-4961-8ef8-443fd6c89147}</UniqueIdentifier>
+    </Filter>
     <Filter Include="FixListFEP">
       <UniqueIdentifier>{393d8820-fd6b-4866-b880-1f4989f3e3e2}</UniqueIdentifier>
     </Filter>
@@ -1209,6 +1212,12 @@
     <ClCompile Include="FixGetSSGDataFile\FixGetSSGDataFile.c">
       <Filter>FixGetSSGDataFile</Filter>
     </ClCompile>
+    <ClCompile Include="FixHintWindow\Attach_FixHintWindow.c">
+      <Filter>FixHintWindow</Filter>
+    </ClCompile>
+    <ClCompile Include="FixHintWindow\TApplication_ActivateHint_epilogue.c">
+      <Filter>FixHintWindow</Filter>
+    </ClCompile>
     <ClCompile Include="FixListFEP\Attach_FixListFEP.c">
       <Filter>FixListFEP</Filter>
     </ClCompile>
@@ -1432,12 +1441,6 @@
       <Filter>FixTitleSelectForm</Filter>
     </ClCompile>
     <ClCompile Include="FixTitleSelectForm\LCMapStringJISX0213.c">
-      <Filter>FixTitleSelectForm</Filter>
-    </ClCompile>
-    <ClCompile Include="FixTitleSelectForm\TTitleSelectForm_FindLBoxActivateHint.c">
-      <Filter>FixTitleSelectForm</Filter>
-    </ClCompile>
-    <ClCompile Include="FixTitleSelectForm\TTitleSelectForm_TitleDGridActivateHint.c">
       <Filter>FixTitleSelectForm</Filter>
     </ClCompile>
     <ClCompile Include="FixToggleByteArray\Attach_FixToggleByteArray.c">

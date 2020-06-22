@@ -44,7 +44,6 @@ const DWORD F0055E418                     = 0x0055E418;
 const DWORD F0055E74C                     = 0x0055E74C;
 const DWORD F00562CF0                     = 0x00562CF0;
 const DWORD F0056DDBC                     = 0x0056DDBC;
-const DWORD _TApplication_ActivateHint    = 0x005721C4;
 const DWORD F005806A0                     = 0x005806A0;
 const DWORD F00580BBC                     = 0x00580BBC;
 const DWORD _TWinControl_GetHandle        = 0x0058750C;

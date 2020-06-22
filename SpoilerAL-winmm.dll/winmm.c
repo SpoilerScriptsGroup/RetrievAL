@@ -318,6 +318,7 @@ static BOOL __cdecl ModifyCodeSection()
 	EXTERN_C void __cdecl Attach_FixClearChild();
 	EXTERN_C void __cdecl FixMaskBytes();
 	EXTERN_C void __cdecl Attach_FixTitleSelectForm();
+	EXTERN_C void __cdecl Attach_FixHintWindow();
 
 	DWORD dwProtect;
 
@@ -369,6 +370,7 @@ static BOOL __cdecl ModifyCodeSection()
 	Attach_FixClearChild();
 	FixMaskBytes();
 	Attach_FixTitleSelectForm();
+	Attach_FixHintWindow();
 	return VirtualProtect((LPVOID)0x00401000, 0x00201000, PAGE_EXECUTE_READ, &dwProtect);
 }
 

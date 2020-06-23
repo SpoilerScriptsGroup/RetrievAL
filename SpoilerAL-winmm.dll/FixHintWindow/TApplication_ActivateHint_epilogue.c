@@ -153,7 +153,7 @@ __declspec(naked) void __cdecl TApplication_ActivateHint_epilogue()
 	    mov     ecx, dword ptr [ebx]                        //         return;
 	    test    eax, eax
 	    jnz     epilogue
-	    mov     eax, dword ptr [ecx + 96]                   //     Control = (TWinControl *)((char *)this + 96);
+	    mov     eax, dword ptr [ecx + 96]                   //     Control = *(TWinControl **)((char *)this + 96);
 	    test    eax, eax                                    //     if (!Control)
 	    jz      epilogue                                    //         return;
 	    call    dword ptr [_TWinControl_GetHandle]          //     hWnd = Control->Handle;

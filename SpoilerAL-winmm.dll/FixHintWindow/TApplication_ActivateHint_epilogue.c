@@ -6,7 +6,7 @@
 #endif
 
 static HANDLE hHook = NULL;
-static HWND   hWnd  = NULL;
+static HWND   hWnd;
 
 #ifndef _M_IX86
 #define PtInRect(lprc, pt) ((pt).x >= (lprc)->left && (pt).x < (lprc)->right && (pt).y >= (lprc)->top && (pt).y < (lprc)->bottom)
@@ -14,26 +14,26 @@ static HWND   hWnd  = NULL;
 static LRESULT CALLBACK GetMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT lResult;
-	RECT    rc;
 	HANDLE  hOldHook;
+	RECT    rc;
 
 	if (nCode < 0)
-		goto PASS;
+		goto pass;
 	if (GetCapture() != hWnd)
-		goto UNHOOK;
+		goto unhook;
 	if ((UINT)(((MSG *)lParam)->message - WM_MOUSEFIRST) < WM_MOUSELAST - WM_MOUSEFIRST + 1)
 		if (GetWindowRect(hWnd, &rc) && PtInRect(&rc, ((MSG *)lParam)->pt))
-			goto PASS;
+			goto pass;
 		else
-			goto RELEASE;
+			goto release;
 	else if (((MSG *)lParam)->message == WM_ACTIVATE)
-		goto RELEASE;
-PASS:
+		goto release;
+pass:
 	return CallNextHookEx(hHook, nCode, wParam, lParam);
 
-RELEASE:
+release:
 	ReleaseCapture();
-UNHOOK:
+unhook:
 	hOldHook = hHook;
 	hHook = NULL;
 	lResult = CallNextHookEx(hOldHook, nCode, wParam, lParam);
@@ -57,58 +57,58 @@ __declspec(naked) static LRESULT CALLBACK GetMsgProc(int nCode, WPARAM wParam, L
 	    #define offsetof_RECT_bottom    12
 
 	    cmp     dword ptr [nCode], 0                        //     if (nCode < 0)
-	    jl      PASS                                        //         goto PASS;
+	    jl      pass                                        //         goto pass;
 	    call    GetCapture                                  //     if (GetCapture() != hWnd)
-	    mov     ecx, dword ptr [hWnd]                       //         goto UNHOOK;
+	    mov     ecx, dword ptr [hWnd]                       //         goto unhook;
 	    mov     edx, dword ptr [lParam]
 	    cmp     eax, ecx
-	    jne     UNHOOK
+	    jne     unhook
 	    mov     eax, dword ptr [edx + offsetof_MSG_message] //     if ((UINT)(((MSG *)lParam)->message - WM_MOUSEFIRST) < WM_MOUSELAST - WM_MOUSEFIRST + 1)
-	    mov     ecx, eax
+	    mov     edx, eax
 	    sub     eax, WM_MOUSEFIRST
 	    cmp     eax, WM_MOUSELAST - WM_MOUSEFIRST + 1
-	    jae     ISACTIVATE
+	    jae     isactivate
 	    sub     esp, 16                                     //         if (GetWindowRect(hWnd, &rc) && PtInRect(&rc, ((MSG *)lParam)->pt))
-	    mov     eax, dword ptr [hWnd]                       //             goto PASS;
-	    push    esp                                         //         else
-	    push    eax                                         //             goto RELEASE;
-	    call    GetWindowRect
+	    push    esp                                         //             goto pass;
+	    push    ecx                                         //         else
+	    call    GetWindowRect                               //             goto release;
 	    test    eax, eax
-	    jz      NOWHERE
+	    jz      nowhere
 	    mov     eax, dword ptr [lParam + 16]
 	    mov     ecx, dword ptr [esp + offsetof_RECT_left]
 	    mov     eax, dword ptr [eax + offsetof_MSG_pt_x]
 	    mov     edx, dword ptr [esp + offsetof_RECT_right]
 	    cmp     eax, ecx
-	    jl      NOWHERE
+	    jl      nowhere
 	    cmp     eax, edx
-	    jge     NOWHERE
+	    jge     nowhere
 	    mov     eax, dword ptr [lParam + 16]
 	    mov     ecx, dword ptr [esp + offsetof_RECT_top]
 	    mov     eax, dword ptr [eax + offsetof_MSG_pt_y]
 	    mov     edx, dword ptr [esp + offsetof_RECT_bottom]
 	    cmp     eax, ecx
-	    jl      NOWHERE
+	    jl      nowhere
 	    cmp     eax, edx
-	    jge     NOWHERE
+	    jge     nowhere
 	    add     esp, 16
-	    jmp     PASS
+	    jmp     pass
 
-	ISACTIVATE:
-	    cmp     ecx, WM_ACTIVATE                            //     else if (((MSG *)lParam)->message == WM_ACTIVATE)
-	    je      RELEASE                                     //         goto RELEASE;
-	PASS:                                                   // PASS:
+	isactivate:
+	    cmp     edx, WM_ACTIVATE                            //     else if (((MSG *)lParam)->message == WM_ACTIVATE)
+	    je      release                                     //         goto release;
+	pass:                                                   // pass:
 	    mov     eax, dword ptr [hHook]                      //     return CallNextHookEx(hHook, nCode, wParam, lParam);
 	    pop     ecx
 	    push    eax
 	    push    ecx
 	    jmp     CallNextHookEx
 
-	NOWHERE:
+		align   16
+	nowhere:
 	    add     esp, 16
-	RELEASE:                                                // RELEASE:
+	release:                                                // release:
 	    call    ReleaseCapture                              //     ReleaseCapture();
-	UNHOOK:                                                 // UNHOOK:
+	unhook:                                                 // unhook:
 	    mov     eax, dword ptr [lParam]
 	    mov     ecx, dword ptr [wParam]
 	    push    esi
@@ -147,36 +147,36 @@ __declspec(naked) void __cdecl TApplication_ActivateHint_epilogue()
 
 	__asm
 	{
-		#define this ebx
+	    #define this ebx
 
-		mov     eax, dword ptr [hHook]
-		mov     ecx, dword ptr [ebx]
-		test    eax, eax
-		jnz     epilogue
-		mov     eax, dword ptr [ecx + 96]
-		test    eax, eax
-		jz      epilogue
-		call    dword ptr [_TWinControl_GetHandle]
-		mov     dword ptr [hWnd], eax
-		push    eax                                         //     SetCapture(hWnd);
-		call    SetCapture
-		call    GetCurrentThreadId                          //     hHook = SetWindowsHookExA(
-		push    eax                                         //         WH_GETMESSAGE,
-		push    0                                           //         GetMsgProc,
-		call    GetModuleHandleA                            //         GetModuleHandleA(NULL),
-		push    eax                                         //         GetCurrentThreadId());
-		push    offset GetMsgProc
-		push    WH_GETMESSAGE
-		call    SetWindowsHookExA
-		mov     dword ptr [hHook], eax
+	    mov     eax, dword ptr [hHook]                      //     if (hHook)
+	    mov     ecx, dword ptr [ebx]                        //         return;
+	    test    eax, eax
+	    jnz     epilogue
+	    mov     eax, dword ptr [ecx + 96]                   //     Control = (TWinControl *)((char *)this + 96);
+	    test    eax, eax                                    //     if (!Control)
+	    jz      epilogue                                    //         return;
+	    call    dword ptr [_TWinControl_GetHandle]          //     hWnd = Control->Handle;
+	    mov     dword ptr [hWnd], eax
+	    push    eax                                         //     SetCapture(hWnd);
+	    call    SetCapture
+	    call    GetCurrentThreadId                          //     hHook = SetWindowsHookExA(
+	    push    eax                                         //         WH_GETMESSAGE,
+	    push    0                                           //         GetMsgProc,
+	    call    GetModuleHandleA                            //         GetModuleHandleA(NULL),
+	    push    eax                                         //         GetCurrentThreadId());
+	    push    offset GetMsgProc
+	    push    WH_GETMESSAGE
+	    call    SetWindowsHookExA
+	    mov     dword ptr [hHook], eax
 	epilogue:
-		pop     edi
-		pop     esi
-		pop     ebx
-		mov     esp, ebp
-		pop     ebp
-		ret
+	    pop     edi
+	    pop     esi
+	    pop     ebx
+	    mov     esp, ebp
+	    pop     ebp
+	    ret
 
-		#undef this
+	    #undef this
 	}
 }

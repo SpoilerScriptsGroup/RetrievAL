@@ -7,21 +7,21 @@ unsigned long __cdecl Parsing(void *this, void *SSGS, const void *Src, ...);
 #endif
 
 extern BOOL EnableParserFix;
+extern const DWORD F005113F8;
 
 __declspec(naked) void __cdecl Caller_Parsing()
 {
 	__asm
 	{
-		mov     eax, dword ptr [EnableParserFix]
-		mov     ecx, 005113F8H
-		test    eax, eax
-		jz      L1
+		cmp     dword ptr [EnableParserFix], 0
+		je      L1
 #if 0
 		jmp     Parsing61
 #else
 		jmp     Parsing
 #endif
+
 	L1:
-		jmp     ecx
+		jmp     dword ptr [F005113F8]
 	}
 }

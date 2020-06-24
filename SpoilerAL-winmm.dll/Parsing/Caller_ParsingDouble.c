@@ -6,6 +6,8 @@ extern BOOL EnableParserFix;
 
 __declspec(naked) void __cdecl Caller_ParsingDouble()
 {
+	static const DWORD X005174C9 = 0x005174C9;
+
 	__asm
 	{
 		cmp     dword ptr [EnableParserFix], 0
@@ -14,9 +16,8 @@ __declspec(naked) void __cdecl Caller_ParsingDouble()
 
 	L1:
 		push    ebp
-		mov     eax, 005174C0H + 9
 		mov     ebp, esp
 		sub     esp, 2288
-		jmp     eax
+		jmp     dword ptr [X005174C9]
 	}
 }

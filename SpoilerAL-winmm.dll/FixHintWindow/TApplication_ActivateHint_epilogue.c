@@ -103,7 +103,7 @@ __declspec(naked) static LRESULT CALLBACK GetMsgProc(int nCode, WPARAM wParam, L
 	    push    ecx
 	    jmp     CallNextHookEx
 
-		align   16
+	    align   16
 	nowhere:
 	    add     esp, 16
 	release:                                                // release:

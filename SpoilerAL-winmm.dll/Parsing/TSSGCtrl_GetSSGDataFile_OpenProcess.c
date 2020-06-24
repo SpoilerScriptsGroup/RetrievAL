@@ -3,7 +3,7 @@
 #include "bcb6_std_string.h"
 #include "TProcessCtrl.h"
 
-HANDLE __stdcall TSSGCtrl_OpenProcess(TProcessCtrl *processCtrl, DWORD Mode, LPCSTR addressStr);
+extern HANDLE __stdcall TSSGCtrl_OpenProcess(TProcessCtrl *processCtrl, DWORD Mode, LPCSTR addressStr);
 
 __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_OpenProcess(
 	bcb6_std_string *ErrorStr,
@@ -29,8 +29,9 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_OpenProcess(
 		cmovz   edx, ecx
 		mov     dword ptr [edx], eax
 	L2:
-		mov     eax, 0x004166F0
-		jmp     eax// construct ErrorStr
+		mov     ecx, dword ptr [esp + 4]
+		mov     edx, dword ptr [esp + 8]
+		jmp     string_ctor_assign	// construct ErrorStr
 
 		#undef StepSize
 		#undef SHandle

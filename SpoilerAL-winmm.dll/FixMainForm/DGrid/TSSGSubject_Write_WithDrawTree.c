@@ -14,7 +14,6 @@ __declspec(naked) void __cdecl TSSGSubject_Write_WithDrawTree()
 
 #if SHOW_ERROR_MESSAGE
 		mov     dword ptr [dwErrorMessageId], 0
-		mov     ecx, dword ptr [ecx + 12]
 #endif
 		mov     edx, dword ptr [esp + 12]
 		mov     eax, dword ptr [esp +  8]
@@ -24,11 +23,7 @@ __declspec(naked) void __cdecl TSSGSubject_Write_WithDrawTree()
 		mov     eax, dword ptr [esp + 12]
 		mov     dword ptr [esp + 20], edx
 		push    eax
-#if SHOW_ERROR_MESSAGE
-		call    ecx
-#else
 		call    dword ptr [ecx + 12]
-#endif
 		mov     ecx, dword ptr ds:[_MainForm]
 		mov     dword ptr [esp + 20], eax
 		mov     dword ptr [esp + 16], TRUE

@@ -6,16 +6,17 @@ static void __fastcall TSSGCtrl_IsEnabled_except1(TSSGSubject *SSGS, LPCVOID Ret
 
 __declspec(naked) void __cdecl Caller_TSSGCtrl_IsEnabled_except1(LPVOID *this, TSSGSubject *SSGS)
 {
+	static const DWORD X005111E6 = 0x005111E6;
+
 	__asm
 	{
 		mov     edx, dword ptr [esp    ]
 		mov     ecx, dword ptr [esp + 8]
 		call    TSSGCtrl_IsEnabled_except1
 		push    ebp
-		mov     eax, 005111E6H
 		mov     ebp, esp
 		sub     esp, 64
-		jmp     eax
+		jmp     dword ptr [X005111E6]
 	}
 }
 

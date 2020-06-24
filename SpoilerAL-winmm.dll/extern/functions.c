@@ -1,7 +1,7 @@
 #include <windows.h>
 
-const DWORD F00401FD8                     = 0x00401FD8;
 const DWORD F00415878                     = 0x00415878;
+const DWORD F00415948                     = 0x00415948;
 const DWORD F00415A60                     = 0x00415A60;
 const DWORD F004167F8                     = 0x004167F8;
 const DWORD F004185E8                     = 0x004185E8;
@@ -33,10 +33,14 @@ const DWORD F004F21F8                     = 0x004F21F8;
 const DWORD F004F2424                     = 0x004F2424;
 const DWORD F004F32FC                     = 0x004F32FC;
 const DWORD F004F3410                     = 0x004F3410;
+const DWORD F004FCE80                     = 0x004FCE80;
 const DWORD F004FE200                     = 0x004FE200;
 const DWORD F0050123C                     = 0x0050123C;
 const DWORD F00504284                     = 0x00504284;
 const DWORD F0050E758                     = 0x0050E758;
+const DWORD F0050F600                     = 0x0050F600;
+const DWORD F005111E0                     = 0x005111E0;
+const DWORD F005113F8                     = 0x005113F8;
 const DWORD F0054B87C                     = 0x0054B87C;
 const DWORD F00559D94                     = 0x00559D94;
 const DWORD F00559DB8                     = 0x00559DB8;
@@ -44,10 +48,13 @@ const DWORD F0055E418                     = 0x0055E418;
 const DWORD F0055E74C                     = 0x0055E74C;
 const DWORD F00562CF0                     = 0x00562CF0;
 const DWORD F0056DDBC                     = 0x0056DDBC;
+const DWORD F0057AEDC                     = 0x0057AEDC;
+const DWORD _TControl_SetWidth            = 0x00580430;
 const DWORD F005806A0                     = 0x005806A0;
 const DWORD F00580BBC                     = 0x00580BBC;
 const DWORD _TWinControl_GetHandle        = 0x0058750C;
 const DWORD F005D54CC                     = 0x005D54CC;
+const DWORD _TFont_SetName                = 0x0055D578;
 const DWORD F005E0D50                     = 0x005E0D50;
 const DWORD F005E0EA8                     = 0x005E0EA8;
 const DWORD F005F5078                     = 0x005F5078;

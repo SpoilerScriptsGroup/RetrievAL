@@ -1,6 +1,9 @@
+#include <windows.h>
 
 __declspec(naked) void __cdecl TSSGCtrl_SetSSGDataFile_IgnoreEmptyData()
 {
+	static const DWORD X004F0A51 = 0x004F0A51;
+
 	__asm
 	{
 		mov     eax, dword ptr [esp + 8]
@@ -9,10 +12,9 @@ __declspec(naked) void __cdecl TSSGCtrl_SetSSGDataFile_IgnoreEmptyData()
 		cmp     eax, ecx
 		je      L1
 		push    ebp
-		mov     eax, 004F0A51H
 		mov     ebp, esp
 		sub     esp, 1152
-		jmp     eax
+		jmp     dword ptr [X004F0A51]
 
 	L1:
 		ret

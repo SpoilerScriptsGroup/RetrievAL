@@ -11,9 +11,11 @@ void __stdcall AddressNamingFEPFreeList(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, ve
 
 __declspec(naked) void __cdecl AddressNamingAdditionalType()
 {
+	#define _ReturnAddress 0x00506578
+	static const DWORD ReturnAddress = _ReturnAddress;
+
 	__asm
 	{
-		#define ReturnAddress 00506578H
 		#define SSGCtrl       (edi)
 		#define SSGS          (ebp + 16)
 		#define tmpV          (esi)
@@ -38,7 +40,7 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		mov     dword ptr [ecx], eax
 		mov     ecx, dword ptr [DataSize]
 		push    tmpV
-		push    ReturnAddress
+		push    _ReturnAddress
 		jmp     AddressNamingFromUtf8                       ;		return;
 
 	L1:
@@ -58,7 +60,7 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		mov     dword ptr [ecx], eax
 		mov     ecx, dword ptr [DataSize]
 		push    tmpV
-		push    ReturnAddress                               ;			return;
+		push    _ReturnAddress                               ;			return;
 		jmp     AddressNamingFromUnicode                    ;		}
 
 	L2:
@@ -73,7 +75,7 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		push    tmpV
 		push    eax
 		push    SSGCtrl
-		push    ReturnAddress
+		push    _ReturnAddress
 		jmp     AddressNamingFEPNumber                      ;		return;
 
 	L3:
@@ -91,7 +93,7 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		push    tmpV
 		push    ecx
 		push    SSGCtrl
-		push    ReturnAddress
+		push    _ReturnAddress
 		jmp     AddressNamingFEPList                        ;		return;
 
 	L4:
@@ -113,14 +115,12 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		push    tmpV
 		push    ecx
 		push    SSGCtrl
-		push    ReturnAddress
+		push    _ReturnAddress
 		jmp     AddressNamingFEPFreeList                    ;		return;
 		                                                    ;	}
 	L5:
-		mov     eax, ReturnAddress
-		jmp     eax
+		jmp     dword ptr [ReturnAddress]
 
-		#undef ReturnAddress
 		#undef SSGCtrl
 		#undef SSGS
 		#undef tmpV
@@ -128,4 +128,5 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		#undef tmpC
 		#undef sizeof_string
 	}
+	#undef _ReturnAddress
 }

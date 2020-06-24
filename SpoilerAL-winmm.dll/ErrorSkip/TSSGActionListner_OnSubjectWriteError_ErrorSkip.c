@@ -1,6 +1,8 @@
 #include "TSSGCtrl.h"
 #include "TSSGAttributeElement.h"
 
+extern const DWORD F0057AEDC;
+
 __declspec(naked) void __cdecl TSSGActionListner_OnSubjectWriteError_ErrorSkip()
 {
 	__asm
@@ -17,9 +19,8 @@ __declspec(naked) void __cdecl TSSGActionListner_OnSubjectWriteError_ErrorSkip()
 		test    eax, eax
 		jnz     L1
 		add     esp, 12
-		mov     ecx, 0057AEDCH
 		pop     eax
-		jmp     ecx
+		jmp     dword ptr [F0057AEDC]
 
 	L1:
 		add     esp, 12 + 4

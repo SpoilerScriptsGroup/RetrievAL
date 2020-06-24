@@ -1,4 +1,7 @@
 #include "TMainForm.h"
+
+extern const DWORD F004FCE80;
+
 /*
 void __cdecl TMainForm_M_TitleSelectClick_OpenSSG(TSSGCtrl &ssgCtrl, TSSGScriptStruct &selectScript, int &nowSelectSubjectIndex)
 {
@@ -15,8 +18,7 @@ __declspec(naked) void __cdecl TMainForm_M_TitleSelectClick_OpenSSG()
 		push    ebx
 		call    TMainForm_ChangeSubjectPanel
 		add     esp, 8
-		mov     ecx, 004FCE80H
 		mov     dword ptr [ebx + 554H], -2
-		jmp     ecx
+		jmp     dword ptr [F004FCE80]
 	}
 }

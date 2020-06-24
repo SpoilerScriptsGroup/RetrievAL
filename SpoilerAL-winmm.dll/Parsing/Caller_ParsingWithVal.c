@@ -3,6 +3,7 @@
 unsigned long __cdecl Parsing(void *this, void *SSGS, const void *Src, ...);
 
 extern BOOL EnableParserFix;
+extern const DWORD F005113F8;
 
 __declspec(naked) void __cdecl Caller_ParsingWithVal()
 {
@@ -10,10 +11,8 @@ __declspec(naked) void __cdecl Caller_ParsingWithVal()
 
 	__asm
 	{
-		mov     eax, dword ptr [EnableParserFix]
-		mov     ecx, 005113F8H
-		test    eax, eax
-		jz      L1
+		cmp     dword ptr [EnableParserFix], 0
+		je      L1
 		mov     eax, dword ptr [esp + 16]
 		mov     edx, dword ptr [esp + 12]
 		push    0
@@ -29,7 +28,8 @@ __declspec(naked) void __cdecl Caller_ParsingWithVal()
 		call    Parsing
 		add     esp, 32
 		ret
+
 	L1:
-		jmp     ecx
+		jmp     dword ptr [F005113F8]
 	}
 }

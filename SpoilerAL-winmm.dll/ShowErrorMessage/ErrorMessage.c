@@ -17,6 +17,8 @@ extern TMainForm *MainForm;
 #include "TMainForm.h"
 #endif
 
+extern const DWORD F005D54CC;
+
 volatile DWORD dwErrorMessageId = ERROR_SUCCESS;
 
 void __cdecl ShowErrorMessage()
@@ -133,9 +135,8 @@ __declspec(naked) void __cdecl TSSGActionListner_OnSubjectDisabled_SetErrorMessa
 {
 	__asm
 	{
-		mov     ecx, 005D54CCH
 		mov     dword ptr [dwErrorMessageId], ERROR_INVALID_FLAGS
-		jmp     ecx
+		jmp     dword ptr [F005D54CC]
 	}
 }
 #endif

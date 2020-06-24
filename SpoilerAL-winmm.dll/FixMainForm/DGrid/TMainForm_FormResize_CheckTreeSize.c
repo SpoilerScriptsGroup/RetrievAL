@@ -1,10 +1,12 @@
+#include <windows.h>
+
+extern const DWORD _TControl_SetWidth;
 
 __declspec(naked) void __cdecl TMainForm_FormResize_CheckTreeSize()
 {
 	__asm
 	{
 		#define NextCallAddress        00446E88H
-		#define DGrid_SetWidth         00580430H
 		#define AllWidthCheck          (esp + 8)
 		#define MainForm               ebx
 		#define DGrid                  (ebx + 3A4H)
@@ -12,15 +14,13 @@ __declspec(naked) void __cdecl TMainForm_FormResize_CheckTreeSize()
 		#define offsetof_Splitter_Left 40H
 
 		mov     dword ptr [AllWidthCheck], 1
-		mov     ecx, DGrid_SetWidth
 		mov     edx, dword ptr [Splitter]
 		mov     eax, dword ptr [DGrid]
 		mov     edx, dword ptr [edx + offsetof_Splitter_Left]
 		push    NextCallAddress
-		jmp     ecx
+		jmp     dword ptr [_TControl_SetWidth]
 
 		#undef NextCallAddress
-		#undef DGrid_SetWidth
 		#undef AllWidthCheck
 		#undef MainForm
 		#undef DGrid

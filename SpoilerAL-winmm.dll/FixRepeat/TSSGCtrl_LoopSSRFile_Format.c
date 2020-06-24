@@ -73,11 +73,12 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_Format()
 
 __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_LineListLoopContinue()
 {
+	static const DWORD X0050267C = 0x0050267C;
+
 	__asm
 	{
-		mov     ecx, 0050267CH
 		mov     eax, dword ptr [VIt]
-		jmp     ecx
+		jmp     dword ptr [X0050267C]
 
 		#undef RT_FORMAT
 		#undef this

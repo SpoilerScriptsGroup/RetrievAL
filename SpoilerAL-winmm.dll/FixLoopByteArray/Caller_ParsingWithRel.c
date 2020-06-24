@@ -75,8 +75,12 @@ static TProcessAccessElementMaskData* __fastcall TSSGCtrl_StrToProcessAccessElem
 
 __declspec(naked) void __cdecl Caller_ParsingWithRel()
 {
-	static const char lpszRel[] = "Rel";
 	extern BOOL FixTheProcedure;
+
+	static const char lpszRel[] = "Rel";
+	static const DWORD X0050B4D9 = 0x0050B4D9;
+	static const DWORD X0050BC21 = 0x0050BC21;
+
 	__asm
 	{
 		cmp     EnableParserFix, 0
@@ -143,8 +147,7 @@ __declspec(naked) void __cdecl Caller_ParsingWithRel()
 		lea     ecx, [CodeList]
 		call    TSSGCtrl_StrToProcessAccessElementVec_switch_CodeSize
 		mov     dword ptr [NowAE], eax
-		mov     eax, 0x0050BC21
-		jmp     eax// goto default:
+		jmp     dword ptr [X0050BC21]	// goto default:
 
 		#undef Data
 		#undef PosEnd
@@ -160,7 +163,6 @@ __declspec(naked) void __cdecl Caller_ParsingWithRel()
 	L1:
 		push    0
 		lea     eax, [esi + 2]
-		mov     ecx, 0x0050B4D9
-		jmp     ecx
+		jmp     dword ptr [X0050B4D9]
 	}
 }

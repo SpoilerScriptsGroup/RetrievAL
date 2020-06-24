@@ -1,15 +1,16 @@
 #include <windows.h>
 
+extern const DWORD F0043CC08;
+
 __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_CommonList()
 {
 	__asm
 	{
-		#define CallAddress 0043CC08H
-		#define tmpS        (esp +  4)
-		#define begin       (esp +  8)
-		#define end         (esp + 12)
-		#define unknown     (esp + 16)
-		#define prefix      (esp + 20)
+		#define tmpS    (esp +  4)
+		#define begin   (esp +  8)
+		#define end     (esp + 12)
+		#define unknown (esp + 16)
+		#define prefix  (esp + 20)
 
 		mov     al, byte ptr [prefix]
 		mov     ecx, dword ptr [begin]
@@ -17,8 +18,7 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_CommonList()
 		je      L1
 		cmp     al, '*'
 		je      L4
-		mov     eax, CallAddress
-		jmp     eax
+		jmp     dword ptr [F0043CC08]
 
 		align   16
 	L1:
@@ -40,9 +40,8 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_CommonList()
 		jb      L2
 	L3:
 		dec     ecx
-		mov     eax, CallAddress
 		mov     dword ptr [begin], ecx
-		jmp     eax
+		jmp     dword ptr [F0043CC08]
 
 		align   16
 	L4:
@@ -75,8 +74,7 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_CommonList()
 	L7:
 		inc     ecx
 	L8:
-		mov     eax, CallAddress
 		mov     dword ptr [end], ecx
-		jmp     eax
+		jmp     dword ptr [F0043CC08]
 	}
 }

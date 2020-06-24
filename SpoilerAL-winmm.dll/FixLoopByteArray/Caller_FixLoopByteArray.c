@@ -16,6 +16,10 @@ void __stdcall FixLoopByteArray(
 
 __declspec(naked) void __cdecl Caller_FixLoopByteArray()
 {
+	static const DWORD X0050AFA2 = 0x0050AFA2;
+	static const DWORD X0050B2F4 = 0x0050B2F4;
+	static const DWORD X0050B325 = 0x0050B325;
+
 	__asm
 	{
 		cmp     dword ptr [EnableParserFix], 0
@@ -45,18 +49,15 @@ __declspec(naked) void __cdecl Caller_FixLoopByteArray()
 		mov     dword ptr [ebp - 0D00H], eax
 		test    ecx, ecx
 		jz      L1
-		mov     eax, 0050B2F4H
-		jmp     eax
+		jmp     dword ptr [X0050B2F4]
 
 	L1:
-		mov     eax, 0050B325H
-		jmp     eax
+		jmp     dword ptr [X0050B325]
 
 		align   16
 	L2:
 		dec     dword ptr [ebx + 1CH]
 		dec     dword ptr [ebx + 1CH]
-		mov     eax, 0050AFA2H
-		jmp     eax
+		jmp     dword ptr [X0050AFA2]
 	}
 }

@@ -21,6 +21,8 @@ void __stdcall TMainForm_DrawTreeCell_DrawFocusRect(int ARow, int nowSelectSubje
 */
 __declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawFocusRect()
 {
+	static const DWORD X004460A0 = 0x004460A0;
+
 	__asm
 	{
 		#define sizeof_RECT                     16
@@ -62,9 +64,8 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawFocusRect()
 		call    DrawFocusRect
 		add     esp, sizeof_RECT
 	L3:
-		mov     eax, 004460A0H
 		push    00CC0020H
-		jmp     eax
+		jmp     dword ptr [X004460A0]
 
 		#undef rcItem
 		#undef rcItem_left

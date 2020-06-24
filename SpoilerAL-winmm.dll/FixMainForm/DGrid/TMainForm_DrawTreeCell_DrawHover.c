@@ -25,6 +25,8 @@ void __stdcall TMainForm_DrawTreeCell_DrawHover(int ARow, int invertGridRow, Gra
 */
 __declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawHover()
 {
+	static const DWORD X00444C12 = 0x00444C12;
+
 	__asm
 	{
 		#define _NOTSRCCOPY   0x00330008
@@ -46,9 +48,8 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawHover()
 
 		align   16
 	L1:
-		mov     eax, 00444C12H
 		mov     word ptr [ebp - 174H], 8
-		jmp     eax
+		jmp     dword ptr [X00444C12]
 
 		align   16
 	L2:
@@ -89,9 +90,8 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawHover()
 		mov     dword ptr [esp + 72], 0
 		mov     dword ptr [esp + 76], eax
 		mov     dword ptr [esp + 80], ecx
-		mov     eax, BitBlt
 		mov     dword ptr [esp + 84], AC_SRC_OVER or (0 shl 8) or (48 shl 16) or (0 shl 24)
-		jmp     eax
+		jmp     BitBlt
 
 		#undef _NOTSRCCOPY
 		#undef ARow

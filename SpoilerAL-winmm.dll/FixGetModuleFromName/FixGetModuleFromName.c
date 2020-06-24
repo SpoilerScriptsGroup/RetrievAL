@@ -1,3 +1,4 @@
+#include "TProcessCtrl.h"
 
 __declspec(naked) void __cdecl FixGetModuleFromName()
 {
@@ -5,22 +6,15 @@ __declspec(naked) void __cdecl FixGetModuleFromName()
 	{
 		#define ProcessCtrl                              ecx
 		#define offsetof_ProcessCtrl_entry_th32ProcessID 200
-		#define ProcessCtrl_LoadModuleList               004A4E4CH
-		#define ProcessCtrl_Attach                       004A610CH
 
-		mov     ecx, dword ptr [ProcessCtrl + offsetof_ProcessCtrl_entry_th32ProcessID]
-		mov     eax, ProcessCtrl_LoadModuleList
-		test    ecx, ecx
-		jz      L1
-		jmp     eax
+		cmp     dword ptr [ProcessCtrl + offsetof_ProcessCtrl_entry_th32ProcessID], 0
+		je      L1
+		jmp     dword ptr [TProcessCtrl_LoadModuleList]
 
 	L1:
-		mov     eax, ProcessCtrl_Attach
-		jmp     eax
+		jmp     TProcessCtrl_Attach
 
 		#undef ProcessCtrl
 		#undef offsetof_ProcessCtrl_entry_th32ProcessID
-		#undef ProcessCtrl_LoadModuleList
-		#undef ProcessCtrl_Attach
 	}
 }

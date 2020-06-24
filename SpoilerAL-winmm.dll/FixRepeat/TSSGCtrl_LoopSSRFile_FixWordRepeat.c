@@ -7,6 +7,9 @@ extern const DWORD F0043CC08;
 
 __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_FixWordRepeat()
 {
+	static const DWORD X0050222B = 0x0050222B;
+	static const DWORD X00502676 = 0x00502676;
+
 	__asm
 	{
 		mov     eax, dword ptr [EnableParserFix]
@@ -38,13 +41,11 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_FixWordRepeat()
 		jmp     TSSGCtrl_LoopSSRFile_LineListLoopContinue
 
 	L4:
-		mov     eax, 0050222BH
-		mov     ecx, 00502676H
 		test    esi, esi
 		je      L5
-		jmp     eax
+		jmp     dword ptr [X0050222B]
 
 	L5:
-		jmp     ecx
+		jmp     dword ptr [X00502676]
 	}
 }

@@ -2,6 +2,8 @@
 
 __declspec(naked) void __cdecl AddressNamingFromFloat()
 {
+	static const DWORD X005062A0 = 0x005062A0;
+
 	__asm
 	{
 		mov     eax, dword ptr [ebp - 01ECH]
@@ -30,8 +32,7 @@ __declspec(naked) void __cdecl AddressNamingFromFloat()
 		push    edx
 		push    eax
 		call    TStringDivision_ToStringDouble
-		mov     eax, 005062A0H
 		add     esp, 16
-		jmp     eax
+		jmp     dword ptr [X005062A0]
 	}
 }

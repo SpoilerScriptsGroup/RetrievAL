@@ -2,20 +2,21 @@
 
 __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchCommonList()
 {
+	static const DWORD X005009AF = 0x005009AF;
+	static const DWORD X00500C13 = 0x00500C13;
+
 	__asm
 	{
-		mov     ecx, 00500C13H
-		mov     edx, 005009AFH
 		cmp     al, '+' - 'R'
 		je      L1
 		cmp     al, '*' - 'R'
 		je      L1
-		jmp     ecx
+		jmp     dword ptr [X00500C13]
 
 		align   16
 	L1:
 		push    -1
 		push    0
-		jmp     edx
+		jmp     dword ptr [X005009AF]
 	}
 }

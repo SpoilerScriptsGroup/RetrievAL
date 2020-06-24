@@ -1,3 +1,4 @@
+#include "TStringDivision.h"
 
 __declspec(naked) void __cdecl FixAdjustByValue()
 {
@@ -13,7 +14,6 @@ __declspec(naked) void __cdecl FixAdjustByValue()
 	L1:
 		bswap   eax
 		mov     dword ptr [esp + 8], eax
-		mov     eax, 004AE7A0H
-		jmp     eax
+		jmp     TStringDivision_ToString
 	}
 }

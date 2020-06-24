@@ -1,20 +1,21 @@
 #include <windows.h>
 #include "bcb6_std_string.h"
+#include "TSSGCtrl.h"
 
 extern BOOL FixTheProcedure;
+extern const DWORD F0050F600;
+extern const DWORD F005111E0;
 
 __declspec(naked) BOOLEAN __cdecl TSSGCtrl_Funneling_IsEnabled(void *TSSGCtrl, void *SSGS)
 {
 	__asm
 	{
-		mov     eax, dword ptr [FixTheProcedure]
-		test    al, al
-		jz      IsEnabled
+		cmp     dword ptr [FixTheProcedure], 0
+		je      IsEnabled
 		ret
 
 	IsEnabled:
-		mov     eax, 0x005111E0
-		jmp     eax
+		jmp     dword ptr [F005111E0]
 	}
 }
 
@@ -22,14 +23,12 @@ __declspec(naked) unsigned long __cdecl TSSGCtrl_Funneling_GetAddress(void *TSSG
 {
 	__asm
 	{
-		mov     eax, dword ptr [FixTheProcedure]
-		test    eax, eax
-		jz      GetAddress
+		cmp     dword ptr [FixTheProcedure], 0
+		je      GetAddress
 		ret
 
 	GetAddress:
-		mov     eax, 0x00503920
-		jmp     eax
+		jmp     dword ptr [TSSGCtrl_GetAddress]
 	}
 }
 
@@ -45,22 +44,19 @@ __declspec(naked) void __cdecl TSSGCtrl_Funneling_MakeDataCode(
 {
 	__asm
 	{
-		mov     eax, dword ptr[FixTheProcedure]
-		test    eax, eax
-		jz      MakeDataCode
+		cmp     dword ptr [FixTheProcedure], 0
+		je      MakeDataCode
 		push    0x0F                            // Mode = ssgCtrl::atALL
 		mov     ecx, dword ptr [ebp - 0x34]     // tmpV
 		lea     edx, [ecx + 0x18]               // tmpV[1]
 		push    edx                             // AddressStr = tmpV[1]
 		push    dword ptr [ebp + 0x0C]          // SSGS
 		push    edi                             // this
-		mov     eax, 0x00503920                 // TSSGCtrl::GetAddress
-		call    eax
+		call    dword ptr [TSSGCtrl_GetAddress] // TSSGCtrl::GetAddress
 		add     esp, 0x10
 		mov     dword ptr [ebp - 0x0148], eax   // Address = eax
 		mov     dword ptr [esp + 0x30], eax     // StartAddress = eax
 	MakeDataCode:
-		mov     eax, 0x0050F600
-		jmp     eax
+		jmp     dword ptr [F0050F600]
 	}
 }

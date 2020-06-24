@@ -57,10 +57,10 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 
 	__asm
 	{
-		mov     ecx, dword ptr [TMainForm_PrevWindowProc]
-		pop     eax
-		push    ecx
+		mov     eax, dword ptr [TMainForm_PrevWindowProc]
+		pop     ecx
 		push    eax
+		push    ecx
 
 		#define lpPrevWndFunc (esp +  4)
 		#define hWnd          (esp +  8)
@@ -68,60 +68,57 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 		#define wParam        (esp + 16)
 		#define lParam        (esp + 20)
 
-		mov     ecx, dword ptr [uMsg]
-		mov     eax, CallWindowProcA
-		cmp     ecx, WM_LBUTTONDOWN
+		mov     eax, dword ptr [uMsg]
+		mov     ecx, dword ptr [lParam]
+		cmp     eax, WM_LBUTTONDOWN
 		je      OnLButtonDown
-		cmp     ecx, WM_LBUTTONUP
+		cmp     eax, WM_LBUTTONUP
 		je      OnLButtonUp
-		cmp     ecx, WM_LBUTTONDBLCLK
+		cmp     eax, WM_LBUTTONDBLCLK
 		je      OnLButtonDown
-		cmp     ecx, WM_COMMAND
+		cmp     eax, WM_COMMAND
 		je      OnCommand
-		cmp     ecx, WM_SHOWWINDOW
+		cmp     eax, WM_SHOWWINDOW
 		je      OnShowWindow
-		cmp     ecx, WM_DRAW_GUIDE_BUFFER
+		cmp     eax, WM_DRAW_GUIDE_BUFFER
 		je      OnDrawGuideBuffer
-		cmp     ecx, WM_DRAW_PROGRESS
+		cmp     eax, WM_DRAW_PROGRESS
 		je      OnDrawProgress
-		jmp     eax
+		jmp     CallWindowProcA
 
 		align   16
 	OnLButtonDown:
-		xor     eax, eax
-		mov     edx, dword ptr ds:[_MainForm]
-		mov     ax, word ptr [lParam]
-		mov     edx, dword ptr [edx + 2FCH]
-		shl     eax, 16
-		mov     ecx, dword ptr [edx + 40H]
-		sar     eax, 16
-		mov     edx, dword ptr [edx + 48H]
-		cmp     eax, ecx
+		shl     ecx, 16
+		mov     eax, dword ptr ds:[_MainForm]
+		sar     ecx, 16
+		mov     eax, dword ptr [eax + 2FCH]
+		mov     edx, dword ptr [eax + 40H]
+		mov     eax, dword ptr [eax + 48H]
+		cmp     ecx, edx
 		jl      OnLButtonDown2
-		add     ecx, edx
-		cmp     eax, ecx
+		add     edx, eax
+		cmp     ecx, edx
 		jge     OnLButtonDown2
-		and     eax, 0FFFFH
+		and     ecx, 0FFFFH
 		jmp     OnLButtonDown3
 
 	OnLButtonDown2:
-		mov     eax, MAXDWORD
+		mov     ecx, MAXDWORD
 	OnLButtonDown3:
-		mov     dword ptr [TMainForm_SplitterLButtonDownX], eax
+		mov     dword ptr [TMainForm_SplitterLButtonDownX], ecx
 		jmp     CallWindowProcA
 
 		align   16
 	OnLButtonUp:
-		mov     ecx, dword ptr [TMainForm_SplitterLButtonDownX]
-		mov     dx, word ptr [lParam]
+		mov     eax, dword ptr [TMainForm_SplitterLButtonDownX]
 		mov     dword ptr [TMainForm_SplitterLButtonDownX], MAXDWORD
-		cmp     ecx, MAXWORD
+		cmp     eax, MAXWORD
 		ja      OnLButtonUp2
-		cmp     cx, dx
+		cmp     ax, cx
 		je      OnLButtonUp2
 		call    GetCapture
 		cmp     eax, dword ptr [hWnd]
-		jne     OnLButtonUp3
+		jne     OnLButtonUp2
 		mov     ecx, dword ptr [lParam]
 		mov     eax, dword ptr [wParam]
 		push    ecx
@@ -142,33 +139,30 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 		ret     20
 
 	OnLButtonUp2:
-		jmp     eax
-
-	OnLButtonUp3:
 		jmp     CallWindowProcA
 
 		align   16
 	OnCommand:
-		mov     ecx, dword ptr [lParam]
-		mov     edx, dword ptr [wParam]
-		push    ecx
-		push    edx
-		shr     edx, 16
-		mov     ecx, dword ptr [hWnd + 8]
-		push    edx
+		mov     eax, dword ptr [wParam]
+		mov     edx, dword ptr [hWnd]
 		push    ecx
 		push    eax
+		shr     eax, 16
+		mov     ecx, CallWindowProcA
+		push    eax
+		push    edx
+		push    ecx
 		jmp     TMainForm_OnCommand
 
 		align   16
 	OnShowWindow:
-		mov     ecx, dword ptr [lParam]
-		mov     edx, dword ptr [wParam]
-		push    ecx
-		push    edx
-		mov     ecx, dword ptr [hWnd + 8]
+		mov     eax, dword ptr [wParam]
+		mov     edx, dword ptr [hWnd]
 		push    ecx
 		push    eax
+		mov     ecx, CallWindowProcA
+		push    edx
+		push    ecx
 		jmp     TMainForm_OnShowWindow
 
 		align   16
@@ -177,10 +171,9 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 
 		align   16
 	OnDrawProgress:
-		mov     ecx, dword ptr [lParam]
-		mov     edx, dword ptr [wParam]
+		mov     eax, dword ptr [wParam]
 		push    ecx
-		push    edx
+		push    eax
 		call    TSearchForm_DrawProgress
 		add     esp, 8
 		xor     eax, eax

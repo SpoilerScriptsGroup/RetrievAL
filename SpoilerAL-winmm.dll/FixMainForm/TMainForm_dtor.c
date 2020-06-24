@@ -23,14 +23,15 @@ static void __fastcall dtor(TMainForm *this);
 
 __declspec(naked) void __cdecl TMainForm_dtor()
 {
+	static const DWORD X0045FDF2 = 0x0045FDF2;
+
 	__asm
 	{
 		mov     ecx, dword ptr ds:[_MainForm]
 		call    dtor
-		mov     eax, 0045FDF2H
 		dec     dword ptr [ebx + 1CH]
 		lea     edx, [esi + 0C10H]
-		jmp     eax
+		jmp     dword ptr [X0045FDF2]
 	}
 }
 

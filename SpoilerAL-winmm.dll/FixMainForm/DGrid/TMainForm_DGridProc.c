@@ -54,10 +54,10 @@ __declspec(naked) LRESULT CALLBACK TMainForm_DGridProc(HWND hwnd, UINT uMsg, WPA
 
 	__asm
 	{
-		mov     ecx, dword ptr [TMainForm_PrevDGridProc]
-		pop     eax
-		push    ecx
+		mov     eax, dword ptr [TMainForm_PrevDGridProc]
+		pop     ecx
 		push    eax
+		push    ecx
 
 		#define lpPrevWndFunc (esp +  4)
 		#define hWnd          (esp +  8)
@@ -65,65 +65,65 @@ __declspec(naked) LRESULT CALLBACK TMainForm_DGridProc(HWND hwnd, UINT uMsg, WPA
 		#define wParam        (esp + 16)
 		#define lParam        (esp + 20)
 
-		mov     ecx, dword ptr [uMsg]
-		mov     eax, CallWindowProcA
-		cmp     ecx, WM_LBUTTONDOWN
+		mov     eax, dword ptr [uMsg]
+		mov     ecx, dword ptr [lParam]
+		cmp     eax, WM_LBUTTONDOWN
 		je      L1
-		cmp     ecx, WM_LBUTTONUP
+		cmp     eax, WM_LBUTTONUP
 		je      L2
-		cmp     ecx, WM_LBUTTONDBLCLK
+		cmp     eax, WM_LBUTTONDBLCLK
 		je      L3
-		cmp     ecx, WM_MOUSEWHEEL
+		cmp     eax, WM_MOUSEWHEEL
 		je      L4
-		cmp     ecx, WM_KEYDOWN
+		cmp     eax, WM_KEYDOWN
 		je      L5
-		jmp     eax
+		jmp     CallWindowProcA
 
 	L1:
+		mov     eax, dword ptr ds:[_MainForm]
+		mov     edx, CallWindowProcA
 		mov     byte ptr [TMainForm_DGridLButtonDblClk], FALSE
-		mov     edx, dword ptr [lParam]
-		mov     ecx, dword ptr ds:[_MainForm]
-		push    edx
 		push    ecx
 		push    eax
+		push    edx
 		jmp     TMainForm_OnDGridLButtonDown
 
 	L2:
-		mov     edx, dword ptr [lParam]
-		mov     ecx, dword ptr ds:[_MainForm]
-		push    edx
+		mov     eax, dword ptr ds:[_MainForm]
+		mov     edx, CallWindowProcA
 		push    ecx
 		push    eax
+		push    edx
 		jmp     TMainForm_OnDGridLButtonUp
 
 	L3:
 		mov     byte ptr [TMainForm_DGridLButtonDblClk], TRUE
-		jmp     eax
+		jmp     CallWindowProcA
 
 	L4:
-		mov     ecx, dword ptr [wParam]
-		mov     dx, word ptr [lParam]
-		sar     ecx, 16
+		mov     edx, dword ptr [wParam]
 		sub     esp, 12
-		shl     edx, 16
-		mov     eax, esp
 		sar     edx, 16
-		push    ecx
-		mov     ecx, dword ptr [lParam + 16]
-		push    eax
+		mov     eax, esp
+		shl     ecx, 16
+		push    edx
 		sar     ecx, 16
-		mov     dword ptr [eax], edx
-		mov     dword ptr [eax + 4], ecx
+		mov     edx, dword ptr [lParam + 16]
+		sar     edx, 16
+		push    eax
+		mov     dword ptr [eax], ecx
+		mov     dword ptr [eax + 4], edx
 		add     eax, 8
+		mov     ecx, dword ptr ds:[_MainForm]
 		xor     edx, edx
 		push    eax
 		push    edx
 		mov     dword ptr [eax], edx
-		mov     ecx, dword ptr ds:[_MainForm]
 		call    _TMainForm_FormMouseWheel
 		add     esp, 12
 		xor     eax, eax
 		ret     20
+
 	L5:
 		mov     eax, dword ptr ds:[_MainForm]
 		lea     ecx, [esp + 16]

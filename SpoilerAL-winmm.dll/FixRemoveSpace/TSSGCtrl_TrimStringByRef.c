@@ -3,13 +3,14 @@
 
 __declspec(naked) void __cdecl TSSGCtrl_TrimStringByRef()
 {
+	static const DWORD X004FFDA2 = 0x004FFDA2;
+
 	__asm
 	{
 		lea     ecx, [ebp - 18H]
 		call    string_trim_blank
-		mov     eax, 004FFDA2H
 		dec     dword ptr [ebx + 1CH]
 		dec     dword ptr [ebx + 1CH]
-		jmp     eax
+		jmp     dword ptr [X004FFDA2]
 	}
 }

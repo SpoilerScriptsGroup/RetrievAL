@@ -367,6 +367,7 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		0x00000000, 0x0005008C,
 		0x00000000, 0x00000000,
 	};
+	static const DWORD X00506F81 = 0x00506F81;
 
 	__asm
 	{
@@ -444,10 +445,9 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		mov     dword ptr [esp +  4], edx
 		mov     dword ptr [esp     ], offset L6
 		push    ebp
-		mov     eax, 00506F81H
 		mov     ebp, esp
 		sub     esp, 4092
-		jmp     eax
+		jmp     dword ptr [X00506F81]
 
 		align   16
 	L6:
@@ -584,10 +584,9 @@ __declspec(naked) void __stdcall FixLoopByteArray(
 		push    edx
 		push    offset L9
 		push    ebp
-		mov     eax, 00506F81H
 		mov     ebp, esp
 		sub     esp, 4092
-		jmp     eax
+		jmp     dword ptr [X00506F81]
 
 		align   16
 	L9:

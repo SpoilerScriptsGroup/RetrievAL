@@ -27,6 +27,10 @@ static unsigned long __fastcall TSSGCtrl_GetSSGDataFile_Parsing(
 __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing()
 {
 	extern BOOL FixTheProcedure;
+
+	static const DWORD X004EE312 = 0x004EE312;
+	static const DWORD X004EE34E = 0x004EE34E;
+
 	__asm
 	{
 		#define IsNocache (ebp - 304H)
@@ -51,15 +55,13 @@ __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing()
 		mov     ecx, dword ptr [this]
 		call    TSSGCtrl_GetSSGDataFile_Parsing
 		mov     StrSize, eax
-		mov     eax, 0x004EE34E
-		jmp     eax
+		jmp     dword ptr [X004EE34E]
 
 		align   16
 	L1:
 		push    1
 		mov     ecx, dword ptr [tmpV]
-		mov     eax, 0x004EE312
-		jmp     eax
+		jmp     dword ptr [X004EE312]
 
 		#undef IsNocache
 		#undef this

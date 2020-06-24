@@ -41,7 +41,6 @@ __declspec(naked) LRESULT CALLBACK TMainForm_DGridProc(HWND hwnd, UINT uMsg, WPA
 	}
 	else if (uMsg == WM_KEYDOWN)
 	{
-		Handled = FALSE;
 		TMainForm_HotKeyEditKeyDown(
 			MainForm,
 			NULL,
@@ -105,16 +104,16 @@ __declspec(naked) LRESULT CALLBACK TMainForm_DGridProc(HWND hwnd, UINT uMsg, WPA
 		sub     esp, 12
 		sar     edx, 16
 		mov     eax, esp
-		shl     ecx, 16
 		push    edx
+		mov     edx, ecx
 		sar     ecx, 16
-		mov     edx, dword ptr [lParam + 16]
-		sar     edx, 16
 		push    eax
-		mov     dword ptr [eax], ecx
-		mov     dword ptr [eax + 4], edx
-		add     eax, 8
+		shl     edx, 16
+		mov     dword ptr [eax + 4], ecx
+		sar     edx, 16
 		mov     ecx, dword ptr ds:[_MainForm]
+		mov     dword ptr [eax], edx
+		add     eax, 8
 		xor     edx, edx
 		push    eax
 		push    edx

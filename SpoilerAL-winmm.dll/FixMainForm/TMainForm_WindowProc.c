@@ -103,7 +103,7 @@ __declspec(naked) LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WP
 		jmp     OnLButtonDown3
 
 	OnLButtonDown2:
-		mov     ecx, MAXDWORD
+		or      ecx, -1
 	OnLButtonDown3:
 		mov     dword ptr [TMainForm_SplitterLButtonDownX], ecx
 		jmp     CallWindowProcA

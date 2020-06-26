@@ -732,6 +732,36 @@
     <ClCompile Include="crt\msvc\isa_available_init.c">
       <Filter>crt\msvc</Filter>
     </ClCompile>
+    <ClCompile Include="crt\msvc\lldiv.c">
+      <Filter>crt\msvc</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\msvc\lldvrm.c">
+      <Filter>crt\msvc</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\msvc\llmul.c">
+      <Filter>crt\msvc</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\msvc\llrem.c">
+      <Filter>crt\msvc</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\msvc\llshl.c">
+      <Filter>crt\msvc</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\msvc\llshr.c">
+      <Filter>crt\msvc</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\msvc\ulldiv.c">
+      <Filter>crt\msvc</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\msvc\ulldvrm.c">
+      <Filter>crt\msvc</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\msvc\ullrem.c">
+      <Filter>crt\msvc</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\msvc\ullshr.c">
+      <Filter>crt\msvc</Filter>
+    </ClCompile>
     <ClCompile Include="crt\putenv.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -1978,32 +2008,17 @@
     <MASM Include="crt\asmlib\wmemset.asm">
       <Filter>crt\asmlib</Filter>
     </MASM>
-    <MASM Include="crt\chkstk.asm">
-      <Filter>crt</Filter>
-    </MASM>
     <MASM Include="crt\itoa.asm">
       <Filter>crt</Filter>
     </MASM>
     <MASM Include="crt\itow.asm">
       <Filter>crt</Filter>
     </MASM>
-    <MASM Include="crt\lldiv.asm">
-      <Filter>crt</Filter>
-    </MASM>
-    <MASM Include="crt\llmul.asm">
-      <Filter>crt</Filter>
-    </MASM>
-    <MASM Include="crt\llrem.asm">
-      <Filter>crt</Filter>
-    </MASM>
-    <MASM Include="crt\llshl.asm">
-      <Filter>crt</Filter>
-    </MASM>
-    <MASM Include="crt\llshr.asm">
-      <Filter>crt</Filter>
-    </MASM>
     <MASM Include="crt\math\ftol.asm">
       <Filter>crt\math</Filter>
+    </MASM>
+    <MASM Include="crt\msvc\chkstk.asm">
+      <Filter>crt\msvc</Filter>
     </MASM>
     <MASM Include="crt\msvc\memcmp.asm">
       <Filter>crt\msvc</Filter>
@@ -2013,18 +2028,6 @@
     </MASM>
     <MASM Include="crt\msvc\memset.asm">
       <Filter>crt\msvc</Filter>
-    </MASM>
-    <MASM Include="crt\ulldiv.asm">
-      <Filter>crt</Filter>
-    </MASM>
-    <MASM Include="crt\ulldvrm.asm">
-      <Filter>crt</Filter>
-    </MASM>
-    <MASM Include="crt\ullrem.asm">
-      <Filter>crt</Filter>
-    </MASM>
-    <MASM Include="crt\ullshr.asm">
-      <Filter>crt</Filter>
     </MASM>
     <MASM Include="Kernel32\GetProcessId.asm">
       <Filter>Kernel32</Filter>

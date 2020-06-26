@@ -96,7 +96,7 @@ cs10:
 ; Find next lower page and probe
 cs20:
         sub     eax, _PAGESIZE_         ; decrease by PAGESIZE
-        test    dword ptr [eax],eax     ; probe page.
+        test    dword ptr [eax], eax    ; probe page.
         jmp     short cs10
 
 _chkstk endp

@@ -79,8 +79,8 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 	byte_loop_entry:
 		inc     ebx
 		jz      epilogue
-		sub     ebp, 1
-		jae     byte_loop
+		dec     ebp
+		jns     byte_loop
 		movdqa  xmm4, xmmword ptr [upper]
 		movdqa  xmm5, xmmword ptr [azrange]
 		movdqa  xmm6, xmmword ptr [casebit]                 // bit to change

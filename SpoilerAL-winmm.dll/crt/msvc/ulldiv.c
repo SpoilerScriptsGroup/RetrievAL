@@ -37,7 +37,6 @@
 
 __declspec(naked) void __cdecl _aulldiv()
 {
-#if 0
 	__asm
 	{
 		push    ebx
@@ -75,11 +74,19 @@ __declspec(naked) void __cdecl _aulldiv()
 		// things get a little more complex.
 		//
 
+#if 0
 		mov     eax, HIWORD(DVSR)       // check to see if divisor < 4194304K
 		or      eax, eax
 		jnz     short L1                // nope, gotta do this the hard way
 		mov     ecx, LOWORD(DVSR)       // load divisor
 		mov     eax, HIWORD(DVND)       // load high word of dividend
+#else
+		mov     edx, HIWORD(DVSR)       // load high word of divisor
+		mov     eax, HIWORD(DVND)       // load high word of dividend
+		or      edx, edx                // check to see if divisor < 4194304K
+		jnz     short L1                // nope, gotta do this the hard way
+		mov     ecx, LOWORD(DVSR)       // load divisor
+#endif
 		xor     edx, edx
 		div     ecx                     // get high order bits of quotient
 		mov     ebx, eax                // save high bits of quotient
@@ -93,6 +100,7 @@ __declspec(naked) void __cdecl _aulldiv()
 		//
 
 	L1:
+#if 0
 		mov     ecx, eax                // ecx:ebx <- divisor
 		mov     ebx, LOWORD(DVSR)
 		mov     edx, HIWORD(DVND)       // edx:eax <- dividend
@@ -104,6 +112,54 @@ __declspec(naked) void __cdecl _aulldiv()
 		rcr     eax, 1
 		or      ecx, ecx
 		jnz     short L3                // loop until divisor < 4194304K
+#else
+		mov     ebx, edx
+		jns     short shift
+		xor     edx, edx
+		jmp     short divide
+
+	shift:
+		cmp     edx, 1 shl 4
+		jae     bitscan
+		mov     ecx, edx                // ecx:ebx <- divisor
+		mov     ebx, LOWORD(DVSR)
+		shr     ecx, 1
+		mov     edx, eax                // edx:eax <- dividend
+		rcr     ebx, 1
+		mov     eax, LOWORD(DVND)
+		shr     edx, 1
+		rcr     eax, 1
+		or      ecx, ecx
+		jz      divide
+		shr     ecx, 1
+		rcr     ebx, 1
+		shr     edx, 1
+		rcr     eax, 1
+		or      ecx, ecx
+		jz      divide
+		shr     ecx, 1
+		rcr     ebx, 1
+		shr     edx, 1
+		rcr     eax, 1
+		or      ecx, ecx
+		jz      divide
+		shr     ecx, 1
+		rcr     ebx, 1
+		shr     edx, 1
+		rcr     eax, 1
+		jmp     divide
+
+	bitscan:
+		bsr     ecx, edx
+		mov     ebx, LOWORD(DVSR)       // edx:ebx <- divisor
+		inc     ecx
+		shrd    ebx, edx, cl
+		mov     edx, eax                // edx:eax <- dividend
+		mov     eax, LOWORD(DVND)
+		shrd    eax, edx, cl
+		shr     edx, cl
+	divide:
+#endif
 		div     ebx                     // now divide, ignore remainder
 		mov     esi, eax                // save quotient
 
@@ -153,139 +209,6 @@ __declspec(naked) void __cdecl _aulldiv()
 		#undef DVND
 		#undef DVSR
 	}
-#else
-	__asm
-	{
-		#define DVND (esp + 4)          // stack address of dividend (a)
-		#define DVSR (esp + 12)         // stack address of divisor (b)
-
-		mov     eax, HIWORD(DVND)
-		mov     ecx, HIWORD(DVSR)
-		mov     edx, eax
-		or      eax, ecx
-		jnz     large
-		mov     eax, LOWORD(DVND)
-		mov     ecx, LOWORD(DVSR)
-		cmp     eax, ecx
-		jb      smaller
-		xor     edx, edx
-		div     ecx
-		xor     edx, edx
-		ret     16
-
-		align   16
-	large:
-		cmp     edx, ecx
-		jb      smaller
-		push    ebx
-		cmp     ecx, 1 shl 4
-		jae     mid
-		or      ecx, ecx
-		jz      biglittle
-		shr     ecx, 1
-		mov     ebx, LOWORD(DVSR + 4)
-		rcr     ebx, 1
-		mov     eax, LOWORD(DVND + 4)
-		shr     edx, 1
-		rcr     eax, 1
-		or      ecx, ecx
-		jz      cont
-		shr     ecx, 1
-		rcr     ebx, 1
-		shr     edx, 1
-		rcr     eax, 1
-		or      ecx, ecx
-		jz      cont
-		shr     ecx, 1
-		rcr     ebx, 1
-		shr     edx, 1
-		rcr     eax, 1
-		or      ecx, ecx
-		jz      cont
-		shr     ecx, 1
-		rcr     ebx, 1
-		shr     edx, 1
-		rcr     eax, 1
-		jmp     cont
-
-	mid:
-		mov     eax, edx
-		xor     edx, edx
-		mov     ebx, ecx
-		add     ecx, ecx
-		jc      cont
-		bsr     ecx, ecx
-		mov     edx, ebx
-		mov     ebx, LOWORD(DVSR + 4)
-		shrd    ebx, edx, cl
-		mov     edx, eax
-		mov     eax, LOWORD(DVND + 4)
-		shrd    eax, edx, cl
-		shr     edx, cl
-
-	cont:
-		div     ebx
-		push    eax
-		mov     ebx, eax
-		mov     eax, HIWORD(DVSR + 8)
-		mul     ebx
-		or      edx, edx
-		jnz     wrap
-		mov     ecx, eax
-		mov     eax, LOWORD(DVSR + 8)
-		mul     ebx
-		add     edx, ecx
-		mov     ecx, LOWORD(DVND + 8)
-		mov     ebx, HIWORD(DVND + 8)
-		sub     ecx, eax
-		sbb     ebx, edx
-		js      wrap
-		sub     ecx, LOWORD(DVSR + 8)
-		pop     eax
-		sbb     ebx, HIWORD(DVSR + 4)
-		jae     undershot
-		xor     edx, edx
-		pop     ebx
-		ret     16
-
-		align   16
-	undershot:
-		inc     eax                     // we undershot by one
-		xor     edx, edx
-		pop     ebx
-		ret     16
-
-		align   16
-	wrap:
-		pop     eax                     // we overshot by one
-		pop     ebx
-		xor     edx, edx
-		dec     eax
-		ret     16
-
-		align   16
-	smaller:
-		xor     eax, eax
-		xor     edx, edx
-		ret     16
-
-		align   16
-	biglittle:
-		mov     eax, edx
-		mov     ecx, LOWORD(DVSR + 4)
-		xor     edx, edx
-		div     ecx
-		mov     ebx, eax
-		mov     eax, LOWORD(DVND + 4)
-		div     ecx
-		mov     edx, ebx
-		pop     ebx
-		ret     16
-
-		#undef DVND
-		#undef DVSR
-	}
-#endif
 }
 
 #if 0

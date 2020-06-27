@@ -37,7 +37,6 @@
 
 __declspec(naked) void __cdecl _alldiv()
 {
-#if 0
 	__asm
 	{
 		push    edi
@@ -78,6 +77,7 @@ __declspec(naked) void __cdecl _alldiv()
 
 		xor     edi, edi                // result sign assumed positive
 
+#if 0
 		mov     eax, HIWORD(DVND)       // hi word of a
 		or      eax, eax                // test to see if signed
 		jge     short L1                // skip rest if a is already positive
@@ -88,7 +88,21 @@ __declspec(naked) void __cdecl _alldiv()
 		sbb     eax, 0
 		mov     HIWORD(DVND), eax       // save positive value
 		mov     LOWORD(DVND), edx
+#else
+		mov     eax, HIWORD(DVND)       // hi word of a
+		mov     edx, HIWORD(DVSR)       // hi word of b
+		or      eax, eax                // test to see if signed
+		jge     short L1                // skip rest if a is already positive
+		mov     ecx, LOWORD(DVND)       // lo word of a
+		xor     eax, -1                 // make a positive
+		neg     ecx
+		sbb     eax, -1
+		dec     edi                     // complement result sign flag
+		mov     HIWORD(DVND), eax       // save positive value
+		mov     LOWORD(DVND), ecx
+#endif
 	L1:
+#if 0
 		mov     eax, HIWORD(DVSR)       // hi word of b
 		or      eax, eax                // test to see if signed
 		jge     short L2                // skip rest if b is already positive
@@ -99,6 +113,17 @@ __declspec(naked) void __cdecl _alldiv()
 		sbb     eax,0
 		mov     HIWORD(DVSR), eax       // save positive value
 		mov     LOWORD(DVSR), edx
+#else
+		or      edx, edx                // test to see if signed
+		jge     short L2                // skip rest if b is already positive
+		mov     ecx, LOWORD(DVSR)       // lo word of b
+		xor     edx, -1                 // make b positive
+		neg     ecx
+		sbb     edx, -1
+		xor     edi, -1                 // complement the result sign flag
+		mov     HIWORD(DVSR), edx       // save positive value
+		mov     LOWORD(DVSR), ecx
+#endif
 	L2:
 
 		//
@@ -109,10 +134,16 @@ __declspec(naked) void __cdecl _alldiv()
 		// NOTE - eax currently contains the high order word of DVSR
 		//
 
+#if 0
 		or      eax, eax                // check to see if divisor < 4194304K
 		jnz     short L3                // nope, gotta do this the hard way
 		mov     ecx, LOWORD(DVSR)       // load divisor
 		mov     eax, HIWORD(DVND)       // load high word of dividend
+#else
+		or      edx, edx                // check to see if divisor < 4194304K
+		jnz     short L3                // nope, gotta do this the hard way
+		mov     ecx, LOWORD(DVSR)       // load divisor
+#endif
 		xor     edx, edx
 		div     ecx                     // eax <- high order bits of quotient
 		mov     ebx, eax                // save high bits of quotient
@@ -126,6 +157,7 @@ __declspec(naked) void __cdecl _alldiv()
 		//
 
 	L3:
+#if 0
 		mov     ebx, eax                // ebx:ecx <- divisor
 		mov     ecx, LOWORD(DVSR)
 		mov     edx, HIWORD(DVND)       // edx:eax <- dividend
@@ -138,6 +170,55 @@ __declspec(naked) void __cdecl _alldiv()
 		or      ebx, ebx
 		jnz     short L5                // loop until divisor < 4194304K
 		div     ecx                     // now divide, ignore remainder
+#else
+		mov     ebx, edx
+		jns     short shift
+		xor     edx, edx
+		jmp     short divide
+
+	shift:
+		cmp     edx, 1 shl 4
+		jae     bitscan
+		mov     ecx, edx                // ecx:ebx <- divisor
+		mov     ebx, LOWORD(DVSR)
+		shr     ecx, 1
+		mov     edx, eax                // edx:eax <- dividend
+		rcr     ebx, 1
+		mov     eax, LOWORD(DVND)
+		shr     edx, 1
+		rcr     eax, 1
+		or      ecx, ecx
+		jz      divide
+		shr     ecx, 1
+		rcr     ebx, 1
+		shr     edx, 1
+		rcr     eax, 1
+		or      ecx, ecx
+		jz      divide
+		shr     ecx, 1
+		rcr     ebx, 1
+		shr     edx, 1
+		rcr     eax, 1
+		or      ecx, ecx
+		jz      divide
+		shr     ecx, 1
+		rcr     ebx, 1
+		shr     edx, 1
+		rcr     eax, 1
+		jmp     divide
+
+	bitscan:
+		bsr     ecx, edx
+		mov     ebx, LOWORD(DVSR)       // edx:ebx <- divisor
+		inc     ecx
+		shrd    ebx, edx, cl
+		mov     edx, eax                // edx:eax <- dividend
+		mov     eax, LOWORD(DVND)
+		shrd    eax, edx, cl
+		shr     edx, cl
+	divide:
+		div     ebx                     // now divide, ignore remainder
+#endif
 		mov     esi, eax                // save quotient
 
 		//
@@ -177,17 +258,26 @@ __declspec(naked) void __cdecl _alldiv()
 		//
 
 	L4:
+#if 0
 		dec     edi                     // check to see if result is negative
 		jnz     short L8                // if EDI == 0, result should be negative
 		neg     edx                     // otherwise, negate the result
 		neg     eax
 		sbb     edx, 0
+#else
+		xor     eax, edi                // otherwise, negate the result
+		xor     edx, edi
+		sub     eax, edi
+		sbb     edx, edi
+#endif
 
 		//
 		// Restore the saved registers and return.
 		//
 
+#if 0
 	L8:
+#endif
 		pop     ebx
 		pop     esi
 		pop     edi
@@ -197,180 +287,6 @@ __declspec(naked) void __cdecl _alldiv()
 		#undef DVND
 		#undef DVSR
 	}
-#else
-	__asm
-	{
-		#define DVND (esp + 4)          // stack address of dividend (a)
-		#define DVSR (esp + 12)         // stack address of divisor (b)
-
-		mov     edx, HIWORD(DVND)
-		mov     ecx, HIWORD(DVSR)
-		xor     edx, ecx
-		mov     eax, LOWORD(DVND)
-		sar     edx, 31
-		push    ebx
-		push    edx
-		mov     edx, ecx
-		sar     edx, 31
-		mov     ebx, LOWORD(DVSR + 8)
-		xor     ecx, edx
-		xor     ebx, edx
-		sub     ebx, edx
-		sbb     ecx, edx
-		mov     edx, HIWORD(DVND + 8)
-		mov     LOWORD(DVSR + 8), ebx
-		mov     ebx, edx
-		sar     ebx, 31
-		xor     edx, ebx
-		xor     eax, ebx
-		sub     eax, ebx
-		sbb     edx, ebx
-		mov     LOWORD(DVND + 8), eax
-		mov     eax, edx
-		or      eax, ecx
-		jnz     large
-		mov     eax, LOWORD(DVND + 8)
-		mov     ecx, LOWORD(DVSR + 8)
-		cmp     eax, ecx
-		jb      smaller
-		xor     edx, edx
-		div     ecx
-		pop     edx
-		xor     eax, edx
-		sub     eax, edx
-		sbb     edx, edx
-		pop     ebx
-		ret     16
-
-		align   16
-	large:
-		cmp     edx, ecx
-		jb      smaller
-		cmp     ecx, 1 shl 4
-		mov     HIWORD(DVND + 8), edx
-		mov     HIWORD(DVSR + 8), ecx
-		jae     mid
-		or      ecx, ecx
-		jz      biglittle
-		shr     ecx, 1
-		mov     ebx, LOWORD(DVSR + 8)
-		rcr     ebx, 1
-		mov     eax, LOWORD(DVND + 8)
-		shr     edx, 1
-		rcr     eax, 1
-		or      ecx, ecx
-		jz      cont
-		shr     ecx, 1
-		rcr     ebx, 1
-		shr     edx, 1
-		rcr     eax, 1
-		or      ecx, ecx
-		jz      cont
-		shr     ecx, 1
-		rcr     ebx, 1
-		shr     edx, 1
-		rcr     eax, 1
-		or      ecx, ecx
-		jz      cont
-		shr     ecx, 1
-		rcr     ebx, 1
-		shr     edx, 1
-		rcr     eax, 1
-		jmp     cont
-
-	mid:
-		mov     eax, edx
-		xor     edx, edx
-		mov     ebx, ecx
-		add     ecx, ecx
-		jc      cont
-		bsr     ecx, ecx
-		mov     edx, ebx
-		mov     ebx, LOWORD(DVSR + 8)
-		shrd    ebx, edx, cl
-		mov     edx, eax
-		mov     eax, LOWORD(DVND + 8)
-		shrd    eax, edx, cl
-		shr     edx, cl
-
-	cont:
-		div     ebx
-		push    eax
-		mov     ebx, eax
-		mov     eax, HIWORD(DVSR + 12)
-		mul     ebx
-		or      edx, edx
-		jnz     wrap
-		mov     ecx, eax
-		mov     eax, LOWORD(DVSR + 12)
-		mul     ebx
-		add     edx, ecx
-		mov     ecx, LOWORD(DVND + 12)
-		mov     ebx, HIWORD(DVND + 12)
-		sub     ecx, eax
-		sbb     ebx, edx
-		js      wrap
-		sub     ecx, LOWORD(DVSR + 12)
-		pop     eax
-		sbb     ebx, HIWORD(DVSR + 8)
-		jae     undershot
-		pop     edx
-		xor     eax, edx
-		sub     eax, edx
-		sbb     edx, edx
-		pop     ebx
-		ret     16
-
-		align   16
-	undershot:
-		inc     eax                     // we undershot by one (already subtracted one from remainder)
-		pop     edx
-		xor     eax, edx
-		sub     eax, edx
-		sbb     edx, edx
-		pop     ebx
-		ret     16
-
-		align   16
-	wrap:
-		pop     eax                     // we overshot by one
-		pop     edx
-		dec     eax
-		xor     eax, edx
-		sub     eax, edx
-		sbb     edx, edx
-		pop     ebx
-		ret     16
-
-		align   16
-	smaller:
-		xor     eax, eax
-		xor     edx, edx
-		pop     ecx
-		pop     ebx
-		ret     16
-
-		align   16
-	biglittle:
-		mov     ecx, LOWORD(DVSR + 8)
-		xor     edx, edx
-		div     ecx
-		mov     ebx, eax
-		mov     eax, LOWORD(DVND + 8)
-		div     ecx
-		pop     ecx
-		mov     edx, ebx
-		xor     eax, ecx
-		xor     edx, ecx
-		sub     eax, ecx
-		sbb     edx, ecx
-		pop     ebx
-		ret     16
-
-		#undef DVND
-		#undef DVSR
-	}
-#endif
 }
 
 #if 0

@@ -298,7 +298,7 @@ __declspec(naked) void __cdecl _allrem()
 		align   16
 	shift:
 		cmp     edx, 1 shl 4
-		jae     bitscan
+		jae     short bitscan
 		mov     ecx, edx                // ecx:ebx <- divisor
 		mov     ebx, LOWORD(DVSR)
 		shr     ecx, 1
@@ -308,24 +308,24 @@ __declspec(naked) void __cdecl _allrem()
 		shr     edx, 1
 		rcr     eax, 1
 		or      ecx, ecx
-		jz      divide
+		jz      short divide
 		shr     ecx, 1
 		rcr     ebx, 1
 		shr     edx, 1
 		rcr     eax, 1
 		or      ecx, ecx
-		jz      divide
+		jz      short divide
 		shr     ecx, 1
 		rcr     ebx, 1
 		shr     edx, 1
 		rcr     eax, 1
 		or      ecx, ecx
-		jz      divide
+		jz      short divide
 		shr     ecx, 1
 		rcr     ebx, 1
 		shr     edx, 1
 		rcr     eax, 1
-		jmp     divide
+		jmp     short divide
 
 		align   16
 	bitscan:

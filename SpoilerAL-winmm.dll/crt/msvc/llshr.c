@@ -32,54 +32,54 @@
 
 __declspec(naked) void __cdecl _allshr()
 {
-__asm
-{
-//
-// Handle shifts of 64 bits or more (if shifting 64 bits or more, the result
-// depends only on the high order bit of edx).
-//
-        cmp     cl, 64
-        jae     short RETSIGN
+	__asm
+	{
+		//
+		// Handle shifts of 64 bits or more (if shifting 64 bits or more, the result
+		// depends only on the high order bit of edx).
+		//
+		cmp     cl, 64
+		jae     short RETSIGN
 
-//
-// Handle shifts of between 0 and 31 bits
-//
-        cmp     cl, 32
-        jae     short MORE32
-        shrd    eax, edx, cl
-        sar     edx, cl
-        ret
+		//
+		// Handle shifts of between 0 and 31 bits
+		//
+		cmp     cl, 32
+		jae     short MORE32
+		shrd    eax, edx, cl
+		sar     edx, cl
+		ret
 
-//
-// Handle shifts of between 32 and 63 bits
-//
-MORE32:
-        mov     eax, edx
-        sar     edx, 31
-        and     cl, 31
-        sar     eax, cl
-        ret
+		//
+		// Handle shifts of between 32 and 63 bits
+		//
+	MORE32:
+		mov     eax, edx
+		sar     edx, 31
+		and     cl, 31
+		sar     eax, cl
+		ret
 
-//
-// Return double precision 0 or -1, depending on the sign of edx
-//
-RETSIGN:
-        sar     edx, 31
-        mov     eax, edx
-        ret
-}
+		//
+		// Return double precision 0 or -1, depending on the sign of edx
+		//
+	RETSIGN:
+		sar     edx, 31
+		mov     eax, edx
+		ret
+	}
 }
 
 #if 0
 __declspec(naked) __int64 __stdcall _llshr(__int64 value, unsigned char shift)
 {
-__asm
-{
-        mov     eax, dword ptr [esp + 4]
-        mov     edx, dword ptr [esp + 8]
-        mov     ecx, dword ptr [esp + 12]
-        call    _allshr
-        ret     12
-}
+	__asm
+	{
+		mov     eax, dword ptr [esp + 4]
+		mov     edx, dword ptr [esp + 8]
+		mov     ecx, dword ptr [esp + 12]
+		call    _allshr
+		ret     12
+	}
 }
 #endif

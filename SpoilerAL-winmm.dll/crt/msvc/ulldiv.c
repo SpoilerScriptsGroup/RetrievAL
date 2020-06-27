@@ -196,7 +196,6 @@ __declspec(naked) void __cdecl _aulldiv()
 		or      edx, edx                // check to see if divisor < 4194304K
 		jnz     short L1                // nope, gotta do this the hard way
 		mov     ecx, LOWORD(DVSR)       // load divisor
-		xor     edx, edx
 		div     ecx                     // get high order bits of quotient
 		mov     ebx, eax                // save high bits of quotient
 		mov     eax, LOWORD(DVND)       // edx:eax <- remainder:lo word of dividend
@@ -208,12 +207,14 @@ __declspec(naked) void __cdecl _aulldiv()
 		// Here we do it the hard way.  Remember, eax contains DVSRHI
 		//
 
+		align   16
 	L1:
 		mov     ebx, edx
 		jns     short shift
 		xor     edx, edx
 		jmp     short divide
 
+		align   16
 	shift:
 		cmp     edx, 1 shl 4
 		jae     bitscan
@@ -245,6 +246,7 @@ __declspec(naked) void __cdecl _aulldiv()
 		rcr     eax, 1
 		jmp     divide
 
+		align   16
 	bitscan:
 		bsr     ecx, edx
 		mov     ebx, LOWORD(DVSR)       // edx:ebx <- divisor

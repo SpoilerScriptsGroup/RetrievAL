@@ -32,6 +32,7 @@
 
 __declspec(naked) void __cdecl _aullshr()
 {
+#if 0
 	__asm
 	{
 		//
@@ -68,6 +69,46 @@ __declspec(naked) void __cdecl _aullshr()
 		xor     edx, edx
 		ret
 	}
+#else
+	__asm
+	{
+		//
+		// Handle shifts of 64 bits or more (if shifting 64 bits or more, the result
+		// depends only on the high order bit of edx).
+		//
+		cmp     cl, 64
+		jae     short RETZERO
+
+		//
+		// Handle shifts of between 0 and 31 bits
+		//
+		cmp     cl, 32
+		jae     short MORE32
+		shrd    eax, edx, cl
+		shr     edx, cl
+		ret
+
+		//
+		// Handle shifts of between 32 and 63 bits
+		//
+		align   16
+	MORE32:
+		mov     eax, edx
+		xor     edx, edx
+		and     cl, 31
+		shr     eax, cl
+		ret
+
+		//
+		// return 0 in edx:eax
+		//
+		align   16
+	RETZERO:
+		xor     eax, eax
+		xor     edx, edx
+		ret
+	}
+#endif
 }
 
 #if 0

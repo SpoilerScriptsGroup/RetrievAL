@@ -220,7 +220,6 @@ __declspec(naked) void __cdecl _aulldvrm()
 		or      edx, edx                // check to see if divisor < 4194304K
 		jnz     short L1                // nope, gotta do this the hard way
 		mov     ecx, LOWORD(DVSR)       // load divisor
-		xor     edx, edx
 		div     ecx                     // get high order bits of quotient
 		mov     ebx, eax                // save high bits of quotient
 		mov     eax, LOWORD(DVND)       // edx:eax <- remainder:lo word of dividend
@@ -230,6 +229,7 @@ __declspec(naked) void __cdecl _aulldvrm()
 		//
 		// Now we need to do a multiply so that we can compute the remainder.
 		//
+
 		mov     eax, ebx                // set up high word of quotient
 		mul     dword ptr LOWORD(DVSR)  // HIWORD(QUOT) * DVSR
 		mov     ecx, eax                // save the result in ecx
@@ -242,12 +242,14 @@ __declspec(naked) void __cdecl _aulldvrm()
 		// Here we do it the hard way.  Remember, eax contains DVSRHI
 		//
 
+		align   16
 	L1:
 		mov     ebx, edx
 		jns     short shift
 		xor     edx, edx
 		jmp     short divide
 
+		align   16
 	shift:
 		cmp     edx, 1 shl 4
 		jae     bitscan
@@ -279,6 +281,7 @@ __declspec(naked) void __cdecl _aulldvrm()
 		rcr     eax, 1
 		jmp     divide
 
+		align   16
 	bitscan:
 		bsr     ecx, edx
 		mov     ebx, LOWORD(DVSR)       // edx:ebx <- divisor
@@ -340,11 +343,13 @@ __declspec(naked) void __cdecl _aulldvrm()
 		//
 		// Now we need to get the quotient into edx:eax and the remainder into ebx:ecx.
 		//
+
 		mov     ecx, ebx
 		mov     ebx, edx
 		mov     edx, ecx
 		mov     ecx, eax
 		mov     eax, esi
+
 		//
 		// Just the cleanup left to do.  edx:eax contains the quotient.
 		// Restore the saved registers and return.

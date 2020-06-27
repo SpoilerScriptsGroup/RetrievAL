@@ -276,7 +276,6 @@ __declspec(naked) void __cdecl _allrem()
 		or      edx, edx                // check to see if divisor < 4194304K
 		jnz     short L3                // nope, gotta do this the hard way
 		mov     ecx, LOWORD(DVSR)       // load divisor
-		xor     edx, edx
 		div     ecx                     // edx <- remainder
 		mov     eax, LOWORD(DVND)       // edx:eax <- remainder:lo word of dividend
 		div     ecx                     // edx <- final remainder
@@ -289,12 +288,14 @@ __declspec(naked) void __cdecl _allrem()
 		// Here we do it the hard way.  Remember, eax contains the high word of DVSR
 		//
 
+		align   16
 	L3:
 		mov     ebx, edx
 		jns     short shift
 		xor     edx, edx
 		jmp     short divide
 
+		align   16
 	shift:
 		cmp     edx, 1 shl 4
 		jae     bitscan
@@ -326,6 +327,7 @@ __declspec(naked) void __cdecl _allrem()
 		rcr     eax, 1
 		jmp     divide
 
+		align   16
 	bitscan:
 		bsr     ecx, edx
 		mov     ebx, LOWORD(DVSR)       // edx:ebx <- divisor

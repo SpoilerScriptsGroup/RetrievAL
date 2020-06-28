@@ -295,31 +295,29 @@ __declspec(naked) void __cdecl _alldiv()
 		cmp     edx, 1 shl 4
 		jae     short bitscan
 		mov     ecx, edx                // ecx:ebx <- divisor
+		mov     edx, eax                // edx:eax <- dividend
+		shr     edx, 1
+		mov     eax, LOWORD(DVND)
+		rcr     eax, 1
 		mov     ebx, LOWORD(DVSR)
 		shr     ecx, 1
-		mov     edx, eax                // edx:eax <- dividend
+		jz      short rotate
 		rcr     ebx, 1
-		mov     eax, LOWORD(DVND)
 		shr     edx, 1
 		rcr     eax, 1
-		or      ecx, ecx
-		jz      short divide
 		shr     ecx, 1
+		jz      short rotate
 		rcr     ebx, 1
 		shr     edx, 1
 		rcr     eax, 1
-		or      ecx, ecx
-		jz      short divide
 		shr     ecx, 1
+		jz      short rotate
 		rcr     ebx, 1
 		shr     edx, 1
 		rcr     eax, 1
-		or      ecx, ecx
-		jz      short divide
 		shr     ecx, 1
+	rotate:
 		rcr     ebx, 1
-		shr     edx, 1
-		rcr     eax, 1
 		jmp     short divide
 
 		align   16

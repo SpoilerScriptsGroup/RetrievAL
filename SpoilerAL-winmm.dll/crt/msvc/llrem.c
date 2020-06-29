@@ -66,34 +66,34 @@ __declspec(naked) void __cdecl _allrem()
 		//               -----------------
 		//
 
-		#define DVND (esp + 12)         // stack address of dividend (a)
-		#define DVSR (esp + 20)         // stack address of divisor (b)
+		#define DVND (esp + 12)             // stack address of dividend (a)
+		#define DVSR (esp + 20)             // stack address of divisor (b)
 
 
 		// Determine sign of the result (edi = 0 if result is positive, non-zero
 		// otherwise) and make operands positive.
 
-		or      edi, -1                 // result sign assumed positive
+		or      edi, -1                     // result sign assumed positive
 
-		mov     eax, HIWORD(DVND)       // hi word of a
-		or      eax, eax                // test to see if signed
-		jge     short L1                // skip rest if a is already positive
-		inc     edi                     // complement result sign flag bit
-		mov     edx, LOWORD(DVND)       // lo word of a
-		neg     eax                     // make a positive
+		mov     eax, HIWORD(DVND)           // hi word of a
+		or      eax, eax                    // test to see if signed
+		jge     short L1                    // skip rest if a is already positive
+		inc     edi                         // complement result sign flag bit
+		mov     edx, LOWORD(DVND)           // lo word of a
+		neg     eax                         // make a positive
 		neg     edx
 		sbb     eax, 0
-		mov     HIWORD(DVND), eax       // save positive value
+		mov     HIWORD(DVND), eax           // save positive value
 		mov     LOWORD(DVND), edx
 	L1:
-		mov     eax, HIWORD(DVSR)       // hi word of b
-		or      eax, eax                // test to see if signed
-		jge     short L2                // skip rest if b is already positive
-		mov     edx, LOWORD(DVSR)       // lo word of b
-		neg     eax                     // make b positive
+		mov     eax, HIWORD(DVSR)           // hi word of b
+		or      eax, eax                    // test to see if signed
+		jge     short L2                    // skip rest if b is already positive
+		mov     edx, LOWORD(DVSR)           // lo word of b
+		neg     eax                         // make b positive
 		neg     edx
 		sbb     eax, 0
-		mov     HIWORD(DVSR), eax       // save positive value
+		mov     HIWORD(DVSR), eax           // save positive value
 		mov     LOWORD(DVSR), edx
 	L2:
 
@@ -105,37 +105,37 @@ __declspec(naked) void __cdecl _allrem()
 		// NOTE - eax currently contains the high order word of DVSR
 		//
 
-		or      eax, eax                // check to see if divisor < 4194304K
-		jnz     short L3                // nope, gotta do this the hard way
-		mov     ecx, LOWORD(DVSR)       // load divisor
-		mov     eax, HIWORD(DVND)       // load high word of dividend
+		or      eax, eax                    // check to see if divisor < 4194304K
+		jnz     short L3                    // nope, gotta do this the hard way
+		mov     ecx, LOWORD(DVSR)           // load divisor
+		mov     eax, HIWORD(DVND)           // load high word of dividend
 		xor     edx, edx
-		div     ecx                     // edx <- remainder
-		mov     eax, LOWORD(DVND)       // edx:eax <- remainder:lo word of dividend
-		div     ecx                     // edx <- final remainder
-		mov     eax, edx                // edx:eax <- remainder
+		div     ecx                         // edx <- remainder
+		mov     eax, LOWORD(DVND)           // edx:eax <- remainder:lo word of dividend
+		div     ecx                         // edx <- final remainder
+		mov     eax, edx                    // edx:eax <- remainder
 		xor     edx, edx
-		dec     edi                     // check result sign flag
-		jns     short L4                // negate result, restore stack and return
-		jmp     short L8                // result sign ok, restore stack and return
+		dec     edi                         // check result sign flag
+		jns     short L4                    // negate result, restore stack and return
+		jmp     short L8                    // result sign ok, restore stack and return
 
 		//
 		// Here we do it the hard way.  Remember, eax contains the high word of DVSR
 		//
 
 	L3:
-		mov     ebx, eax                // ebx:ecx <- divisor
+		mov     ebx, eax                    // ebx:ecx <- divisor
 		mov     ecx, LOWORD(DVSR)
-		mov     edx, HIWORD(DVND)       // edx:eax <- dividend
+		mov     edx, HIWORD(DVND)           // edx:eax <- dividend
 		mov     eax, LOWORD(DVND)
 	L5:
-		shr     ebx, 1                  // shift divisor right one bit
+		shr     ebx, 1                      // shift divisor right one bit
 		rcr     ecx, 1
-		shr     edx, 1                  // shift dividend right one bit
+		shr     edx, 1                      // shift dividend right one bit
 		rcr     eax, 1
 		or      ebx, ebx
-		jnz     short L5                // loop until divisor < 4194304K
-		div     ecx                     // now divide, ignore remainder
+		jnz     short L5                    // loop until divisor < 4194304K
+		div     ecx                         // now divide, ignore remainder
 
 		//
 		// We may be off by one, so to check, we will multiply the quotient
@@ -144,12 +144,12 @@ __declspec(naked) void __cdecl _allrem()
 		// dividend is close to 2**64 and the quotient is off by 1.
 		//
 
-		mov     ecx, eax                // save a copy of quotient in ECX
+		mov     ecx, eax                    // save a copy of quotient in ECX
 		mul     dword ptr HIWORD(DVSR)
-		xchg    ecx, eax                // save product, get quotient in EAX
+		xchg    ecx, eax                    // save product, get quotient in EAX
 		mul     dword ptr LOWORD(DVSR)
-		add     edx, ecx                // EDX:EAX = QUOT * DVSR
-		jc      short L6                // carry means Quotient is off by 1
+		add     edx, ecx                    // EDX:EAX = QUOT * DVSR
+		jc      short L6                    // carry means Quotient is off by 1
 
 		//
 		// do long compare here between original dividend and the result of the
@@ -157,13 +157,13 @@ __declspec(naked) void __cdecl _allrem()
 		// subtract the original divisor from the result.
 		//
 
-		cmp     edx, HIWORD(DVND)       // compare hi words of result and original
-		ja      short L6                // if result > original, do subtract
-		jb      short L7                // if result < original, we are ok
-		cmp     eax, LOWORD(DVND)       // hi words are equal, compare lo words
-		jbe     short L7                // if less or equal we are ok, else subtract
+		cmp     edx, HIWORD(DVND)           // compare hi words of result and original
+		ja      short L6                    // if result > original, do subtract
+		jb      short L7                    // if result < original, we are ok
+		cmp     eax, LOWORD(DVND)           // hi words are equal, compare lo words
+		jbe     short L7                    // if less or equal we are ok, else subtract
 	L6:
-		sub     eax, LOWORD(DVSR)       // subtract divisor from result
+		sub     eax, LOWORD(DVSR)           // subtract divisor from result
 		sbb     edx, HIWORD(DVSR)
 	L7:
 
@@ -173,7 +173,7 @@ __declspec(naked) void __cdecl _allrem()
 		// opposite direction and negate the result if necessary.
 		//
 
-		sub     eax, LOWORD(DVND)       // subtract dividend from result
+		sub     eax, LOWORD(DVND)           // subtract dividend from result
 		sbb     edx, HIWORD(DVND)
 
 		//
@@ -183,10 +183,10 @@ __declspec(naked) void __cdecl _allrem()
 		// the result to make it positive again.
 		//
 
-		dec     edi                     // check result sign flag
-		jns     short L8                // result is ok, restore stack and return
+		dec     edi                         // check result sign flag
+		jns     short L8                    // result is ok, restore stack and return
 	L4:
-		neg     edx                     // otherwise, negate the result
+		neg     edx                         // otherwise, negate the result
 		neg     eax
 		sbb     edx, 0
 
@@ -208,6 +208,7 @@ __declspec(naked) void __cdecl _allrem()
 	__asm
 	{
 		push    ebx
+		push    esi
 		push    edi
 
 		// Set up the local stack and save the index registers.  When this is done
@@ -233,37 +234,29 @@ __declspec(naked) void __cdecl _allrem()
 		//               -----------------
 		//
 
-		#define DVND (esp + 12)         // stack address of dividend (a)
-		#define DVSR (esp + 20)         // stack address of divisor (b)
-
+		#define DVND (esp + 16)             // stack address of dividend (a)
+		#define DVSR (esp + 24)             // stack address of divisor (b)
 
 		// Determine sign of the result (edi = 0 if result is positive, non-zero
 		// otherwise) and make operands positive.
 
-		or      edi, -1                 // result sign assumed positive
-
-		mov     eax, HIWORD(DVND)       // hi word of a
-		mov     ecx, LOWORD(DVSR)       // lo word of b
-		mov     edx, HIWORD(DVSR)       // hi word of b
-		or      eax, eax                // test to see if signed
-		jge     short L1                // skip rest if a is already positive
-		mov     ebx, LOWORD(DVND)       // lo word of a
-		xor     eax, -1                 // make a positive
-		neg     ebx
-		sbb     eax, -1
-		inc     edi                     // complement result sign flag bit
-		mov     HIWORD(DVND), eax       // save positive value
-		mov     LOWORD(DVND), ebx
-	L1:
-		or      edx, edx                // test to see if signed
-		jge     short L2                // skip rest if b is already positive
-		xor     edx, -1                 // make b positive
-		sub     ecx, 1
-		adc     edx, 0
-		xor     ecx, -1
-		mov     HIWORD(DVSR), edx       // save positive value
-		mov     LOWORD(DVSR), ecx
-	L2:
+		mov     edi, HIWORD(DVND)           // load dividend
+		mov     esi, HIWORD(DVSR)           // load divisor
+		mov     ebx, LOWORD(DVND)
+		mov     eax, edi
+		sar     edi, 31
+		mov     edx, esi
+		sar     esi, 31
+		mov     ecx, LOWORD(DVSR)
+		xor     eax, edi
+		add     ebx, edi
+		sbb     eax, edi
+		xor     ebx, edi
+		xor     edx, esi
+		add     ecx, esi
+		sbb     edx, esi
+		xor     ecx, esi
+		xor     edi, -1
 
 		//
 		// Now do the divide.  First look to see if the divisor is less than 4194304K.
@@ -273,70 +266,66 @@ __declspec(naked) void __cdecl _allrem()
 		// NOTE - eax currently contains the high order word of DVSR
 		//
 
-		or      edx, edx                // check to see if divisor < 4194304K
-		jnz     short L3                // nope, gotta do this the hard way
-		mov     ecx, LOWORD(DVSR)       // load divisor
-		div     ecx                     // edx <- remainder
-		mov     eax, LOWORD(DVND)       // edx:eax <- remainder:lo word of dividend
-		div     ecx                     // edx <- final remainder
-		mov     eax, edx                // edx:eax <- remainder
+		cmp     ecx, ebx                    // compare divisor and dividend
+		mov     esi, edx
+		sbb     esi, eax
+		jae     above_or_equal
+		or      edx, edx                    // check to see if divisor < 4194304K
+		jnz     hard                        // nope, gotta do this the hard way
+		div     ecx                         // edx <- remainder
+		mov     eax, ebx                    // edx:eax <- remainder:lo word of dividend
+		div     ecx                         // edx <- final remainder
+		mov     eax, edx                    // edx:eax <- remainder
 		xor     edx, edx
-		xor     edi, -1                 // check result sign flag
-		jmp     short L4                // negate result, restore stack and return
+		xor     edi, -1                     // check result sign flag
+		jmp     negate                      // negate result, restore stack and return
 
+		align   16
+	above_or_equal:
+		cmp     ebx, ecx
+		mov     ecx, eax
+		sbb     ecx, edx
+		mov     edx, eax
+		sbb     ecx, ecx
+		mov     eax, ebx
+		and     eax, ecx
+		and     edx, ecx
+		xor     edi, -1                     // check result sign flag
+		jmp     negate                      // negate result, restore stack and return
+
+		align   16
+	hard:
 		//
 		// Here we do it the hard way.  Remember, eax contains the high word of DVSR
 		//
 
-		align   16
-	L3:
-		mov     ebx, edx
-		jns     short shift
-		xor     edx, edx
-		jmp     short divide
+		push    edx                         // save positive value
+		push    ecx
+		push    eax
+		push    ebx
 
-		align   16
-	shift:
-		cmp     edx, 1 shl 4
-		jae     short bitscan
-		mov     ecx, edx                // ecx:ebx <- divisor
-		mov     edx, eax                // edx:eax <- dividend
-		shr     edx, 1
-		mov     eax, LOWORD(DVND)
-		rcr     eax, 1
-		mov     ebx, LOWORD(DVSR)
-		shr     ecx, 1
-		jz      short rotate
-		rcr     ebx, 1
-		shr     edx, 1
-		rcr     eax, 1
-		shr     ecx, 1
-		jz      short rotate
-		rcr     ebx, 1
-		shr     edx, 1
-		rcr     eax, 1
-		shr     ecx, 1
-		jz      short rotate
-		rcr     ebx, 1
-		shr     edx, 1
-		rcr     eax, 1
-		shr     ecx, 1
-	rotate:
-		rcr     ebx, 1
-		jmp     short divide
+		#undef DVND
+		#undef DVSR
+		#define DVND (esp)                  // stack address of dividend (a)
+		#define DVSR (esp + 8)              // stack address of divisor (b)
+
+		mov     esi, edx
+		jns     bitscan
+		xor     edx, edx
+		jmp     divide
 
 		align   16
 	bitscan:
 		bsr     ecx, edx
-		mov     ebx, LOWORD(DVSR)       // edx:ebx <- divisor
+		mov     esi, LOWORD(DVSR)           // edx:esi <- divisor
 		inc     ecx
-		shrd    ebx, edx, cl
-		mov     edx, eax                // edx:eax <- dividend
-		mov     eax, LOWORD(DVND)
+		shrd    esi, edx, cl
+		mov     edx, eax                    // edx:eax <- dividend
+		mov     eax, ebx
 		shrd    eax, edx, cl
 		shr     edx, cl
 	divide:
-		div     ebx                     // now divide, ignore remainder
+		div     esi                         // now divide, ignore remainder
 
 		//
 		// We may be off by one, so to check, we will multiply the quotient
@@ -345,12 +334,10 @@ __declspec(naked) void __cdecl _allrem()
 		// dividend is close to 2**64 and the quotient is off by 1.
 		//
 
-		mov     ecx, eax                // save a copy of quotient in ECX
+		mov     ecx, eax                    // save a copy of quotient in ECX
 		mul     dword ptr HIWORD(DVSR)
-		xchg    ecx, eax                // save product, get quotient in EAX
+		xchg    ecx, eax                    // save product, get quotient in EAX
 		mul     dword ptr LOWORD(DVSR)
-		add     edx, ecx                // EDX:EAX = QUOT * DVSR
-		jc      short L6                // carry means Quotient is off by 1
 
 		//
 		// do long compare here between original dividend and the result of the
@@ -358,24 +345,31 @@ __declspec(naked) void __cdecl _allrem()
 		// subtract the original divisor from the result.
 		//
 
-		cmp     LOWORD(DVND), eax       // compare original and result
-		mov     ecx, HIWORD(DVND)       // ecx <- high word of original
-		sbb     ecx, edx                // using carry flag
-		jae     short L7                // if above or equal we are ok, else subtract
-	L6:
-		sub     eax, LOWORD(DVSR)       // subtract divisor from result
-		sbb     edx, HIWORD(DVSR)
-	L7:
+		mov     ebx, LOWORD(DVND)
+		add     edx, ecx                    // EDX:EAX = QUOT * DVSR
+		cmp     ebx, eax                    // compare original and result
+		mov     ecx, HIWORD(DVND)
+		sbb     ecx, edx
+		jae     complete_remainder          // if above or equal we are ok, else subtract
+		mov     ecx, LOWORD(DVSR)
+		mov     ebx, HIWORD(DVSR)
+		sub     eax, ecx                    // subtract divisor from result
+		sbb     edx, ebx
 
+	complete_remainder:
 		//
 		// Calculate remainder by subtracting the result from the original dividend.
 		// Since the result is already in a register, we will do the subtract in the
 		// opposite direction and negate the result if necessary.
 		//
 
-		sub     eax, LOWORD(DVND)       // subtract dividend from result
-		sbb     edx, HIWORD(DVND)
+		mov     ecx, LOWORD(DVND)
+		mov     ebx, HIWORD(DVND)
+		add     esp, 16                     // cleanup the stack
+		sub     eax, ecx                    // subtract dividend from result
+		sbb     edx, ebx
 
+	negate:
 		//
 		// Now check the result sign flag to see if the result is supposed to be positive
 		// or negative.  It is currently negated (because we subtracted in the 'wrong'
@@ -383,8 +377,7 @@ __declspec(naked) void __cdecl _allrem()
 		// the result to make it positive again.
 		//
 
-	L4:
-		xor     eax, edi                // otherwise, negate the result
+		xor     eax, edi                    // if edi == -1, negate the result
 		xor     edx, edi
 		sub     eax, edi
 		sbb     edx, edi
@@ -395,6 +388,7 @@ __declspec(naked) void __cdecl _allrem()
 		//
 
 		pop     edi
+		pop     esi
 		pop     ebx
 
 		ret     16

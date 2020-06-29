@@ -77,13 +77,13 @@ __declspec(naked) void __cdecl _allshr()
 		// depends only on the high order bit of edx).
 		//
 		cmp     cl, 64
-		jae     short RETSIGN
+		jae     retsign
 
 		//
 		// Handle shifts of between 0 and 31 bits
 		//
 		cmp     cl, 32
-		jae     short MORE32
+		jae     more32
 		shrd    eax, edx, cl
 		sar     edx, cl
 		ret
@@ -92,7 +92,7 @@ __declspec(naked) void __cdecl _allshr()
 		// Handle shifts of between 32 and 63 bits
 		//
 		align   16
-	MORE32:
+	more32:
 		mov     eax, edx
 		sar     edx, 31
 		and     cl, 31
@@ -103,7 +103,7 @@ __declspec(naked) void __cdecl _allshr()
 		// Return double precision 0 or -1, depending on the sign of edx
 		//
 		align   16
-	RETSIGN:
+	retsign:
 		sar     edx, 31
 		mov     eax, edx
 		ret

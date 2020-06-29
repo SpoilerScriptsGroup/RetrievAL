@@ -77,13 +77,13 @@ __declspec(naked) void __cdecl _aullshr()
 		// depends only on the high order bit of edx).
 		//
 		cmp     cl, 64
-		jae     short RETZERO
+		jae     retzero
 
 		//
 		// Handle shifts of between 0 and 31 bits
 		//
 		cmp     cl, 32
-		jae     short MORE32
+		jae     more32
 		shrd    eax, edx, cl
 		shr     edx, cl
 		ret
@@ -92,18 +92,18 @@ __declspec(naked) void __cdecl _aullshr()
 		// Handle shifts of between 32 and 63 bits
 		//
 		align   16
-	MORE32:
+	more32:
 		mov     eax, edx
-		xor     edx, edx
 		and     cl, 31
 		shr     eax, cl
+		xor     edx, edx
 		ret
 
 		//
 		// return 0 in edx:eax
 		//
 		align   16
-	RETZERO:
+	retzero:
 		xor     eax, eax
 		xor     edx, edx
 		ret

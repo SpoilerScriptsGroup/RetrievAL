@@ -35,6 +35,9 @@
 //
 //*******************************************************************************
 
+#if 0
+static
+#endif
 __declspec(naked) void __cdecl _allrem()
 {
 #if 0
@@ -271,7 +274,7 @@ __declspec(naked) void __cdecl _allrem()
 		mov     esi, edx
 		sbb     esi, eax
 		jae     above_or_equal
-		or      edx, edx                    // check to see if divisor < 4194304K
+		test    edx, edx                    // check to see if divisor < 4194304K
 		jnz     hard                        // nope, gotta do this the hard way
 		div     ecx                         // edx <- remainder
 		mov     eax, ebx                    // edx:eax <- remainder:lo word of dividend
@@ -309,12 +312,12 @@ __declspec(naked) void __cdecl _allrem()
 		#define DVSR (esp + 8)              // stack address of divisor (b)
 
 		mov     esi, edx
-		jns     bitscan
+		jns     shift
 		xor     edx, edx
 		jmp     divide
 
 		align   16
-	bitscan:
+	shift:
 		bsr     ecx, edx
 		mov     esi, LOWORD(DVSR)           // edx:esi <- divisor
 		inc     ecx

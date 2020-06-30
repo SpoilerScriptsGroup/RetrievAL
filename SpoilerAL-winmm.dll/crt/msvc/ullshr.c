@@ -97,9 +97,10 @@ __declspec(naked) void __cdecl _aullshr()
 		align   16
 	more32:
 		mov     eax, edx
+		je      equal32
 		and     cl, 31
-		shr     eax, cl
 		xor     edx, edx
+		shr     eax, cl
 		ret
 
 		//
@@ -108,6 +109,7 @@ __declspec(naked) void __cdecl _aullshr()
 		align   16
 	retzero:
 		xor     eax, eax
+	equal32:
 		xor     edx, edx
 		ret
 	}

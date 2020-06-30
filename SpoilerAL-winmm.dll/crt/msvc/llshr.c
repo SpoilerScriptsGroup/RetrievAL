@@ -97,9 +97,15 @@ __declspec(naked) void __cdecl _allshr()
 		align   16
 	more32:
 		mov     eax, edx
+		je      equal32
 		sar     edx, 31
 		and     cl, 31
 		sar     eax, cl
+		ret
+
+		align   16
+	equal32:
+		sar     edx, 31
 		ret
 
 		//

@@ -95,9 +95,10 @@ __declspec(naked) void __cdecl _allshl()
 		align   16
 	more32:
 		mov     edx, eax
+		je      equal32
 		and     cl, 31
-		shl     edx, cl
 		xor     eax, eax
+		shl     edx, cl
 		ret
 
 		//
@@ -105,8 +106,9 @@ __declspec(naked) void __cdecl _allshl()
 		//
 		align   16
 	retzero:
-		xor     eax, eax
 		xor     edx, edx
+	equal32:
+		xor     eax, eax
 		ret
 	}
 #endif

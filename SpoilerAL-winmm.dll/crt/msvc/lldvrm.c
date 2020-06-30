@@ -321,10 +321,6 @@ __declspec(naked) void __cdecl _alldvrm()
 		// NOTE - eax currently contains the high order word of DVSR
 		//
 
-		cmp     ecx, ebx                    // compare divisor and dividend
-		mov     esi, edx
-		sbb     esi, eax
-		jae     above_or_equal
 		test    edx, edx                    // check to see if divisor < 4194304K
 		jnz     hard                        // nope, gotta do this the hard way
 		div     ecx                         // eax <- high order bits of quotient
@@ -350,19 +346,6 @@ __declspec(naked) void __cdecl _alldvrm()
 		mov     ecx, edx                    // edx:ecx = dividend - result
 		mov     edx, eax
 		jmp     rotate                      // rotate register
-
-		align   16
-	above_or_equal:
-		cmp     ebx, ecx
-		mov     ecx, LOWORD(DVND)
-		sbb     eax, edx
-		mov     ebx, HIWORD(DVND)
-		sbb     eax, eax
-		xor     edx, edx
-		and     ecx, eax
-		and     ebx, eax
-		inc     eax
-		jmp     cleanup                     // negate result, restore stack and return
 
 		align   16
 	hard:

@@ -198,10 +198,6 @@ __declspec(naked) void __cdecl _aulldiv()
 		mov     eax, HIWORD(DVND)
 		mov     ecx, LOWORD(DVSR)           // load divisor
 		mov     edx, HIWORD(DVSR)
-		cmp     ecx, ebx                    // compare divisor and dividend
-		mov     esi, edx
-		sbb     esi, eax
-		jae     above_or_equal
 		test    edx, edx                    // check to see if divisor < 4194304K
 		jnz     hard                        // nope, gotta do this the hard way
 		div     ecx                         // get high order bits of quotient
@@ -209,15 +205,6 @@ __declspec(naked) void __cdecl _aulldiv()
 		mov     eax, ebx                    // edx:eax <- remainder:lo word of dividend
 		div     ecx                         // get low order bits of quotient
 		mov     edx, esi                    // edx:eax <- quotient hi:quotient lo
-		jmp     epilogue                    // restore stack and return
-
-		align   16
-	above_or_equal:
-		cmp     ebx, ecx
-		sbb     eax, edx
-		sbb     eax, eax
-		xor     edx, edx
-		inc     eax
 		jmp     epilogue                    // restore stack and return
 
 		align   16

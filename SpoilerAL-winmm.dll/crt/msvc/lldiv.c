@@ -264,10 +264,6 @@ __declspec(naked) void __cdecl _alldiv()
 		// NOTE - eax currently contains the high order word of DVSR
 		//
 
-		cmp     ecx, ebx                    // compare divisor and dividend
-		mov     esi, edx
-		sbb     esi, eax
-		jae     above_or_equal
 		test    edx, edx                    // check to see if divisor < 4194304K
 		jnz     hard                        // nope, gotta do this the hard way
 		div     ecx                         // eax <- high order bits of quotient
@@ -275,15 +271,6 @@ __declspec(naked) void __cdecl _alldiv()
 		mov     eax, ebx                    // edx:eax <- remainder:lo word of dividend
 		div     ecx                         // eax <- low order bits of quotient
 		mov     edx, esi                    // edx:eax <- quotient
-		jmp     negate                      // set sign, restore stack and return
-
-		align   16
-	above_or_equal:
-		cmp     ebx, ecx
-		sbb     eax, edx
-		sbb     eax, eax
-		xor     edx, edx
-		inc     eax
 		jmp     negate                      // set sign, restore stack and return
 
 		align   16

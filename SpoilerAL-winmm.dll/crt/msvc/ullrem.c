@@ -202,10 +202,6 @@ __declspec(naked) void __cdecl _aullrem()
 		mov     eax, HIWORD(DVND)
 		mov     ecx, LOWORD(DVSR)           // load divisor
 		mov     edx, HIWORD(DVSR)
-		cmp     ecx, ebx                    // compare divisor and dividend
-		mov     esi, edx
-		sbb     esi, eax
-		jae     above_or_equal
 		test    edx, edx                    // check to see if divisor < 4194304K
 		jnz     hard                        // nope, gotta do this the hard way
 		div     ecx                         // edx <- remainder, eax <- quotient
@@ -213,18 +209,6 @@ __declspec(naked) void __cdecl _aullrem()
 		div     ecx                         // edx <- final remainder
 		mov     eax, edx                    // edx:eax <- remainder
 		xor     edx, edx
-		jmp     epilogue                    // restore stack and return
-
-		align   16
-	above_or_equal:
-		cmp     ebx, ecx
-		mov     ecx, eax
-		sbb     ecx, edx
-		mov     edx, eax
-		sbb     ecx, ecx
-		mov     eax, ebx
-		and     edx, ecx
-		and     eax, ecx
 		jmp     epilogue                    // restore stack and return
 
 		align   16

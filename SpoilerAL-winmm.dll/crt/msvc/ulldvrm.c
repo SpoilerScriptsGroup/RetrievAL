@@ -184,6 +184,7 @@ __declspec(naked) void __cdecl _aulldvrm()
 	__asm
 	{
 		push    esi
+		push    edi
 
 		// Set up the local stack and save the index registers.  When this is done
 		// the stack frame will look as follows (assuming that the expression a/b will
@@ -202,12 +203,14 @@ __declspec(naked) void __cdecl _aulldvrm()
 		//               |---------------|
 		//               | return addr** |
 		//               |---------------|
-		//       ESP---->|      ESI      |
+		//               |      ESI      |
+		//               |---------------|
+		//       ESP---->|      EDI      |
 		//               -----------------
 		//
 
-		#define DVND (esp + 8)              // stack address of dividend (a)
-		#define DVSR (esp + 16)             // stack address of divisor (b)
+		#define DVND (esp + 12)             // stack address of dividend (a)
+		#define DVSR (esp + 20)             // stack address of divisor (b)
 
 		//
 		// Now do the divide.  First look to see if the divisor is less than 4194304K.
@@ -237,29 +240,26 @@ __declspec(naked) void __cdecl _aulldvrm()
 
 		mov     eax, ebx                    // set up high word of quotient
 		mul     dword ptr LOWORD(DVSR)      // HIWORD(QUOT) * DVSR
-		mov     ecx, eax                    // save the result in ecx
+		mov     edi, eax                    // save the result in edi
 		mov     eax, esi                    // set up low word of quotient
 		mul     dword ptr LOWORD(DVSR)      // LOWORD(QUOT) * DVSR
-		add     edx, ecx                    // EDX:EAX = QUOT * DVSR
-		jmp     complete_remainder          // complete remainder calculation
+		add     edi, edx                    // EDI:EAX = QUOT * DVSR
+		mov     ecx, LOWORD(DVND)           // edx:ecx = dividend - result
+		sub     ecx, eax
+		mov     edx, HIWORD(DVND)
+		sbb     edx, edi
+		jmp     rotate                      // rotate register
 
-		align   16
+		align   8
 	above_or_equal:
 		cmp     ebx, ecx
-		mov     ecx, eax
-		sbb     ecx, edx
-		jz      equal
-		mov     ecx, ebx
-		mov     ebx, eax
-		xor     eax, eax
+		mov     ecx, LOWORD(DVND)
+		sbb     eax, edx
+		mov     ebx, HIWORD(DVND)
+		sbb     eax, eax
 		xor     edx, edx
-		jmp     epilogue                    // restore stack and return
-
-		align   16
-	equal:
-		xor     eax, eax
-		xor     edx, edx
-		xor     ebx, ebx
+		and     ecx, eax
+		and     ebx, eax
 		inc     eax
 		jmp     epilogue                    // restore stack and return
 
@@ -296,11 +296,9 @@ __declspec(naked) void __cdecl _aulldvrm()
 		//
 
 		mul     dword ptr HIWORD(DVSR)      // QUOT * HIWORD(DVSR)
-		mov     ecx, eax
+		mov     ebx, eax
 		mov     eax, LOWORD(DVSR)
 		mul     esi                         // QUOT * LOWORD(DVSR)
-		add     edx, ecx                    // EDX:EAX = QUOT * DVSR
-		jc      subtract_divisor            // carry means Quotient is off by 1
 
 		//
 		// do long compare here between original dividend and the result of the
@@ -308,43 +306,30 @@ __declspec(naked) void __cdecl _aulldvrm()
 		// subtract one (1) from the quotient.
 		//
 
-		cmp     LOWORD(DVND), eax           // compare original and result
-		mov     ecx, HIWORD(DVND)
-		sbb     ecx, edx
-		jae     complete_quotient           // if above or equal we are ok, else subtract
-	subtract_divisor:
-		mov     ecx, LOWORD(DVSR)
-		mov     ebx, HIWORD(DVSR)
-		dec     esi                         // subtract 1 from quotient
-		sub     eax, ecx                    // subtract divisor from result
+		add     ebx, edx                    // ebx:eax = QUOT * DVSR
+		mov     ecx, LOWORD(DVND)
+		sbb     edi, edi
+		mov     edx, HIWORD(DVND)
+		sub     ecx, eax                    // edx:ecx = dividend - result
+		mov     eax, LOWORD(DVSR)
 		sbb     edx, ebx
-	complete_quotient:
-		xor     ebx, ebx                    // ebx:esi <- quotient
+		mov     ebx, 0                      // ebx:esi <- quotient
+		sbb     edi, 0
+		jz      rotate                      // if above or equal we're ok, else add
+		add     ecx, eax                    // add divisor to result
+		mov     eax, HIWORD(DVSR)
+		adc     edx, eax
+		dec     esi                         // subtract 1 from quotient
 
-	complete_remainder:
-		//
-		// Calculate remainder by subtracting the result from the original dividend.
-		// Since the result is already in a register, we will do the subtract in the
-		// opposite direction and negate the result.
-		//
-
-		sub     eax, LOWORD(DVND)           // subtract dividend from result
-		mov     ecx, HIWORD(DVND)
-		sbb     edx, ecx
-		sub     eax, 1                      // otherwise, negate the result
-		sbb     edx, 0
-		xor     eax, -1
-		xor     edx, -1
-
+	rotate:
 		//
 		// Now we need to get the quotient into edx:eax and the remainder into ebx:ecx.
 		//
 
-		mov     ecx, ebx
-		mov     ebx, edx
-		mov     edx, ecx
-		mov     ecx, eax
 		mov     eax, esi
+		mov     esi, edx
+		mov     edx, ebx
+		mov     ebx, esi
 
 	epilogue:
 		//
@@ -352,6 +337,7 @@ __declspec(naked) void __cdecl _aulldvrm()
 		// Restore the saved registers and return.
 		//
 
+		pop     edi
 		pop     esi
 
 		ret     16

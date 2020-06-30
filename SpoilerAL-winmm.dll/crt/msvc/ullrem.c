@@ -181,7 +181,9 @@ __declspec(naked) void __cdecl _aullrem()
 		//               |---------------|
 		//               | return addr** |
 		//               |---------------|
-		//       ESP---->|      EBX      |
+		//               |      EBX      |
+		//               |---------------|
+		//       ESP---->|      ESI      |
 		//               -----------------
 		//
 
@@ -218,8 +220,8 @@ __declspec(naked) void __cdecl _aullrem()
 		mov     edx, eax
 		sbb     ecx, ecx
 		mov     eax, ebx
-		and     eax, ecx
 		and     edx, ecx
+		and     eax, ecx
 		jmp     epilogue                    // restore stack and return
 
 		align   16
@@ -253,12 +255,10 @@ __declspec(naked) void __cdecl _aullrem()
 		// dividend is close to 2**64 and the quotient is off by 1.
 		//
 
-		mov     ecx, eax                    // save a copy of quotient in ECX
+		mov     ebx, eax                    // save a copy of quotient in EBX
 		mul     dword ptr HIWORD(DVSR)
-		xchg    ecx, eax                    // put partial product in ECX, get quotient in EAX
+		xchg    eax, ebx                    // put partial product in EBX, get quotient in EAX
 		mul     dword ptr LOWORD(DVSR)
-		add     edx, ecx                    // EDX:EAX = QUOT * DVSR
-		jc      subtract_divisor            // carry means Quotient is off by 1
 
 		//
 		// do long compare here between original dividend and the result of the
@@ -266,31 +266,19 @@ __declspec(naked) void __cdecl _aullrem()
 		// subtract the original divisor from the result.
 		//
 
-		cmp     LOWORD(DVND), eax           // compare original and result
-		mov     ecx, HIWORD(DVND)
-		sbb     ecx, edx
-		jae     complete_remainder          // if above or equal we're ok, else subtract
-	subtract_divisor:
-		mov     ecx, LOWORD(DVSR)
-		mov     ebx, HIWORD(DVSR)
-		sub     eax, ecx                    // subtract divisor from result
+		add     ebx, edx                    // ebx:ecx = QUOT * DVSR
+		mov     ecx, eax
+		sbb     esi, esi
+		mov     eax, LOWORD(DVND)
+		sub     eax, ecx                    // edx:eax = dividend - result
+		mov     edx, HIWORD(DVND)
 		sbb     edx, ebx
-
-	complete_remainder:
-		//
-		// Calculate remainder by subtracting the result from the original dividend.
-		// Since the result is already in a register, we will perform the subtract in
-		// the opposite direction and negate the result to make it positive.
-		//
-
-		mov     ecx, LOWORD(DVND)
-		mov     ebx, HIWORD(DVND)
-		xor     edx, -1
-		sub     eax, ecx                    // subtract original dividend from result
-		adc     edx, ebx
-		sub     eax, 1                      // and negate it
-		adc     edx, 0
-		xor     eax, -1
+		mov     ecx, LOWORD(DVSR)
+		sbb     esi, 0
+		jz      epilogue                    // if above or equal we're ok, else add
+		add     eax, ecx                    // add divisor to result
+		mov     ecx, HIWORD(DVSR)
+		adc     edx, ecx
 
 	epilogue:
 		//

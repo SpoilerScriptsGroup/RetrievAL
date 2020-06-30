@@ -268,7 +268,7 @@ __declspec(naked) void __cdecl _aulldiv()
 		mov     eax, esi
 		sbb     ebx, ecx                    // if original < result, do subtract
 		mov     edx, 0
-		sbb     eax, edx                    // subtract carry flag from quotient
+		sbb     eax, 0                      // subtract carry flag from quotient
 
 	epilogue:
 		//

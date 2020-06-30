@@ -221,11 +221,11 @@ __declspec(naked) void __cdecl _alldiv()
 		//               |---------------|
 		//               | return addr** |
 		//               |---------------|
-		//               |      EDI      |
+		//               |      EBX      |
 		//               |---------------|
 		//               |      ESI      |
 		//               |---------------|
-		//       ESP---->|      EBX      |
+		//       ESP---->|      EDI      |
 		//               -----------------
 		//
 
@@ -243,14 +243,14 @@ __declspec(naked) void __cdecl _alldiv()
 		mov     edx, esi
 		sar     esi, 31
 		mov     ecx, LOWORD(DVSR)
-		xor     eax, edi
-		add     ebx, edi
-		sbb     eax, edi
 		xor     ebx, edi
-		xor     edx, esi
-		add     ecx, esi
-		sbb     edx, esi
+		xor     eax, edi
+		sub     ebx, edi
+		sbb     eax, edi
 		xor     ecx, esi
+		xor     edx, esi
+		sub     ecx, esi
+		sbb     edx, esi
 		xor     edi, esi
 
 		//
@@ -344,7 +344,12 @@ __declspec(naked) void __cdecl _alldiv()
 		mov     eax, esi
 		sbb     eax, 0                      // subtract carry flag from quotient
 		xor     edx, edx
-		add     esp, 16                     // cleanup the stack
+
+		//
+		// Cleanup the stack.
+		//
+
+		add     esp, 16
 
 	negate:
 		//

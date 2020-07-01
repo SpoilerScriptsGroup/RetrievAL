@@ -129,11 +129,11 @@ __declspec(naked) __int64 __cdecl _allmul(__int64 multiplicand, __int64 multipli
 
 		align   16
 	hard:
-		mul     dword ptr LOWORD(B)         // eax has AHI, so AHI * BLO
+		imul    eax, dword ptr LOWORD(B)    // eax has AHI, so AHI * BLO
 		mov     ecx, eax                    // save result
 
 		mov     eax, LOWORD(A)
-		mul     dword ptr HIWORD(B)         // ALO * BHI
+		imul    eax, dword ptr HIWORD(B)    // ALO * BHI
 		add     ecx, eax                    // ecx = ((ALO * BHI) + (AHI * BLO))
 
 		mov     eax, LOWORD(A)

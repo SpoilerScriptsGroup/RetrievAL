@@ -31,23 +31,23 @@
 //*******************************************************************************
 
 #ifdef CFUNCTION
-__declspec(naked) unsigned __int64 __fastcall _ullshr(unsigned __int64 value, unsigned char shift)
-{
-	static void __cdecl _aullshr();
+#define __cdecl __fastcall
+#define _aullshr _ullshr
+#endif
 
+__declspec(naked) unsigned __int64 __cdecl _aullshr(unsigned __int64 value, unsigned char shift)
+{
+#ifdef CFUNCTION
 	__asm
 	{
-		mov     eax, dword ptr [esp + 4]
 		mov     edx, dword ptr [esp + 8]
-		call    _aullshr
-		ret     8
-	}
-}
+		pop     eax
+		mov     dword ptr [esp + 4], eax
+		pop     eax
 
-static
+		align   16
+	}
 #endif
-__declspec(naked) void __cdecl _aullshr()
-{
 #if 0
 	__asm
 	{

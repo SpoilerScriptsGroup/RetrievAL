@@ -278,23 +278,23 @@ __declspec(naked) void __cdecl _alldvrm()
 		//               -----------------
 		//
 
-		#define DVNDLO dword ptr [esp + 16] // stack address of dividend (a)
-		#define DVNDHI dword ptr [esp + 20]
-		#define DVSRLO dword ptr [esp + 24] // stack address of divisor (b)
-		#define DVSRHI dword ptr [esp + 28]
+		#define DVNDLO (esp + 16)           // stack address of dividend (a)
+		#define DVNDHI (esp + 20)
+		#define DVSRLO (esp + 24)           // stack address of divisor (b)
+		#define DVSRHI (esp + 28)
 
 		// Determine sign of the quotient (edi = 0 if result is positive, non-zero
 		// otherwise) and make operands positive.
 		// Sign of the remainder is kept in ebp.
 
-		mov     ebp, DVNDHI                 // load dividend
-		mov     edi, DVSRHI                 // load divisor
-		mov     ebx, DVNDLO
+		mov     ebp, dword ptr [DVNDHI]     // load dividend
+		mov     edi, dword ptr [DVSRHI]     // load divisor
+		mov     ebx, dword ptr [DVNDLO]
 		mov     eax, ebp
 		sar     ebp, 31
 		mov     edx, edi
 		sar     edi, 31
-		mov     ecx, DVSRLO
+		mov     ecx, dword ptr [DVSRLO]
 		xor     ebx, ebp
 		xor     eax, ebp
 		sub     ebx, ebp
@@ -314,10 +314,10 @@ __declspec(naked) void __cdecl _alldvrm()
 		#undef DVNDHI
 		#undef DVSRLO
 		#undef DVSRHI
-		#define DVNDLO dword ptr [esp     ] // stack address of dividend (a)
-		#define DVNDHI dword ptr [esp +  4]
-		#define DVSRLO dword ptr [esp +  8] // stack address of divisor (b)
-		#define DVSRHI dword ptr [esp + 12]
+		#define DVNDLO (esp     )           // stack address of dividend (a)
+		#define DVNDHI (esp +  4)
+		#define DVSRLO (esp +  8)           // stack address of divisor (b)
+		#define DVSRHI (esp + 12)
 
 		//
 		// Now do the divide.  First look to see if the divisor is less than 4194304K.
@@ -331,7 +331,7 @@ __declspec(naked) void __cdecl _alldvrm()
 		jnz     hard                        // nope, gotta do this the hard way
 		div     ecx                         // EAX <- high order bits of quotient
 		mov     ebx, eax                    // save high bits of quotient
-		mov     eax, DVNDLO                 // EDX:EAX <- remainder:lo word of dividend
+		mov     eax, dword ptr [DVNDLO]     // EDX:EAX <- remainder:lo word of dividend
 		div     ecx                         // EAX <- low order bits of quotient
 		mov     esi, eax                    // EBX:ESI <- quotient
 
@@ -340,14 +340,14 @@ __declspec(naked) void __cdecl _alldvrm()
 		//
 
 		mov     eax, ebx                    // set up high word of quotient
-		imul    DVSRLO                      // HIWORD(QUOT) * DVSR
+		imul    dword ptr [DVSRLO]          // HIWORD(QUOT) * DVSR
 		mov     ecx, eax                    // save the result in ECX
 		mov     eax, esi                    // set up low word of quotient
-		mul     DVSRLO                      // LOWORD(QUOT) * DVSR
+		mul     dword ptr [DVSRLO]          // LOWORD(QUOT) * DVSR
 		add     ecx, edx                    // ECX:EAX = QUOT * DVSR
-		mov     edx, DVNDLO                 // subtract result from dividend
+		mov     edx, dword ptr [DVNDLO]     // subtract result from dividend
 		sub     edx, eax
-		mov     eax, DVNDHI
+		mov     eax, dword ptr [DVNDHI]
 		sbb     eax, ecx
 		mov     ecx, edx
 		mov     edx, eax                    // EDX:ECX = DVND - QUOT * DVSR
@@ -367,7 +367,7 @@ __declspec(naked) void __cdecl _alldvrm()
 		align   16
 	shift:
 		bsr     ecx, edx
-		mov     esi, DVSRLO                 // EDX:ESI <- divisor
+		mov     esi, dword ptr [DVSRLO]     // EDX:ESI <- divisor
 		inc     ecx
 		shrd    esi, edx, cl
 		mov     edx, eax                    // EDX:EAX <- dividend
@@ -386,9 +386,9 @@ __declspec(naked) void __cdecl _alldvrm()
 
 		mov     ecx, ebx                    // ECX <- low word of dividend
 		mov     esi, eax                    // save quotient
-		imul    eax, DVSRHI                 // QUOT * DVSRHI
+		imul    eax, dword ptr [DVSRHI]     // QUOT * DVSRHI
 		mov     ebx, eax
-		mov     eax, DVSRLO
+		mov     eax, dword ptr [DVSRLO]
 		mul     esi                         // QUOT * DVSRLO
 
 		//
@@ -399,12 +399,12 @@ __declspec(naked) void __cdecl _alldvrm()
 
 		sub     ecx, eax                    // compute the remainder
 		lea     eax, [edx + ebx]
-		mov     edx, DVNDHI
+		mov     edx, dword ptr [DVNDHI]
 		mov     ebx, 0                      // EBX:ESI = quotient
 		sbb     edx, eax                    // EDX:ECX = remainder
 		jae     negate                      // if above or equal we are ok, else add
-		add     ecx, DVSRLO                 // add divisor to result
-		mov     eax, DVSRHI
+		add     ecx, dword ptr [DVSRLO]     // add divisor to result
+		mov     eax, dword ptr [DVSRHI]
 		adc     edx, eax
 		dec     esi                         // subtract 1 from quotient
 

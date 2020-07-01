@@ -35,7 +35,7 @@
 //
 //*******************************************************************************
 
-#if 0
+#if 1
 static
 #endif
 __declspec(naked) void __cdecl _allrem()
@@ -242,22 +242,22 @@ __declspec(naked) void __cdecl _allrem()
 		//               -----------------
 		//
 
-		#define DVNDLO dword ptr [esp + 20] // stack address of dividend (a)
-		#define DVNDHI dword ptr [esp + 24]
-		#define DVSRLO dword ptr [esp + 28] // stack address of divisor (b)
-		#define DVSRHI dword ptr [esp + 32]
+		#define DVNDLO (esp + 20)           // stack address of dividend (a)
+		#define DVNDHI (esp + 24)
+		#define DVSRLO (esp + 28)           // stack address of divisor (b)
+		#define DVSRHI (esp + 32)
 
 		// Determine sign of the result (edi = 0 if result is positive, non-zero
 		// otherwise) and make operands positive.
 
-		mov     edi, DVNDHI                 // load dividend
-		mov     esi, DVSRHI                 // load divisor
-		mov     ebx, DVNDLO
+		mov     edi, dword ptr [DVNDHI]     // load dividend
+		mov     esi, dword ptr [DVSRHI]     // load divisor
+		mov     ebx, dword ptr [DVNDLO]
 		mov     eax, edi
 		sar     edi, 31
 		mov     edx, esi
 		sar     esi, 31
-		mov     ebp, DVSRLO
+		mov     ebp, dword ptr [DVSRLO]
 		xor     eax, edi
 		add     ebx, edi
 		sbb     eax, edi
@@ -297,10 +297,10 @@ __declspec(naked) void __cdecl _allrem()
 		#undef DVNDHI
 		#undef DVSRLO
 		#undef DVSRHI
-		#define DVNDLO ebx                  // stack address of dividend (a)
-		#define DVNDHI dword ptr [esp +  4]
-		#define DVSRLO ebp                  // stack address of divisor (b)
-		#define DVSRHI dword ptr [esp     ]
+		#define DVNDLO ebx
+		#define DVNDHI (esp +  4)
+		#define DVSRLO ebp
+		#define DVSRHI (esp     )
 
 		mov     esi, edx
 		jns     shift
@@ -385,7 +385,7 @@ __declspec(naked) void __cdecl _allrem()
 #endif
 }
 
-#if 0
+#if 1
 __declspec(naked) __int64 __stdcall _llrem(__int64 dividend, __int64 divisor)
 {
 	__asm

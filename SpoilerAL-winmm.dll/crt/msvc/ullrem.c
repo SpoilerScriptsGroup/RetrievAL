@@ -204,17 +204,17 @@ __declspec(naked) void __cdecl _aullrem()
 		mov     edx, HIWORD(DVSR)
 		test    edx, edx                    // check to see if divisor < 4194304K
 		jnz     hard                        // nope, gotta do this the hard way
-		div     ecx                         // edx <- remainder, eax <- quotient
-		mov     eax, ebx                    // edx:eax <- remainder:lo word of dividend
-		div     ecx                         // edx <- final remainder
-		mov     eax, edx                    // edx:eax <- remainder
+		div     ecx                         // EDX <- remainder, EAX <- quotient
+		mov     eax, ebx                    // EDX:EAX <- remainder:lo word of dividend
+		div     ecx                         // EDX <- final remainder
+		mov     eax, edx                    // EDX:EAX <- remainder
 		xor     edx, edx
 		jmp     epilogue                    // restore stack and return
 
 		align   16
 	hard:
 		//
-		// Here we do it the hard way.  Remember, eax contains DVSRHI
+		// Here we do it the hard way.  Remember, EAX contains DVSRHI
 		//
 
 		mov     esi, edx
@@ -225,10 +225,10 @@ __declspec(naked) void __cdecl _aullrem()
 		align   16
 	shift:
 		bsr     ecx, edx
-		mov     esi, LOWORD(DVSR)           // edx:esi <- divisor
+		mov     esi, LOWORD(DVSR)           // EDX:ESI <- divisor
 		inc     ecx
 		shrd    esi, edx, cl
-		mov     edx, eax                    // edx:eax <- dividend
+		mov     edx, eax                    // EDX:EAX <- dividend
 		mov     eax, ebx
 		shrd    eax, edx, cl
 		shr     edx, cl
@@ -242,9 +242,10 @@ __declspec(naked) void __cdecl _aullrem()
 		// dividend is close to 2**64 and the quotient is off by 1.
 		//
 
-		mov     ebx, eax                    // save a copy of quotient in EBX
-		mul     dword ptr HIWORD(DVSR)
-		xchg    eax, ebx                    // put partial product in EBX, get quotient in EAX
+		mov     esi, eax                    // save a copy of quotient in ESI
+		imul    eax, dword ptr HIWORD(DVSR)
+		mov     ecx, eax                    // put partial product in ECX, get quotient in EAX
+		mov     eax, esi
 		mul     dword ptr LOWORD(DVSR)
 
 		//
@@ -253,23 +254,21 @@ __declspec(naked) void __cdecl _aullrem()
 		// subtract the original divisor from the result.
 		//
 
-		add     ebx, edx                    // ebx:ecx = QUOT * DVSR
-		mov     ecx, eax
-		sbb     esi, esi
-		mov     eax, LOWORD(DVND)
-		sub     eax, ecx                    // edx:eax = dividend - result
+		add     ecx, edx                    // ECX:EAX = QUOT * DVSR
 		mov     edx, HIWORD(DVND)
-		sbb     edx, ebx
-		mov     ecx, LOWORD(DVSR)
+		sbb     esi, esi
+		sub     ebx, eax
+		sbb     edx, ecx
+		mov     eax, ebx                    // EDX:EAX = remainder
 		sbb     esi, 0
 		jz      epilogue                    // if above or equal we're ok, else add
-		add     eax, ecx                    // add divisor to result
+		add     eax, LOWORD(DVSR)           // add divisor to result
 		mov     ecx, HIWORD(DVSR)
 		adc     edx, ecx
 
 	epilogue:
 		//
-		// Just the cleanup left to do.  dx:ax contains the remainder.
+		// Just the cleanup left to do.  EDX:EAX contains the remainder.
 		// Restore the saved registers and return.
 		//
 

@@ -204,6 +204,7 @@ __declspec(naked) void __cdecl _alldiv()
 	__asm
 	{
 		push    ebx
+		push    ebp
 		push    esi
 		push    edi
 
@@ -226,14 +227,16 @@ __declspec(naked) void __cdecl _alldiv()
 		//               |---------------|
 		//               |      EBX      |
 		//               |---------------|
+		//               |      EBP      |
+		//               |---------------|
 		//               |      ESI      |
 		//               |---------------|
 		//       ESP---->|      EDI      |
 		//               -----------------
 		//
 
-		#define DVND (esp + 16)             // stack address of dividend (a)
-		#define DVSR (esp + 24)             // stack address of divisor (b)
+		#define DVND (esp + 20)             // stack address of dividend (a)
+		#define DVSR (esp + 28)             // stack address of divisor (b)
 
 		// Determine sign of the result (edi = 0 if result is positive, non-zero
 		// otherwise) and make operands positive.
@@ -246,15 +249,16 @@ __declspec(naked) void __cdecl _alldiv()
 		mov     edx, esi
 		sar     esi, 31
 		mov     ecx, LOWORD(DVSR)
-		xor     ebx, edi
 		xor     eax, edi
-		sub     ebx, edi
+		add     ebx, edi
 		sbb     eax, edi
-		xor     ecx, esi
+		xor     ebx, edi
 		xor     edx, esi
-		sub     ecx, esi
+		add     ecx, esi
 		sbb     edx, esi
+		xor     ecx, esi
 		xor     edi, esi
+		mov     ebp, eax
 
 		//
 		// Now do the divide.  First look to see if the divisor is less than 4194304K.
@@ -266,28 +270,26 @@ __declspec(naked) void __cdecl _alldiv()
 
 		test    edx, edx                    // check to see if divisor < 4194304K
 		jnz     hard                        // nope, gotta do this the hard way
-		div     ecx                         // eax <- high order bits of quotient
+		div     ecx                         // EAX <- high order bits of quotient
 		mov     esi, eax                    // save high bits of quotient
-		mov     eax, ebx                    // edx:eax <- remainder:lo word of dividend
-		div     ecx                         // eax <- low order bits of quotient
-		mov     edx, esi                    // edx:eax <- quotient
+		mov     eax, ebx                    // EDX:EAX <- remainder:lo word of dividend
+		div     ecx                         // EAX <- low order bits of quotient
+		mov     edx, esi                    // EDX:EAX <- quotient
 		jmp     negate                      // set sign, restore stack and return
 
 		align   16
 	hard:
 		//
-		// Here we do it the hard way.  Remember, eax contains the high word of DVSR
+		// Here we do it the hard way.  Remember, EAX contains the high word of DVSR
 		//
 
-		push    edx                         // save positive value
-		push    ecx
-		push    eax
-		push    ebx
+		push    ecx                         // save positive value
+		push    edx
 
-		#undef DVND
-		#undef DVSR
-		#define DVND (esp)                  // stack address of dividend (a)
-		#define DVSR (esp + 8)              // stack address of divisor (b)
+		#define DVNDLO ebx
+		#define DVNDHI ebp
+		#define DVSRLO [esp + 4]
+		#define DVSRHI [esp]
 
 		mov     esi, edx
 		jns     shift
@@ -297,16 +299,15 @@ __declspec(naked) void __cdecl _alldiv()
 		align   16
 	shift:
 		bsr     ecx, edx
-		mov     esi, LOWORD(DVSR)           // edx:esi <- divisor
+		mov     esi, DVSRLO                 // EDX:ESI <- divisor
 		inc     ecx
 		shrd    esi, edx, cl
-		mov     edx, eax                    // edx:eax <- dividend
+		mov     edx, eax                    // EDX:EAX <- dividend
 		mov     eax, ebx
 		shrd    eax, edx, cl
 		shr     edx, cl
 	divide:
 		div     esi                         // now divide, ignore remainder
-		mov     esi, eax                    // save quotient
 
 		//
 		// We may be off by one, so to check, we will multiply the quotient
@@ -315,42 +316,41 @@ __declspec(naked) void __cdecl _alldiv()
 		// dividend is close to 2**64 and the quotient is off by 1.
 		//
 
-		mul     dword ptr HIWORD(DVSR)      // QUOT * HIWORD(DVSR)
+		pop     ecx                         // ECX <- HIWORD(DVSR)
+		mov     esi, eax                    // save quotient
+		imul    eax, ecx                    // QUOT * HIWORD(DVSR)
 		mov     ecx, eax
-		mov     eax, LOWORD(DVSR)
+		pop     eax                         // EAX <- LOWORD(DVSR)
 		mul     esi                         // QUOT * LOWORD(DVSR)
 
 		//
 		// do long compare here between original dividend and the result of the
-		// multiply in edx:eax.  If original is larger or equal, we are ok, otherwise
+		// multiply in EDX:EAX.  If original is larger or equal, we are ok, otherwise
 		// subtract one (1) from the quotient.
 		//
 
-		mov     ebx, LOWORD(DVND)
 		add     edx, ecx                    // EDX:EAX = QUOT * DVSR
-		cmp     ebx, eax                    // compare original and result
-		mov     ecx, HIWORD(DVND)
-		sbb     ecx, edx                    // if original < result, do subtract
+		cmp     ebx, eax
+		sbb     ebp, edx                    // if original < result, do subtract
 		mov     eax, esi
 		sbb     eax, 0                      // subtract carry flag from quotient
 		xor     edx, edx
 
-		//
-		// Cleanup the stack.
-		//
-
-		add     esp, 16
+		#undef DVNDLO
+		#undef DVNDHI
+		#undef DVSRLO
+		#undef DVSRHI
 
 	negate:
 		//
-		// Just the cleanup left to do.  edx:eax contains the quotient.  Set the sign
+		// Just the cleanup left to do.  EDX:EAX contains the quotient.  Set the sign
 		// according to the save value, cleanup the stack, and return.
 		//
 
-		xor     eax, edi                    // if edi == -1, negate the result
-		xor     edx, edi
-		sub     eax, edi
+		xor     edx, edi                    // if EDI == -1, negate the result
+		add     eax, edi
 		sbb     edx, edi
+		xor     eax, edi
 
 		//
 		// Restore the saved registers and return.
@@ -358,6 +358,7 @@ __declspec(naked) void __cdecl _alldiv()
 
 		pop     edi
 		pop     esi
+		pop     ebp
 		pop     ebx
 
 		ret     16

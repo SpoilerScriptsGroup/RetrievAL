@@ -202,15 +202,15 @@ __declspec(naked) void __cdecl _aulldiv()
 		jnz     hard                        // nope, gotta do this the hard way
 		div     ecx                         // get high order bits of quotient
 		mov     esi, eax                    // save high bits of quotient
-		mov     eax, ebx                    // edx:eax <- remainder:lo word of dividend
+		mov     eax, ebx                    // EDX:EAX <- remainder:lo word of dividend
 		div     ecx                         // get low order bits of quotient
-		mov     edx, esi                    // edx:eax <- quotient hi:quotient lo
+		mov     edx, esi                    // EDX:EAX <- quotient hi:quotient lo
 		jmp     epilogue                    // restore stack and return
 
 		align   16
 	hard:
 		//
-		// Here we do it the hard way.  Remember, eax contains DVSRHI
+		// Here we do it the hard way.  Remember, EAX contains DVSRHI
 		//
 
 		mov     esi, edx
@@ -221,16 +221,15 @@ __declspec(naked) void __cdecl _aulldiv()
 		align   16
 	shift:
 		bsr     ecx, edx
-		mov     esi, LOWORD(DVSR)           // edx:esi <- divisor
+		mov     esi, LOWORD(DVSR)           // EDX:ESI <- divisor
 		inc     ecx
 		shrd    esi, edx, cl
-		mov     edx, eax                    // edx:eax <- dividend
+		mov     edx, eax                    // EDX:EAX <- dividend
 		mov     eax, ebx
 		shrd    eax, edx, cl
 		shr     edx, cl
 	divide:
 		div     esi                         // now divide, ignore remainder
-		mov     esi, eax                    // save quotient
 
 		//
 		// We may be off by one, so to check, we will multiply the quotient
@@ -239,7 +238,8 @@ __declspec(naked) void __cdecl _aulldiv()
 		// dividend is close to 2**64 and the quotient is off by 1.
 		//
 
-		mul     dword ptr HIWORD(DVSR)      // QUOT * HIWORD(DVSR)
+		mov     esi, eax                    // save quotient
+		imul    eax, dword ptr HIWORD(DVSR) // QUOT * HIWORD(DVSR)
 		mov     ecx, eax
 		mov     eax, LOWORD(DVSR)
 		mul     esi                         // QUOT * LOWORD(DVSR)
@@ -250,19 +250,18 @@ __declspec(naked) void __cdecl _aulldiv()
 		// subtract one (1) from the quotient.
 		//
 
-		add     ecx, edx                    // ecx:eax = QUOT * DVSR
-		mov     edx, LOWORD(DVND)
+		add     ecx, edx                    // ECX:EAX = QUOT * DVSR
+		mov     edx, HIWORD(DVND)
 		sbb     esi, 0                      // subtract carry flag from quotient
-		mov     ebx, HIWORD(DVND)
-		cmp     edx, eax                    // compare original and result
+		cmp     ebx, eax
+		sbb     edx, ecx                    // if original < result, do subtract
 		mov     eax, esi
-		sbb     ebx, ecx                    // if original < result, do subtract
-		mov     edx, 0
 		sbb     eax, 0                      // subtract carry flag from quotient
+		xor     edx, edx
 
 	epilogue:
 		//
-		// Just the cleanup left to do.  edx:eax contains the quotient.
+		// Just the cleanup left to do.  EDX:EAX contains the quotient.
 		// Restore the saved registers and return.
 		//
 

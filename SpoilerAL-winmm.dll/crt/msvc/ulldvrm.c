@@ -229,30 +229,30 @@ __declspec(naked) void __cdecl _aulldvrm()
 		jnz     hard                        // nope, gotta do this the hard way
 		div     ecx                         // get high order bits of quotient
 		mov     ebx, eax                    // save high bits of quotient
-		mov     eax, LOWORD(DVND)           // edx:eax <- remainder:lo word of dividend
+		mov     eax, LOWORD(DVND)           // EDX:EAX <- remainder:lo word of dividend
 		div     ecx                         // get low order bits of quotient
-		mov     esi, eax                    // ebx:esi <- quotient
+		mov     esi, eax                    // EBX:ESI <- quotient
 
 		//
 		// Now we need to do a multiply so that we can compute the remainder.
 		//
 
 		mov     eax, ebx                    // set up high word of quotient
-		mul     dword ptr LOWORD(DVSR)      // HIWORD(QUOT) * DVSR
+		imul    eax, dword ptr LOWORD(DVSR) // HIWORD(QUOT) * DVSR
 		mov     edi, eax                    // save the result in edi
 		mov     eax, esi                    // set up low word of quotient
 		mul     dword ptr LOWORD(DVSR)      // LOWORD(QUOT) * DVSR
 		add     edi, edx                    // EDI:EAX = QUOT * DVSR
-		mov     ecx, LOWORD(DVND)           // edx:ecx = dividend - result
+		mov     ecx, LOWORD(DVND)           // subtract result from dividend
 		sub     ecx, eax
 		mov     edx, HIWORD(DVND)
-		sbb     edx, edi
+		sbb     edx, edi                    // EDX:ECX = DVND - QUOT * DVSR
 		jmp     rotate                      // rotate register
 
 		align   16
 	hard:
 		//
-		// Here we do it the hard way.  Remember, eax contains DVSRHI
+		// Here we do it the hard way.  Remember, EAX contains DVSRHI
 		//
 
 		mov     esi, edx
@@ -263,16 +263,15 @@ __declspec(naked) void __cdecl _aulldvrm()
 		align   16
 	shift:
 		bsr     ecx, edx
-		mov     esi, LOWORD(DVSR)           // edx:esi <- divisor
+		mov     esi, LOWORD(DVSR)           // EDX:ESI <- divisor
 		inc     ecx
 		shrd    esi, edx, cl
-		mov     edx, eax                    // edx:eax <- dividend
+		mov     edx, eax                    // EDX:EAX <- dividend
 		mov     eax, ebx
 		shrd    eax, edx, cl
 		shr     edx, cl
 	divide:
 		div     esi                         // now divide, ignore remainder
-		mov     esi, eax                    // save quotient
 
 		//
 		// We may be off by one, so to check, we will multiply the quotient
@@ -281,7 +280,9 @@ __declspec(naked) void __cdecl _aulldvrm()
 		// dividend is close to 2**64 and the quotient is off by 1.
 		//
 
-		mul     dword ptr HIWORD(DVSR)      // QUOT * HIWORD(DVSR)
+		mov     ecx, ebx                    // ECX <- low word of dividend
+		mov     esi, eax                    // save quotient
+		imul    eax, dword ptr HIWORD(DVSR) // QUOT * HIWORD(DVSR)
 		mov     ebx, eax
 		mov     eax, LOWORD(DVSR)
 		mul     esi                         // QUOT * LOWORD(DVSR)
@@ -292,24 +293,22 @@ __declspec(naked) void __cdecl _aulldvrm()
 		// subtract one (1) from the quotient.
 		//
 
-		add     ebx, edx                    // ebx:eax = QUOT * DVSR
-		mov     ecx, LOWORD(DVND)
-		sbb     edi, edi
+		add     ebx, edx                    // EBX:EAX = QUOT * DVSR
 		mov     edx, HIWORD(DVND)
-		sub     ecx, eax                    // edx:ecx = dividend - result
-		mov     eax, LOWORD(DVSR)
+		sbb     edi, edi
+		sub     ecx, eax                    // EDX:ECX = remainder
 		sbb     edx, ebx
-		mov     ebx, 0                      // ebx:esi <- quotient
+		mov     ebx, 0                      // EBX:ESI = quotient
 		sbb     edi, 0
 		jz      rotate                      // if above or equal we're ok, else add
-		add     ecx, eax                    // add divisor to result
+		add     ecx, LOWORD(DVSR)           // add divisor to result
 		mov     eax, HIWORD(DVSR)
 		adc     edx, eax
 		dec     esi                         // subtract 1 from quotient
 
 	rotate:
 		//
-		// Now we need to get the quotient into edx:eax and the remainder into ebx:ecx.
+		// Now we need to get the quotient into EDX:EAX and the remainder into EBX:ECX.
 		//
 
 		mov     eax, esi
@@ -317,9 +316,8 @@ __declspec(naked) void __cdecl _aulldvrm()
 		mov     edx, ebx
 		mov     ebx, esi
 
-	epilogue:
 		//
-		// Just the cleanup left to do.  edx:eax contains the quotient.
+		// Just the cleanup left to do.  EDX:EAX contains the quotient.
 		// Restore the saved registers and return.
 		//
 

@@ -35,10 +35,12 @@
 //
 //*******************************************************************************
 
-#if 0
-static
+#ifdef CFUNCTION
+#define __cdecl __fastcall
+#define _aullrem _ullrem
 #endif
-__declspec(naked) void __cdecl _aullrem()
+
+__declspec(naked) unsigned __int64 __cdecl _aullrem(unsigned __int64 dividend, unsigned __int64 divisor)
 {
 #if 0
 	__asm
@@ -286,13 +288,3 @@ __declspec(naked) void __cdecl _aullrem()
 	}
 #endif
 }
-
-#if 0
-__declspec(naked) unsigned __int64 __stdcall _ullrem(unsigned __int64 dividend, unsigned __int64 divisor)
-{
-	__asm
-	{
-		jmp     _aullrem
-	}
-}
-#endif

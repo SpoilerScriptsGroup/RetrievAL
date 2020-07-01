@@ -36,7 +36,33 @@
 //
 //*******************************************************************************
 
-#if 0
+#ifdef CFUNCTION
+__declspec(naked) unsigned __int64 __fastcall _ulldvrm(unsigned __int64 dividend, unsigned __int64 divisor, unsigned __int64 *remainder)
+{
+	static void __cdecl _aulldvrm();
+
+	__asm
+	{
+		push    ebx
+		push    esi
+		mov     esi, ecx
+		mov     ebx, dword ptr [esp + 24]
+		mov     ecx, dword ptr [esp + 20]
+		mov     edx, dword ptr [esp + 16]
+		mov     eax, dword ptr [esp + 12]
+		push    ebx
+		push    ecx
+		push    edx
+		push    eax
+		call    _aulldvrm
+		mov     dword ptr [esi], ecx
+		mov     dword ptr [esi + 4], ebx
+		pop     esi
+		pop     ebx
+		ret     16
+	}
+}
+
 static
 #endif
 __declspec(naked) void __cdecl _aulldvrm()
@@ -335,29 +361,3 @@ __declspec(naked) void __cdecl _aulldvrm()
 	}
 #endif
 }
-
-#if 0
-__declspec(naked) unsigned __int64 __stdcall _ulldvrm(unsigned __int64 dividend, unsigned __int64 divisor, unsigned __int64 *remainder)
-{
-	__asm
-	{
-		push    ebx
-		push    esi
-		mov     esi, dword ptr [esp + 28]
-		mov     ebx, dword ptr [esp + 24]
-		mov     ecx, dword ptr [esp + 20]
-		mov     edx, dword ptr [esp + 16]
-		mov     eax, dword ptr [esp + 12]
-		push    ebx
-		push    ecx
-		push    edx
-		push    eax
-		call    _aulldvrm
-		mov     dword ptr [esi], ecx
-		mov     dword ptr [esi + 4], ebx
-		pop     esi
-		pop     ebx
-		ret     20
-	}
-}
-#endif

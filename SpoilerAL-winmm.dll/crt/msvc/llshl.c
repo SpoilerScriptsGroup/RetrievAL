@@ -30,7 +30,20 @@
 //
 //*******************************************************************************
 
-#if 0
+#ifdef CFUNCTION
+__declspec(naked) __int64 __fastcall _llshl(__int64 value, unsigned char shift)
+{
+	static void __cdecl _allshl();
+
+	__asm
+	{
+		mov     eax, dword ptr [esp + 4]
+		mov     edx, dword ptr [esp + 8]
+		call    _allshl
+		ret     8
+	}
+}
+
 static
 #endif
 __declspec(naked) void __cdecl _allshl()
@@ -113,17 +126,3 @@ __declspec(naked) void __cdecl _allshl()
 	}
 #endif
 }
-
-#if 0
-__declspec(naked) __int64 __stdcall _llshl(__int64 value, unsigned char shift)
-{
-	__asm
-	{
-		mov     eax, dword ptr [esp + 4]
-		mov     edx, dword ptr [esp + 8]
-		mov     ecx, dword ptr [esp + 12]
-		call    _allshl
-		ret     12
-	}
-}
-#endif

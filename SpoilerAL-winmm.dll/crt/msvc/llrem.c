@@ -35,10 +35,12 @@
 //
 //*******************************************************************************
 
-#if 1
-static
+#ifdef CFUNCTION
+#define __cdecl __fastcall
+#define _allrem _llrem
 #endif
-__declspec(naked) void __cdecl _allrem()
+
+__declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 {
 #if 0
 	__asm
@@ -384,13 +386,3 @@ __declspec(naked) void __cdecl _allrem()
 	}
 #endif
 }
-
-#if 1
-__declspec(naked) __int64 __stdcall _llrem(__int64 dividend, __int64 divisor)
-{
-	__asm
-	{
-		jmp     _allrem
-	}
-}
-#endif

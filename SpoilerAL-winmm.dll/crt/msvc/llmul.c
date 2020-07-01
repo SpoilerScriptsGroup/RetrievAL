@@ -38,10 +38,12 @@
 //
 //*******************************************************************************
 
-#if 0
-static
+#ifdef CFUNCTION
+#define __cdecl __fastcall
+#define _allmul _llmul
 #endif
-__declspec(naked) void __cdecl _allmul()
+
+__declspec(naked) __int64 __cdecl _allmul(__int64 multiplicand, __int64 multiplier)
 {
 #if 0
 	__asm
@@ -145,13 +147,3 @@ __declspec(naked) void __cdecl _allmul()
 	}
 #endif
 }
-
-#if 0
-__declspec(naked) __int64 __stdcall _llmul(__int64 multiplier, __int64 multiplicand)
-{
-	__asm
-	{
-		jmp     _allmul
-	}
-}
-#endif

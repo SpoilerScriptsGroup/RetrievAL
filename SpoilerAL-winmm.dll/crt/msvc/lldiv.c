@@ -35,10 +35,12 @@
 //
 //*******************************************************************************
 
-#if 1
-static
+#ifdef CFUNCTION
+#define __cdecl __fastcall
+#define _alldiv _lldiv
 #endif
-__declspec(naked) void __cdecl _alldiv()
+
+__declspec(naked) __int64 __cdecl _alldiv(__int64 dividend, __int64 divisor)
 {
 #if 0
 	__asm
@@ -371,13 +373,3 @@ __declspec(naked) void __cdecl _alldiv()
 	}
 #endif
 }
-
-#if 1
-__declspec(naked) __int64 __stdcall _lldiv(__int64 dividend, __int64 divisor)
-{
-	__asm
-	{
-		jmp     _alldiv
-	}
-}
-#endif

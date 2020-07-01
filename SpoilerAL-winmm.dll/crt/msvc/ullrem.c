@@ -246,8 +246,9 @@ __declspec(naked) unsigned __int64 __cdecl _aullrem(unsigned __int64 dividend, u
 		// dividend is close to 2**64 and the quotient is off by 1.
 		//
 
+		mov     ecx, dword ptr [DVSRHI]
 		mov     esi, eax                    // save a copy of quotient in ESI
-		imul    eax, dword ptr [DVSRHI]
+		imul    eax, ecx
 		mov     ecx, eax                    // put partial product in ECX, get quotient in EAX
 		mov     eax, esi
 		mul     dword ptr [DVSRLO]

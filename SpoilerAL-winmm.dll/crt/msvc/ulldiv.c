@@ -242,8 +242,9 @@ __declspec(naked) unsigned __int64 __cdecl _aulldiv(unsigned __int64 dividend, u
 		// dividend is close to 2**64 and the quotient is off by 1.
 		//
 
+		mov     ecx, dword ptr [DVSRHI]
 		mov     esi, eax                    // save quotient
-		imul    eax, dword ptr [DVSRHI]     // QUOT * DVSRHI
+		imul    eax, ecx                    // QUOT * DVSRHI
 		mov     ecx, eax
 		mov     eax, dword ptr [DVSRLO]
 		mul     esi                         // QUOT * DVSRLO

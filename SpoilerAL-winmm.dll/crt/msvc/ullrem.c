@@ -190,18 +190,20 @@ __declspec(naked) void __cdecl _aullrem()
 		//               -----------------
 		//
 
-		#define DVND (esp + 12)             // stack address of dividend (a)
-		#define DVSR (esp + 20)             // stack address of divisor (b)
+		#define DVNDLO dword ptr [esp + 12] // stack address of dividend (a)
+		#define DVNDHI dword ptr [esp + 16]
+		#define DVSRLO dword ptr [esp + 20] // stack address of divisor (b)
+		#define DVSRHI dword ptr [esp + 24]
 
 		// Now do the divide.  First look to see if the divisor is less than 4194304K.
 		// If so, then we can use a simple algorithm with word divides, otherwise
 		// things get a little more complex.
 		//
 
-		mov     ebx, LOWORD(DVND)           // load dividend
-		mov     eax, HIWORD(DVND)
-		mov     ecx, LOWORD(DVSR)           // load divisor
-		mov     edx, HIWORD(DVSR)
+		mov     ebx, DVNDLO                 // load dividend
+		mov     eax, DVNDHI
+		mov     ecx, DVSRLO                 // load divisor
+		mov     edx, DVSRHI
 		test    edx, edx                    // check to see if divisor < 4194304K
 		jnz     hard                        // nope, gotta do this the hard way
 		div     ecx                         // EDX <- remainder, EAX <- quotient
@@ -225,7 +227,7 @@ __declspec(naked) void __cdecl _aullrem()
 		align   16
 	shift:
 		bsr     ecx, edx
-		mov     esi, LOWORD(DVSR)           // EDX:ESI <- divisor
+		mov     esi, DVSRLO                 // EDX:ESI <- divisor
 		inc     ecx
 		shrd    esi, edx, cl
 		mov     edx, eax                    // EDX:EAX <- dividend
@@ -243,10 +245,10 @@ __declspec(naked) void __cdecl _aullrem()
 		//
 
 		mov     esi, eax                    // save a copy of quotient in ESI
-		imul    eax, dword ptr HIWORD(DVSR)
+		imul    eax, DVSRHI
 		mov     ecx, eax                    // put partial product in ECX, get quotient in EAX
 		mov     eax, esi
-		mul     dword ptr LOWORD(DVSR)
+		mul     DVSRLO
 
 		//
 		// do long compare here between original dividend and the result of the
@@ -255,15 +257,15 @@ __declspec(naked) void __cdecl _aullrem()
 		//
 
 		add     ecx, edx                    // ECX:EAX = QUOT * DVSR
-		mov     edx, HIWORD(DVND)
+		mov     edx, DVNDHI
 		sbb     esi, esi
 		sub     ebx, eax
 		sbb     edx, ecx
 		mov     eax, ebx                    // EDX:EAX = remainder
 		sbb     esi, 0
 		jz      epilogue                    // if above or equal we're ok, else add
-		add     eax, LOWORD(DVSR)           // add divisor to result
-		mov     ecx, HIWORD(DVSR)
+		add     eax, DVSRLO                 // add divisor to result
+		mov     ecx, DVSRHI
 		adc     edx, ecx
 
 	epilogue:
@@ -277,8 +279,10 @@ __declspec(naked) void __cdecl _aullrem()
 
 		ret     16
 
-		#undef DVND
-		#undef DVSR
+		#undef DVNDLO
+		#undef DVNDHI
+		#undef DVSRLO
+		#undef DVSRHI
 	}
 #endif
 }

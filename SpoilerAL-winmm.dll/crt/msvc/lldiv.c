@@ -235,20 +235,22 @@ __declspec(naked) void __cdecl _alldiv()
 		//               -----------------
 		//
 
-		#define DVND (esp + 20)             // stack address of dividend (a)
-		#define DVSR (esp + 28)             // stack address of divisor (b)
+		#define DVNDLO dword ptr [esp + 20] // stack address of dividend (a)
+		#define DVNDHI dword ptr [esp + 24]
+		#define DVSRLO dword ptr [esp + 28] // stack address of divisor (b)
+		#define DVSRHI dword ptr [esp + 32]
 
 		// Determine sign of the result (edi = 0 if result is positive, non-zero
 		// otherwise) and make operands positive.
 
-		mov     edi, HIWORD(DVND)           // load dividend
-		mov     esi, HIWORD(DVSR)           // load divisor
-		mov     ebx, LOWORD(DVND)
+		mov     edi, DVNDHI                 // load dividend
+		mov     esi, DVSRHI                 // load divisor
+		mov     ebx, DVNDLO
 		mov     eax, edi
 		sar     edi, 31
 		mov     edx, esi
 		sar     esi, 31
-		mov     ecx, LOWORD(DVSR)
+		mov     ecx, DVSRLO
 		xor     eax, edi
 		add     ebx, edi
 		sbb     eax, edi
@@ -286,10 +288,14 @@ __declspec(naked) void __cdecl _alldiv()
 		push    ecx                         // save positive value
 		push    edx
 
-		#define DVNDLO ebx
+		#undef DVNDLO
+		#undef DVNDHI
+		#undef DVSRLO
+		#undef DVSRHI
+		#define DVNDLO ebx                  // stack address of dividend (a)
 		#define DVNDHI ebp
-		#define DVSRLO [esp + 4]
-		#define DVSRHI [esp]
+		#define DVSRLO dword ptr [esp +  4] // stack address of divisor (b)
+		#define DVSRHI dword ptr [esp     ]
 
 		mov     esi, edx
 		jns     shift
@@ -303,7 +309,7 @@ __declspec(naked) void __cdecl _alldiv()
 		inc     ecx
 		shrd    esi, edx, cl
 		mov     edx, eax                    // EDX:EAX <- dividend
-		mov     eax, ebx
+		mov     eax, DVNDLO
 		shrd    eax, edx, cl
 		shr     edx, cl
 	divide:
@@ -316,12 +322,12 @@ __declspec(naked) void __cdecl _alldiv()
 		// dividend is close to 2**64 and the quotient is off by 1.
 		//
 
-		pop     ecx                         // ECX <- HIWORD(DVSR)
+		pop     ecx                         // ECX <- DVSRHI
 		mov     esi, eax                    // save quotient
-		imul    eax, ecx                    // QUOT * HIWORD(DVSR)
+		imul    eax, ecx                    // QUOT * DVSRHI
 		mov     ecx, eax
-		pop     eax                         // EAX <- LOWORD(DVSR)
-		mul     esi                         // QUOT * LOWORD(DVSR)
+		pop     eax                         // EAX <- DVSRLO
+		mul     esi                         // QUOT * DVSRLO
 
 		//
 		// do long compare here between original dividend and the result of the
@@ -330,16 +336,11 @@ __declspec(naked) void __cdecl _alldiv()
 		//
 
 		add     edx, ecx                    // EDX:EAX = QUOT * DVSR
-		cmp     ebx, eax
-		sbb     ebp, edx                    // if original < result, do subtract
+		cmp     DVNDLO, eax
+		sbb     DVNDHI, edx                 // if original < result, do subtract
 		mov     eax, esi
 		sbb     eax, 0                      // subtract carry flag from quotient
 		xor     edx, edx
-
-		#undef DVNDLO
-		#undef DVNDHI
-		#undef DVSRLO
-		#undef DVSRHI
 
 	negate:
 		//
@@ -363,8 +364,10 @@ __declspec(naked) void __cdecl _alldiv()
 
 		ret     16
 
-		#undef DVND
-		#undef DVSR
+		#undef DVNDLO
+		#undef DVNDHI
+		#undef DVSRLO
+		#undef DVSRHI
 	}
 #endif
 }

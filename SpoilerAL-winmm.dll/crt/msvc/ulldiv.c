@@ -185,8 +185,10 @@ __declspec(naked) void __cdecl _aulldiv()
 		//               -----------------
 		//
 
-		#define DVND (esp + 12)             // stack address of dividend (a)
-		#define DVSR (esp + 20)             // stack address of divisor (b)
+		#define DVNDLO dword ptr [esp + 12] // stack address of dividend (a)
+		#define DVNDHI dword ptr [esp + 16]
+		#define DVSRLO dword ptr [esp + 20] // stack address of divisor (b)
+		#define DVSRHI dword ptr [esp + 24]
 
 		//
 		// Now do the divide.  First look to see if the divisor is less than 4194304K.
@@ -194,10 +196,10 @@ __declspec(naked) void __cdecl _aulldiv()
 		// things get a little more complex.
 		//
 
-		mov     ebx, LOWORD(DVND)           // load dividend
-		mov     eax, HIWORD(DVND)
-		mov     ecx, LOWORD(DVSR)           // load divisor
-		mov     edx, HIWORD(DVSR)
+		mov     ebx, DVNDLO                 // load dividend
+		mov     eax, DVNDHI
+		mov     ecx, DVSRLO                 // load divisor
+		mov     edx, DVSRHI
 		test    edx, edx                    // check to see if divisor < 4194304K
 		jnz     hard                        // nope, gotta do this the hard way
 		div     ecx                         // get high order bits of quotient
@@ -221,7 +223,7 @@ __declspec(naked) void __cdecl _aulldiv()
 		align   16
 	shift:
 		bsr     ecx, edx
-		mov     esi, LOWORD(DVSR)           // EDX:ESI <- divisor
+		mov     esi, DVSRLO                 // EDX:ESI <- divisor
 		inc     ecx
 		shrd    esi, edx, cl
 		mov     edx, eax                    // EDX:EAX <- dividend
@@ -239,10 +241,10 @@ __declspec(naked) void __cdecl _aulldiv()
 		//
 
 		mov     esi, eax                    // save quotient
-		imul    eax, dword ptr HIWORD(DVSR) // QUOT * HIWORD(DVSR)
+		imul    eax, DVSRHI                 // QUOT * DVSRHI
 		mov     ecx, eax
-		mov     eax, LOWORD(DVSR)
-		mul     esi                         // QUOT * LOWORD(DVSR)
+		mov     eax, DVSRLO
+		mul     esi                         // QUOT * DVSRLO
 
 		//
 		// do long compare here between original dividend and the result of the
@@ -251,7 +253,7 @@ __declspec(naked) void __cdecl _aulldiv()
 		//
 
 		add     ecx, edx                    // ECX:EAX = QUOT * DVSR
-		mov     edx, HIWORD(DVND)
+		mov     edx, DVNDHI
 		sbb     esi, 0                      // subtract carry flag from quotient
 		cmp     ebx, eax
 		sbb     edx, ecx                    // if original < result, do subtract
@@ -270,8 +272,10 @@ __declspec(naked) void __cdecl _aulldiv()
 
 		ret     16
 
-		#undef DVND
-		#undef DVSR
+		#undef DVNDLO
+		#undef DVNDHI
+		#undef DVSRLO
+		#undef DVSRHI
 	}
 #endif
 }

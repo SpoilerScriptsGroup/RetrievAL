@@ -242,20 +242,22 @@ __declspec(naked) void __cdecl _allrem()
 		//               -----------------
 		//
 
-		#define DVND (esp + 20)             // stack address of dividend (a)
-		#define DVSR (esp + 28)             // stack address of divisor (b)
+		#define DVNDLO dword ptr [esp + 20] // stack address of dividend (a)
+		#define DVNDHI dword ptr [esp + 24]
+		#define DVSRLO dword ptr [esp + 28] // stack address of divisor (b)
+		#define DVSRHI dword ptr [esp + 32]
 
 		// Determine sign of the result (edi = 0 if result is positive, non-zero
 		// otherwise) and make operands positive.
 
-		mov     edi, HIWORD(DVND)           // load dividend
-		mov     esi, HIWORD(DVSR)           // load divisor
-		mov     ebx, LOWORD(DVND)
+		mov     edi, DVNDHI                 // load dividend
+		mov     esi, DVSRHI                 // load divisor
+		mov     ebx, DVNDLO
 		mov     eax, edi
 		sar     edi, 31
 		mov     edx, esi
 		sar     esi, 31
-		mov     ebp, LOWORD(DVSR)
+		mov     ebp, DVSRLO
 		xor     eax, edi
 		add     ebx, edi
 		sbb     eax, edi
@@ -291,10 +293,14 @@ __declspec(naked) void __cdecl _allrem()
 		push    eax                         // save positive value
 		push    edx
 
-		#define DVNDLO ebx
-		#define DVNDHI [esp + 4]
-		#define DVSRLO ebp
-		#define DVSRHI [esp]
+		#undef DVNDLO
+		#undef DVNDHI
+		#undef DVSRLO
+		#undef DVSRHI
+		#define DVNDLO ebx                  // stack address of dividend (a)
+		#define DVNDHI dword ptr [esp +  4]
+		#define DVSRLO ebp                  // stack address of divisor (b)
+		#define DVSRHI dword ptr [esp     ]
 
 		mov     esi, edx
 		jns     shift
@@ -304,11 +310,11 @@ __declspec(naked) void __cdecl _allrem()
 		align   16
 	shift:
 		bsr     ecx, edx
-		mov     esi, ebp                    // EDX:ESI <- divisor
+		mov     esi, DVSRLO                 // EDX:ESI <- divisor
 		inc     ecx
 		shrd    esi, edx, cl
 		mov     edx, eax                    // EDX:EAX <- dividend
-		mov     eax, ebx
+		mov     eax, DVNDLO
 		shrd    eax, edx, cl
 		shr     edx, cl
 	divide:
@@ -321,12 +327,15 @@ __declspec(naked) void __cdecl _allrem()
 		// dividend is close to 2**64 and the quotient is off by 1.
 		//
 
-		pop     esi                         // ESI <- HIWORD(DVSR)
+		#undef DVSRHI
+		#define DVSRHI esi
+
+		pop     esi                         // ESI <- DVSRHI
 		mov     edx, eax                    // save a copy of quotient in ESI
-		imul    eax, esi
+		imul    eax, DVSRHI
 		mov     ecx, eax                    // put partial product in ECX, get quotient in EAX
 		mov     eax, edx
-		mul     ebp
+		mul     DVSRLO
 
 		//
 		// do long compare here between original dividend and the result of the
@@ -335,18 +344,13 @@ __declspec(naked) void __cdecl _allrem()
 		//
 
 		add     ecx, edx                    // ECX:EAX = QUOT * DVSR
-		sub     ebx, eax
-		pop     edx                         // EDX <- HIWORD(DVND)
-		mov     eax, ebx
+		sub     DVNDLO, eax
+		pop     edx                         // EDX <- DVNDHI
+		mov     eax, DVNDLO
 		sbb     edx, ecx                    // EDX:EAX = remainder
 		jae     negate                      // if above or equal we're ok, else add
-		add     eax, ebp                    // add divisor to result
-		adc     edx, esi
-
-		#undef DVNDLO
-		#undef DVNDHI
-		#undef DVSRLO
-		#undef DVSRHI
+		add     eax, DVSRLO                 // add divisor to result
+		adc     edx, DVSRHI
 
 	negate:
 		//
@@ -373,8 +377,10 @@ __declspec(naked) void __cdecl _allrem()
 
 		ret     16
 
-		#undef DVND
-		#undef DVSR
+		#undef DVNDLO
+		#undef DVNDHI
+		#undef DVSRLO
+		#undef DVSRHI
 	}
 #endif
 }

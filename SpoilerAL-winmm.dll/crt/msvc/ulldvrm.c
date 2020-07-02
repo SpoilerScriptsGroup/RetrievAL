@@ -329,8 +329,8 @@ __declspec(naked) void __cdecl _aulldvrm()
 		add     edx, ebx                    // EDX:EAX = QUOT * DVSR
 		mov     ebx, dword ptr [DVNDHI]
 		sbb     edi, edi
-		sub     ecx, eax                    // EBX:ECX = remainder
-		sbb     ebx, edx
+		sub     ecx, eax
+		sbb     ebx, edx                    // EBX:ECX = remainder
 		mov     edx, 0
 		mov     eax, esi                    // EDX:EAX = quotient
 		mov     esi, dword ptr [DVSRLO]

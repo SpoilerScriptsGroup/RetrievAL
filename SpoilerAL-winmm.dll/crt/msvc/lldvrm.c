@@ -387,8 +387,8 @@ __declspec(naked) void __cdecl _alldvrm()
 		mov     ecx, dword ptr [DVNDLO]     // subtract product from dividend
 		sub     ecx, eax
 		mov     eax, dword ptr [DVNDHI]
-		sbb     eax, edx                    // EAX:ECX = DVND - QUOT * DVSR
-		mov     edx, ebx
+		sbb     eax, edx                    // EAX:ECX = remainder
+		mov     edx, ebx                    // EDX:ESI = quotient
 		jmp     negate                      // negate result, restore stack and return
 
 		align   16
@@ -435,8 +435,8 @@ __declspec(naked) void __cdecl _alldvrm()
 		// subtract one (1) from the quotient.
 		//
 
-		add     ebx, edx
-		sub     ecx, eax                    // compute the remainder
+		add     ebx, edx                    // EBX:EAX = QUOT * DVSR
+		sub     ecx, eax
 		mov     eax, dword ptr [DVNDHI]
 		mov     edx, 0                      // EDX:ESI = quotient
 		sbb     eax, ebx                    // EAX:ECX = remainder

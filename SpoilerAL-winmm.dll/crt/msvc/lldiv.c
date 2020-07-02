@@ -339,7 +339,7 @@ __declspec(naked) __int64 __cdecl _alldiv(__int64 dividend, __int64 divisor)
 
 		add     edx, ecx                    // EDX:EAX = QUOT * DVSR
 		cmp     DVNDLO, eax
-		sbb     DVNDHI, edx                 // if original < result, do subtract
+		sbb     DVNDHI, edx                 // if dividend < product, do subtract
 		mov     eax, esi
 		sbb     eax, 0                      // subtract carry flag from quotient
 		xor     edx, edx
@@ -350,7 +350,7 @@ __declspec(naked) __int64 __cdecl _alldiv(__int64 dividend, __int64 divisor)
 		// according to the save value, cleanup the stack, and return.
 		//
 
-		xor     edx, edi                    // if EDI == -1, negate the result
+		xor     edx, edi                    // if EDI == -1, negate the quotient
 		add     eax, edi
 		sbb     edx, edi
 		xor     eax, edi

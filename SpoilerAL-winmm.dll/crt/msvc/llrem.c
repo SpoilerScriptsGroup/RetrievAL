@@ -351,7 +351,7 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 		mov     eax, DVNDLO
 		sbb     edx, ecx                    // EDX:EAX = remainder
 		jae     negate                      // if above or equal we're ok, else add
-		add     eax, DVSRLO                 // add divisor to result
+		add     eax, DVSRLO                 // add divisor to remainder
 		adc     edx, DVSRHI
 
 	negate:
@@ -362,7 +362,7 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 		// the result to make it positive again.
 		//
 
-		xor     edx, edi                    // if EDI == -1, negate the result
+		xor     edx, edi                    // if EDI == -1, negate the remainder
 		add     eax, edi
 		sbb     edx, edi
 		xor     eax, edi

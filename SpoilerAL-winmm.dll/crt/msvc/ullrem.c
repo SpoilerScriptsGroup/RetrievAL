@@ -267,7 +267,7 @@ __declspec(naked) unsigned __int64 __cdecl _aullrem(unsigned __int64 dividend, u
 		mov     eax, ebx                    // EDX:EAX = remainder
 		sbb     esi, 0
 		jz      epilogue                    // if above or equal we're ok, else add
-		add     eax, dword ptr [DVSRLO]     // add divisor to result
+		add     eax, dword ptr [DVSRLO]     // add divisor to remainder
 		mov     ecx, dword ptr [DVSRHI]
 		adc     edx, ecx
 

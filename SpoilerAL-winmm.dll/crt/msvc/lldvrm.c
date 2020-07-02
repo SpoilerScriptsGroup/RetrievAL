@@ -55,8 +55,11 @@ __declspec(naked) __int64 __fastcall _lldvrm(__int64 dividend, __int64 divisor, 
 		push    edx
 		push    eax
 		call    _alldvrm
+		test    esi, esi
+		jz      epilogue
 		mov     dword ptr [esi], ecx
 		mov     dword ptr [esi + 4], ebx
+	epilogue:
 		pop     esi
 		pop     ebx
 		ret     16
@@ -275,6 +278,14 @@ __declspec(naked) void __cdecl _alldvrm()
 #else
 	__asm
 	{
+		#define DVNDLO (esp +  4)           // stack address of dividend (a)
+		#define DVNDHI (esp +  8)
+		#define DVSRLO (esp + 12)           // stack address of divisor (b)
+		#define DVSRHI (esp + 16)
+
+		mov     eax, dword ptr [DVNDHI]     // high word of load dividend
+		mov     edx, dword ptr [DVSRHI]     // high word of load divisor
+
 		push    ebp
 		push    esi
 		push    edi
@@ -304,6 +315,10 @@ __declspec(naked) void __cdecl _alldvrm()
 		//               -----------------
 		//
 
+		#undef DVNDLO
+		#undef DVNDHI
+		#undef DVSRLO
+		#undef DVSRHI
 		#define DVNDLO (esp + 16)           // stack address of dividend (a)
 		#define DVNDHI (esp + 20)
 		#define DVSRLO (esp + 24)           // stack address of divisor (b)
@@ -313,20 +328,18 @@ __declspec(naked) void __cdecl _alldvrm()
 		// otherwise) and make operands positive.
 		// Sign of the remainder is kept in ebp.
 
-		mov     ebp, dword ptr [DVNDHI]     // load dividend
-		mov     edi, dword ptr [DVSRHI]     // load divisor
-		mov     ebx, dword ptr [DVNDLO]
-		mov     eax, ebp
+		mov     ebp, eax
 		sar     ebp, 31
-		mov     edx, edi
+		mov     edi, edx
 		sar     edi, 31
+		mov     ebx, dword ptr [DVNDLO]
 		mov     ecx, dword ptr [DVSRLO]
 		xor     ebx, ebp
 		xor     eax, ebp
-		sub     ebx, ebp
-		sbb     eax, ebp
 		xor     ecx, edi
 		xor     edx, edi
+		sub     ebx, ebp
+		sbb     eax, ebp
 		sub     ecx, edi
 		sbb     edx, edi
 		xor     edi, ebp
@@ -366,12 +379,12 @@ __declspec(naked) void __cdecl _alldvrm()
 		//
 
 		mov     eax, ebx                    // set up high word of quotient
-		imul    dword ptr [DVSRLO]          // HIWORD(QUOT) * DVSR
+		imul    eax, dword ptr [DVSRLO]     // HIWORD(QUOT) * DVSR
 		mov     ecx, eax                    // save the result in ECX
 		mov     eax, esi                    // set up low word of quotient
 		mul     dword ptr [DVSRLO]          // LOWORD(QUOT) * DVSR
 		add     ecx, edx                    // ECX:EAX = QUOT * DVSR
-		mov     edx, dword ptr [DVNDLO]     // subtract result from dividend
+		mov     edx, dword ptr [DVNDLO]     // subtract product from dividend
 		sub     edx, eax
 		mov     eax, dword ptr [DVNDHI]
 		sbb     eax, ecx
@@ -429,7 +442,7 @@ __declspec(naked) void __cdecl _alldvrm()
 		mov     ebx, 0                      // EBX:ESI = quotient
 		sbb     edx, eax                    // EDX:ECX = remainder
 		jae     negate                      // if above or equal we are ok, else add
-		add     ecx, dword ptr [DVSRLO]     // add divisor to result
+		add     ecx, dword ptr [DVSRLO]     // add divisor to remainder
 		mov     eax, dword ptr [DVSRHI]
 		adc     edx, eax
 		dec     esi                         // subtract 1 from quotient
@@ -457,20 +470,14 @@ __declspec(naked) void __cdecl _alldvrm()
 		// the result to make it positive again.
 		//
 
-		xor     ecx, ebp                    // if EBP == -1, negate the result
-		xor     ebx, ebp
-		sub     ecx, ebp
-		sbb     ebx, ebp
-
-		//
-		// Just the cleanup left to do.  EDX:EAX contains the quotient.  Set the sign
-		// according to the save value, cleanup the stack, and return.
-		//
-
-		xor     eax, edi                    // if EDI == -1, negate the result
+		xor     eax, edi                    // if EDI == -1, negate the quotient
 		xor     edx, edi
+		xor     ecx, ebp                    // if EBP == -1, negate the remainder
+		xor     ebx, ebp
 		sub     eax, edi
 		sbb     edx, edi
+		sub     ecx, ebp
+		sbb     ebx, ebp
 
 		//
 		// Restore the saved registers and return.

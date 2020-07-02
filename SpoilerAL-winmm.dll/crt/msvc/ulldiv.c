@@ -259,7 +259,7 @@ __declspec(naked) unsigned __int64 __cdecl _aulldiv(unsigned __int64 dividend, u
 		mov     edx, dword ptr [DVNDHI]
 		sbb     esi, 0                      // subtract carry flag from quotient
 		cmp     ebx, eax
-		sbb     edx, ecx                    // if original < result, do subtract
+		sbb     edx, ecx                    // if dividend < product, do subtract
 		mov     eax, esi
 		sbb     eax, 0                      // subtract carry flag from quotient
 		xor     edx, edx

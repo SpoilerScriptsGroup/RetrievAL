@@ -55,8 +55,11 @@ __declspec(naked) unsigned __int64 __fastcall _ulldvrm(unsigned __int64 dividend
 		push    edx
 		push    eax
 		call    _aulldvrm
+		test    esi, esi
+		jz      epilogue
 		mov     dword ptr [esi], ecx
 		mov     dword ptr [esi + 4], ebx
+	epilogue:
 		pop     esi
 		pop     ebx
 		ret     16
@@ -271,7 +274,7 @@ __declspec(naked) void __cdecl _aulldvrm()
 		mov     eax, esi                    // set up low word of quotient
 		mul     dword ptr [DVSRLO]          // LOWORD(QUOT) * DVSR
 		add     edi, edx                    // EDI:EAX = QUOT * DVSR
-		mov     ecx, dword ptr [DVNDLO]     // subtract result from dividend
+		mov     ecx, dword ptr [DVNDLO]     // subtract product from dividend
 		sub     ecx, eax
 		mov     edx, dword ptr [DVNDHI]
 		sbb     edx, edi                    // EDX:ECX = DVND - QUOT * DVSR
@@ -329,7 +332,7 @@ __declspec(naked) void __cdecl _aulldvrm()
 		mov     ebx, 0                      // EBX:ESI = quotient
 		sbb     edi, 0
 		jz      epilogue                    // if above or equal we're ok, else add
-		add     ecx, dword ptr [DVSRLO]     // add divisor to result
+		add     ecx, dword ptr [DVSRLO]     // add divisor to remainder
 		mov     eax, dword ptr [DVSRHI]
 		adc     edx, eax
 		dec     esi                         // subtract 1 from quotient

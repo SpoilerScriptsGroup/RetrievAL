@@ -269,10 +269,10 @@ __declspec(naked) void __cdecl _aulldvrm()
 		//
 
 		mov     eax, ebx                    // set up high word of quotient
-		imul    eax, dword ptr [DVSRLO]     // HIWORD(QUOT) * DVSR
+		imul    eax, ecx                    // HIWORD(QUOT) * DVSR
 		mov     edi, eax                    // save the result in edi
 		mov     eax, esi                    // set up low word of quotient
-		mul     dword ptr [DVSRLO]          // LOWORD(QUOT) * DVSR
+		mul     ecx                         // LOWORD(QUOT) * DVSR
 		add     edi, edx                    // EDI:EAX = QUOT * DVSR
 		mov     ecx, dword ptr [DVNDLO]     // subtract product from dividend
 		sub     ecx, eax

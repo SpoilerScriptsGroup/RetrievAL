@@ -276,8 +276,10 @@ __declspec(naked) void __cdecl _aulldvrm()
 		add     edi, edx                    // EDI:EAX = QUOT * DVSR
 		mov     ecx, dword ptr [DVNDLO]     // subtract product from dividend
 		sub     ecx, eax
-		mov     edx, dword ptr [DVNDHI]
-		sbb     edx, edi                    // EDX:ECX = DVND - QUOT * DVSR
+		mov     edx, ebx
+		mov     ebx, dword ptr [DVNDHI]
+		mov     eax, esi                    // EDX:EAX = quotient
+		sbb     ebx, edi                    // EBX:ECX = remainder
 		jmp     epilogue                    // restore stack and return
 
 		align   16
@@ -324,29 +326,22 @@ __declspec(naked) void __cdecl _aulldvrm()
 		// subtract one (1) from the quotient.
 		//
 
-		add     ebx, edx                    // EBX:EAX = QUOT * DVSR
-		mov     edx, dword ptr [DVNDHI]
+		add     edx, ebx                    // EDX:EAX = QUOT * DVSR
+		mov     ebx, dword ptr [DVNDHI]
 		sbb     edi, edi
-		sub     ecx, eax                    // EDX:ECX = remainder
-		sbb     edx, ebx
-		mov     ebx, 0                      // EBX:ESI = quotient
+		sub     ecx, eax                    // EBX:ECX = remainder
+		sbb     ebx, edx
+		mov     edx, 0
+		mov     eax, esi                    // EDX:EAX = quotient
+		mov     esi, dword ptr [DVSRLO]
 		sbb     edi, 0
 		jz      epilogue                    // if above or equal we're ok, else add
-		add     ecx, dword ptr [DVSRLO]     // add divisor to remainder
-		mov     eax, dword ptr [DVSRHI]
-		adc     edx, eax
-		dec     esi                         // subtract 1 from quotient
+		add     ecx, esi                    // add divisor to remainder
+		mov     esi, dword ptr [DVSRHI]
+		adc     ebx, esi
+		dec     eax                         // subtract 1 from quotient
 
 	epilogue:
-		//
-		// Now we need to get the quotient into EDX:EAX and the remainder into EBX:ECX.
-		//
-
-		mov     eax, esi
-		mov     esi, edx
-		mov     edx, ebx
-		mov     ebx, esi
-
 		//
 		// Just the cleanup left to do.  EDX:EAX contains the quotient.
 		// Restore the saved registers and return.

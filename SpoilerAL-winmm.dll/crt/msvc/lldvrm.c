@@ -383,13 +383,12 @@ __declspec(naked) void __cdecl _alldvrm()
 		mov     ecx, eax                    // save the result in ECX
 		mov     eax, esi                    // set up low word of quotient
 		mul     dword ptr [DVSRLO]          // LOWORD(QUOT) * DVSR
-		add     ecx, edx                    // ECX:EAX = QUOT * DVSR
-		mov     edx, dword ptr [DVNDLO]     // subtract product from dividend
-		sub     edx, eax
+		add     edx, ecx                    // EDX:EAX = QUOT * DVSR
+		mov     ecx, dword ptr [DVNDLO]     // subtract product from dividend
+		sub     ecx, eax
 		mov     eax, dword ptr [DVNDHI]
-		sbb     eax, ecx
-		mov     ecx, edx
-		mov     edx, eax                    // EDX:ECX = DVND - QUOT * DVSR
+		sbb     eax, edx                    // EAX:ECX = DVND - QUOT * DVSR
+		mov     edx, ebx
 		jmp     negate                      // negate result, restore stack and return
 
 		align   16
@@ -436,15 +435,15 @@ __declspec(naked) void __cdecl _alldvrm()
 		// subtract one (1) from the quotient.
 		//
 
+		add     ebx, edx
 		sub     ecx, eax                    // compute the remainder
-		lea     eax, [edx + ebx]
-		mov     edx, dword ptr [DVNDHI]
-		mov     ebx, 0                      // EBX:ESI = quotient
-		sbb     edx, eax                    // EDX:ECX = remainder
+		mov     eax, dword ptr [DVNDHI]
+		mov     edx, 0                      // EDX:ESI = quotient
+		sbb     eax, ebx                    // EAX:ECX = remainder
 		jae     negate                      // if above or equal we are ok, else add
 		add     ecx, dword ptr [DVSRLO]     // add divisor to remainder
-		mov     eax, dword ptr [DVSRHI]
-		adc     edx, eax
+		mov     ebx, dword ptr [DVSRHI]
+		adc     eax, ebx
 		dec     esi                         // subtract 1 from quotient
 
 	negate:
@@ -452,10 +451,8 @@ __declspec(naked) void __cdecl _alldvrm()
 		// Now we need to get the quotient into EDX:EAX and the remainder into EBX:ECX.
 		//
 
+		mov     ebx, eax
 		mov     eax, esi
-		mov     esi, edx
-		mov     edx, ebx
-		mov     ebx, esi
 
 		//
 		// Cleanup the stack.

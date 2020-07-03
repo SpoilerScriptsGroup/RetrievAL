@@ -294,11 +294,11 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 
 		mov     esi, ebp                    // EDX:ESI <- divisor
 		jns     shift
-		mov     edx, eax                    // EDX:EAX <- dividend
-		mov     eax, ebp
-		test    edx, edx
-		jns     epilogue
-		xor     edx, edx
+		cmp     eax, edx
+		mov     edx, eax
+		sbb     ecx, ecx
+		mov     eax, ebx
+		and     edx, ecx                    // EDX:EAX <- remainder
 		jmp     epilogue                    // negate result, restore stack and return
 
 		align   16

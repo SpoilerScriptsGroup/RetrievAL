@@ -399,13 +399,12 @@ __declspec(naked) void __cdecl _alldvrm()
 
 		mov     esi, ecx                    // EDX:ESI <- divisor
 		jns     shift
-		xor     esi, esi                    // EDX:ESI = quotient
 		cmp     eax, edx
 		mov     edx, ecx
-		mov     ecx, ebx                    // EAX:ECX = remainder
-		adc     esi, esi
-		jnz     epilogue
-		xor     eax, eax
+		sbb     esi, esi
+		mov     ecx, ebx
+		and     eax, esi                    // EAX:ECX = remainder
+		inc     esi                         // EDX:ESI = quotient
 		jmp     epilogue                    // negate result, restore stack and return
 
 		align   16

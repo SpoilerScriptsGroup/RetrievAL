@@ -284,7 +284,7 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 		div     ebp                         // EDX <- final remainder
 		mov     eax, edx                    // EDX:EAX <- remainder
 		xor     edx, edx
-		jmp     negate                      // negate result, restore stack and return
+		jmp     epilogue                    // negate result, restore stack and return
 
 		align   16
 	hard:
@@ -297,9 +297,9 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 		mov     edx, eax                    // EDX:EAX <- dividend
 		mov     eax, ebp
 		test    edx, edx
-		jns     negate
+		jns     epilogue
 		xor     edx, edx
-		jmp     negate                      // negate result, restore stack and return
+		jmp     epilogue                    // negate result, restore stack and return
 
 		align   16
 	shift:
@@ -352,11 +352,11 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 		pop     edx                         // EDX <- DVNDHI
 		mov     eax, DVNDLO
 		sbb     edx, ecx                    // EDX:EAX = remainder
-		jae     negate                      // if above or equal we're ok, else add
+		jae     epilogue                    // if above or equal we're ok, else add
 		add     eax, DVSRLO                 // add divisor to remainder
 		adc     edx, DVSRHI
 
-	negate:
+	epilogue:
 		//
 		// Now check the result sign flag to see if the result is supposed to be positive
 		// or negative.  It is currently negated (because we subtracted in the 'wrong'

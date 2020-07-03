@@ -389,7 +389,7 @@ __declspec(naked) void __cdecl _alldvrm()
 		mov     eax, dword ptr [DVNDHI]
 		sbb     eax, edx                    // EAX:ECX = remainder
 		mov     edx, ebx                    // EDX:ESI = quotient
-		jmp     negate                      // negate result, restore stack and return
+		jmp     epilogue                    // negate result, restore stack and return
 
 		align   16
 	hard:
@@ -404,9 +404,9 @@ __declspec(naked) void __cdecl _alldvrm()
 		mov     edx, ecx
 		mov     ecx, ebx                    // EAX:ECX = remainder
 		adc     esi, esi
-		jnz     negate
+		jnz     epilogue
 		xor     eax, eax
-		jmp     negate                      // negate result, restore stack and return
+		jmp     epilogue                    // negate result, restore stack and return
 
 		align   16
 	shift:
@@ -444,13 +444,13 @@ __declspec(naked) void __cdecl _alldvrm()
 		mov     eax, dword ptr [DVNDHI]
 		mov     edx, 0                      // EDX:ESI = quotient
 		sbb     eax, ebx                    // EAX:ECX = remainder
-		jae     negate                      // if above or equal we are ok, else add
+		jae     epilogue                    // if above or equal we are ok, else add
 		add     ecx, dword ptr [DVSRLO]     // add divisor to remainder
 		mov     ebx, dword ptr [DVSRHI]
 		adc     eax, ebx
 		dec     esi                         // subtract 1 from quotient
 
-	negate:
+	epilogue:
 		//
 		// Now we need to get the quotient into EDX:EAX and the remainder into EBX:ECX.
 		//

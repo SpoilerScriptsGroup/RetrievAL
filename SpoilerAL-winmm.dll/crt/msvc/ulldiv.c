@@ -234,10 +234,10 @@ __declspec(naked) unsigned __int64 __cdecl _aulldiv(unsigned __int64 dividend, u
 		div     esi                         // now divide, ignore remainder
 		mov     ecx, dword ptr [DVNDHI]
 		mov     esi, eax                    // save quotient
-		test    ecx, ecx
-		js      correct
+		test    ecx, ecx                    // if (int64_t)dividend < 0,
+		js      correct                     //     return quotient - (dividend < quotient * divisor)
 		xor     edx, edx
-		jmp     epilogue
+		jmp     epilogue                    // restore stack and return
 
 		align   16
 	above_or_equal:

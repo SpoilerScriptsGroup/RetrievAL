@@ -292,6 +292,17 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 		// Here we do it the hard way.  Remember, EAX contains the high word of DVSR
 		//
 
+		mov     esi, ebp                    // EDX:ESI <- divisor
+		jns     shift
+		mov     edx, eax                    // EDX:EAX <- dividend
+		mov     eax, ebp
+		test    edx, edx
+		jns     negate
+		xor     edx, edx
+		jmp     negate                      // negate result, restore stack and return
+
+		align   16
+	shift:
 		push    eax                         // save positive value
 		push    edx
 
@@ -304,22 +315,13 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 		#define DVSRLO ebp
 		#define DVSRHI (esp     )
 
-		mov     esi, edx
-		jns     shift
-		xor     edx, edx
-		jmp     divide
-
-		align   16
-	shift:
 		bsr     ecx, edx
-		mov     esi, DVSRLO                 // EDX:ESI <- divisor
 		inc     ecx
 		shrd    esi, edx, cl
 		mov     edx, eax                    // EDX:EAX <- dividend
 		mov     eax, DVNDLO
 		shrd    eax, edx, cl
 		shr     edx, cl
-	divide:
 		div     esi                         // now divide, ignore remainder
 
 		//

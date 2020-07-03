@@ -397,22 +397,26 @@ __declspec(naked) void __cdecl _alldvrm()
 		// Here we do it the hard way.  Remember, EAX contains the high word of DVSR
 		//
 
-		mov     esi, edx
+		mov     esi, ecx                    // EDX:ESI <- divisor
 		jns     shift
-		xor     edx, edx
-		jmp     divide
+		xor     esi, esi                    // EDX:ESI = quotient
+		cmp     eax, edx
+		mov     edx, ecx
+		mov     ecx, ebx                    // EAX:ECX = remainder
+		adc     esi, esi
+		jnz     negate
+		xor     eax, eax
+		jmp     negate                      // negate result, restore stack and return
 
 		align   16
 	shift:
 		bsr     ecx, edx
-		mov     esi, dword ptr [DVSRLO]     // EDX:ESI <- divisor
 		inc     ecx
 		shrd    esi, edx, cl
 		mov     edx, eax                    // EDX:EAX <- dividend
 		mov     eax, ebx
 		shrd    eax, edx, cl
 		shr     edx, cl
-	divide:
 		div     esi                         // now divide, ignore remainder
 
 		//

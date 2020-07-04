@@ -262,22 +262,20 @@ __declspec(naked) void __cdecl _aulldvrm()
 		mov     ebx, eax                    // save high bits of quotient
 		mov     eax, dword ptr [DVNDLO]     // EDX:EAX <- remainder:lo word of dividend
 		div     ecx                         // get low order bits of quotient
-		mov     esi, eax                    // EBX:ESI <- quotient
 
 		//
 		// Now we need to do a multiply so that we can compute the remainder.
 		//
 
-		mov     eax, ebx                    // set up high word of quotient
-		imul    eax, ecx                    // HIWORD(QUOT) * DVSR
-		mov     edi, eax                    // save the result in edi
-		mov     eax, esi                    // set up low word of quotient
+		mov     edi, ebx                    // set up high word of quotient
+		mov     esi, eax                    // EBX:ESI <- quotient
+		imul    edi, ecx                    // HIWORD(QUOT) * DVSR
 		mul     ecx                         // LOWORD(QUOT) * DVSR
 		add     edi, edx                    // EDI:EAX = QUOT * DVSR
-		mov     ecx, dword ptr [DVNDLO]     // subtract product from dividend
-		sub     ecx, eax
 		mov     edx, ebx
+		mov     ecx, dword ptr [DVNDLO]     // subtract product from dividend
 		mov     ebx, dword ptr [DVNDHI]
+		sub     ecx, eax
 		mov     eax, esi                    // EDX:EAX = quotient
 		sbb     ebx, edi                    // EBX:ECX = remainder
 		jmp     epilogue                    // restore stack and return
@@ -313,12 +311,12 @@ __declspec(naked) void __cdecl _aulldvrm()
 		// dividend is close to 2**64 and the quotient is off by 1.
 		//
 
-		mov     ecx, ebx                    // ECX <- low word of dividend
 		mov     esi, eax                    // save quotient
-		imul    eax, dword ptr [DVSRHI]     // QUOT * DVSRHI
-		mov     ebx, eax
-		mov     eax, dword ptr [DVSRLO]
-		mul     esi                         // QUOT * DVSRLO
+		mov     ecx, ebx                    // ECX <- low word of dividend
+		mov     ebx, dword ptr [DVSRHI]
+		mov     edx, dword ptr [DVSRLO]
+		imul    ebx, eax                    // QUOT * DVSRHI
+		mul     edx                         // QUOT * DVSRLO
 
 		//
 		// do long compare here between original dividend and the result of the

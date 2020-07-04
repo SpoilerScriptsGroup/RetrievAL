@@ -287,41 +287,35 @@ __declspec(naked) __int64 __cdecl _alldiv(__int64 dividend, __int64 divisor)
 		// Here we do it the hard way.  Remember, EAX contains the high word of DVSR
 		//
 
-		cmp     ecx, ebx                    // if divisor >= dividend, return +/-1 or 0
-		mov     esi, edx
-		sbb     esi, eax
-		jae     above_or_equal
-		mov     esi, ecx                    // if (int64_t)divisor < 0, return +/-1 or 0
-		mov     ecx, edx
-		add     ecx, ecx
-		jc      above_or_equal
-		push    esi                         // save positive value
+		mov     esi, ecx                    // EDX:ESI <- divisor
+		jns     shift
+		shr     eax, 31
+		xor     edx, edx
+		jmp     epilogue
+
+		align   16
+	shift:
+		push    ecx                         // save positive value
 		push    edx
-		bsr     ecx, ecx
+
+		#undef DVNDLO
+		#undef DVNDHI
+		#undef DVSRLO
+		#undef DVSRHI
+		#define DVNDLO ebx
+		#define DVNDHI ebp
+		#define DVSRLO (esp +  4)
+		#define DVSRHI (esp     )
+
+		bsr     ecx, edx
+		inc     ecx
 		shrd    esi, edx, cl
 		mov     edx, eax                    // EDX:EAX <- dividend
-		mov     eax, ebx
+		mov     eax, DVNDLO
 		shrd    eax, edx, cl
 		shr     edx, cl
 		div     esi                         // now divide, ignore remainder
-		pop     ecx
-		pop     edx
-		test    ebp, ebp                    // if (int64_t)dividend < 0,
-		js      correct                     //     return +/-(quotient - (dividend < quotient * divisor))
-		xor     edx, edx
-		jmp     epilogue                    // negate result, restore stack and return
 
-		align   16
-	above_or_equal:
-		cmp     ebx, ecx
-		sbb     eax, edx
-		sbb     eax, eax
-		xor     edx, edx
-		inc     eax
-		jmp     epilogue                    // negate result, restore stack and return
-
-		align   16
-	correct:
 		//
 		// We may be off by one, so to check, we will multiply the quotient
 		// by the divisor and check the result against the orignal dividend
@@ -329,11 +323,12 @@ __declspec(naked) __int64 __cdecl _alldiv(__int64 dividend, __int64 divisor)
 		// dividend is close to 2**64 and the quotient is off by 1.
 		//
 
+		pop     ecx                         // ECX <- DVSRHI
 		mov     esi, eax                    // save quotient
 		imul    eax, ecx                    // QUOT * DVSRHI
 		mov     ecx, eax
-		mov     eax, esi
-		mul     edx                         // QUOT * DVSRLO
+		pop     eax                         // EAX <- DVSRLO
+		mul     esi                         // QUOT * DVSRLO
 
 		//
 		// do long compare here between original dividend and the result of the
@@ -342,8 +337,8 @@ __declspec(naked) __int64 __cdecl _alldiv(__int64 dividend, __int64 divisor)
 		//
 
 		add     edx, ecx                    // EDX:EAX = QUOT * DVSR
-		cmp     ebx, eax
-		sbb     ebp, edx                    // if dividend < product, do subtract
+		cmp     DVNDLO, eax
+		sbb     DVNDHI, edx                 // if dividend < product, do subtract
 		mov     eax, esi
 		sbb     eax, 0                      // subtract carry flag from quotient
 		xor     edx, edx

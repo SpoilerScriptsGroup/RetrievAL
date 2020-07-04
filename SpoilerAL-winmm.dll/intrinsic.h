@@ -840,10 +840,10 @@ __forceinline unsigned __int64 __ui64return_add_u32(unsigned int a, unsigned int
 		setc    al
 	}
 }
-__forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsigned int *out)
+__forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsigned int *_out)
 {
 	unsigned __int64 x = __ui64return_add_u32(a, b);
-	*out = x >> 32;
+	*_out = x >> 32;
 	return (unsigned char)x;
 }
 __forceinline unsigned __int64 __ui64return_addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b)
@@ -858,23 +858,23 @@ __forceinline unsigned __int64 __ui64return_addcarry_u32(unsigned char c_in, uns
 		setc    al
 	}
 }
-__forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out)
+__forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *_out)
 {
 	unsigned __int64 x = __ui64return_addcarry_u32(c_in, a, b);
-	*out = x >> 32;
+	*_out = x >> 32;
 	return (unsigned char)x;
 }
 #elif defined(__BORLANDC__)
-unsigned char __fastcall _add_u32(unsigned int a, unsigned int b, unsigned int *out);
-unsigned char __fastcall _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out);
+unsigned char __fastcall _add_u32(unsigned int a, unsigned int b, unsigned int *_out);
+unsigned char __fastcall _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *_out);
 #else
-__forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsigned int *out)
+__forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsigned int *_out)
 {
-	return (*out = a + b) < b;
+	return (*_out = a + b) < b;
 }
-__forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out)
+__forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *_out)
 {
-	return ((*out = a + b) < b) | (c_in && !++(*out));
+	return ((*_out = a + b) < b) | (c_in && !++(*_out));
 }
 #endif
 
@@ -892,10 +892,10 @@ __forceinline unsigned __int64 __ui64return_sub_u32(unsigned int a, unsigned int
 		setc    al
 	}
 }
-__forceinline unsigned char _sub_u32(unsigned int a, unsigned int b, unsigned int *out)
+__forceinline unsigned char _sub_u32(unsigned int a, unsigned int b, unsigned int *_out)
 {
 	unsigned __int64 x = __ui64return_sub_u32(a, b);
-	*out = x >> 32;
+	*_out = x >> 32;
 	return (unsigned char)x;
 }
 __forceinline unsigned __int64 __ui64return_subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b)
@@ -910,51 +910,181 @@ __forceinline unsigned __int64 __ui64return_subborrow_u32(unsigned char b_in, un
 		setc    al
 	}
 }
-__forceinline unsigned char _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *out)
+__forceinline unsigned char _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *_out)
 {
 	unsigned __int64 x = __ui64return_subborrow_u32(b_in, a, b);
-	*out = x >> 32;
+	*_out = x >> 32;
 	return (unsigned char)x;
 }
 #elif defined(__BORLANDC__)
-unsigned char __fastcall _sub_u32(unsigned int a, unsigned int b, unsigned int *out);
-unsigned char __fastcall _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *out);
+unsigned char __fastcall _sub_u32(unsigned int a, unsigned int b, unsigned int *_out);
+unsigned char __fastcall _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *_out);
 #else
-__forceinline unsigned char _sub_u32(unsigned int a, unsigned int b, unsigned int *out)
+__forceinline unsigned char _sub_u32(unsigned int a, unsigned int b, unsigned int *_out)
 {
-	return (*out = a - b) > a;
+	return (*_out = a - b) > a;
 }
-__forceinline unsigned char _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *out)
+__forceinline unsigned char _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *_out)
 {
-	return ((*out = a - b) > a) | (b_in && !(*out)--);
+	return ((*_out = a - b) > a) | (b_in && !(*_out)--);
 }
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310 && defined(_WIN64)
 #pragma intrinsic(_addcarry_u64)
 #define _add_u64(a, b, out) _addcarry_u64(0, a, b, out)
-#else
-__forceinline unsigned char _add_u64(uint64_t a, uint64_t b, uint64_t *out)
+#elif defined(_MSC_VER) && _MSC_VER >= 1310
+#pragma intrinsic(_addcarry_u32)
+__forceinline unsigned char _add_u64(uint64_t a, uint64_t b, uint64_t *_out)
 {
-	return (*out = a + b) < b;
+	return
+		_addcarry_u32(
+			_addcarry_u32(0,
+				(unsigned int)a,
+				(unsigned int)b,
+				(unsigned int *)_out),
+			a >> 32,
+			b >> 32,
+			(unsigned int *)_out + 1);
 }
-__forceinline unsigned char _addcarry_u64(unsigned char c_in, uint64_t a, uint64_t b, uint64_t *out)
+__forceinline unsigned char _addcarry_u64(unsigned char c_in, uint64_t a, uint64_t b, uint64_t *_out)
 {
-	return ((*out = a + b) < b) | (c_in && !++(*out));
+	return
+		_addcarry_u32(
+			_addcarry_u32(c_in,
+				(unsigned int)a,
+				(unsigned int)b,
+				(unsigned int *)_out),
+			a >> 32,
+			b >> 32,
+			(unsigned int *)_out + 1);
+}
+#elif defined(_MSC_VER) && defined(_M_IX86)
+__forceinline unsigned char _add_u64(uint64_t a, uint64_t b, uint64_t *_out)
+{
+	__asm
+	{
+		mov     eax, dword ptr [a]
+		mov     edx, dword ptr [a + 4]
+		mov     ecx, dword ptr [b]
+		add     eax, ecx
+		mov     ecx, dword ptr [b + 4]
+		adc     edx, ecx
+		mov     ecx, dword ptr [_out]
+		mov     dword ptr [ecx], eax
+		mov     dword ptr [ecx + 4], edx
+		setc    al
+	}
+}
+__forceinline unsigned char _addcarry_u64(unsigned char c_in, uint64_t a, uint64_t b, uint64_t *_out)
+{
+	__asm
+	{
+		mov     cl, byte ptr [c_in]
+		mov     eax, dword ptr [a]
+		add     cl, -1
+		mov     edx, dword ptr [a + 4]
+		mov     ecx, dword ptr [b]
+		adc     eax, ecx
+		mov     ecx, dword ptr [b + 4]
+		adc     edx, ecx
+		mov     ecx, dword ptr [_out]
+		mov     dword ptr [ecx], eax
+		mov     dword ptr [ecx + 4], edx
+		setc    al
+	}
+}
+#elif defined(__BORLANDC__)
+unsigned char __fastcall _add_u64(uint64_t a, uint64_t b, uint64_t *_out);
+unsigned char __fastcall _addcarry_u64(unsigned char c_in, uint64_t a, uint64_t b, uint64_t *_out);
+#else
+__forceinline unsigned char _add_u64(uint64_t a, uint64_t b, uint64_t *_out)
+{
+	return (*_out = a + b) < b;
+}
+__forceinline unsigned char _addcarry_u64(unsigned char c_in, uint64_t a, uint64_t b, uint64_t *_out)
+{
+	return ((*_out = a + b) < b) | (c_in && !++(*_out));
 }
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310 && defined(_WIN64)
 #pragma intrinsic(_subborrow_u64)
 #define _sub_u64(a, b, out) _subborrow_u64(0, a, b, out)
-#else
-__forceinline unsigned char _sub_u64(uint64_t a, uint64_t b, uint64_t *out)
+#elif defined(_MSC_VER) && _MSC_VER >= 1310
+#pragma intrinsic(_subborrow_u32)
+__forceinline unsigned char _sub_u64(uint64_t a, uint64_t b, uint64_t *_out)
 {
-	return (*out = a - b) > a;
+	return
+		_subborrow_u32(
+			_subborrow_u32(
+				0,
+				(unsigned int)a,
+				(unsigned int)b,
+				(unsigned int *)_out),
+			a >> 32,
+			b >> 32,
+			(unsigned int *)_out + 1);
 }
-__forceinline unsigned char _subborrow_u64(unsigned char b_in, uint64_t a, uint64_t b, uint64_t *out)
+__forceinline unsigned char _subborrow_u64(unsigned char b_in, uint64_t a, uint64_t b, uint64_t *_out)
 {
-	return ((*out = a - b) > a) | (b_in && !(*out)--);
+	return
+		_subborrow_u32(
+			_subborrow_u32(
+				b_in,
+				(unsigned int)a,
+				(unsigned int)b,
+				(unsigned int *)_out),
+			a >> 32,
+			b >> 32,
+			(unsigned int *)_out + 1);
+}
+#elif defined(_MSC_VER) && defined(_M_IX86)
+__forceinline unsigned char _sub_u64(uint64_t a, uint64_t b, uint64_t *_out)
+{
+	__asm
+	{
+		mov     eax, dword ptr [a]
+		mov     edx, dword ptr [a + 4]
+		mov     ecx, dword ptr [b]
+		sub     eax, ecx
+		mov     ecx, dword ptr [b + 4]
+		sbb     edx, ecx
+		mov     ecx, dword ptr [_out]
+		mov     dword ptr [ecx], eax
+		mov     dword ptr [ecx + 4], edx
+		setc    al
+	}
+}
+__forceinline unsigned char _subborrow_u64(unsigned char b_in, uint64_t a, uint64_t b, uint64_t *_out)
+{
+	__asm
+	{
+		mov     cl, byte ptr [b_in]
+		mov     eax, dword ptr [a]
+		add     cl, -1
+		mov     edx, dword ptr [a + 4]
+		mov     ecx, dword ptr [b]
+		sbb     eax, ecx
+		mov     ecx, dword ptr [b + 4]
+		sbb     edx, ecx
+		mov     ecx, dword ptr [_out]
+		mov     dword ptr [ecx], eax
+		mov     dword ptr [ecx + 4], edx
+		setc    al
+	}
+}
+#elif defined(__BORLANDC__)
+unsigned char __fastcall _sub_u64(uint64_t a, uint64_t b, uint64_t *_out);
+unsigned char __fastcall _subborrow_u64(unsigned char b_in, uint64_t a, uint64_t b, uint64_t *_out);
+#else
+__forceinline unsigned char _sub_u64(uint64_t a, uint64_t b, uint64_t *_out)
+{
+	return (*_out = a - b) > a;
+}
+__forceinline unsigned char _subborrow_u64(unsigned char b_in, uint64_t a, uint64_t b, uint64_t *_out)
+{
+	return ((*_out = a - b) > a) | (b_in && !(*_out)--);
 }
 #endif
 

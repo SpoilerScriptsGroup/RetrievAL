@@ -334,11 +334,9 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 		#undef DVSRHI
 		#define DVSRHI esi
 
-		pop     esi                         // ESI <- DVSRHI
-		mov     edx, eax                    // save a copy of quotient in ESI
-		imul    eax, DVSRHI
-		mov     ecx, eax                    // put partial product in ECX, get quotient in EAX
-		mov     eax, edx
+		pop     esi                         // save a copy of quotient in ESI
+		mov     ecx, eax
+		imul    ecx, DVSRHI                 // put partial product in ECX, get quotient in EAX
 		mul     DVSRLO
 
 		//

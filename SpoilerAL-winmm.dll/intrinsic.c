@@ -255,7 +255,7 @@ __declspec(naked) unsigned char __fastcall __fastcall_BitScanReverse64(uint32_t 
 	}
 }
 
-__declspec(naked) unsigned char __fastcall _add_u32(unsigned int a, unsigned int b, unsigned int *out)
+__declspec(naked) unsigned char __fastcall _add_u32(unsigned int a, unsigned int b, unsigned int *_out)
 {
 	__asm
 	{
@@ -266,7 +266,7 @@ __declspec(naked) unsigned char __fastcall _add_u32(unsigned int a, unsigned int
 	}
 }
 
-__declspec(naked) unsigned char __fastcall _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *out)
+__declspec(naked) unsigned char __fastcall _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *_out)
 {
 	__asm
 	{
@@ -283,7 +283,7 @@ __declspec(naked) unsigned char __fastcall _addcarry_u32(unsigned char c_in, uns
 	}
 }
 
-__declspec(naked) unsigned char __fastcall _sub_u32(unsigned int a, unsigned int b, unsigned int *out)
+__declspec(naked) unsigned char __fastcall _sub_u32(unsigned int a, unsigned int b, unsigned int *_out)
 {
 	__asm
 	{
@@ -294,7 +294,7 @@ __declspec(naked) unsigned char __fastcall _sub_u32(unsigned int a, unsigned int
 	}
 }
 
-__declspec(naked) unsigned char __fastcall _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *out)
+__declspec(naked) unsigned char __fastcall _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *_out)
 {
 	__asm
 	{
@@ -307,6 +307,106 @@ __declspec(naked) unsigned char __fastcall _subborrow_u32(unsigned char b_in, un
 		setc    al
 		ret     4
 
+		#undef out
+	}
+}
+
+__declspec(naked) unsigned char __fastcall _add_u64(uint64_t a, uint64_t b, uint64_t *_out)
+{
+	__asm
+	{
+		#define a   (esp + 4)
+		#define b   (esp + 12)
+		#define out eax
+
+		mov     ecx, dword ptr [a]
+		mov     edx, dword ptr [b]
+		add     ecx, edx
+		mov     edx, dword ptr [a + 4]
+		adc     edx, dword ptr [b + 4]
+		mov     dword ptr [eax], ecx
+		mov     dword ptr [eax + 4], edx
+		setc    al
+		ret     16
+
+		#undef a
+		#undef b
+		#undef out
+	}
+}
+
+__declspec(naked) unsigned char __fastcall _addcarry_u64(unsigned char c_in, uint64_t a, uint64_t b, uint64_t *_out)
+{
+	__asm
+	{
+		#define c_in al
+		#define a    (esp + 4)
+		#define b    (esp + 12)
+		#define out  edx
+
+		add     al, -1
+		mov     ecx, dword ptr [a]
+		adc     ecx, dword ptr [b]
+		mov     eax, dword ptr [a + 4]
+		adc     eax, dword ptr [b + 4]
+		mov     dword ptr [edx], ecx
+		mov     dword ptr [edx + 4], eax
+		setc    al
+		ret     16
+
+		#undef c_in
+		#undef a
+		#undef b
+		#undef out
+	}
+}
+
+__declspec(naked) unsigned char __fastcall _sub_u64(uint64_t a, uint64_t b, uint64_t *_out)
+{
+	__asm
+	{
+		#define a   (esp + 4)
+		#define b   (esp + 12)
+		#define out eax
+
+		mov     ecx, dword ptr [a]
+		mov     edx, dword ptr [b]
+		sub     ecx, edx
+		mov     edx, dword ptr [a + 4]
+		sbb     edx, dword ptr [b + 4]
+		mov     dword ptr [eax], ecx
+		mov     dword ptr [eax + 4], edx
+		setc    al
+		ret     16
+
+		#undef a
+		#undef b
+		#undef out
+	}
+}
+
+__declspec(naked) unsigned char __fastcall _subborrow_u64(unsigned char b_in, uint64_t a, uint64_t b, uint64_t *_out)
+{
+	__asm
+	{
+		#define b_in al
+		#define a    (esp + 4)
+		#define b    (esp + 12)
+		#define out  edx
+
+		add     al, -1
+		mov     ecx, dword ptr [a]
+		sbb     ecx, dword ptr [b]
+		mov     eax, dword ptr [a + 4]
+		sbb     eax, dword ptr [b + 4]
+		mov     dword ptr [edx], ecx
+		mov     dword ptr [edx + 4], eax
+		setc    al
+		ret     16
+
+		#undef b_in
+		#undef a
+		#undef b
 		#undef out
 	}
 }

@@ -248,9 +248,7 @@ __declspec(naked) unsigned __int64 __cdecl _aullrem(unsigned __int64 dividend, u
 
 		mov     ecx, dword ptr [DVSRHI]
 		mov     esi, eax                    // save a copy of quotient in ESI
-		imul    eax, ecx
-		mov     ecx, eax                    // put partial product in ECX, get quotient in EAX
-		mov     eax, esi
+		imul    ecx, eax                    // put partial product in ECX, get quotient in EAX
 		mul     dword ptr [DVSRLO]
 
 		//

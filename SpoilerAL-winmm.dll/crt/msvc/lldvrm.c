@@ -333,19 +333,19 @@ __declspec(naked) void __cdecl _alldvrm()
 		mov     edi, edx
 		sar     edi, 31
 		mov     ebx, dword ptr [DVNDLO]
-		mov     ecx, dword ptr [DVSRLO]
+		mov     esi, dword ptr [DVSRLO]
 		xor     ebx, ebp
 		xor     eax, ebp
-		xor     ecx, edi
+		xor     esi, edi
 		xor     edx, edi
 		sub     ebx, ebp
 		sbb     eax, ebp
-		sub     ecx, edi
+		sub     esi, edi
 		sbb     edx, edi
 		xor     edi, ebp
 
 		push    edx                         // save positive value
-		push    ecx
+		push    esi
 		push    eax
 		push    ebx
 
@@ -368,25 +368,26 @@ __declspec(naked) void __cdecl _alldvrm()
 
 		test    edx, edx                    // check to see if divisor < 4194304K
 		jnz     hard                        // nope, gotta do this the hard way
-		div     ecx                         // EAX <- high order bits of quotient
+		div     esi                         // EAX <- high order bits of quotient
 		mov     ebx, eax                    // save high bits of quotient
 		mov     eax, dword ptr [DVNDLO]     // EDX:EAX <- remainder:lo word of dividend
-		div     ecx                         // EAX <- low order bits of quotient
+		div     esi                         // EAX <- low order bits of quotient
 
 		//
 		// Now we need to do a multiply so that we can compute the remainder.
 		//
 
-		mov     edx, ecx
-		mov     esi, eax                    // EBX:ESI <- quotient
-		imul    ecx, ebx                    // HIWORD(QUOT) * DVSR
+		mov     edx, esi
+		push    eax                         // save quotient
+		imul    esi, ebx                    // HIWORD(QUOT) * DVSR
 		mul     edx                         // LOWORD(QUOT) * DVSR
-		add     edx, ecx                    // EDX:EAX = QUOT * DVSR
-		mov     ecx, dword ptr [DVNDLO]     // subtract product from dividend
+		add     edx, esi                    // EDX:EAX = QUOT * DVSR
+		mov     ecx, dword ptr [DVNDLO + 4] // subtract product from dividend
 		sub     ecx, eax
-		mov     eax, dword ptr [DVNDHI]
+		mov     eax, dword ptr [DVNDHI + 4]
 		sbb     eax, edx                    // EAX:ECX = remainder
-		mov     edx, ebx                    // EDX:ESI = quotient
+		mov     edx, ebx
+		pop     esi                         // EDX:ESI = quotient
 		jmp     epilogue                    // negate result, restore stack and return
 
 		align   16
@@ -395,10 +396,10 @@ __declspec(naked) void __cdecl _alldvrm()
 		// Here we do it the hard way.  Remember, EAX contains the high word of DVSR
 		//
 
-		mov     esi, ecx                    // EDX:ESI <- divisor
+		lea     ecx, [edx + edx]
 		jns     shift
 		cmp     eax, edx
-		mov     edx, ecx
+		mov     edx, esi
 		sbb     esi, esi
 		mov     ecx, ebx
 		and     eax, esi                    // EAX:ECX = remainder
@@ -407,8 +408,7 @@ __declspec(naked) void __cdecl _alldvrm()
 
 		align   16
 	shift:
-		bsr     ecx, edx
-		inc     ecx
+		bsr     ecx, ecx
 		shrd    esi, edx, cl
 		mov     edx, eax                    // EDX:EAX <- dividend
 		mov     eax, ebx
@@ -449,7 +449,7 @@ __declspec(naked) void __cdecl _alldvrm()
 
 	epilogue:
 		//
-		// Now we need to get the quotient into EDX:EAX and the remainder into EBX:ECX.
+		// Now we need to get the quotient into EDX:EAX and the remainder into EBX:ESI.
 		//
 
 		mov     ebx, eax

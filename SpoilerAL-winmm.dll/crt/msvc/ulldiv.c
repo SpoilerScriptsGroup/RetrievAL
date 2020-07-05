@@ -200,15 +200,15 @@ __declspec(naked) unsigned __int64 __cdecl _aulldiv(unsigned __int64 dividend, u
 
 		mov     ebx, dword ptr [DVNDLO]     // load dividend
 		mov     eax, dword ptr [DVNDHI]
-		mov     ecx, dword ptr [DVSRLO]     // load divisor
+		mov     esi, dword ptr [DVSRLO]     // load divisor
 		mov     edx, dword ptr [DVSRHI]
 		test    edx, edx                    // check to see if divisor < 4194304K
 		jnz     hard                        // nope, gotta do this the hard way
-		div     ecx                         // get high order bits of quotient
-		mov     esi, eax                    // save high bits of quotient
+		div     esi                         // get high order bits of quotient
+		mov     ecx, eax                    // save high bits of quotient
 		mov     eax, ebx                    // EDX:EAX <- remainder:lo word of dividend
-		div     ecx                         // get low order bits of quotient
-		mov     edx, esi                    // EDX:EAX <- quotient hi:quotient lo
+		div     esi                         // get low order bits of quotient
+		mov     edx, ecx                    // EDX:EAX <- quotient hi:quotient lo
 		jmp     epilogue                    // restore stack and return
 
 		align   16
@@ -217,19 +217,18 @@ __declspec(naked) unsigned __int64 __cdecl _aulldiv(unsigned __int64 dividend, u
 		// Here we do it the hard way.  Remember, EAX contains DVSRHI
 		//
 
-		mov     esi, ecx                    // EDX:ESI <- divisor
+		lea     ecx, [edx + edx]
 		jns     shift
-		cmp     ebx, ecx
+		cmp     ebx, esi
 		sbb     eax, edx
 		sbb     eax, eax
 		xor     edx, edx
-		inc     eax
+		inc     eax                         // EDX:EAX = quotient
 		jmp     epilogue                    // restore stack and return
 
 		align   16
 	shift:
-		bsr     ecx, edx
-		inc     ecx
+		bsr     ecx, ecx
 		shrd    esi, edx, cl
 		mov     edx, eax                    // EDX:EAX <- dividend
 		mov     eax, ebx
@@ -246,10 +245,8 @@ __declspec(naked) unsigned __int64 __cdecl _aulldiv(unsigned __int64 dividend, u
 
 		mov     ecx, dword ptr [DVSRHI]
 		mov     esi, eax                    // save quotient
-		imul    eax, ecx                    // QUOT * DVSRHI
-		mov     ecx, eax
-		mov     eax, dword ptr [DVSRLO]
-		mul     esi                         // QUOT * DVSRLO
+		imul    ecx, eax                    // QUOT * DVSRHI
+		mul     dword ptr [DVSRLO]          // QUOT * DVSRLO
 
 		//
 		// do long compare here between original dividend and the result of the
@@ -257,11 +254,11 @@ __declspec(naked) unsigned __int64 __cdecl _aulldiv(unsigned __int64 dividend, u
 		// subtract one (1) from the quotient.
 		//
 
-		add     ecx, edx                    // ECX:EAX = QUOT * DVSR
-		mov     edx, dword ptr [DVNDHI]
+		add     edx, ecx                    // EDX:EAX = QUOT * DVSR
+		mov     ecx, dword ptr [DVNDHI]
 		sbb     esi, 0                      // subtract carry flag from quotient
 		cmp     ebx, eax
-		sbb     edx, ecx                    // if dividend < product, do subtract
+		sbb     ecx, edx                    // if dividend < product, do subtract
 		mov     eax, esi
 		sbb     eax, 0                      // subtract carry flag from quotient
 		xor     edx, edx

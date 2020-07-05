@@ -204,13 +204,13 @@ __declspec(naked) unsigned __int64 __cdecl _aullrem(unsigned __int64 dividend, u
 
 		mov     ebx, dword ptr [DVNDLO]     // load dividend
 		mov     eax, dword ptr [DVNDHI]
-		mov     ecx, dword ptr [DVSRLO]     // load divisor
+		mov     esi, dword ptr [DVSRLO]     // load divisor
 		mov     edx, dword ptr [DVSRHI]
 		test    edx, edx                    // check to see if divisor < 4194304K
 		jnz     hard                        // nope, gotta do this the hard way
-		div     ecx                         // EDX <- remainder, EAX <- quotient
+		div     esi                         // EDX <- remainder, EAX <- quotient
 		mov     eax, ebx                    // EDX:EAX <- remainder:lo word of dividend
-		div     ecx                         // EDX <- final remainder
+		div     esi                         // EDX <- final remainder
 		mov     eax, edx                    // EDX:EAX <- remainder
 		xor     edx, edx
 		jmp     epilogue                    // restore stack and return
@@ -221,22 +221,29 @@ __declspec(naked) unsigned __int64 __cdecl _aullrem(unsigned __int64 dividend, u
 		// Here we do it the hard way.  Remember, EAX contains DVSRHI
 		//
 
-		mov     esi, edx
+		lea     ecx, [edx + edx]
 		jns     shift
-		xor     edx, edx
-		jmp     divide
+		xor     ecx, ecx
+		cmp     ebx, esi
+		sbb     eax, edx
+		mov     ebx, edx
+		adc     ecx, -1
+		mov     eax, dword ptr [DVNDLO]
+		and     ebx, ecx
+		and     ecx, esi
+		mov     edx, dword ptr [DVNDHI]
+		sub     eax, ecx
+		sbb     edx, ebx                    // EDX:EAX = remainder
+		jmp     epilogue                    // restore stack and return
 
 		align   16
 	shift:
-		bsr     ecx, edx
-		mov     esi, dword ptr [DVSRLO]     // EDX:ESI <- divisor
-		inc     ecx
+		bsr     ecx, ecx
 		shrd    esi, edx, cl
 		mov     edx, eax                    // EDX:EAX <- dividend
 		mov     eax, ebx
 		shrd    eax, edx, cl
 		shr     edx, cl
-	divide:
 		div     esi                         // now divide, ignore remainder
 
 		//

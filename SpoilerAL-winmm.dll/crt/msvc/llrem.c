@@ -253,21 +253,21 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 		// otherwise) and make operands positive.
 
 		mov     edi, dword ptr [DVNDHI]     // load dividend
-		mov     esi, dword ptr [DVSRHI]     // load divisor
+		mov     ecx, dword ptr [DVSRHI]     // load divisor
 		mov     ebx, dword ptr [DVNDLO]
 		mov     eax, edi
 		sar     edi, 31
-		mov     edx, esi
-		sar     esi, 31
-		mov     ebp, dword ptr [DVSRLO]
+		mov     edx, ecx
+		sar     ecx, 31
+		mov     esi, dword ptr [DVSRLO]
 		xor     eax, edi
 		add     ebx, edi
 		sbb     eax, edi
 		xor     ebx, edi
-		xor     edx, esi
-		add     ebp, esi
-		sbb     edx, esi
-		xor     ebp, esi
+		xor     edx, ecx
+		add     esi, ecx
+		sbb     edx, ecx
+		xor     esi, ecx
 
 		//
 		// Now do the divide.  First look to see if the divisor is less than 4194304K.
@@ -279,9 +279,9 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 
 		test    edx, edx                    // check to see if divisor < 4194304K
 		jnz     hard                        // nope, gotta do this the hard way
-		div     ebp                         // EDX <- remainder
+		div     esi                         // EDX <- remainder
 		mov     eax, ebx                    // EDX:EAX <- remainder:lo word of dividend
-		div     ebp                         // EDX <- final remainder
+		div     esi                         // EDX <- final remainder
 		mov     eax, edx                    // EDX:EAX <- remainder
 		xor     edx, edx
 		jmp     epilogue                    // negate result, restore stack and return
@@ -292,19 +292,20 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 		// Here we do it the hard way.  Remember, EAX contains the high word of DVSR
 		//
 
-		mov     esi, ebp                    // EDX:ESI <- divisor
 		jns     shift
 		cmp     eax, edx
 		mov     edx, eax
 		sbb     ecx, ecx
 		mov     eax, ebx
-		and     edx, ecx                    // EDX:EAX <- remainder
+		and     edx, ecx                    // EDX:EAX = remainder
 		jmp     epilogue                    // negate result, restore stack and return
 
 		align   16
 	shift:
 		push    eax                         // save positive value
 		push    edx
+		mov     ebp, esi
+		lea     ecx, [edx + edx]
 
 		#undef DVNDLO
 		#undef DVNDHI
@@ -312,14 +313,13 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 		#undef DVSRHI
 		#define DVNDLO ebx
 		#define DVNDHI (esp +  4)
-		#define DVSRLO ebp
+		#define DVSRLO esi
 		#define DVSRHI (esp     )
 
-		bsr     ecx, edx
-		inc     ecx
+		bsr     ecx, ecx
 		shrd    esi, edx, cl
 		mov     edx, eax                    // EDX:EAX <- dividend
-		mov     eax, DVNDLO
+		mov     eax, ebx
 		shrd    eax, edx, cl
 		shr     edx, cl
 		div     esi                         // now divide, ignore remainder
@@ -331,13 +331,10 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 		// dividend is close to 2**64 and the quotient is off by 1.
 		//
 
-		#undef DVSRHI
-		#define DVSRHI esi
-
-		pop     esi                         // save a copy of quotient in ESI
-		mov     ecx, eax
-		imul    ecx, DVSRHI                 // put partial product in ECX, get quotient in EAX
-		mul     DVSRLO
+		pop     esi                         // ESI <- DVSRHI
+		mov     ecx, eax                    // save a copy of quotient in ECX
+		imul    ecx, esi                    // put partial product in ECX, get quotient in EAX
+		mul     ebp
 
 		//
 		// do long compare here between original dividend and the result of the
@@ -346,13 +343,13 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 		//
 
 		add     ecx, edx                    // ECX:EAX = QUOT * DVSR
-		sub     DVNDLO, eax
+		sub     ebx, eax
 		pop     edx                         // EDX <- DVNDHI
-		mov     eax, DVNDLO
+		mov     eax, ebx
 		sbb     edx, ecx                    // EDX:EAX = remainder
 		jae     epilogue                    // if above or equal we're ok, else add
-		add     eax, DVSRLO                 // add divisor to remainder
-		adc     edx, DVSRHI
+		add     eax, ebp                    // add divisor to remainder
+		adc     edx, esi
 
 	epilogue:
 		//

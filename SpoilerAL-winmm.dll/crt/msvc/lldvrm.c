@@ -10,7 +10,7 @@
 //*******************************************************************************
 
 #define LOWORD(x) [x]
-#define HIWORD(x) [x + 4]
+#define HIWORD(x) [(x) + 4]
 
 //***
 //lldvrm - signed long divide and remainder
@@ -278,13 +278,11 @@ __declspec(naked) void __cdecl _alldvrm()
 #else
 	__asm
 	{
-		#define DVNDLO (esp +  4)           // stack address of dividend (a)
-		#define DVNDHI (esp +  8)
-		#define DVSRLO (esp + 12)           // stack address of divisor (b)
-		#define DVSRHI (esp + 16)
+		#define DVND (esp +  4)             // stack address of dividend (a)
+		#define DVSR (esp + 12)             // stack address of divisor (b)
 
-		mov     eax, dword ptr [DVNDHI]     // high word of load dividend
-		mov     edx, dword ptr [DVSRHI]     // high word of load divisor
+		mov     eax, HIWORD(DVND)           // load high word of dividend
+		mov     edx, HIWORD(DVSR)           // load high word of divisor
 
 		push    ebp
 		push    esi
@@ -315,14 +313,10 @@ __declspec(naked) void __cdecl _alldvrm()
 		//               -----------------
 		//
 
-		#undef DVNDLO
-		#undef DVNDHI
-		#undef DVSRLO
-		#undef DVSRHI
-		#define DVNDLO (esp + 16)           // stack address of dividend (a)
-		#define DVNDHI (esp + 20)
-		#define DVSRLO (esp + 24)           // stack address of divisor (b)
-		#define DVSRHI (esp + 28)
+		#undef DVND
+		#undef DVSR
+		#define DVND (esp + 16)             // stack address of dividend (a)
+		#define DVSR (esp + 24)             // stack address of divisor (b)
 
 		// Determine sign of the quotient (edi = 0 if result is positive, non-zero
 		// otherwise) and make operands positive.
@@ -332,8 +326,8 @@ __declspec(naked) void __cdecl _alldvrm()
 		sar     ebp, 31
 		mov     edi, edx
 		sar     edi, 31
-		mov     ebx, dword ptr [DVNDLO]
-		mov     esi, dword ptr [DVSRLO]
+		mov     ebx, LOWORD(DVND)
+		mov     esi, LOWORD(DVSR)
 		xor     ebx, ebp
 		xor     eax, ebp
 		xor     esi, edi
@@ -349,28 +343,24 @@ __declspec(naked) void __cdecl _alldvrm()
 		push    eax
 		push    ebx
 
-		#undef DVNDLO
-		#undef DVNDHI
-		#undef DVSRLO
-		#undef DVSRHI
-		#define DVNDLO (esp     )           // stack address of dividend (a)
-		#define DVNDHI (esp +  4)
-		#define DVSRLO (esp +  8)           // stack address of divisor (b)
-		#define DVSRHI (esp + 12)
+		#undef DVND
+		#undef DVSR
+		#define DVND (esp     )             // stack address of dividend (a)
+		#define DVSR (esp +  8)             // stack address of divisor (b)
 
 		//
 		// Now do the divide.  First look to see if the divisor is less than 4194304K.
 		// If so, then we can use a simple algorithm with word divides, otherwise
 		// things get a little more complex.
 		//
-		// NOTE - eax currently contains the high order word of DVSR
+		// NOTE - EDX currently contains the high order word of DVSR
 		//
 
 		test    edx, edx                    // check to see if divisor < 4194304K
 		jnz     hard                        // nope, gotta do this the hard way
 		div     esi                         // EAX <- high order bits of quotient
 		mov     ebx, eax                    // save high bits of quotient
-		mov     eax, dword ptr [DVNDLO]     // EDX:EAX <- remainder:lo word of dividend
+		mov     eax, LOWORD(DVND)           // EDX:EAX <- remainder:lo word of dividend
 		div     esi                         // EAX <- low order bits of quotient
 
 		//
@@ -382,9 +372,9 @@ __declspec(naked) void __cdecl _alldvrm()
 		imul    esi, ebx                    // HIWORD(QUOT) * DVSR
 		mul     edx                         // LOWORD(QUOT) * DVSR
 		add     edx, esi                    // EDX:EAX = QUOT * DVSR
-		mov     ecx, dword ptr [DVNDLO + 4] // subtract product from dividend
+		mov     ecx, LOWORD(DVND + 4)       // subtract product from dividend
 		sub     ecx, eax
-		mov     eax, dword ptr [DVNDHI + 4]
+		mov     eax, HIWORD(DVND + 4)
 		sbb     eax, edx                    // EAX:ECX = remainder
 		mov     edx, ebx
 		pop     esi                         // EDX:ESI = quotient
@@ -393,7 +383,7 @@ __declspec(naked) void __cdecl _alldvrm()
 		align   16
 	hard:
 		//
-		// Here we do it the hard way.  Remember, EAX contains the high word of DVSR
+		// Here we do it the hard way.  Remember, EDX contains the high word of DVSR
 		//
 
 		lea     ecx, [edx + edx]
@@ -425,10 +415,10 @@ __declspec(naked) void __cdecl _alldvrm()
 
 		mov     esi, eax                    // save quotient
 		mov     ecx, ebx                    // ECX <- low word of dividend
-		mov     ebx, dword ptr [DVSRHI]
-		mov     edx, dword ptr [DVSRLO]
-		imul    ebx, eax                    // QUOT * DVSRHI
-		mul     edx                         // QUOT * DVSRLO
+		mov     ebx, HIWORD(DVSR)
+		mov     edx, LOWORD(DVSR)
+		imul    ebx, eax                    // QUOT * HIWORD(DVSR)
+		mul     edx                         // QUOT * LOWORD(DVSR)
 
 		//
 		// do long compare here between original dividend and the result of the
@@ -438,12 +428,12 @@ __declspec(naked) void __cdecl _alldvrm()
 
 		add     ebx, edx                    // EBX:EAX = QUOT * DVSR
 		sub     ecx, eax
-		mov     eax, dword ptr [DVNDHI]
+		mov     eax, HIWORD(DVND)
 		mov     edx, 0                      // EDX:ESI = quotient
 		sbb     eax, ebx                    // EAX:ECX = remainder
 		jae     epilogue                    // if above or equal we are ok, else add
-		add     ecx, dword ptr [DVSRLO]     // add divisor to remainder
-		mov     ebx, dword ptr [DVSRHI]
+		add     ecx, LOWORD(DVSR)           // add divisor to remainder
+		mov     ebx, HIWORD(DVSR)
 		adc     eax, ebx
 		dec     esi                         // subtract 1 from quotient
 
@@ -487,10 +477,8 @@ __declspec(naked) void __cdecl _alldvrm()
 
 		ret     16
 
-		#undef DVNDLO
-		#undef DVNDHI
-		#undef DVSRLO
-		#undef DVSRHI
+		#undef DVND
+		#undef DVSR
 	}
 #endif
 }

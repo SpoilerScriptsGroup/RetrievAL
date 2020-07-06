@@ -5,16 +5,16 @@
 
 #pragma warning(disable:4273)
 
-#define UI64(x) (*(uint64_t *)&(x))
-#define DBL(x)  (*(double *)&(x))
+#define U64(x) (*(uint64_t *)&(x))
+#define DBL(x) (*(double *)&(x))
 
 double __cdecl _hypot(double x, double y)
 {
 	uint64_t a, b;
 
 	/* Determine absolute values. */
-	a = UI64(x) & INT64_MAX;
-	b = UI64(y) & INT64_MAX;
+	a = U64(x) & INT64_MAX;
+	b = U64(y) & INT64_MAX;
 
 	/* x is finite ? */
 	if (a < 0x7FF0000000000000)

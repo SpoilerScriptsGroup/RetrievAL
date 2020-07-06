@@ -2,15 +2,15 @@
 #ifndef _M_IX86
 #include <stdint.h>
 
-#define I64(x)  (*(int64_t *)&(x))
-#define UI64(x) (*(uint64_t *)&(x))
+#define I64(x) (*(int64_t *)&(x))
+#define U64(x) (*(uint64_t *)&(x))
 
 double __cdecl _nextafter(double x, double y)
 {
 	uint64_t a, b;
 
-	if ((a = (UI64(x) & INT64_MAX)) > 0x7FF0000000000000 ||                                 // x is NaN ?
-	    (b = (UI64(y) & INT64_MAX)) > 0x7FF0000000000000)                                   // y is NaN ?
+	if ((a = (U64(x) & INT64_MAX)) > 0x7FF0000000000000 ||                                  // x is NaN ?
+	    (b = (U64(y) & INT64_MAX)) > 0x7FF0000000000000)                                    // y is NaN ?
 #if 0
 		return x + y;	// Not add due to compiler optimization.
 #elif !defined(_M_IX86)
@@ -19,18 +19,18 @@ double __cdecl _nextafter(double x, double y)
 		{ { __asm fld x __asm fld y __asm fadd __asm fstp x } return x; }
 #endif
 	if (!a) {                                                                               // x == 0 ?
-		UI64(y) = (b != 0) | (UI64(y) & INT64_MIN);
+		U64(y) = (b != 0) | (U64(y) & INT64_MIN);
 		errno = ERANGE;
 		return y;
 	}
-	if (UI64(x) == UI64(y))                                                                 // x == y ?
+	if (U64(x) == U64(y))                                                                   // x == y ?
 		return y;
-	if (I64(x) < I64(y) && UI64(x) != 0xFFF0000000000000 && ~I64(x) < 0x7FEFFFFFFFFFFFFF)   // (x < y) == (x >= 0) && x != -HUGE_VAL && x > -DBL_MIN ?
-		UI64(x)++;
+	if (I64(x) < I64(y) && U64(x) != 0xFFF0000000000000 && ~I64(x) < 0x7FEFFFFFFFFFFFFF)    // (x < y) == (x >= 0) && x != -HUGE_VAL && x > -DBL_MIN ?
+		U64(x)++;
 	else
-		UI64(x)--;
-	if ((UI64(x) & INT64_MAX) >= 0x7FF0000000000000 ||                                      // overflow ?
-	    (UI64(x) & INT64_MAX) < 0x0010000000000000)                                         // underflow ?
+		U64(x)--;
+	if ((U64(x) & INT64_MAX) >= 0x7FF0000000000000 ||                                       // overflow ?
+	    (U64(x) & INT64_MAX) < 0x0010000000000000)                                          // underflow ?
 		errno = ERANGE;
 	return x;
 }

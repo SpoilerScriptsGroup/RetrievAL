@@ -24,7 +24,7 @@ __declspec(naked) int __cdecl _finite(double x)
 		xor     eax, eax
 		add     ecx, ecx
 		cmp     ecx, 0x7FF00000 * 2
-		adc     eax, 0
+		adc     eax, eax
 		ret
 
 		#undef LSW

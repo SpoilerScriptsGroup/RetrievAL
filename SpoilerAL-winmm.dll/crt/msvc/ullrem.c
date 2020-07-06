@@ -10,7 +10,7 @@
 //*******************************************************************************
 
 #define LOWORD(x) [x]
-#define HIWORD(x) [x + 4]
+#define HIWORD(x) [(x) + 4]
 
 //***
 //ullrem - unsigned long remainder
@@ -192,20 +192,18 @@ __declspec(naked) unsigned __int64 __cdecl _aullrem(unsigned __int64 dividend, u
 		//               -----------------
 		//
 
-		#define DVNDLO (esp + 12)           // stack address of dividend (a)
-		#define DVNDHI (esp + 16)
-		#define DVSRLO (esp + 20)           // stack address of divisor (b)
-		#define DVSRHI (esp + 24)
+		#define DVND (esp + 12)             // stack address of dividend (a)
+		#define DVSR (esp + 20)             // stack address of divisor (b)
 
 		// Now do the divide.  First look to see if the divisor is less than 4194304K.
 		// If so, then we can use a simple algorithm with word divides, otherwise
 		// things get a little more complex.
 		//
 
-		mov     ebx, dword ptr [DVNDLO]     // load dividend
-		mov     eax, dword ptr [DVNDHI]
-		mov     esi, dword ptr [DVSRLO]     // load divisor
-		mov     edx, dword ptr [DVSRHI]
+		mov     ebx, LOWORD(DVND)           // load dividend
+		mov     eax, HIWORD(DVND)
+		mov     esi, LOWORD(DVSR)           // load divisor
+		mov     edx, HIWORD(DVSR)
 		test    edx, edx                    // check to see if divisor < 4194304K
 		jnz     hard                        // nope, gotta do this the hard way
 		div     esi                         // EDX <- remainder, EAX <- quotient
@@ -218,7 +216,7 @@ __declspec(naked) unsigned __int64 __cdecl _aullrem(unsigned __int64 dividend, u
 		align   16
 	hard:
 		//
-		// Here we do it the hard way.  Remember, EAX contains DVSRHI
+		// Here we do it the hard way.  Remember, EDX contains DVSRHI
 		//
 
 		lea     ecx, [edx + edx]
@@ -228,10 +226,10 @@ __declspec(naked) unsigned __int64 __cdecl _aullrem(unsigned __int64 dividend, u
 		sbb     eax, edx
 		mov     ebx, edx
 		adc     ecx, -1
-		mov     eax, dword ptr [DVNDLO]
+		mov     eax, LOWORD(DVND)
 		and     ebx, ecx
 		and     ecx, esi
-		mov     edx, dword ptr [DVNDHI]
+		mov     edx, HIWORD(DVND)
 		sub     eax, ecx
 		sbb     edx, ebx                    // EDX:EAX = remainder
 		jmp     epilogue                    // restore stack and return
@@ -253,10 +251,10 @@ __declspec(naked) unsigned __int64 __cdecl _aullrem(unsigned __int64 dividend, u
 		// dividend is close to 2**64 and the quotient is off by 1.
 		//
 
-		mov     ecx, dword ptr [DVSRHI]
+		mov     ecx, HIWORD(DVSR)
 		mov     esi, eax                    // save a copy of quotient in ESI
 		imul    ecx, eax                    // put partial product in ECX, get quotient in EAX
-		mul     dword ptr [DVSRLO]
+		mul     dword ptr LOWORD(DVSR)
 
 		//
 		// do long compare here between original dividend and the result of the
@@ -265,15 +263,15 @@ __declspec(naked) unsigned __int64 __cdecl _aullrem(unsigned __int64 dividend, u
 		//
 
 		add     ecx, edx                    // ECX:EAX = QUOT * DVSR
-		mov     edx, dword ptr [DVNDHI]
+		mov     edx, HIWORD(DVND)
 		sbb     esi, esi
 		sub     ebx, eax
 		sbb     edx, ecx
 		mov     eax, ebx                    // EDX:EAX = remainder
 		sbb     esi, 0
 		jz      epilogue                    // if above or equal we're ok, else add
-		add     eax, dword ptr [DVSRLO]     // add divisor to remainder
-		mov     ecx, dword ptr [DVSRHI]
+		add     eax, LOWORD(DVSR)           // add divisor to remainder
+		mov     ecx, HIWORD(DVSR)
 		adc     edx, ecx
 
 	epilogue:
@@ -287,10 +285,8 @@ __declspec(naked) unsigned __int64 __cdecl _aullrem(unsigned __int64 dividend, u
 
 		ret     16
 
-		#undef DVNDLO
-		#undef DVNDHI
-		#undef DVSRLO
-		#undef DVSRHI
+		#undef DVND
+		#undef DVSR
 	}
 #endif
 }

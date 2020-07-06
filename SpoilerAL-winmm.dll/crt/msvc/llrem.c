@@ -10,7 +10,7 @@
 //*******************************************************************************
 
 #define LOWORD(x) [x]
-#define HIWORD(x) [x + 4]
+#define HIWORD(x) [(x) + 4]
 
 //***
 //llrem - signed long remainder
@@ -244,22 +244,20 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 		//               -----------------
 		//
 
-		#define DVNDLO (esp + 20)           // stack address of dividend (a)
-		#define DVNDHI (esp + 24)
-		#define DVSRLO (esp + 28)           // stack address of divisor (b)
-		#define DVSRHI (esp + 32)
+		#define DVND (esp + 20)             // stack address of dividend (a)
+		#define DVSR (esp + 28)             // stack address of divisor (b)
 
 		// Determine sign of the result (edi = 0 if result is positive, non-zero
 		// otherwise) and make operands positive.
 
-		mov     edi, dword ptr [DVNDHI]     // load dividend
-		mov     ecx, dword ptr [DVSRHI]     // load divisor
-		mov     ebx, dword ptr [DVNDLO]
+		mov     edi, HIWORD(DVND)           // load dividend
+		mov     ecx, HIWORD(DVSR)           // load divisor
+		mov     ebx, LOWORD(DVND)
 		mov     eax, edi
 		sar     edi, 31
 		mov     edx, ecx
 		sar     ecx, 31
-		mov     esi, dword ptr [DVSRLO]
+		mov     esi, LOWORD(DVSR)
 		xor     eax, edi
 		add     ebx, edi
 		sbb     eax, edi
@@ -274,7 +272,7 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 		// If so, then we can use a simple algorithm with word divides, otherwise
 		// things get a little more complex.
 		//
-		// NOTE - eax currently contains the high order word of DVSR
+		// NOTE - EDX currently contains the high order word of DVSR
 		//
 
 		test    edx, edx                    // check to see if divisor < 4194304K
@@ -289,9 +287,10 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 		align   16
 	hard:
 		//
-		// Here we do it the hard way.  Remember, EAX contains the high word of DVSR
+		// Here we do it the hard way.  Remember, EDX contains the high word of DVSR
 		//
 
+		lea     ecx, [edx + edx]
 		jns     shift
 		cmp     eax, edx
 		mov     edx, eax
@@ -305,12 +304,7 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 		push    eax                         // save positive value
 		push    edx
 		mov     ebp, esi
-		lea     ecx, [edx + edx]
 
-		#undef DVNDLO
-		#undef DVNDHI
-		#undef DVSRLO
-		#undef DVSRHI
 		#define DVNDLO ebx
 		#define DVNDHI (esp +  4)
 		#define DVSRLO esi
@@ -351,6 +345,11 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 		add     eax, ebp                    // add divisor to remainder
 		adc     edx, esi
 
+		#undef DVNDLO
+		#undef DVNDHI
+		#undef DVSRLO
+		#undef DVSRHI
+
 	epilogue:
 		//
 		// Now check the result sign flag to see if the result is supposed to be positive
@@ -376,10 +375,8 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 
 		ret     16
 
-		#undef DVNDLO
-		#undef DVNDHI
-		#undef DVSRLO
-		#undef DVSRHI
+		#undef DVND
+		#undef DVSR
 	}
 #endif
 }

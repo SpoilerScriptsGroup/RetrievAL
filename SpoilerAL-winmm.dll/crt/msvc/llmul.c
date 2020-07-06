@@ -13,7 +13,7 @@
 //*******************************************************************************
 
 #define LOWORD(x) [x]
-#define HIWORD(x) [x + 4]
+#define HIWORD(x) [(x) + 4]
 
 //***
 //llmul - long multiply routine

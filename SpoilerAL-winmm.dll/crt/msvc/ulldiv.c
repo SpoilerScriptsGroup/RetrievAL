@@ -10,7 +10,7 @@
 //*******************************************************************************
 
 #define LOWORD(x) [x]
-#define HIWORD(x) [x + 4]
+#define HIWORD(x) [(x) + 4]
 
 //***
 //ulldiv - unsigned long divide
@@ -187,10 +187,8 @@ __declspec(naked) unsigned __int64 __cdecl _aulldiv(unsigned __int64 dividend, u
 		//               -----------------
 		//
 
-		#define DVNDLO (esp + 12)           // stack address of dividend (a)
-		#define DVNDHI (esp + 16)
-		#define DVSRLO (esp + 20)           // stack address of divisor (b)
-		#define DVSRHI (esp + 24)
+		#define DVND (esp + 12)             // stack address of dividend (a)
+		#define DVSR (esp + 20)             // stack address of divisor (b)
 
 		//
 		// Now do the divide.  First look to see if the divisor is less than 4194304K.
@@ -198,10 +196,10 @@ __declspec(naked) unsigned __int64 __cdecl _aulldiv(unsigned __int64 dividend, u
 		// things get a little more complex.
 		//
 
-		mov     ebx, dword ptr [DVNDLO]     // load dividend
-		mov     eax, dword ptr [DVNDHI]
-		mov     esi, dword ptr [DVSRLO]     // load divisor
-		mov     edx, dword ptr [DVSRHI]
+		mov     ebx, LOWORD(DVND)           // load dividend
+		mov     eax, HIWORD(DVND)
+		mov     esi, LOWORD(DVSR)           // load divisor
+		mov     edx, HIWORD(DVSR)
 		test    edx, edx                    // check to see if divisor < 4194304K
 		jnz     hard                        // nope, gotta do this the hard way
 		div     esi                         // get high order bits of quotient
@@ -214,7 +212,7 @@ __declspec(naked) unsigned __int64 __cdecl _aulldiv(unsigned __int64 dividend, u
 		align   16
 	hard:
 		//
-		// Here we do it the hard way.  Remember, EAX contains DVSRHI
+		// Here we do it the hard way.  Remember, EDX contains DVSRHI
 		//
 
 		lea     ecx, [edx + edx]
@@ -243,10 +241,10 @@ __declspec(naked) unsigned __int64 __cdecl _aulldiv(unsigned __int64 dividend, u
 		// dividend is close to 2**64 and the quotient is off by 1.
 		//
 
-		mov     ecx, dword ptr [DVSRHI]
+		mov     ecx, HIWORD(DVSR)
 		mov     esi, eax                    // save quotient
-		imul    ecx, eax                    // QUOT * DVSRHI
-		mul     dword ptr [DVSRLO]          // QUOT * DVSRLO
+		imul    ecx, eax                    // QUOT * HIWORD(DVSR)
+		mul     dword ptr LOWORD(DVSR)      // QUOT * LOWORD(DVSR)
 
 		//
 		// do long compare here between original dividend and the result of the
@@ -255,7 +253,7 @@ __declspec(naked) unsigned __int64 __cdecl _aulldiv(unsigned __int64 dividend, u
 		//
 
 		add     edx, ecx                    // EDX:EAX = QUOT * DVSR
-		mov     ecx, dword ptr [DVNDHI]
+		mov     ecx, HIWORD(DVND)
 		sbb     esi, 0                      // subtract carry flag from quotient
 		cmp     ebx, eax
 		sbb     ecx, edx                    // if dividend < product, do subtract
@@ -274,10 +272,8 @@ __declspec(naked) unsigned __int64 __cdecl _aulldiv(unsigned __int64 dividend, u
 
 		ret     16
 
-		#undef DVNDLO
-		#undef DVNDHI
-		#undef DVSRLO
-		#undef DVSRHI
+		#undef DVND
+		#undef DVSR
 	}
 #endif
 }

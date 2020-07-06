@@ -20,20 +20,20 @@ short __cdecl _dclass(double x)
 {
 #endif
 #if INTPTR_MAX > INT32_MAX
-	#define UI64(x) (*(uint64_t *)&(x))
+	#define U64(x) (*(uint64_t *)&(x))
 
 	return
-		(UI64(x) *= 2) ?
-			UI64(x) < UINT64_C(0x7FF0000000000000) * 2 ?
-				UI64(x) >= UINT64_C(0x0010000000000000) * 2 ?
+		(U64(x) *= 2) ?
+			U64(x) < UINT64_C(0x7FF0000000000000) * 2 ?
+				U64(x) >= UINT64_C(0x0010000000000000) * 2 ?
 					FP_NORMAL :
 					FP_SUBNORMAL :
-				UI64(x) == UINT64_C(0x7FF0000000000000) * 2 ?
+				U64(x) == UINT64_C(0x7FF0000000000000) * 2 ?
 					FP_INFINITE :
 					FP_NAN :
 			FP_ZERO;
 
-	#undef UI64
+	#undef U64
 #elif !defined(_M_IX86)
 	#define LSW(x) ((uint32_t *)&(x))[0]
 	#define MSW(x) ((uint32_t *)&(x))[1]

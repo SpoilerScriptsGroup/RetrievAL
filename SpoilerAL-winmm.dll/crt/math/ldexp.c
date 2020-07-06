@@ -13,36 +13,36 @@
 #define DBL_EXP_MASK  (((UINT64_C(1) << DBL_EXP_BIT) - 1) << DBL_MANT_BIT)
 #define DBL_INF_BIN   DBL_EXP_MASK
 
-#define UI64(x) (*(uint64_t *)&(x))
+#define U64(x) (*(uint64_t *)&(x))
 
 double __cdecl ldexp(double x, int exp)
 {
 	uintptr_t sign;
 
-	sign = (UI64(x) >> (DBL_BIT - sizeof(uintptr_t) * 8)) & INTPTR_MIN;
-	UI64(x) &= ~DBL_SIGN_MASK;
-	if (UI64(x) < DBL_INF_BIN && UI64(x) && exp)
+	sign = (U64(x) >> (DBL_BIT - sizeof(uintptr_t) * 8)) & INTPTR_MIN;
+	U64(x) &= ~DBL_SIGN_MASK;
+	if (U64(x) < DBL_INF_BIN && U64(x) && exp)
 	{
-		exp += UI64(x) >> DBL_MANT_BIT;
+		exp += U64(x) >> DBL_MANT_BIT;
 		if (exp < (int)(DBL_EXP_MASK >> DBL_MANT_BIT))
 		{
 			if (exp >= 0)
 			{
-				UI64(x) &= DBL_MANT_MASK;
-				UI64(x) |= (uint64_t)(unsigned int)exp << DBL_MANT_BIT;
+				U64(x) &= DBL_MANT_MASK;
+				U64(x) |= (uint64_t)(unsigned int)exp << DBL_MANT_BIT;
 			}
 			else
 			{
-				UI64(x) = 0;
+				U64(x) = 0;
 			}
 		}
 		else
 		{
-			UI64(x) = DBL_INF_BIN;
+			U64(x) = DBL_INF_BIN;
 			errno = ERANGE;
 		}
 	}
-	UI64(x) |= (uint64_t)sign << (DBL_BIT - sizeof(uintptr_t) * 8);
+	U64(x) |= (uint64_t)sign << (DBL_BIT - sizeof(uintptr_t) * 8);
 	return x;
 }
 #else

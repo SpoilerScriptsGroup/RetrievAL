@@ -247,7 +247,7 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 		#define DVND (esp + 20)             // stack address of dividend (a)
 		#define DVSR (esp + 28)             // stack address of divisor (b)
 
-		// Determine sign of the result (edi = 0 if result is positive, non-zero
+		// Determine sign of the result (EDI = 0 if result is positive, non-zero
 		// otherwise) and make operands positive.
 
 		mov     edi, HIWORD(DVND)           // load dividend
@@ -332,13 +332,13 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 
 		//
 		// do long compare here between original dividend and the result of the
-		// multiply in edx:eax.  If original is larger or equal, we are ok, otherwise
+		// multiply in EDX:EAX.  If original is larger or equal, we are ok, otherwise
 		// subtract the original divisor from the result.
 		//
 
 		add     ecx, edx                    // ECX:EAX = QUOT * DVSR
-		sub     ebx, eax
 		pop     edx                         // EDX <- DVNDHI
+		sub     ebx, eax
 		mov     eax, ebx
 		sbb     edx, ecx                    // EDX:EAX = remainder
 		jae     epilogue                    // if above or equal we're ok, else add

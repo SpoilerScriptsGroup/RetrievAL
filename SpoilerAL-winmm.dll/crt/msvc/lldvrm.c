@@ -318,9 +318,9 @@ __declspec(naked) void __cdecl _alldvrm()
 		#define DVND (esp + 16)             // stack address of dividend (a)
 		#define DVSR (esp + 24)             // stack address of divisor (b)
 
-		// Determine sign of the quotient (edi = 0 if result is positive, non-zero
+		// Determine sign of the quotient (EDI = 0 if result is positive, non-zero
 		// otherwise) and make operands positive.
-		// Sign of the remainder is kept in ebp.
+		// Sign of the remainder is kept in EBP.
 
 		mov     ebp, eax
 		sar     ebp, 31
@@ -359,25 +359,25 @@ __declspec(naked) void __cdecl _alldvrm()
 		test    edx, edx                    // check to see if divisor < 4194304K
 		jnz     hard                        // nope, gotta do this the hard way
 		div     esi                         // EAX <- high order bits of quotient
-		mov     ebx, eax                    // save high bits of quotient
-		mov     eax, LOWORD(DVND)           // EDX:EAX <- remainder:lo word of dividend
+		mov     ecx, eax                    // save high bits of quotient
+		mov     eax, ebx                    // EDX:EAX <- remainder:lo word of dividend
 		div     esi                         // EAX <- low order bits of quotient
 
 		//
 		// Now we need to do a multiply so that we can compute the remainder.
 		//
 
-		mov     edx, esi
+		mov     edx, esi                    // set up high word of quotient
 		push    eax                         // save quotient
-		imul    esi, ebx                    // HIWORD(QUOT) * DVSR
+		imul    esi, ecx                    // HIWORD(QUOT) * DVSR
 		mul     edx                         // LOWORD(QUOT) * DVSR
-		add     edx, esi                    // EDX:EAX = QUOT * DVSR
+		add     esi, edx                    // ESI:EAX = QUOT * DVSR
+		mov     edx, ecx
 		mov     ecx, LOWORD(DVND + 4)       // subtract product from dividend
+		mov     ebx, HIWORD(DVND + 4)
 		sub     ecx, eax
-		mov     eax, HIWORD(DVND + 4)
-		sbb     eax, edx                    // EAX:ECX = remainder
-		mov     edx, ebx
-		pop     esi                         // EDX:ESI = quotient
+		pop     eax                         // EDX:EAX = quotient
+		sbb     ebx, esi                    // EBX:ECX = remainder
 		jmp     epilogue                    // negate result, restore stack and return
 
 		align   16
@@ -389,11 +389,12 @@ __declspec(naked) void __cdecl _alldvrm()
 		lea     ecx, [edx + edx]
 		jns     shift
 		cmp     eax, edx
-		mov     edx, esi
-		sbb     esi, esi
 		mov     ecx, ebx
-		and     eax, esi                    // EAX:ECX = remainder
-		inc     esi                         // EDX:ESI = quotient
+		sbb     esi, esi
+		mov     ebx, eax
+		and     ebx, esi                    // EBX:ECX = remainder
+		lea     eax, [esi + 1]
+		xor     edx, edx                    // EDX:EAX = quotient
 		jmp     epilogue                    // negate result, restore stack and return
 
 		align   16
@@ -413,38 +414,31 @@ __declspec(naked) void __cdecl _alldvrm()
 		// dividend is close to 2**64 and the quotient is off by 1.
 		//
 
+		mov     ecx, HIWORD(DVSR)
 		mov     esi, eax                    // save quotient
-		mov     ecx, ebx                    // ECX <- low word of dividend
-		mov     ebx, HIWORD(DVSR)
-		mov     edx, LOWORD(DVSR)
-		imul    ebx, eax                    // QUOT * HIWORD(DVSR)
-		mul     edx                         // QUOT * LOWORD(DVSR)
+		imul    ecx, eax                    // QUOT * HIWORD(DVSR)
+		mul     dword ptr LOWORD(DVSR)      // QUOT * LOWORD(DVSR)
 
 		//
 		// do long compare here between original dividend and the result of the
-		// multiply in edx:eax.  If original is larger or equal, we are ok, otherwise
+		// multiply in EDX:EAX.  If original is larger or equal, we are ok, otherwise
 		// subtract one (1) from the quotient.
 		//
 
-		add     ebx, edx                    // EBX:EAX = QUOT * DVSR
+		add     edx, ecx                    // EDX:EAX = QUOT * DVSR
+		mov     ecx, ebx
+		mov     ebx, HIWORD(DVND)
 		sub     ecx, eax
-		mov     eax, HIWORD(DVND)
-		mov     edx, 0                      // EDX:ESI = quotient
-		sbb     eax, ebx                    // EAX:ECX = remainder
+		sbb     ebx, edx                    // EBX:ECX = remainder
+		mov     eax, esi
+		mov     edx, 0                      // EDX:EAX = quotient
 		jae     epilogue                    // if above or equal we are ok, else add
 		add     ecx, LOWORD(DVSR)           // add divisor to remainder
-		mov     ebx, HIWORD(DVSR)
-		adc     eax, ebx
-		dec     esi                         // subtract 1 from quotient
+		mov     esi, HIWORD(DVSR)
+		adc     ebx, esi
+		dec     eax                         // subtract 1 from quotient
 
 	epilogue:
-		//
-		// Now we need to get the quotient into EDX:EAX and the remainder into EBX:ESI.
-		//
-
-		mov     ebx, eax
-		mov     eax, esi
-
 		//
 		// Cleanup the stack.
 		//

@@ -16,6 +16,7 @@ memcmp proc near
 	mov     ecx, dword ptr [esp + 20]
 	sub     ecx, 4
 	jb      L2
+
 	align   16
 L1:
 	mov     eax, dword ptr [ebx]

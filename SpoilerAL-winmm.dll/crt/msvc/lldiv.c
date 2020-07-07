@@ -240,7 +240,7 @@ __declspec(naked) __int64 __cdecl _alldiv(__int64 dividend, __int64 divisor)
 		#define DVND (esp + 20)             // stack address of dividend (a)
 		#define DVSR (esp + 28)             // stack address of divisor (b)
 
-		// Determine sign of the result (edi = 0 if result is positive, non-zero
+		// Determine sign of the result (EDI = 0 if result is positive, non-zero
 		// otherwise) and make operands positive.
 
 		mov     edi, HIWORD(DVND)           // load dividend

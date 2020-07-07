@@ -939,7 +939,8 @@ __forceinline unsigned char _add_u64(uint64_t a, uint64_t b, uint64_t *_out)
 {
 	return
 		_addcarry_u32(
-			_addcarry_u32(0,
+			_addcarry_u32(
+				0,
 				(unsigned int)a,
 				(unsigned int)b,
 				(unsigned int *)_out),
@@ -951,7 +952,8 @@ __forceinline unsigned char _addcarry_u64(unsigned char c_in, uint64_t a, uint64
 {
 	return
 		_addcarry_u32(
-			_addcarry_u32(c_in,
+			_addcarry_u32(
+				c_in,
 				(unsigned int)a,
 				(unsigned int)b,
 				(unsigned int *)_out),

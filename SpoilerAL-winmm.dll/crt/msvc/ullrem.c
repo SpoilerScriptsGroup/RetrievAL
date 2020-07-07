@@ -195,15 +195,17 @@ __declspec(naked) unsigned __int64 __cdecl _aullrem(unsigned __int64 dividend, u
 		#define DVND (esp + 12)             // stack address of dividend (a)
 		#define DVSR (esp + 20)             // stack address of divisor (b)
 
+		mov     ebx, LOWORD(DVND)           // load dividend
+		mov     eax, HIWORD(DVND)
+		mov     esi, LOWORD(DVSR)           // load divisor
+		mov     edx, HIWORD(DVSR)
+
+		//
 		// Now do the divide.  First look to see if the divisor is less than 4194304K.
 		// If so, then we can use a simple algorithm with word divides, otherwise
 		// things get a little more complex.
 		//
 
-		mov     ebx, LOWORD(DVND)           // load dividend
-		mov     eax, HIWORD(DVND)
-		mov     esi, LOWORD(DVSR)           // load divisor
-		mov     edx, HIWORD(DVSR)
 		test    edx, edx                    // check to see if divisor < 4194304K
 		jnz     hard                        // nope, gotta do this the hard way
 		div     esi                         // EDX <- remainder, EAX <- quotient
@@ -258,7 +260,7 @@ __declspec(naked) unsigned __int64 __cdecl _aullrem(unsigned __int64 dividend, u
 
 		//
 		// do long compare here between original dividend and the result of the
-		// multiply in edx:eax.  If original is larger or equal, we're ok, otherwise
+		// multiply in EDX:EAX.  If original is larger or equal, we're ok, otherwise
 		// subtract the original divisor from the result.
 		//
 

@@ -359,25 +359,12 @@ __declspec(naked) void __cdecl _alldvrm()
 		test    edx, edx                    // check to see if divisor < 4194304K
 		jnz     hard                        // nope, gotta do this the hard way
 		div     esi                         // EAX <- high order bits of quotient
-		mov     ecx, eax                    // save high bits of quotient
-		mov     eax, ebx                    // EDX:EAX <- remainder:lo word of dividend
+		mov     ebx, eax                    // save high bits of quotient
+		mov     eax, LOWORD(DVND)           // EDX:EAX <- remainder:lo word of dividend
 		div     esi                         // EAX <- low order bits of quotient
-
-		//
-		// Now we need to do a multiply so that we can compute the remainder.
-		//
-
-		mov     edx, esi                    // set up high word of quotient
-		push    eax                         // save quotient
-		imul    esi, ecx                    // HIWORD(QUOT) * DVSR
-		mul     edx                         // LOWORD(QUOT) * DVSR
-		add     esi, edx                    // ESI:EAX = QUOT * DVSR
-		mov     edx, ecx
-		mov     ecx, LOWORD(DVND + 4)       // subtract product from dividend
-		mov     ebx, HIWORD(DVND + 4)
-		sub     ecx, eax
-		pop     eax                         // EDX:EAX = quotient
-		sbb     ebx, esi                    // EBX:ECX = remainder
+		mov     ecx, edx                    // ECX <- final remainder
+		mov     edx, ebx                    // EDX:EAX = quotient
+		xor     ebx, ebx                    // EBX:ECX = remainder
 		jmp     epilogue                    // negate result, restore stack and return
 
 		align   16

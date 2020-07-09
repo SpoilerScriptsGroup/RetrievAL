@@ -267,7 +267,7 @@ __declspec(naked) unsigned __int64 __cdecl _aullrem(unsigned __int64 dividend, u
 		add     ecx, edx                    // ECX:EAX = QUOT * DVSR
 		mov     edx, HIWORD(DVND)
 		sbb     esi, esi
-		sub     ebx, eax
+		sub     ebx, eax                    // subtract product from dividend
 		sbb     edx, ecx
 		mov     eax, ebx                    // EDX:EAX = remainder
 		sbb     esi, 0

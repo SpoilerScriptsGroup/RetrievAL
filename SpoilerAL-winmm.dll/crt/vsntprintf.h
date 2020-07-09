@@ -609,7 +609,7 @@ double __cdecl ldexp10(double x, int e);
 #endif
 
 // internal functions
-static uint32_t tcsfmt(TCHAR *, uint32_t, uint32_t, const TCHAR *, uint32_t, int32_t, int);
+static uint32_t tcsfmt(TCHAR *, uint32_t, uint32_t, const TCHAR *, uint32_t, uint32_t, int32_t, int);
 static uint32_t intfmt(TCHAR *, uint32_t, uint32_t, intmax_t, uint32_t, uint32_t, int32_t, int);
 static uint32_t fltfmt(TCHAR *, uint32_t, uint32_t, long_double, uint32_t, int32_t, int);
 
@@ -1091,7 +1091,7 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 
 				cbuf[0] = (TCHAR)va_read(argptr, endarg, int, 0);
 				cbuf[1] = '\0';
-				length = tcsfmt(buffer, count, length, cbuf, width, precision, flags);
+				length = tcsfmt(buffer, count, length, cbuf, 1, width, precision, flags);
 			}
 			break;
 #ifdef _WIN32
@@ -1102,7 +1102,7 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 
 				cbuf[0] = (char)va_read(argptr, endarg, int, 0);
 				cbuf[1] = '\0';
-				length = tcsfmt(buffer, count, length, cbuf, width, precision, flags);
+				length = tcsfmt(buffer, count, length, cbuf, 1, width, precision, flags);
 #else
 				wchar_t w;
 				int     i;
@@ -1113,13 +1113,13 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 				if (!i)
 					break;
 				cbuf[i] = '\0';
-				length = tcsfmt(buffer, count, length, cbuf, width, precision, flags);
+				length = tcsfmt(buffer, count, length, cbuf, i, width, precision, flags);
 #endif
 			}
 			break;
 #endif
 		case 's':
-			length = tcsfmt(buffer, count, length, va_read(argptr, endarg, TCHAR *, NULL), width, precision, flags);
+			length = tcsfmt(buffer, count, length, va_read(argptr, endarg, TCHAR *, NULL), -1, width, precision, flags);
 			break;
 #ifdef _WIN32
 		case 'S':
@@ -1137,7 +1137,7 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 					if (i = MultiByteToWideChar(CP_THREAD_ACP, 0, s, -1, NULL, 0))
 						if (ws = (wchar_t *)HeapAlloc(handle = GetProcessHeap(), 0, i * sizeof(wchar_t)))
 							i = MultiByteToWideChar(CP_THREAD_ACP, 0, s, -1, ws, i);
-				length = tcsfmt(buffer, count, length, i ? ws : NULL, width, precision, flags);
+				length = tcsfmt(buffer, count, length, i ? ws : NULL, i, width, precision, flags);
 				if (ws)
 					HeapFree(handle, 0, ws);
 #else
@@ -1153,7 +1153,7 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 					if (i = WideCharToMultiByte(CP_THREAD_ACP, 0, ws, -1, NULL, 0, NULL, NULL))
 						if (s = (char *)HeapAlloc(handle = GetProcessHeap(), 0, i))
 							i = WideCharToMultiByte(CP_THREAD_ACP, 0, ws, -1, s, i, NULL, NULL);
-				length = tcsfmt(buffer, count, length, i ? s : NULL, width, precision, flags);
+				length = tcsfmt(buffer, count, length, i ? s : NULL, i, width, precision, flags);
 				if (s)
 					HeapFree(handle, 0, s);
 #endif
@@ -1178,7 +1178,7 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 					 * We use the glibc format.  BSD prints
 					 * "0x0", SysV "0".
 					 */
-					length = tcsfmt(buffer, count, length, lpcszNil, width, -1, flags);
+					length = tcsfmt(buffer, count, length, lpcszNil, _countof(lpcszNil) - 1, width, -1, flags);
 				}
 				else
 				{
@@ -1253,7 +1253,7 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 					if (as && as->Buffer)
 						if (ws = (wchar_t *)HeapAlloc(handle = GetProcessHeap(), 0, i = (unsigned int)as->Length + 1))
 							i = MultiByteToWideChar(CP_THREAD_ACP, 0, as->Buffer, -1, ws, i);
-					length = tcsfmt(buffer, count, length, i ? ws : NULL, width, precision, flags);
+					length = tcsfmt(buffer, count, length, i ? ws : NULL, i, width, precision, flags);
 					if (ws)
 						HeapFree(handle, 0, ws);
 				}
@@ -1263,7 +1263,7 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 					PUNICODE_STRING us;
 
 					us = va_read(argptr, endarg, PUNICODE_STRING, NULL);
-					length = tcsfmt(buffer, count, length, us ? us->Buffer : NULL, width, precision, flags);
+					length = tcsfmt(buffer, count, length, us ? us->Buffer : NULL, us ? us->Length : 0, width, precision, flags);
 				}
 				break;
 #else
@@ -1281,7 +1281,7 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 					if (us && us->Buffer)
 						if (s = (char *)HeapAlloc(handle = GetProcessHeap(), 0, i = ((unsigned int)us->Length + 1) * 2))
 							i = WideCharToMultiByte(CP_THREAD_ACP, 0, us->Buffer, -1, s, i, NULL, NULL);
-					length = tcsfmt(buffer, count, length, i ? s : NULL, width, precision, flags);
+					length = tcsfmt(buffer, count, length, i ? s : NULL, i, width, precision, flags);
 					if (s)
 						HeapFree(handle, 0, s);
 				}
@@ -1291,7 +1291,7 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 					PANSI_STRING as;
 
 					as = va_read(argptr, endarg, PANSI_STRING, NULL);
-					length = tcsfmt(buffer, count, length, as ? as->Buffer : NULL, width, precision, flags);
+					length = tcsfmt(buffer, count, length, as ? as->Buffer : NULL, as ? as->Length : 0, width, precision, flags);
 				}
 				break;
 #endif
@@ -1336,9 +1336,8 @@ NESTED_BREAK:
 	#undef va_read
 }
 
-static uint32_t tcsfmt(TCHAR *buffer, uint32_t count, uint32_t length, const TCHAR *src, uint32_t width, int32_t precision, int flags)
+static uint32_t tcsfmt(TCHAR *buffer, uint32_t count, uint32_t length, const TCHAR *src, uint32_t srclen, uint32_t width, int32_t precision, int flags)
 {
-	uint32_t srclen;
 	uint32_t padlen;	/* Amount to pad. */
 
 #ifdef _DEBUG
@@ -1348,10 +1347,16 @@ static uint32_t tcsfmt(TCHAR *buffer, uint32_t count, uint32_t length, const TCH
 #endif
 
 	/* We're forgiving. */
-	if (!src)
+	if (src)
+		if (srclen == -1)
+			srclen = (uint32_t)_tcsnlen(src, (uint32_t)precision);
+		else
+			srclen = min(srclen, (uint32_t)precision);
+	else
+	{
 		src = lpcszNull;
-
-	srclen = (uint32_t)_tcsnlen(src, (uint32_t)max(precision, -1));
+		srclen = min(_countof(lpcszNull) - 1, (uint32_t)precision);
+	}
 	if (_sub_u32(width, srclen, &padlen))
 		padlen = 0;
 
@@ -2319,5 +2324,5 @@ INF_NaN:
 	else
 		while (c = *(infnan++))
 			*(p++) = c;
-	return tcsfmt(buffer, count, length, cvtbuf, width, p - cvtbuf, flags);
+	return tcsfmt(buffer, count, length, cvtbuf, -1, width, p - cvtbuf, flags);
 }

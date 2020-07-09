@@ -415,7 +415,7 @@ __declspec(naked) void __cdecl _alldvrm()
 		add     edx, ecx                    // EDX:EAX = QUOT * DVSR
 		mov     ecx, ebx
 		mov     ebx, HIWORD(DVND)
-		sub     ecx, eax
+		sub     ecx, eax                    // subtract product from dividend
 		sbb     ebx, edx                    // EBX:ECX = remainder
 		mov     eax, esi
 		mov     edx, 0                      // EDX:EAX = quotient

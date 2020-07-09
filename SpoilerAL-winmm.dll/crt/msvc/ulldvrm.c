@@ -285,8 +285,8 @@ __declspec(naked) void __cdecl _aulldvrm()
 		mov     eax, edi
 		sub     ecx, esi
 		sbb     ebx, edx                    // EBX:ECX = remainder
-		and     eax, 1
-		xor     edx, edx                    // EDX:EAX = quotient
+		xor     edx, edx
+		and     eax, 1                      // EDX:EAX = quotient
 		jmp     epilogue                    // restore stack and return
 
 		align   16
@@ -321,7 +321,7 @@ __declspec(naked) void __cdecl _aulldvrm()
 		mov     ecx, ebx
 		sbb     edi, edi
 		mov     ebx, HIWORD(DVND)
-		sub     ecx, eax
+		sub     ecx, eax                    // subtract product from dividend
 		mov     eax, esi
 		sbb     ebx, edx                    // EBX:ECX = remainder
 		mov     edx, 0                      // EDX:EAX = quotient

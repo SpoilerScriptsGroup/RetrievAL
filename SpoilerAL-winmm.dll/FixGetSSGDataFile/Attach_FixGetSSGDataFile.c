@@ -165,7 +165,7 @@ static void __fastcall TSSGCtrl_SetSSGDataFile_IsSSL(
 			}
 			else
 			{
-				string_reserve(vector_begin(&func), length);
+				string_reserve(vector_begin(&func), sizeof(size_t) * 2 + length);
 				for (const string *LineS = first; LineS < VIt; LineS++)
 				{
 					string_append(vector_begin(&func), LineS);

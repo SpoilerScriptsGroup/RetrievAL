@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <winternl.h>
 
 #include <stdlib.h>
 #ifndef _countof
@@ -297,11 +298,44 @@ static DWORD WINAPI ProcessMonitor(LPVOID lpParameter)
 	return 0;
 }
 
+static BOOL __fastcall ProcessCmdlineInspect(DWORD pid, LPCSTR lpCommandArg) {
+	BOOL match = FALSE;
+	HANDLE hProcess;
+	if (hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid))
+	{
+		PEB peb;
+		RTL_USER_PROCESS_PARAMETERS upp;
+		PROCESS_BASIC_INFORMATION pbi;
+		LPSTR cmdLine;
+		if (!NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), NULL)
+			&& ReadProcessMemory(hProcess, pbi.PebBaseAddress, &peb, sizeof(peb), NULL)
+			&& ReadProcessMemory(hProcess, peb.ProcessParameters, &upp, sizeof(upp), NULL)
+			&& (cmdLine = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, upp.CommandLine.MaximumLength << 1))
+			)
+		{
+			regex_t cmdArg;
+			if (ReadProcessMemory(hProcess, upp.CommandLine.Buffer, &cmdLine[upp.CommandLine.MaximumLength], upp.CommandLine.Length, NULL)
+				&& WideCharToMultiByte(CP_THREAD_ACP, 0, (LPCWCH)&cmdLine[upp.CommandLine.MaximumLength], upp.CommandLine.Length >> 1,
+									   cmdLine, upp.CommandLine.MaximumLength, NULL, NULL)
+				&& !regcomp(&cmdArg, lpCommandArg, REG_EXTENDED | REG_ICASE | REG_NOSUB)
+				)
+			{
+				match = !regexec(&cmdArg, cmdLine, 0, NULL, 0);
+				regfree(&cmdArg);
+			}
+			HeapFree(hHeap, 0, cmdLine);
+		}
+		CloseHandle(hProcess);
+	}
+	return match;
+}
+
 DWORD __stdcall FindProcessId(
 	IN          BOOL   bIsRegex,
 	IN          LPCSTR lpProcessName,
 	IN          size_t nProcessNameLength,
-	IN OPTIONAL LPCSTR lpModuleName)
+	IN OPTIONAL LPCSTR lpModuleName,
+	IN OPTIONAL LPCSTR lpCommandArg)
 {
 	static BOOL InProcessing = FALSE;
 	DWORD       dwProcessId;
@@ -341,7 +375,8 @@ DWORD __stdcall FindProcessId(
 				{
 					if (_mbsicmp(lpProcessName, lpBaseName) == 0)
 					{
-						if (!lpModuleName || ProcessContainsModule(*lpdwProcessId, FALSE, lpWideCharStr))
+						if ((!lpModuleName || ProcessContainsModule(*lpdwProcessId, FALSE, lpWideCharStr)) &&
+							(!lpCommandArg || ProcessCmdlineInspect(*lpdwProcessId, lpCommandArg)))
 						{
 							dwProcessId = *lpdwProcessId;
 							break;

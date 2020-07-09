@@ -338,7 +338,7 @@ __declspec(naked) __int64 __cdecl _allrem(__int64 dividend, __int64 divisor)
 
 		add     ecx, edx                    // ECX:EAX = QUOT * DVSR
 		pop     edx                         // EDX <- DVNDHI
-		sub     ebx, eax
+		sub     ebx, eax                    // subtract product from dividend
 		mov     eax, ebx
 		sbb     edx, ecx                    // EDX:EAX = remainder
 		jae     epilogue                    // if above or equal we're ok, else add

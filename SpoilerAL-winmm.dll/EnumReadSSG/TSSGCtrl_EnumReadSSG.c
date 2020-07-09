@@ -566,16 +566,19 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 		while ((c = *(p++)) == ' ' || c == '\t');
 		if (!c || ((c != ']') ^ (tag == DEFINE || tag == UNDEF)))
 			continue;
+		if ((unsigned)tag >= ENDIF + 1 && invalid)
+			continue;
 
-		switch (tag)
+		switch (tag)	// jump by table
 		{
 		// [elif]
 		case ELIF:
 			if (cond)
 			{
 				invalid = TRUE;
-				continue;
+				break;
 			}
+
 		// [if]
 		case IF:
 			{
@@ -585,23 +588,18 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				string_end((string *)Code) = string_end(it);
 				invalid = !(cond = Parsing(this, &dummySSGS, (const string *)Code, 0));
 			}
-			continue;
+			break;
+
 		// [else]
 		case ELSE:
 			invalid = cond;
-			continue;
+			break;
+
 		// [endif]
 		case ENDIF:
 			invalid = FALSE;
-			continue;
-		default:
-			if (invalid)
-				continue;
 			break;
-		}
 
-		switch (tag)	// jump by table
-		{
 		// [subject], [input]
 		case SUBJECT:
 		case INPUT:

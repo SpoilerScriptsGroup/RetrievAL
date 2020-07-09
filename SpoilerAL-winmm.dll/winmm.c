@@ -111,7 +111,7 @@ static BOOL __cdecl Attach()
 	if (!(hWinMM = LoadLibraryW(lpModuleName)))
 		goto LAST_ERROR;
 	InitializeExportFunctions();
-	if (!(hEntryModule = GetModuleHandleW(NULL)))
+	if (!(hEntryModule = GetModuleHandleW(L"SpoilerAL.exe")))
 		goto LAST_ERROR;
 	if (!(nLength = GetModuleFileNameW(hEntryModule, lpModuleName, _countof(lpModuleName))))
 		goto LAST_ERROR;

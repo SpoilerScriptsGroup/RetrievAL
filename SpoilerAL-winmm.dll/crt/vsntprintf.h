@@ -1104,9 +1104,9 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 				cbuf[1] = '\0';
 				length = tcsfmt(buffer, count, length, cbuf, 1, width, precision, flags);
 #else
-				wchar_t w;
-				int     i;
-				char    cbuf[3];
+				char         cbuf[3];
+				unsigned int i;
+				wchar_t      w;
 
 				w = (wchar_t)va_read(argptr, endarg, int, 0);
 				i = WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, cbuf, 2, NULL, NULL);
@@ -1125,37 +1125,37 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 		case 'S':
 			{
 #ifdef _UNICODE
-				wchar_t *ws;
-				int     i;
-				char    *s;
-				HANDLE  handle;
+				wchar_t      *ws;
+				unsigned int n, i;
+				char         *s;
+				HANDLE       heap;
 
 				ws = NULL;
-				i = 0;
-				s = va_read(argptr, endarg, char *, NULL);
-				if (s)
+				n = 0;
+				if (s = va_read(argptr, endarg, char *, NULL))
 					if (i = MultiByteToWideChar(CP_THREAD_ACP, 0, s, -1, NULL, 0))
-						if (ws = (wchar_t *)HeapAlloc(handle = GetProcessHeap(), 0, i * sizeof(wchar_t)))
-							i = MultiByteToWideChar(CP_THREAD_ACP, 0, s, -1, ws, i);
-				length = tcsfmt(buffer, count, length, i ? ws : NULL, i, width, precision, flags);
+						if (ws = (wchar_t *)HeapAlloc(heap = GetProcessHeap(), 0, i * sizeof(wchar_t)))
+							if (n = MultiByteToWideChar(CP_THREAD_ACP, 0, s, -1, ws, i))
+								n--;
+				length = tcsfmt(buffer, count, length, ws, n, width, precision, flags);
 				if (ws)
-					HeapFree(handle, 0, ws);
+					HeapFree(heap, 0, ws);
 #else
-				char    *s;
-				int     i;
-				wchar_t *ws;
-				HANDLE  handle;
+				char         *s;
+				unsigned int n, i;
+				wchar_t      *ws;
+				HANDLE       heap;
 
 				s = NULL;
-				i = 0;
-				ws = va_read(argptr, endarg, wchar_t *, NULL);
-				if (ws)
+				n = 0;
+				if (ws = va_read(argptr, endarg, wchar_t *, NULL))
 					if (i = WideCharToMultiByte(CP_THREAD_ACP, 0, ws, -1, NULL, 0, NULL, NULL))
-						if (s = (char *)HeapAlloc(handle = GetProcessHeap(), 0, i))
-							i = WideCharToMultiByte(CP_THREAD_ACP, 0, ws, -1, s, i, NULL, NULL);
-				length = tcsfmt(buffer, count, length, i ? s : NULL, i, width, precision, flags);
+						if (s = (char *)HeapAlloc(heap = GetProcessHeap(), 0, i))
+							if (n = WideCharToMultiByte(CP_THREAD_ACP, 0, ws, -1, s, i, NULL, NULL))
+								n--;
+				length = tcsfmt(buffer, count, length, s, n, width, precision, flags);
 				if (s)
-					HeapFree(handle, 0, s);
+					HeapFree(heap, 0, s);
 #endif
 			}
 			break;
@@ -1243,27 +1243,33 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 			case C_SHORT:
 				{
 					wchar_t      *ws;
-					int          i;
+					unsigned int n, i;
 					PANSI_STRING as;
-					HANDLE       handle;
+					HANDLE       heap;
 
 					ws = NULL;
-					i = 0;
-					as = va_read(argptr, endarg, PANSI_STRING, NULL);
-					if (as && as->Buffer)
-						if (ws = (wchar_t *)HeapAlloc(handle = GetProcessHeap(), 0, i = (unsigned int)as->Length + 1))
-							i = MultiByteToWideChar(CP_THREAD_ACP, 0, as->Buffer, -1, ws, i);
-					length = tcsfmt(buffer, count, length, i ? ws : NULL, i, width, precision, flags);
+					n = 0;
+					if ((as = va_read(argptr, endarg, PANSI_STRING, NULL)) && as->Buffer)
+						if (ws = (wchar_t *)HeapAlloc(heap = GetProcessHeap(), 0, (i = as->Length + 1) * sizeof(wchar_t)))
+							if (n = MultiByteToWideChar(CP_THREAD_ACP, 0, as->Buffer, i, ws, i))
+								n--;
+					length = tcsfmt(buffer, count, length, ws, n, width, precision, flags);
 					if (ws)
-						HeapFree(handle, 0, ws);
+						HeapFree(heap, 0, ws);
 				}
 				break;
 			default:
 				{
+					wchar_t         *ws;
+					unsigned int    n;
 					PUNICODE_STRING us;
 
-					us = va_read(argptr, endarg, PUNICODE_STRING, NULL);
-					length = tcsfmt(buffer, count, length, us ? us->Buffer : NULL, us ? us->Length : 0, width, precision, flags);
+					ws = NULL;
+					n = 0;
+					if (us = va_read(argptr, endarg, PUNICODE_STRING, NULL))
+						if (ws = us->Buffer)
+							n = us->Length;
+					length = tcsfmt(buffer, count, length, ws, n, width, precision, flags);
 				}
 				break;
 #else
@@ -1271,27 +1277,32 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 			case C_WCHAR:
 				{
 					char            *s;
-					int             i;
+					unsigned int    n, i, j;
 					PUNICODE_STRING us;
-					HANDLE          handle;
+					HANDLE          heap;
 
 					s = NULL;
-					i = 0;
-					us = va_read(argptr, endarg, PUNICODE_STRING, NULL);
-					if (us && us->Buffer)
-						if (s = (char *)HeapAlloc(handle = GetProcessHeap(), 0, i = ((unsigned int)us->Length + 1) * 2))
-							i = WideCharToMultiByte(CP_THREAD_ACP, 0, us->Buffer, -1, s, i, NULL, NULL);
-					length = tcsfmt(buffer, count, length, i ? s : NULL, i, width, precision, flags);
+					n = 0;
+					if ((us = va_read(argptr, endarg, PUNICODE_STRING, NULL)) && us->Buffer)
+						if (s = (char *)HeapAlloc(heap = GetProcessHeap(), 0, j = (i = us->Length + 1) * 2))
+							if (n = WideCharToMultiByte(CP_THREAD_ACP, 0, us->Buffer, i, s, j, NULL, NULL))
+								n--;
+					length = tcsfmt(buffer, count, length, s, n, width, precision, flags);
 					if (s)
-						HeapFree(handle, 0, s);
+						HeapFree(heap, 0, s);
 				}
 				break;
 			default:
 				{
+					char         *s;
+					unsigned int n;
 					PANSI_STRING as;
 
-					as = va_read(argptr, endarg, PANSI_STRING, NULL);
-					length = tcsfmt(buffer, count, length, as ? as->Buffer : NULL, as ? as->Length : 0, width, precision, flags);
+					s = NULL;
+					n = 0;
+					if ((as = va_read(argptr, endarg, PANSI_STRING, NULL)) && (s = as->Buffer))
+						n = as->Length;
+					length = tcsfmt(buffer, count, length, s, n, width, precision, flags);
 				}
 				break;
 #endif

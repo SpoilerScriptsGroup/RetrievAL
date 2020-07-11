@@ -28,18 +28,18 @@ __declspec(naked) char * __cdecl _tcpcpy(char *string1, const char *string2)
 		call    _tcslen                                     // length of src
 		mov     ecx, dword ptr [string1 + 16]               // dest
 #ifdef _UNICODE
-		lea     eax, [eax + eax + 2]                        // include terminating zero in length
+		lea     edx, [eax + eax + 2]                        // include terminating zero in length
 #else
-		inc     eax
+		lea     edx, [eax + 1]
 #endif
 		mov     dword ptr [esp], ecx
 #ifdef _UNICODE
-		lea     ecx, [ecx + eax - 2]
+		lea     eax, [ecx + edx - 2]
 #else
-		lea     ecx, [ecx + eax - 1]
+		add     eax, ecx
 #endif
-		mov     dword ptr [esp + 8], eax
-		mov     dword ptr [esp + 12], ecx
+		mov     dword ptr [esp + 8], edx
+		mov     dword ptr [esp + 12], eax
 		call    memcpy                                      // copy
 		mov     eax, dword ptr [esp + 12]
 		add     esp, 16                                     // clean up stack

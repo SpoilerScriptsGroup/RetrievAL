@@ -105,7 +105,7 @@ static void __fastcall ToSortKey(char *s, LCID lcid)
 				else
 					c3 = jisx0213_8346_83FF[c2 - 0x46] + 0x8346;
 			else
-				if (c2 > 0x95 || c2 < 0x40)
+				if ((unsigned char)(c2 - 0x40) >= 0x95 - 0x40 + 1)
 					continue;
 				else
 					c3 = jisx0213_8440_8495[c2 - 0x40] + 0x83AC;
@@ -177,10 +177,9 @@ __declspec(naked) static void __fastcall ToSortKey(char *s, LCID lcid)
 		jmp     L4
 
 	L3:
-		cmp     al, 0x95
-		ja      L5
 		sub     al, 0x40
-		jb      L5
+		cmp     al, 0x95 - 0x40 + 1
+		jae     L5
 		mov     al, byte ptr [jisx0213_8440_8495 + eax]
 		add     al, 0xAC
 	L4:

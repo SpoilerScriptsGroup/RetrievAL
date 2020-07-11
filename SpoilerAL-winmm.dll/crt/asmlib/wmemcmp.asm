@@ -378,11 +378,10 @@ dword_loop:
 	jnc     dword_loop
 
 compare_words:
-	xor     eax, eax
-	xor     edx, edx
-	dec     ecx
-	jnz     word_loop
-	jmp     epilogue
+	mov     eax, 0
+	mov     edx, 0
+	sub     ecx, 1
+	jz      epilogue
 
 	align   16
 word_loop:

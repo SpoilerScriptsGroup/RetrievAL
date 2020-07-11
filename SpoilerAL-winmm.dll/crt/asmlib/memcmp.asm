@@ -842,11 +842,10 @@ dword_loop:
 	jnc     dword_loop
 
 compare_bytes:
-	xor     eax, eax
-	xor     edx, edx
+	mov     eax, 0
+	mov     edx, 0
 	sub     ecx, 3
-	jnz     byte_loop
-	jmp     epilogue
+	jz      epilogue
 
 	align   16
 byte_loop:

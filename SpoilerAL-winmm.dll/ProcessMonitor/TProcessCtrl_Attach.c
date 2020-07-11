@@ -1,6 +1,9 @@
 #include <windows.h>
+#include <intrin.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "TMainForm.h"
+
+#pragma intrinsic(_ReturnAddress)
 
 #define ALLOCATE_SUPPORT 1
 
@@ -67,7 +70,7 @@ BOOLEAN __cdecl TProcessCtrl_Attach(TProcessCtrl *this)
 {
 	void __cdecl OnProcessDetach();
 
-	if (IsProcessAttached && ((LPDWORD)&this)[-1] == 0x004A61B0)// TProcessCtrl::Open
+	if (IsProcessAttached && (size_t)_ReturnAddress() == 0x004A61B0)// TProcessCtrl::Open
 	{// reset process infomation when lost target
 		vector_string backup = this->processNameVec;
 		this->processNameVec = (const vector_string) { NULL };

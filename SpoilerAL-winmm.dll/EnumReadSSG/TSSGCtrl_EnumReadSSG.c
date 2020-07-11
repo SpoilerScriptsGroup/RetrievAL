@@ -143,6 +143,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 		switch ((dw = *(LPDWORD)p) & 0xFF)	// jump by table
 		{
 		case 'a':
+			if (invalid) continue;
 			switch (dw)
 			{
 			case BSWAP32('adju'): goto CASE_ADJU;
@@ -151,9 +152,11 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			default: continue;
 			}
 		case 'b':
+			if (invalid) continue;
 			if (dw == BSWAP32('back')) goto CASE_BACK;
 			continue;
 		case 'c':
+			if (invalid) continue;
 			switch (dw)
 			{
 			case BSWAP32('calc'): goto CASE_CALC;
@@ -163,6 +166,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			default: continue;
 			}
 		case 'd':
+			if (invalid) continue;
 			switch (dw)
 			{
 			case BSWAP32('defi'): goto CASE_DEFI;
@@ -173,16 +177,17 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 		case 'e':
 			switch (dw)
 			{
-			case BSWAP32('e_wi'): goto CASE_E_WI;
-			case BSWAP32('elif'): goto CASE_ELIF;
-			case BSWAP32('else'): goto CASE_ELSE;
-			case BSWAP32('enab'): goto CASE_ENAB;
-			case BSWAP32('endi'): goto CASE_ENDI;
-			case BSWAP32('erro'): goto CASE_ERRO;
-			case BSWAP32('expr'): goto CASE_EXPR;
+			case BSWAP32('e_wi'): if (invalid) continue; goto CASE_E_WI;
+			case BSWAP32('elif'):                        goto CASE_ELIF;
+			case BSWAP32('else'):                        goto CASE_ELSE;
+			case BSWAP32('enab'): if (invalid) continue; goto CASE_ENAB;
+			case BSWAP32('endi'):                        goto CASE_ENDI;
+			case BSWAP32('erro'): if (invalid) continue; goto CASE_ERRO;
+			case BSWAP32('expr'): if (invalid) continue; goto CASE_EXPR;
 			default: continue;
 			}
 		case 'f':
+			if (invalid) continue;
 			switch (dw)
 			{
 			case BSWAP32('form'): goto CASE_FORM;
@@ -192,9 +197,9 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 		case 'i':
 			switch (dw)
 			{
-			case BSWAP32('inpu'): goto CASE_INPU;
-			case BSWAP32('invo'): goto CASE_INVO;
-			case BSWAP32('io_f'): goto CASE_IO_F;
+			case BSWAP32('inpu'): if (invalid) continue; goto CASE_INPU;
+			case BSWAP32('invo'): if (invalid) continue; goto CASE_INVO;
+			case BSWAP32('io_f'): if (invalid) continue; goto CASE_IO_F;
 			default:
 				if (!close && (dw & USHRT_MAX) == BSWAP16('if'))
 				{
@@ -206,18 +211,23 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				continue;
 			}
 		case 'm':
+			if (invalid) continue;
 			if (dw == BSWAP32('make')) goto CASE_MAKE;
 			continue;
 		case 'n':
+			if (invalid) continue;
 			if (dw == BSWAP32('note')) goto CASE_NOTE;
 			continue;
 		case 'o':
+			if (invalid) continue;
 			if (dw == BSWAP32('offs')) goto CASE_OFFS;
 			continue;
 		case 'p':
+			if (invalid) continue;
 			if (dw == BSWAP32('proc')) goto CASE_PROC;
 			continue;
 		case 'r':
+			if (invalid) continue;
 			switch (dw)
 			{
 			case BSWAP32('repe'): goto CASE_REPE;
@@ -226,6 +236,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			default: continue;
 			}
 		case 's':
+			if (invalid) continue;
 			switch (dw)
 			{
 			case BSWAP32('scop'): goto CASE_SCOP;
@@ -236,6 +247,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			default: continue;
 			}
 		case 't':
+			if (invalid) continue;
 			switch (dw)
 			{
 			case BSWAP32('titl'): goto CASE_TITL;
@@ -243,9 +255,11 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 			default: continue;
 			}
 		case 'u':
+			if (invalid) continue;
 			if (dw == BSWAP32('unde')) goto CASE_UNDE;
 			continue;
 		case 'v':
+			if (invalid) continue;
 			switch (dw)
 			{
 			case BSWAP32('val]'): goto CASE_VAL1;
@@ -565,8 +579,6 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 
 		while ((c = *(p++)) == ' ' || c == '\t');
 		if (!c || ((c != ']') ^ (tag == DEFINE || tag == UNDEF)))
-			continue;
-		if ((unsigned)tag >= ENDIF + 1 && invalid)
 			continue;
 
 		switch (tag)	// jump by table

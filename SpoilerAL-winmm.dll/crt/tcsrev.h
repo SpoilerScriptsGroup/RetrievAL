@@ -76,14 +76,12 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 {
 #ifdef _UNICODE
 	#define scast        scasw
-	#define sizeof_tchar 2
 	#define tchar_ptr    word ptr
 	#define t(r)         r##x
 	#define inc_tchar(r) add r, 2
 	#define dec_tchar(r) sub r, 2
 #else
 	#define scast        scasb
-	#define sizeof_tchar 1
 	#define tchar_ptr    byte ptr
 	#define t(r)         r##l
 	#define inc_tchar(r) inc r
@@ -101,7 +99,7 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		mov     ecx, -1                                     // ecx = -1
 		mov     esi, edi                                    // esi = pointer to string
 		repne   scast                                       // find null
-		sub     edi, sizeof_tchar * 2                       // string is not empty, move di pointer back
+		sub     edi, size TCHAR * 2                       // string is not empty, move di pointer back
 		                                                    // edi points to last non-null char
 		mov     eax, esi                                    // return value: string addr
 		cmp     ecx, -2                                     // is string empty? (if offset value is 0, the
@@ -127,7 +125,6 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 	}
 
 	#undef scast
-	#undef sizeof_tchar
 	#undef tchar_ptr
 	#undef t
 	#undef inc_tchar

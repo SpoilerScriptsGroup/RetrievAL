@@ -43,7 +43,6 @@ __declspec(naked) void __cdecl TMainForm_FormClose_Header()
 		#define this                         esi
 		#define offsetof_TMainForm_calcImage 1320
 		#define offsetof_TCalcImage_valBox   440
-		#define sizeof_TCalcValBox           20
 		#define offsetof_TCalcValBox_edit    0
 
 		mov     ecx, dword ptr [TMainForm_PrevNewValProc]
@@ -53,7 +52,7 @@ __declspec(naked) void __cdecl TMainForm_FormClose_Header()
 		push    ecx
 		mov     eax, dword ptr [eax + offsetof_TCalcImage_valBox]
 		push    GWLP_WNDPROC
-		mov     eax, dword ptr [eax + sizeof_TCalcValBox]
+		mov     eax, dword ptr [eax + size TCalcValBox]
 		call    dword ptr[_TWinControl_GetHandle]
 		push    eax
 		mov     dword ptr [TMainForm_PrevNewValProc], 0
@@ -65,7 +64,6 @@ __declspec(naked) void __cdecl TMainForm_FormClose_Header()
 		#undef this
 		#undef offsetof_TMainForm_calcImage
 		#undef offsetof_TCalcImage_valBox
-		#undef sizeof_TCalcValBox
 		#undef offsetof_TCalcValBox_edit
 	}
 }
@@ -84,14 +82,13 @@ __declspec(naked) void __cdecl TMainForm_LoadCLD_Footer()
 	{
 		#define CalcImage                  (ebp + 36)
 		#define offsetof_TCalcImage_valBox 440
-		#define sizeof_TCalcValBox         20
 		#define offsetof_TCalcValBox_edit  0
 
 		mov     eax, dword ptr [CalcImage]
 		push    offset TMainForm_NewValProc
 		push    GWLP_WNDPROC
 		mov     eax, dword ptr [eax + offsetof_TCalcImage_valBox]
-		mov     eax, dword ptr [eax + sizeof_TCalcValBox]
+		mov     eax, dword ptr [eax + size TCalcValBox]
 		call    dword ptr[_TWinControl_GetHandle]
 		push    eax
 		call    SetWindowLongPtrA
@@ -102,7 +99,6 @@ __declspec(naked) void __cdecl TMainForm_LoadCLD_Footer()
 
 		#undef CalcImage
 		#undef offsetof_TCalcImage_valBox
-		#undef sizeof_TCalcValBox
 		#undef offsetof_TCalcValBox_edit
 	}
 }

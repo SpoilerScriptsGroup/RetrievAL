@@ -22,11 +22,9 @@ size_t __cdecl _tcslcat(TCHAR *dest, const TCHAR *src, size_t count)
 __declspec(naked) size_t __cdecl _tcslcat(TCHAR *dest, const TCHAR *src, size_t count)
 {
 #ifdef _UNICODE
-	#define tchar_ptr    word ptr
-	#define sizeof_tchar 2
+	#define tchar_ptr word ptr
 #else
-	#define tchar_ptr    byte ptr
-	#define sizeof_tchar 1
+	#define tchar_ptr byte ptr
 #endif
 
 	__asm
@@ -46,16 +44,16 @@ __declspec(naked) size_t __cdecl _tcslcat(TCHAR *dest, const TCHAR *src, size_t 
 		lea     ebx, [eax + 1]
 		call    _tcslen
 		mov     ecx, dword ptr [count + 16]
-		lea     edi, [edi + ebx * sizeof_tchar - sizeof_tchar]
+		lea     edi, [edi + ebx * size TCHAR - size TCHAR]
 		sub     ecx, ebx
 		jbe     L3
 		cmp     ecx, eax
 		ja      L1
-		mov     tchar_ptr [edi + ecx * sizeof_tchar], '\0'
+		mov     tchar_ptr [edi + ecx * size TCHAR], '\0'
 		jmp     L2
 
 	L1:
-		mov     tchar_ptr [edi + eax * sizeof_tchar], '\0'
+		mov     tchar_ptr [edi + eax * size TCHAR], '\0'
 		mov     ecx, eax
 	L2:
 #ifdef _UNICODE
@@ -93,6 +91,5 @@ __declspec(naked) size_t __cdecl _tcslcat(TCHAR *dest, const TCHAR *src, size_t 
 	}
 
 	#undef tchar_ptr
-	#undef sizeof_tchar
 }
 #endif

@@ -11,23 +11,21 @@ __declspec(naked) void __cdecl TSSFloatCalc_Setting_MinMax()
 {
 	__asm
 	{
-		#define sizeof_string 24
-		#define this          ebx
-		#define tmpV          edi
+		#define this ebx
+		#define tmpV edi
 
 		mov     eax, dword ptr [tmpV]
-		add     eax, sizeof_string * 4
+		add     eax, size string * 4
 		push    eax
-		sub     eax, sizeof_string * (4 - 2)
+		sub     eax, size string * (4 - 2)
 		push    eax
-		sub     eax, sizeof_string * (2 - 1)
+		sub     eax, size string * (2 - 1)
 		push    eax
 		push    this
 		call    Setting_MinMax
 		pop     edx
 		ret
 
-		#undef sizeof_string
 		#undef this
 		#undef tmpV
 	}
@@ -37,21 +35,19 @@ __declspec(naked) void __cdecl TSSBundleFloatCalc_Setting_MinMax()
 {
 	__asm
 	{
-		#define sizeof_string 24
-		#define this          ebx
+		#define this ebx
 
-		add     eax, sizeof_string * 6
+		add     eax, size string * 6
 		push    eax
-		sub     eax, sizeof_string * (6 - 4)
+		sub     eax, size string * (6 - 4)
 		push    eax
-		sub     eax, sizeof_string * (4 - 3)
+		sub     eax, size string * (4 - 3)
 		push    eax
 		push    this
 		call    Setting_MinMax
 		pop     eax
 		ret
 
-		#undef sizeof_string
 		#undef this
 	}
 }

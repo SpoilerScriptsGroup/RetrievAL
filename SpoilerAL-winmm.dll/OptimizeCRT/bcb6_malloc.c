@@ -25,7 +25,7 @@ __declspec(naked) void * __cdecl bcb6_calloc(size_t num, size_t size)
 
 		mov     eax, dword ptr [num]
 		mov     ecx, dword ptr [size]
-		imul    ecx
+		imul    eax, ecx
 		cmp     eax, 1
 		adc     eax, 0
 		mov     ecx, dword ptr [hHeap]

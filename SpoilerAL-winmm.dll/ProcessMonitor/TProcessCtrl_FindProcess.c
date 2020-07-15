@@ -54,7 +54,6 @@ static char * __fastcall FindInvalidChar(const char *string)
 
 static char ** __stdcall ParseArgument(const char *begin, const char *end, size_t *argc)
 {
-	*argc = 0;
 	while (*begin == ' ')
 		begin++;
 	if (end > begin)
@@ -119,6 +118,7 @@ static char ** __stdcall ParseArgument(const char *begin, const char *end, size_
 			return argv;
 		}
 	}
+	*argc = 0;
 	return NULL;
 }
 

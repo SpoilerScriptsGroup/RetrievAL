@@ -16,12 +16,11 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 
 	__asm
 	{
-		#define SSGCtrl       (edi)
-		#define SSGS          (ebp + 16)
-		#define tmpV          (esi)
-		#define DataSize      (ebp - 01ECH)
-		#define tmpC          (ebp - 01E8H)
-		#define sizeof_string 24
+		#define SSGCtrl  (edi)
+		#define SSGS     (ebp + 16)
+		#define tmpV     (esi)
+		#define DataSize (ebp - 01ECH)
+		#define tmpC     (ebp - 01E8H)
 
 		mov     eax, dword ptr [esi]
 		mov     edx, dword ptr [tmpC]
@@ -34,8 +33,8 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		cmp     dword ptr [eax], MASM_BSWAP32('utf8')       ;		if (*(LPDWORD)p != BSWAP32('utf8'))
 		jne     L5                                          ;			break;
 		mov     ecx, dword ptr [tmpV]                       ;		tmpV[3].clear();
-		mov     eax, dword ptr [ecx + sizeof_string * 3]    ;		AddressNamingFromUtf8(DataSize, tmpC, tmpV);
-		add     ecx, sizeof_string * 3 + 4
+		mov     eax, dword ptr [ecx + size string * 3]      ;		AddressNamingFromUtf8(DataSize, tmpC, tmpV);
+		add     ecx, size string * 3 + 4
 		mov     byte ptr [eax], 0
 		mov     dword ptr [ecx], eax
 		mov     ecx, dword ptr [DataSize]
@@ -54,8 +53,8 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		cmp     eax, MASM_BSWAP32('ode\0')                  ;			if (*(LPDWORD)(p + 4) != BSWAP32('ode\0'))
 		jne     L5                                          ;				break;
 		mov     ecx, dword ptr [tmpV]                       ;			tmpV[3].clear();
-		mov     eax, dword ptr [ecx + sizeof_string * 3]    ;			AddressNamingFromUnicode(DataSize, tmpC, tmpV);
-		add     ecx, sizeof_string * 3 + 4
+		mov     eax, dword ptr [ecx + size string * 3]      ;			AddressNamingFromUnicode(DataSize, tmpC, tmpV);
+		add     ecx, size string * 3 + 4
 		mov     byte ptr [eax], 0
 		mov     dword ptr [ecx], eax
 		mov     ecx, dword ptr [DataSize]
@@ -126,7 +125,6 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		#undef tmpV
 		#undef DataSize
 		#undef tmpC
-		#undef sizeof_string
 	}
 	#undef _ReturnAddress
 }

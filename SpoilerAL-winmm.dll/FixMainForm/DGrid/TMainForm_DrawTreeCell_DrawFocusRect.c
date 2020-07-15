@@ -25,7 +25,6 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawFocusRect()
 
 	__asm
 	{
-		#define sizeof_RECT                     16
 		#define MainForm                        ebx
 		#define ARow                            (ebp + 16)
 		#define nowSelectSubjectIndex           (MainForm + 1364)
@@ -40,7 +39,7 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawFocusRect()
 		cmp     eax, ecx
 		jne     L3
 
-		sub     esp, sizeof_RECT
+		sub     esp, size RECT
 
 		#define rcItem        esp
 		#define rcItem_left   esp
@@ -62,7 +61,7 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawFocusRect()
 		push    rcItem
 		push    eax
 		call    DrawFocusRect
-		add     esp, sizeof_RECT
+		add     esp, size RECT
 	L3:
 		push    00CC0020H
 		jmp     dword ptr [X004460A0]
@@ -73,7 +72,6 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawFocusRect()
 		#undef rcItem_right
 		#undef rcItem_bottom
 
-		#undef sizeof_RECT
 		#undef MainForm
 		#undef ARow
 		#undef nowSelectSubjectIndex

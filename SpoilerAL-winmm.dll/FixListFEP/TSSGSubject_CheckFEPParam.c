@@ -10,15 +10,14 @@ __declspec(naked) void __cdecl TSSBitList_Setting_CheckFEPParam()
 {
 	__asm
 	{
-		#define sizeof_string 24
-		#define this          ebx
-		#define tmpV          (ebp - 18H)
+		#define this ebx
+		#define tmpV (ebp - 18H)
 
 		dec     dword ptr [esi + 1CH]
 		dec     dword ptr [esi + 1CH]
 		mov     edx, dword ptr [tmpV]
 		mov     eax, dword ptr [tmpV + 4]
-		add     edx, sizeof_string * 3
+		add     edx, size string * 3
 		mov     ecx, this
 		cmp     edx, eax
 		jae     L1
@@ -27,7 +26,6 @@ __declspec(naked) void __cdecl TSSBitList_Setting_CheckFEPParam()
 	L1:
 		ret
 
-		#undef sizeof_string
 		#undef this
 		#undef tmpV
 	}
@@ -37,15 +35,14 @@ __declspec(naked) void __cdecl TSSBundleList_Setting_CheckFEPParam()
 {
 	__asm
 	{
-		#define sizeof_string 24
-		#define this          ebx
-		#define tmpV          edi
+		#define this ebx
+		#define tmpV edi
 
 		dec     dword ptr [esi + 1CH]
 		dec     dword ptr [esi + 1CH]
 		mov     edx, dword ptr [tmpV]
 		mov     eax, dword ptr [tmpV + 4]
-		add     edx, sizeof_string * 6
+		add     edx, size string * 6
 		mov     ecx, this
 		cmp     edx, eax
 		jae     L1
@@ -54,7 +51,6 @@ __declspec(naked) void __cdecl TSSBundleList_Setting_CheckFEPParam()
 	L1:
 		ret
 
-		#undef sizeof_string
 		#undef this
 		#undef tmpV
 	}
@@ -64,15 +60,14 @@ __declspec(naked) void __cdecl TSSDoubleList_Setting_CheckFEPParam()
 {
 	__asm
 	{
-		#define sizeof_string 24
-		#define this          ebx
-		#define tmpV          (ebp - 18H)
+		#define this ebx
+		#define tmpV (ebp - 18H)
 
 		dec     dword ptr [esi + 1CH]
 		dec     dword ptr [esi + 1CH]
 		mov     edx, dword ptr [tmpV]
 		mov     eax, dword ptr [tmpV + 4]
-		add     edx, sizeof_string * 6
+		add     edx, size string * 6
 		mov     ecx, this
 		cmp     edx, eax
 		jae     L1
@@ -81,7 +76,6 @@ __declspec(naked) void __cdecl TSSDoubleList_Setting_CheckFEPParam()
 	L1:
 		ret
 
-		#undef sizeof_string
 		#undef this
 		#undef tmpV
 	}
@@ -91,15 +85,14 @@ __declspec(naked) void __cdecl TSSList_Setting_CheckFEPParam()
 {
 	__asm
 	{
-		#define sizeof_string 24
-		#define this          ebx
-		#define tmpV          edi
+		#define this ebx
+		#define tmpV edi
 
 		dec     dword ptr [esi + 1CH]
 		dec     dword ptr [esi + 1CH]
 		mov     edx, dword ptr [tmpV]
 		mov     eax, dword ptr [tmpV + 4]
-		add     edx, sizeof_string * 4
+		add     edx, size string * 4
 		mov     ecx, this
 		cmp     edx, eax
 		jae     L1
@@ -108,7 +101,6 @@ __declspec(naked) void __cdecl TSSList_Setting_CheckFEPParam()
 	L1:
 		ret
 
-		#undef sizeof_string
 		#undef this
 		#undef tmpV
 	}

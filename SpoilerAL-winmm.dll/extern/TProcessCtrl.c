@@ -14,17 +14,13 @@ __declspec(naked) LPMODULEENTRY32A __fastcall TProcessCtrl_GetModuleFromName(TPr
 {
 	__asm
 	{
-		#define sizeof_string 24
-
-		sub     esp, sizeof_string
+		sub     esp, size string
 		mov     eax, ecx
 		mov     ecx, esp
 		push    eax
 		call    string_ctor_assign_cstr
 		call    dword ptr [F004A61F8]
-		add     esp, 4 + sizeof_string
+		add     esp, 4 + size string
 		ret
-
-		#undef sizeof_string
 	}
 }

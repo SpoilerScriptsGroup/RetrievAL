@@ -14,8 +14,6 @@ typedef struct {
 	unsigned long level4;
 } data_layout;
 
-#define sizeof_descriptor_record 4
-
 typedef struct {                                            // record for table of cache descriptors
 	unsigned char d_key;                                    // key from cpuid instruction
 	unsigned char d_level;                                  // cache level
@@ -273,14 +271,14 @@ __declspec(naked) static void __cdecl IntelOldMethod()
 
 		// loop to search in descriptortable
 	J200:
-		cmp     al, descriptortable[ebx * sizeof_descriptor_record].d_key
+		cmp     al, descriptortable[ebx * size descriptor_record].d_key
 		jne     J300
 
 		// descriptor found
-		movzx   eax, descriptortable[ebx * sizeof_descriptor_record].d_sizem
-		mov     cl,  descriptortable[ebx * sizeof_descriptor_record].d_2pow
+		movzx   eax, descriptortable[ebx * size descriptor_record].d_sizem
+		mov     cl,  descriptortable[ebx * size descriptor_record].d_2pow
 		shl     eax, cl                                     // compute size
-		movzx   ecx, descriptortable[ebx * sizeof_descriptor_record].d_level
+		movzx   ecx, descriptortable[ebx * size descriptor_record].d_level
 
 		// check that level = 1-3
 		cmp     ecx, 3

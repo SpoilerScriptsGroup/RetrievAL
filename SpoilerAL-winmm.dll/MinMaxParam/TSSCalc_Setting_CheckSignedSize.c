@@ -10,21 +10,19 @@ __declspec(naked) void __cdecl TSSCalc_Setting_CheckSignedSize()
 {
 	__asm
 	{
-		#define sizeof_string 24
 		#define ReturnAddress 004C18D9H
 		#define this          ebx
 		#define tmpV          edi
 
 		mov     eax, dword ptr [tmpV]
-		add     eax, sizeof_string * 2
+		add     eax, size string * 2
 		push    eax
-		sub     eax, sizeof_string * (2 - 1)
+		sub     eax, size string * (2 - 1)
 		push    eax
 		push    this
 		push    ReturnAddress
 		jmp     Setting_CheckSignedSize
 
-		#undef sizeof_string
 		#undef ReturnAddress
 		#undef this
 		#undef tmpV
@@ -35,21 +33,19 @@ __declspec(naked) void __cdecl TSSBundleCalc_Setting_CheckSignedSize()
 {
 	__asm
 	{
-		#define sizeof_string 24
 		#define ReturnAddress 004BD14BH
 		#define this          ebx
 		#define tmpV          edi
 
 		mov     eax, dword ptr [tmpV]
-		add     eax, sizeof_string * 4
+		add     eax, size string * 4
 		push    eax
-		sub     eax, sizeof_string * (4 - 3)
+		sub     eax, size string * (4 - 3)
 		push    eax
 		push    this
 		push    ReturnAddress
 		jmp     Setting_CheckSignedSize
 
-		#undef sizeof_string
 		#undef ReturnAddress
 		#undef this
 		#undef tmpV

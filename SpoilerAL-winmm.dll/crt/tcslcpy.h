@@ -21,11 +21,9 @@ size_t __cdecl _tcslcpy(TCHAR *dest, const TCHAR *src, size_t count)
 __declspec(naked) size_t __cdecl _tcslcpy(TCHAR *dest, const TCHAR *src, size_t count)
 {
 #ifdef _UNICODE
-	#define tchar_ptr    word ptr
-	#define sizeof_tchar 2
+	#define tchar_ptr word ptr
 #else
-	#define tchar_ptr    byte ptr
-	#define sizeof_tchar 1
+	#define tchar_ptr byte ptr
 #endif
 
 	__asm
@@ -46,11 +44,11 @@ __declspec(naked) size_t __cdecl _tcslcpy(TCHAR *dest, const TCHAR *src, size_t 
 		jb      L3
 		cmp     ecx, eax
 		ja      L1
-		mov     tchar_ptr [edi + ecx * sizeof_tchar], '\0'
+		mov     tchar_ptr [edi + ecx * size TCHAR], '\0'
 		jmp     L2
 
 	L1:
-		mov     tchar_ptr [edi + eax * sizeof_tchar], '\0'
+		mov     tchar_ptr [edi + eax * size TCHAR], '\0'
 		mov     ecx, eax
 	L2:
 #ifdef _UNICODE
@@ -77,6 +75,5 @@ __declspec(naked) size_t __cdecl _tcslcpy(TCHAR *dest, const TCHAR *src, size_t 
 	}
 
 	#undef tchar_ptr
-	#undef sizeof_tchar
 }
 #endif

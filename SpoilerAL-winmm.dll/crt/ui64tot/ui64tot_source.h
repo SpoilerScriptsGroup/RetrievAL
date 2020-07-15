@@ -257,21 +257,19 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 {
 #ifdef _UNICODE
-	#define digits        digits100W
-	#define tchar         word
-	#define tchar2        dword
-	#define sizeof_tchar2 4
-	#define inc_tchar(r)  add r, 2
-	#define t(r)          r##x
-	#define t2(r)         e##r##x
+	#define digits       digits100W
+	#define tchar        word
+	#define tchar2       dword
+	#define inc_tchar(r) add r, 2
+	#define t(r)         r##x
+	#define t2(r)        e##r##x
 #else
-	#define digits        digits100A
-	#define tchar         byte
-	#define tchar2        word
-	#define sizeof_tchar2 2
-	#define inc_tchar(r)  inc r
-	#define t(r)          r##l
-	#define t2(r)         r##x
+	#define digits       digits100A
+	#define tchar        byte
+	#define tchar2       word
+	#define inc_tchar(r) inc r
+	#define t(r)         r##l
+	#define t2(r)        r##x
 #endif
 
 	__asm
@@ -613,34 +611,34 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		mov     eax, edx
 		shr     edx, 25
 		and     eax, (1 << 25) - 1
-		mov     t2(b), tchar2 ptr [digits + edx * sizeof_tchar2]
+		mov     t2(b), tchar2 ptr [digits + edx * (size TCHAR * 2)]
 		lea     eax, [eax + eax * 4]
 		mov     tchar2 ptr [ecx], t2(b)
 		lea     eax, [eax + eax * 4]
-		add     ecx, sizeof_tchar2
+		add     ecx, size TCHAR * 2
 		mov     edx, eax
 		shr     edx, 25 - 2
 		and     eax, (1 << (25 - 2)) - 1
-		mov     t2(b), tchar2 ptr [digits + edx * sizeof_tchar2]
+		mov     t2(b), tchar2 ptr [digits + edx * (size TCHAR * 2)]
 		lea     eax, [eax + eax * 4]
 		mov     tchar2 ptr [ecx], t2(b)
 		lea     eax, [eax + eax * 4]
-		add     ecx, sizeof_tchar2
+		add     ecx, size TCHAR * 2
 		mov     edx, eax
 		shr     edx, 25 - 4
 		and     eax, (1 << (25 - 4)) - 1
-		mov     t2(b), tchar2 ptr [digits + edx * sizeof_tchar2]
+		mov     t2(b), tchar2 ptr [digits + edx * (size TCHAR * 2)]
 		lea     eax, [eax + eax * 4]
 		mov     tchar2 ptr [ecx], t2(b)
 		lea     eax, [eax + eax * 4]
-		add     ecx, sizeof_tchar2
+		add     ecx, size TCHAR * 2
 		mov     edx, eax
 		shr     edx, 25 - 6
 		and     eax, (1 << (25 - 6)) - 1
-		mov     t2(b), tchar2 ptr [digits + edx * sizeof_tchar2]
+		mov     t2(b), tchar2 ptr [digits + edx * (size TCHAR * 2)]
 		lea     edx, [eax + eax * 4]
 		mov     tchar2 ptr [ecx], t2(b)
-		add     ecx, sizeof_tchar2
+		add     ecx, size TCHAR * 2
 		shr     edx, 25 - 7
 		mov     eax, dword ptr [esp + 4]
 		add     edx, '0'
@@ -649,7 +647,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		mov     tchar2 ptr [ecx], t2(d)
 #else
 		mov     tchar ptr [ecx], t(d)
-		mov     tchar ptr [ecx + sizeof_tchar2], '\0'
+		mov     tchar ptr [ecx + (size TCHAR * 2)], '\0'
 #endif
 		ret     8
 	}
@@ -657,7 +655,6 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 	#undef digits
 	#undef tchar
 	#undef tchar2
-	#undef sizeof_tchar2
 	#undef inc_tchar
 	#undef t
 	#undef t2
@@ -697,13 +694,11 @@ __declspec(naked) size_t __fastcall _ui64to2t(uint64_t value, TCHAR *buffer)
 #ifdef _UNICODE
 	#define tchar        word
 	#define tchar2       dword
-	#define sizeof_tchar 2
 	#define dec_tchar(r) sub r, 2
 	#define t(r)         r##x
 #else
 	#define tchar        byte
 	#define tchar2       word
-	#define sizeof_tchar 1
 	#define dec_tchar(r) dec r
 	#define t(r)         r##l
 #endif
@@ -760,7 +755,7 @@ __declspec(naked) size_t __fastcall _ui64to2t(uint64_t value, TCHAR *buffer)
 		shr     edx, 1
 		jnz     L4
 
-		mov     tchar ptr [ecx - sizeof_tchar], '1'
+		mov     tchar ptr [ecx - size TCHAR], '1'
 		pop     eax
 		pop     esi
 		ret     8
@@ -770,7 +765,7 @@ __declspec(naked) size_t __fastcall _ui64to2t(uint64_t value, TCHAR *buffer)
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 		mov     tchar2 ptr [ecx], '0'
 #else
-		mov     tchar2 ptr [ecx], '0' << (8 * sizeof_tchar)
+		mov     tchar2 ptr [ecx], '0' << (8 * size TCHAR)
 #endif
 		mov     eax, 1
 		pop     esi
@@ -783,7 +778,6 @@ __declspec(naked) size_t __fastcall _ui64to2t(uint64_t value, TCHAR *buffer)
 
 	#undef tchar
 	#undef tchar2
-	#undef sizeof_tchar
 	#undef dec_tchar
 	#undef t
 }
@@ -893,7 +887,7 @@ __declspec(naked) size_t __fastcall _ui64to4t(uint64_t value, TCHAR *buffer)
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 		mov     tchar2 ptr [ecx], '0'
 #else
-		mov     tchar2 ptr [ecx], '0' << (8 * sizeof_tchar)
+		mov     tchar2 ptr [ecx], '0' << (8 * size TCHAR)
 #endif
 		mov     eax, 1
 		pop     esi
@@ -1026,7 +1020,7 @@ __declspec(naked) size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer)
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 		mov     tchar2 ptr [ecx], '0'
 #else
-		mov     tchar2 ptr [ecx], '0' << (8 * sizeof_tchar)
+		mov     tchar2 ptr [ecx], '0' << (8 * size TCHAR)
 #endif
 		mov     eax, 1
 		pop     edi
@@ -1080,13 +1074,11 @@ __declspec(naked) size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BO
 #ifdef _UNICODE
 	#define tchar        word
 	#define tchar2       dword
-	#define sizeof_tchar 2
 	#define dec_tchar(r) sub r, 2
 	#define t(r)         r##x
 #else
 	#define tchar        byte
 	#define tchar2       word
-	#define sizeof_tchar 1
 	#define dec_tchar(r) dec r
 	#define t(r)         r##l
 #endif
@@ -1133,7 +1125,7 @@ __declspec(naked) size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BO
 		shr     ebx, 4
 		and     eax, 15
 		shl     edi, 32 - 4
-		mov     t(a), tchar ptr [edx + eax * sizeof_tchar]
+		mov     t(a), tchar ptr [edx + eax * size TCHAR]
 		dec_tchar(ecx)
 		or      ebx, edi
 		shr     esi, 4
@@ -1147,7 +1139,7 @@ __declspec(naked) size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BO
 		dec_tchar(ecx)
 		shr     ebx, 4
 		and     eax, 15
-		mov     t(a), tchar ptr [edx + eax * sizeof_tchar]
+		mov     t(a), tchar ptr [edx + eax * size TCHAR]
 		test    ebx, ebx
 		mov     tchar ptr [ecx], t(a)
 		jnz     L3
@@ -1163,7 +1155,7 @@ __declspec(naked) size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BO
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 		mov     tchar2 ptr [ecx], '0'
 #else
-		mov     tchar2 ptr [ecx], '0' << (8 * sizeof_tchar)
+		mov     tchar2 ptr [ecx], '0' << (8 * size TCHAR)
 #endif
 		mov     eax, 1
 		pop     esi
@@ -1178,7 +1170,6 @@ __declspec(naked) size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BO
 
 	#undef tchar
 	#undef tchar2
-	#undef sizeof_tchar
 	#undef dec_tchar
 	#undef t
 }
@@ -1224,13 +1215,11 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 #ifdef _UNICODE
 	#define tchar        word
 	#define tchar2       dword
-	#define sizeof_tchar 2
 	#define dec_tchar(r) sub r, 2
 	#define t(r)         r##x
 #else
 	#define tchar        byte
 	#define tchar2       word
-	#define sizeof_tchar 1
 	#define dec_tchar(r) dec r
 	#define t(r)         r##l
 #endif
@@ -1278,7 +1267,7 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 		shr     ebx, 5
 		and     eax, 31
 		shl     edi, 32 - 5
-		mov     t(a), tchar ptr [edx + eax * sizeof_tchar]
+		mov     t(a), tchar ptr [edx + eax * size TCHAR]
 		dec_tchar(ecx)
 		or      ebx, edi
 		shr     esi, 5
@@ -1292,7 +1281,7 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 		dec_tchar(ecx)
 		shr     ebx, 5
 		and     eax, 31
-		mov     t(a), tchar ptr [edx + eax * sizeof_tchar]
+		mov     t(a), tchar ptr [edx + eax * size TCHAR]
 		test    ebx, ebx
 		mov     tchar ptr [ecx], t(a)
 		jnz     L3
@@ -1308,7 +1297,7 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 		mov     tchar2 ptr [ecx], '0'
 #else
-		mov     tchar2 ptr [ecx], '0' << (8 * sizeof_tchar)
+		mov     tchar2 ptr [ecx], '0' << (8 * size TCHAR)
 #endif
 		mov     eax, 1
 		pop     esi
@@ -1323,7 +1312,6 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 
 	#undef tchar
 	#undef tchar2
-	#undef sizeof_tchar
 	#undef dec_tchar
 	#undef t
 }
@@ -1386,13 +1374,11 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 #ifdef _UNICODE
 	#define t(r)         r##x
 	#define tchar        word
-	#define sizeof_tchar 2
 	#define inc_tchar(r) add r, 2
 	#define dec_tchar(r) sub r, 2
 #else
 	#define t(r)         r##l
 	#define tchar        byte
-	#define sizeof_tchar 1
 	#define inc_tchar(r) inc r
 	#define dec_tchar(r) dec r
 #endif
@@ -1434,7 +1420,7 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 		mov     hi, eax
 		mov     eax, lo
 		div     radix
-		mov     t(d), tchar ptr [digits + edx * sizeof_tchar]
+		mov     t(d), tchar ptr [digits + edx * size TCHAR]
 		inc_tchar(p1)
 		mov     lo, eax
 		test    hi, hi
@@ -1446,12 +1432,12 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 		xor     edx, edx
 		inc_tchar(p1)
 		div     radix
-		mov     t(d), tchar ptr [digits + edx * sizeof_tchar]
+		mov     t(d), tchar ptr [digits + edx * size TCHAR]
 		test    eax, eax
 		mov     tchar ptr [p1], t(d)
 		jnz     L2
 
-		lea     eax, [p1 + sizeof_tchar]
+		lea     eax, [p1 + size TCHAR]
 		mov     p2, dword ptr [buffer]
 		mov     tchar ptr [eax], '\0'
 		sub     eax, p2
@@ -1490,7 +1476,6 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 
 	#undef t
 	#undef tchar
-	#undef sizeof_tchar
 	#undef inc_tchar
 	#undef dec_tchar
 }

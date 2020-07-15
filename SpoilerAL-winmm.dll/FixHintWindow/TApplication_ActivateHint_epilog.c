@@ -84,7 +84,7 @@ __declspec(naked) static LRESULT CALLBACK GetMsgProc(int nCode, WPARAM wParam, L
 }
 #endif
 
-__declspec(naked) void __cdecl TApplication_ActivateHint_epilogue()
+__declspec(naked) void __cdecl TApplication_ActivateHint_epilog()
 {
 	EXTERN_C const DWORD _TWinControl_GetHandle;
 
@@ -95,10 +95,10 @@ __declspec(naked) void __cdecl TApplication_ActivateHint_epilogue()
 		mov     eax, dword ptr [hHook]                      // if (hHook)
 		mov     ecx, dword ptr [ebx]                        //     return;
 		test    eax, eax
-		jnz     epilogue
+		jnz     epilog
 		mov     eax, dword ptr [ecx + 96]                   // Control = *(TWinControl **)((char *)this + 96);
 		test    eax, eax                                    // if (!Control)
-		jz      epilogue                                    //     return;
+		jz      epilog                                      //     return;
 		call    dword ptr [_TWinControl_GetHandle]          // hWnd = Control->Handle;
 		mov     dword ptr [hWnd], eax
 		push    eax                                         // SetCapture(hWnd);
@@ -112,7 +112,7 @@ __declspec(naked) void __cdecl TApplication_ActivateHint_epilogue()
 		push    WH_GETMESSAGE
 		call    SetWindowsHookExA
 		mov     dword ptr [hHook], eax
-	epilogue:
+	epilog:
 		pop     edi
 		pop     esi
 		pop     ebx

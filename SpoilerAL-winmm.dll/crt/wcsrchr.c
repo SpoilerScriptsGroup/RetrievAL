@@ -136,11 +136,11 @@ __declspec(naked) wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wchar_t c
 		align   16
 	process_stored_pointer:
 		test    eax, eax
-		jz      epilogue
+		jz      epilog
 		bsr     edx, esi
 	return_pointer:
 		lea     eax, [eax + edx - 1]
-	epilogue:
+	epilog:
 		pop     edi
 		pop     esi
 		pop     ebx

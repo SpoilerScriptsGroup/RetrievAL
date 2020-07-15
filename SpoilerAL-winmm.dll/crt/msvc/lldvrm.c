@@ -56,10 +56,10 @@ __declspec(naked) __int64 __fastcall _lldvrm(__int64 dividend, __int64 divisor, 
 		push    eax
 		call    _alldvrm
 		test    esi, esi
-		jz      epilogue
+		jz      epilog
 		mov     dword ptr [esi], ecx
 		mov     dword ptr [esi + 4], ebx
-	epilogue:
+	epilog:
 		pop     esi
 		pop     ebx
 		ret     16
@@ -365,7 +365,7 @@ __declspec(naked) void __cdecl _alldvrm()
 		mov     ecx, edx                    // ECX <- final remainder
 		mov     edx, ebx                    // EDX:EAX = quotient
 		xor     ebx, ebx                    // EBX:ECX = remainder
-		jmp     epilogue                    // negate result, restore stack and return
+		jmp     epilog                      // negate result, restore stack and return
 
 		align   16
 	hard:
@@ -382,7 +382,7 @@ __declspec(naked) void __cdecl _alldvrm()
 		and     ebx, esi                    // EBX:ECX = remainder
 		lea     eax, [esi + 1]
 		xor     edx, edx                    // EDX:EAX = quotient
-		jmp     epilogue                    // negate result, restore stack and return
+		jmp     epilog                      // negate result, restore stack and return
 
 		align   16
 	shift:
@@ -419,13 +419,13 @@ __declspec(naked) void __cdecl _alldvrm()
 		sbb     ebx, edx                    // EBX:ECX = remainder
 		mov     eax, esi
 		mov     edx, 0                      // EDX:EAX = quotient
-		jae     epilogue                    // if above or equal we are ok, else add
+		jae     epilog                      // if above or equal we are ok, else add
 		add     ecx, LOWORD(DVSR)           // add divisor to remainder
 		mov     esi, HIWORD(DVSR)
 		adc     ebx, esi
 		dec     eax                         // subtract 1 from quotient
 
-	epilogue:
+	epilog:
 		//
 		// Cleanup the stack.
 		//

@@ -67,9 +67,9 @@ __declspec(naked) static int __cdecl stricmpSSE2(const char *string1, const char
 		lea     ecx, [edx + 'a' - 'A']
 		cmovb   edx, ecx
 		sub     eax, edx
-		jnz     epilogue
+		jnz     epilog
 		cmp     edx, '\0' - 'A'
-		je      epilogue
+		je      epilog
 		lea     ecx, [edi + 1]
 		inc     edi
 	byte_loop_entry:
@@ -101,7 +101,7 @@ __declspec(naked) static int __cdecl stricmpSSE2(const char *string1, const char
 		xor     eax, 0FFFFH
 		jnz     xmmword_not_equal
 		test    ecx, ecx
-		jnz     epilogue
+		jnz     epilog
 		add     edx, 16
 		add     edi, 16
 		and     edx, PAGE_SIZE - 1
@@ -116,7 +116,7 @@ __declspec(naked) static int __cdecl stricmpSSE2(const char *string1, const char
 		xor     ecx, 15
 		shr     edx, cl
 		and     eax, edx
-		jz      epilogue
+		jz      epilog
 	xmmword_has_not_null:
 		bsf     eax, eax
 		add     edi, eax
@@ -131,7 +131,7 @@ __declspec(naked) static int __cdecl stricmpSSE2(const char *string1, const char
 		lea     ecx, [edx + 'a' - 'A']
 		cmovb   edx, ecx
 		sub     eax, edx
-	epilogue:
+	epilog:
 		pop     edi
 		pop     esi
 		ret

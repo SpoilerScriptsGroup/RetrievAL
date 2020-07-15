@@ -208,7 +208,7 @@ __declspec(naked) unsigned __int64 __cdecl _aulldiv(unsigned __int64 dividend, u
 		mov     eax, ebx                    // EDX:EAX <- remainder:lo word of dividend
 		div     esi                         // get low order bits of quotient
 		mov     edx, ecx                    // EDX:EAX <- quotient hi:quotient lo
-		jmp     epilogue                    // restore stack and return
+		jmp     epilog                      // restore stack and return
 
 		align   16
 	hard:
@@ -223,7 +223,7 @@ __declspec(naked) unsigned __int64 __cdecl _aulldiv(unsigned __int64 dividend, u
 		sbb     eax, eax
 		xor     edx, edx
 		inc     eax                         // EDX:EAX = quotient
-		jmp     epilogue                    // restore stack and return
+		jmp     epilog                      // restore stack and return
 
 		align   16
 	shift:
@@ -262,7 +262,7 @@ __declspec(naked) unsigned __int64 __cdecl _aulldiv(unsigned __int64 dividend, u
 		sbb     eax, 0                      // subtract carry flag from quotient
 		xor     edx, edx
 
-	epilogue:
+	epilog:
 		//
 		// Just the cleanup left to do.  EDX:EAX contains the quotient.
 		// Restore the saved registers and return.

@@ -140,11 +140,11 @@ __declspec(naked) wchar_t * __cdecl wcschr386(const wchar_t *string, wchar_t c)
 		mov     cx, word ptr [eax + 2]
 		add     eax, 2
 		cmp     cx, dx
-		je      epilogue
+		je      epilog
 		test    cx, cx
 		jnz     main_loop
 		xor     eax, eax
-	epilogue:
+	epilog:
 		ret
 
 		align   16

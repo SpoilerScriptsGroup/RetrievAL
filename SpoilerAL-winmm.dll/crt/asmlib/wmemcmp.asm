@@ -189,7 +189,7 @@ wmemcmpAVX2_entry label near
 	mov     edx, 0FFFFH
 	inc     ecx
 	jnz     loop_entry
-	jmp     epilogue
+	jmp     epilog
 
 	align   16
 loop_begin:
@@ -200,7 +200,7 @@ loop_begin:
 	xor     eax, -1                                     ; not eax would not set flags
 	jnz     difference_ymmword                          ; difference found
 	add     ecx, 16
-	jz      epilogue_avx                                ; finished, equal
+	jz      epilog_avx                                  ; finished, equal
 loop_entry:
 	cmp     ecx, -16
 	jna     loop_begin                                  ; next 32 bytes
@@ -217,7 +217,7 @@ loop_entry:
 	xor     eax, edx                                    ; not ax
 	jnz     difference_xmmword                          ; difference found
 	add     ecx, 8
-	jz      epilogue                                    ; finished, equal
+	jz      epilog                                      ; finished, equal
 
 less_than_16_bytes_left:
 	; less than 16 bytes left
@@ -231,7 +231,7 @@ less_than_16_bytes_left:
 	xor     eax, edx                                    ; not ax
 	jnz     difference_xmmword                          ; difference found
 	add     ecx, 4
-	jz      epilogue
+	jz      epilog
 
 less_than_8_bytes_left:
 	; less than 8 bytes left
@@ -246,7 +246,7 @@ less_than_8_bytes_left:
 	jnz     difference_xmmword                          ; difference found
 	add     ecx, 2
 	jnz     difference_word                             ; one word left
-	jmp     epilogue                                    ; no bytes left
+	jmp     epilog                                      ; no bytes left
 
 	align   16
 difference_ymmword:
@@ -262,14 +262,14 @@ difference_word:
 	movzx   eax, word ptr [esi + ecx * 2]
 	movzx   edx, word ptr [edi + ecx * 2]
 	sub     eax, edx                                    ; signed difference between unsigned words
-	jmp     epilogue
+	jmp     epilog
 
 	align   16
-epilogue_avx:
+epilog_avx:
 	; equal
 	vzeroupper
 
-epilogue:
+epilog:
 	pop     edi
 	pop     esi
 	ret
@@ -290,7 +290,7 @@ wmemcmpSSE2 proc near
 	mov     edx, 0FFFFH
 	inc     ecx
 	jnz     loop_entry
-	jmp     epilogue
+	jmp     epilog
 
 	align   16
 loop_begin:
@@ -302,7 +302,7 @@ loop_begin:
 	xor     eax, edx                                    ; not ax
 	jnz     difference_xmmword                          ; difference found
 	add     ecx, 8
-	jz      epilogue                                    ; finished, equal
+	jz      epilog                                      ; finished, equal
 loop_entry:
 	cmp     ecx, -8
 	jna     loop_begin                                  ; next 16 bytes
@@ -318,7 +318,7 @@ loop_entry:
 	xor     eax, edx                                    ; not ax
 	jnz     difference_xmmword                          ; difference found
 	add     ecx, 4
-	jz      epilogue
+	jz      epilog
 
 less_than_8_bytes_left:
 	; less than 8 bytes left
@@ -333,7 +333,7 @@ less_than_8_bytes_left:
 	jnz     difference_xmmword                          ; difference found
 	add     ecx, 2
 	jnz     difference_word                             ; one word left
-	jmp     epilogue                                    ; no bytes left
+	jmp     epilog                                      ; no bytes left
 
 	align   16
 difference_xmmword:
@@ -347,7 +347,7 @@ difference_word:
 	movzx   edx, word ptr [edi + ecx * 2]
 	sub     eax, edx                                    ; signed difference between unsigned words
 
-epilogue:
+epilog:
 	pop     edi
 	pop     esi
 	ret
@@ -381,18 +381,18 @@ compare_words:
 	mov     eax, 0
 	mov     edx, 0
 	sub     ecx, 1
-	jz      epilogue
+	jz      epilog
 
 	align   16
 word_loop:
 	mov     ax, word ptr [esi + ecx * 2]
 	mov     dx, word ptr [edi + ecx * 2]
 	sub     eax, edx
-	jnz     epilogue
+	jnz     epilog
 	inc     ecx
 	jnz     word_loop
 
-epilogue:
+epilog:
 	pop     edi
 	pop     esi
 	ret

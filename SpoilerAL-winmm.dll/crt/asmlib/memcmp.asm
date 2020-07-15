@@ -607,7 +607,7 @@ memcmpAVX2_entry label near
 	mov     edx, 0FFFFH
 	inc     ecx
 	jnz     loop_entry
-	jmp     epilogue
+	jmp     epilog
 
 	align   16
 loop_begin:
@@ -618,7 +618,7 @@ loop_begin:
 	xor     eax, -1                                     ; not eax would not set flags
 	jnz     difference_ymmword                          ; difference found
 	add     ecx, 32
-	jz      epilogue_avx                                ; finished, equal
+	jz      epilog_avx                                  ; finished, equal
 loop_entry:
 	cmp     ecx, -32
 	jna     loop_begin                                  ; next 32 bytes
@@ -635,7 +635,7 @@ loop_entry:
 	xor     eax, edx                                    ; not ax
 	jnz     difference_xmmword                          ; difference found
 	add     ecx, 16
-	jz      epilogue
+	jz      epilog
 
 less_than_16_bytes_left:
 	; less than 16 bytes left
@@ -649,7 +649,7 @@ less_than_16_bytes_left:
 	xor     eax, edx                                    ; not ax
 	jnz     difference_xmmword                          ; difference found
 	add     ecx, 8
-	jz      epilogue
+	jz      epilog
 
 less_than_8_bytes_left:
 	; less than 8 bytes left
@@ -663,7 +663,7 @@ less_than_8_bytes_left:
 	xor     eax, edx                                    ; not ax
 	jnz     difference_xmmword                          ; difference found
 	add     ecx, 4
-	jz      epilogue
+	jz      epilog
 
 less_than_4_bytes_left:
 	; less than 4 bytes left
@@ -675,13 +675,13 @@ less_than_4_bytes_left:
 	sub     eax, edx
 	jnz     difference_word                             ; difference found
 	add     ecx, 2
-	jz      epilogue
+	jz      epilog
 
 less_than_2_bytes_left:
 	; less than 2 bytes left
 	test    ecx, ecx
 	jnz     difference_byte                             ; one byte left
-	jmp     epilogue                                    ; no bytes left
+	jmp     epilog                                      ; no bytes left
 
 	align   16
 difference_ymmword:
@@ -703,14 +703,14 @@ difference_byte:
 	movzx   eax, byte ptr [esi + ecx]
 	movzx   edx, byte ptr [edi + ecx]
 	sub     eax, edx                                    ; signed difference between unsigned bytes
-	jmp     epilogue
+	jmp     epilog
 
 	align   16
-epilogue_avx:
+epilog_avx:
 	; equal
 	vzeroupper
 
-epilogue:
+epilog:
 	pop     edi
 	pop     esi
 	ret
@@ -731,7 +731,7 @@ memcmpSSE2 proc near
 	mov     edx, 0FFFFH
 	inc     ecx
 	jnz     loop_entry
-	jmp     epilogue
+	jmp     epilog
 
 	align   16
 loop_begin:
@@ -743,7 +743,7 @@ loop_begin:
 	xor     eax, edx                                    ; not ax
 	jnz     difference_xmmword                          ; difference found
 	add     ecx, 16
-	jz      epilogue                                    ; finished, equal
+	jz      epilog                                      ; finished, equal
 loop_entry:
 	cmp     ecx, -16
 	jna     loop_begin                                  ; next 16 bytes
@@ -759,7 +759,7 @@ loop_entry:
 	xor     eax, edx                                    ; not ax
 	jnz     difference_xmmword                          ; difference found
 	add     ecx, 8
-	jz      epilogue
+	jz      epilog
 
 less_than_8_bytes_left:
 	; less than 8 bytes left
@@ -773,7 +773,7 @@ less_than_8_bytes_left:
 	xor     eax, edx                                    ; not ax
 	jnz     difference_xmmword                          ; difference found
 	add     ecx, 4
-	jz      epilogue
+	jz      epilog
 
 less_than_4_bytes_left:
 	; less than 4 bytes left
@@ -785,13 +785,13 @@ less_than_4_bytes_left:
 	sub     eax, edx
 	jnz     difference_word                             ; difference found
 	add     ecx, 2
-	jz      epilogue
+	jz      epilog
 
 less_than_2_bytes_left:
 	; less than 2 bytes left
 	test    ecx, ecx
 	jnz     difference_byte                             ; one byte left
-	jmp     epilogue                                    ; no bytes left
+	jmp     epilog                                      ; no bytes left
 
 	align   16
 difference_xmmword:
@@ -811,7 +811,7 @@ difference_byte:
 	movzx   edx, byte ptr [edi + ecx]
 	sub     eax, edx                                    ; signed difference between unsigned bytes
 
-epilogue:
+epilog:
 	pop     edi
 	pop     esi
 	ret
@@ -845,18 +845,18 @@ compare_bytes:
 	mov     eax, 0
 	mov     edx, 0
 	sub     ecx, 3
-	jz      epilogue
+	jz      epilog
 
 	align   16
 byte_loop:
 	mov     al, byte ptr [esi + ecx]
 	mov     dl, byte ptr [edi + ecx]
 	sub     eax, edx
-	jnz     epilogue
+	jnz     epilog
 	inc     ecx
 	jnz     byte_loop
 
-epilogue:
+epilog:
 	pop     edi
 	pop     esi
 	ret

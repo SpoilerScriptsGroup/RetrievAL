@@ -59,7 +59,7 @@ __inline uint32_t bswap32(uint32_t value)
 //     for (int i = 0; i <= 0xFF; i++)
 //         Crc32Lookup[slice][i] = (Crc32Lookup[slice - 1][i] >> 8) ^ Crc32Lookup[0][Crc32Lookup[slice - 1][i] & 0xFF];
 
-const uint32_t Crc32Lookup[MAX_SLICE][256] =
+static const uint32_t Crc32Lookup[MAX_SLICE][256] =
 {
 	{
 		0x00000000, 0x77073096, 0xEE0E612C, 0x990951BA, 0x076DC419, 0x706AF48F, 0xE963A535, 0x9E6495A3,

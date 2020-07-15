@@ -92,7 +92,7 @@ unaligned_word:
 	mov     byte ptr [eax], dl                          ; store first byte
 	dec     ecx                                         ; decrease count
 	mov     byte ptr [eax + ecx * 2 + 1], dh            ; store last byte
-	jz      epilogue                                    ; jump if count == 0
+	jz      epilog                                      ; jump if count == 0
 	mov     eax, edx                                    ; copy c
 	inc     edi                                         ; dest = dest + 1 byte
 	ror     edx, 8                                      ; edx = L/0/0/H (L = low, H = high)
@@ -123,7 +123,7 @@ remaining_word:
 	mov     word ptr [edi], ax                          ; store remaining word
 return_dest:
 	mov     eax, dword ptr [esp + 8]                    ; return dest
-epilogue:
+epilog:
 	pop     edi                                         ; restore edi
 count_equal_zero:
 	ret                                                 ; __cdecl return

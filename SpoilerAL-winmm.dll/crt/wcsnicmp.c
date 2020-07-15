@@ -8,12 +8,13 @@ int __cdecl _wcsnicmp(const wchar_t *string1, const wchar_t *string2, size_t cou
 	string1 += count;
 	string2 += count;
 	count ^= -1;
+	ret = 0;
 	while (++count)
 		if (ret = towlower(string1[count]) - (c = towlower(string2[count])))
-			return ret;
+			break;
 		else if (!c)
 			break;
-	return 0;
+	return ret;
 }
 #else
 #include "page.h"
@@ -76,12 +77,12 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 		lea     ecx, [edx + 'a' - 'A']
 		cmovb   edx, ecx
 		sub     eax, edx
-		jnz     epilogue
+		jnz     epilog
 		cmp     edx, '\0' - 'A'
-		je      epilogue
+		je      epilog
 	word_loop_increment:
 		inc     ebx
-		jz      epilogue
+		jz      epilog
 		lea     edx, [edi + ebx * 2 + 1]
 		lea     ecx, [esi + ebx * 2]
 		and     edx, 14
@@ -114,9 +115,9 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 		xor     edx, 0FFFFH
 		jnz     xmmword_not_equal
 		add     ebx, 8
-		jc      epilogue
+		jc      epilog
 		test    ecx, ecx
-		jnz     epilogue
+		jnz     epilog
 		lea     ecx, [esi + ebx * 2]
 		shl     ecx, 32 - PAGE_SHIFT
 		jmp     aligned_xmmword_loop
@@ -144,9 +145,9 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 		xor     edx, 0FFFFH
 		jnz     xmmword_not_equal
 		add     ebx, 8
-		jc      epilogue
+		jc      epilog
 		test    ecx, ecx
-		jnz     epilogue
+		jnz     epilog
 		lea     ecx, [esi + ebx * 2]
 		shl     ecx, 32 - PAGE_SHIFT
 		jmp     unaligned_xmmword_loop
@@ -160,14 +161,14 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 		xor     ecx, 15
 		shr     eax, cl
 		and     eax, edx
-		jz      epilogue
+		jz      epilog
 		mov     edx, eax
 		xor     eax, eax
 	xmmword_has_not_null:
 		bsf     edx, edx
 		shr     edx, 1
 		add     ebx, edx
-		jc      epilogue
+		jc      epilog
 		mov     ax, word ptr [esi + ebx * 2]
 		mov     dx, word ptr [edi + ebx * 2]
 		sub     eax, 'A'
@@ -179,7 +180,7 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 		lea     ecx, [edx + 'a' - 'A']
 		cmovb   edx, ecx
 		sub     eax, edx
-	epilogue:
+	epilog:
 		pop     edi
 		pop     esi
 		pop     ebx
@@ -238,7 +239,7 @@ __declspec(naked) static int __cdecl wcsnicmp386(const wchar_t *string1, const w
 		cmp     ebx, 'z' - 'a' + 1
 		jb      loop_begin
 		dec     eax
-		jmp     epilogue
+		jmp     epilog
 
 		align   16
 	compare_above:
@@ -247,7 +248,7 @@ __declspec(naked) static int __cdecl wcsnicmp386(const wchar_t *string1, const w
 		cmp     ebx, 'Z' - 'A' + 1
 		jb      loop_begin
 		inc     eax
-		jmp     epilogue
+		jmp     epilog
 
 		align   16
 	not_equal:
@@ -262,7 +263,7 @@ __declspec(naked) static int __cdecl wcsnicmp386(const wchar_t *string1, const w
 		add     edx, 'a' - 'A'
 	difference:
 		sub     eax, edx
-	epilogue:
+	epilog:
 		pop     edi
 		pop     esi
 		pop     ebx

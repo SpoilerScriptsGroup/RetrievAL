@@ -277,7 +277,7 @@ __declspec(naked) __int64 __cdecl _alldiv(__int64 dividend, __int64 divisor)
 		mov     eax, ebx                    // EDX:EAX <- remainder:lo word of dividend
 		div     esi                         // EAX <- low order bits of quotient
 		mov     edx, ecx                    // EDX:EAX <- quotient
-		jmp     epilogue                    // negate result, restore stack and return
+		jmp     epilog                      // negate result, restore stack and return
 
 		align   16
 	hard:
@@ -289,7 +289,7 @@ __declspec(naked) __int64 __cdecl _alldiv(__int64 dividend, __int64 divisor)
 		jns     shift
 		shr     eax, 31
 		xor     edx, edx                    // EDX:EAX = quotient
-		jmp     epilogue                    // negate result, restore stack and return
+		jmp     epilog                      // negate result, restore stack and return
 
 		align   16
 	shift:
@@ -340,7 +340,7 @@ __declspec(naked) __int64 __cdecl _alldiv(__int64 dividend, __int64 divisor)
 		#undef DVSRLO
 		#undef DVSRHI
 
-	epilogue:
+	epilog:
 		//
 		// Just the cleanup left to do.  EDX:EAX contains the quotient.  Set the sign
 		// according to the save value, cleanup the stack, and return.

@@ -56,10 +56,10 @@ __declspec(naked) unsigned __int64 __fastcall _ulldvrm(unsigned __int64 dividend
 		push    eax
 		call    _aulldvrm
 		test    esi, esi
-		jz      epilogue
+		jz      epilog
 		mov     dword ptr [esi], ecx
 		mov     dword ptr [esi + 4], ebx
-	epilogue:
+	epilog:
 		pop     esi
 		pop     ebx
 		ret     16
@@ -264,7 +264,7 @@ __declspec(naked) void __cdecl _aulldvrm()
 		mov     ecx, edx                    // ECX <- final remainder
 		mov     edx, edi                    // EDX:EAX = quotient
 		xor     ebx, ebx                    // EBX:ECX = remainder
-		jmp     epilogue                    // restore stack and return
+		jmp     epilog                      // restore stack and return
 
 		align   16
 	hard:
@@ -287,7 +287,7 @@ __declspec(naked) void __cdecl _aulldvrm()
 		sbb     ebx, edx                    // EBX:ECX = remainder
 		xor     edx, edx
 		and     eax, 1                      // EDX:EAX = quotient
-		jmp     epilogue                    // restore stack and return
+		jmp     epilog                      // restore stack and return
 
 		align   16
 	shift:
@@ -326,13 +326,13 @@ __declspec(naked) void __cdecl _aulldvrm()
 		sbb     ebx, edx                    // EBX:ECX = remainder
 		mov     edx, 0                      // EDX:EAX = quotient
 		sbb     edi, 0
-		jz      epilogue                    // if above or equal we're ok, else add
+		jz      epilog                      // if above or equal we're ok, else add
 		add     ecx, LOWORD(DVSR)           // add divisor to remainder
 		mov     esi, HIWORD(DVSR)
 		adc     ebx, esi
 		dec     eax                         // subtract 1 from quotient
 
-	epilogue:
+	epilog:
 		//
 		// Just the cleanup left to do.  EDX:EAX contains the quotient.
 		// Restore the saved registers and return.

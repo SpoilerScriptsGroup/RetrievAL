@@ -109,7 +109,7 @@ __declspec(naked) static size_t __cdecl wcsspn(const wchar_t *string, const wcha
 		mov     bx, word ptr [esi + eax * 2]
 		inc     eax
 		test    bx, bx
-		jz      epilogue
+		jz      epilog
 		mov     edx, edi
 
 		align   16
@@ -120,7 +120,7 @@ __declspec(naked) static size_t __cdecl wcsspn(const wchar_t *string, const wcha
 		je      outer_loop
 		test    cx, cx
 		jnz     inner_loop
-	epilogue:
+	epilog:
 		pop     edi                                         // restore edi
 		pop     esi                                         // restore esi
 		pop     ebx                                         // restore ebx

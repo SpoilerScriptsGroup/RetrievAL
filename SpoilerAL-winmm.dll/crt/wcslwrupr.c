@@ -255,14 +255,14 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 
 	aligned_last:
 		shr     ecx, 1
-		jc      aligned_epilogue
+		jc      aligned_epilog
 		bsf     ecx, ecx
 		xor     ecx, 15
 		movdqu  xmm2, xmmword ptr [maskbit + ecx]           // load the target bits mask
 		pand    xmm0, xmm2                                  // assign a mask for casebit
 		pxor    xmm0, xmm1                                  // negation of the 5th bit - lowercase letters
 		movdqa  xmmword ptr [edx], xmm0                     // store 16 bytes
-	aligned_epilogue:
+	aligned_epilog:
 		ret
 
 		align   16
@@ -305,14 +305,14 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 		jz      unaligned_loop                              // next 16 bytes
 
 		shr     ecx, 1
-		jc      unaligned_epilogue
+		jc      unaligned_epilog
 		bsf     ecx, ecx
 		xor     ecx, 15
 		movdqu  xmm2, xmmword ptr [maskbit + ecx]           // load the target bits mask
 		pand    xmm0, xmm2                                  // assign a mask for casebit
 		pxor    xmm0, xmm1                                  // negation of the 5th bit - lowercase letters
 		movdqu  xmmword ptr [edx], xmm0                     // store 16 bytes
-	unaligned_epilogue:
+	unaligned_epilog:
 		ret
 	}
 }

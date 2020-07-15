@@ -75,10 +75,10 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		lea     ecx, [edx + 'a' - 'A']
 		cmovb   edx, ecx
 		sub     eax, edx
-		jnz     epilogue
+		jnz     epilog
 	byte_loop_entry:
 		inc     ebx
-		jz      epilogue
+		jz      epilog
 		dec     ebp
 		jns     byte_loop
 		movdqa  xmm4, xmmword ptr [upper]
@@ -124,7 +124,7 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		jnc     xmmword_loop
 		sub     ebx, edx
 		jb      xmmword_loop_last
-		jmp     epilogue
+		jmp     epilog
 
 		align   16
 	xmmword_not_equal:
@@ -132,7 +132,7 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		sub     ebx, edx
 		add     esi, edx
 		add     ebx, ecx
-		jc      epilogue
+		jc      epilog
 		add     edi, edx
 		xor     edx, edx
 		mov     al, byte ptr [esi + ebx]
@@ -146,7 +146,7 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		lea     ecx, [edx + 'a' - 'A']
 		cmovb   edx, ecx
 		sub     eax, edx
-	epilogue:
+	epilog:
 		pop     edi
 		pop     esi
 		pop     ebp
@@ -182,7 +182,7 @@ __declspec(naked) static int __cdecl memicmp386(const void *buffer1, const void 
 		align   16
 	loop_begin:
 		inc     ecx
-		jz      epilogue
+		jz      epilog
 		mov     al, byte ptr [esi + ecx]
 		mov     dl, byte ptr [edi + ecx]
 		sub     eax, edx
@@ -196,7 +196,7 @@ __declspec(naked) static int __cdecl memicmp386(const void *buffer1, const void 
 		cmp     ebx, 'z' - 'a' + 1
 		jb      loop_begin
 		dec     eax
-		jmp     epilogue
+		jmp     epilog
 
 		align   16
 	compare_above:
@@ -205,7 +205,7 @@ __declspec(naked) static int __cdecl memicmp386(const void *buffer1, const void 
 		cmp     ebx, 'Z' - 'A' + 1
 		jb      loop_begin
 		inc     eax
-		jmp     epilogue
+		jmp     epilog
 
 		align   16
 	not_equal:
@@ -220,7 +220,7 @@ __declspec(naked) static int __cdecl memicmp386(const void *buffer1, const void 
 		add     edx, 'a' - 'A'
 	difference:
 		sub     eax, edx
-	epilogue:
+	epilog:
 		pop     edi
 		pop     esi
 		pop     ebx

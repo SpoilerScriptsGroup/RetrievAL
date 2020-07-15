@@ -74,10 +74,10 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		lea     ecx, [edx + 'a' - 'A']
 		cmovb   edx, ecx
 		sub     eax, edx
-		jnz     epilogue
+		jnz     epilog
 	word_loop_entry:
 		inc     ebx
-		jz      epilogue
+		jz      epilog
 		sub     ebp, 2
 		jae     word_loop
 		movdqa  xmm4, xmmword ptr [upper]
@@ -126,7 +126,7 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		jnc     aligned_xmmword_loop
 		sub     ebx, edx
 		jb      aligned_xmmword_loop_last
-		jmp     epilogue
+		jmp     epilog
 
 		align   8
 	unaligned_xmmword_loop_entry:
@@ -167,7 +167,7 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		jnc     unaligned_xmmword_loop
 		sub     ebx, edx
 		jb      unaligned_xmmword_loop_last
-		jmp     epilogue
+		jmp     epilog
 
 		align   16
 	xmmword_not_equal:
@@ -177,7 +177,7 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		shr     ecx, 1
 		add     esi, edx
 		add     ebx, ecx
-		jc      epilogue
+		jc      epilog
 		add     edi, edx
 		xor     edx, edx
 		mov     ax, word ptr [esi + ebx * 2]
@@ -191,7 +191,7 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		lea     ecx, [edx + 'a' - 'A']
 		cmovb   edx, ecx
 		sub     eax, edx
-	epilogue:
+	epilog:
 		pop     edi
 		pop     esi
 		pop     ebp
@@ -227,7 +227,7 @@ __declspec(naked) static int __cdecl wmemicmp386(const wchar_t *buffer1, const w
 		align   16
 	loop_begin:
 		inc     ecx
-		jz      epilogue
+		jz      epilog
 		mov     ax, word ptr [esi + ecx * 2]
 		mov     dx, word ptr [edi + ecx * 2]
 		sub     eax, edx
@@ -241,7 +241,7 @@ __declspec(naked) static int __cdecl wmemicmp386(const wchar_t *buffer1, const w
 		cmp     ebx, 'z' - 'a' + 1
 		jb      loop_begin
 		dec     eax
-		jmp     epilogue
+		jmp     epilog
 
 		align   16
 	compare_above:
@@ -250,7 +250,7 @@ __declspec(naked) static int __cdecl wmemicmp386(const wchar_t *buffer1, const w
 		cmp     ebx, 'Z' - 'A' + 1
 		jb      loop_begin
 		inc     eax
-		jmp     epilogue
+		jmp     epilog
 
 		align   16
 	not_equal:
@@ -265,7 +265,7 @@ __declspec(naked) static int __cdecl wmemicmp386(const wchar_t *buffer1, const w
 		add     edx, 'a' - 'A'
 	difference:
 		sub     eax, edx
-	epilogue:
+	epilog:
 		pop     edi
 		pop     esi
 		pop     ebx

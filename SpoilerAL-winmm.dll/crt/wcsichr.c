@@ -151,11 +151,11 @@ __declspec(naked) static wchar_t * __cdecl wcsichr386(const wchar_t *string, wch
 		mov     bx, cx
 		or      cx, 'a' - 'A'
 		cmp     cx, dx
-		je      epilogue
+		je      epilog
 		test    bx, bx
 		jnz     main_loop
 		xor     eax, eax
-	epilogue:
+	epilog:
 		pop     ebx
 		ret
 

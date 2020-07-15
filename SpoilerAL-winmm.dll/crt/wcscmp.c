@@ -51,9 +51,9 @@ __declspec(naked) static int __cdecl wcscmpSSE2(const wchar_t *string1, const wc
 		movzx   eax, word ptr [esi + edi]
 		movzx   edx, word ptr [edi]
 		sub     eax, edx
-		jnz     epilogue
+		jnz     epilog
 		test    edx, edx
-		jz      epilogue
+		jz      epilog
 		lea     edx, [edi + 3]
 		add     edi, 2
 	word_loop_entry:
@@ -78,7 +78,7 @@ __declspec(naked) static int __cdecl wcscmpSSE2(const wchar_t *string1, const wc
 		xor     eax, 0FFFFH
 		jnz     xmmword_not_equal
 		test    ecx, ecx
-		jnz     epilogue
+		jnz     epilog
 		add     edx, 16
 		add     edi, 16
 		and     edx, PAGE_SIZE - 1
@@ -97,7 +97,7 @@ __declspec(naked) static int __cdecl wcscmpSSE2(const wchar_t *string1, const wc
 		xor     eax, 0FFFFH
 		jnz     xmmword_not_equal
 		test    ecx, ecx
-		jnz     epilogue
+		jnz     epilog
 		add     edx, 16
 		add     edi, 16
 		and     edx, PAGE_SIZE - 1
@@ -112,14 +112,14 @@ __declspec(naked) static int __cdecl wcscmpSSE2(const wchar_t *string1, const wc
 		xor     ecx, 15
 		shr     edx, cl
 		and     eax, edx
-		jz      epilogue
+		jz      epilog
 	xmmword_has_not_null:
 		bsf     eax, eax
 		add     edi, eax
 		movzx   eax, word ptr [esi + edi]
 		movzx   edx, word ptr [edi]
 		sub     eax, edx
-	epilogue:
+	epilog:
 		pop     edi
 		pop     esi
 		ret
@@ -149,10 +149,10 @@ __declspec(naked) static int __cdecl wcscmp386(const wchar_t *string1, const wch
 		add     ecx, 2
 		add     edx, 2
 		cmp     ax, bx
-		jne     epilogue
+		jne     epilog
 		test    ax, ax
 		jnz     loop_begin
-	epilogue:
+	epilog:
 		sub     eax, ebx
 		pop     ebx
 		ret

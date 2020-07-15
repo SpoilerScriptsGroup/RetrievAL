@@ -1245,7 +1245,7 @@
     <ClCompile Include="FixHintWindow\Attach_FixHintWindow.c">
       <Filter>FixHintWindow</Filter>
     </ClCompile>
-    <ClCompile Include="FixHintWindow\TApplication_ActivateHint_epilogue.c">
+    <ClCompile Include="FixHintWindow\TApplication_ActivateHint_epilog.c">
       <Filter>FixHintWindow</Filter>
     </ClCompile>
     <ClCompile Include="FixListFEP\Attach_FixListFEP.c">

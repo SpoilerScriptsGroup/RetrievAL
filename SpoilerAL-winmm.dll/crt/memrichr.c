@@ -246,13 +246,13 @@ __declspec(naked) void * __fastcall internal_memrichr386(const void *buffer, uns
 		cmp     ch, dl
 		je      found
 		dec     eax
-		jz      epilogue
+		jz      epilog
 	modulo1:
 		cmp     cl, dl
 		je      found
 		dec     eax
 		jnz     loop_entry
-		jmp     epilogue
+		jmp     epilog
 
 		align   16
 	loop_begin:
@@ -281,22 +281,22 @@ __declspec(naked) void * __fastcall internal_memrichr386(const void *buffer, uns
 		ja      found
 	retnull:
 		xor     eax, eax
-		jmp     epilogue
+		jmp     epilog
 
 		align   16
 	byte_1:
 		sub     eax, 2
 		ja      found
 		xor     eax, eax
-		jmp     epilogue
+		jmp     epilog
 
 		align   16
 	byte_2:
 		dec     eax
-		jz      epilogue
+		jz      epilog
 	found:
 		lea     eax, [esi + eax + 3]
-	epilogue:
+	epilog:
 		pop     edi                                         // restore edi
 		pop     esi                                         // restore esi
 		pop     ebx                                         // restore ebx

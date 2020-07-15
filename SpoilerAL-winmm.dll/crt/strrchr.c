@@ -99,11 +99,11 @@ __declspec(naked) char * __cdecl strrchrSSE2(const char *string, int c)
 		align   16
 	process_stored_pointer:
 		test    eax, eax
-		jz      epilogue
+		jz      epilog
 		bsr     edx, esi
 	return_pointer:
 		add     eax, edx
-	epilogue:
+	epilog:
 		pop     edi
 		pop     esi
 		pop     ebx
@@ -246,9 +246,9 @@ __declspec(naked) char * __cdecl strrchr386(const char *string, int c)
 	process_stored_pointer:
 		mov     eax, ebp
 		test    ebp, ebp
-		jz      epilogue
+		jz      epilog
 		and     ebp, 3
-		jnz     epilogue
+		jnz     epilog
 		mov     ecx, dword ptr [eax - 4]
 		bswap   ecx
 		cmp     cl, bl
@@ -263,21 +263,21 @@ __declspec(naked) char * __cdecl strrchr386(const char *string, int c)
 		align   16                                          // already aligned
 	byte_0:
 		sub     eax, 4
-		jmp     epilogue
+		jmp     epilog
 
 	byte_1:
 		sub     eax, 3
-		jmp     epilogue
+		jmp     epilog
 
 	byte_2:
 		sub     eax, 2
-		jmp     epilogue
+		jmp     epilog
 
 	byte_3:
 		dec     eax
 
 		align   16                                          // already aligned
-	epilogue:
+	epilog:
 		pop     edi
 		pop     esi
 		pop     ebp

@@ -59,6 +59,7 @@ L4:
 	or      eax, 1
 	pop     ebx
 	ret
+
 L5:
 	xor     eax, eax
 	pop     esi

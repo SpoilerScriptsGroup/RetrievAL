@@ -60,12 +60,12 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		movzx   eax, byte ptr [esi + ebp]
 		movzx   edx, byte ptr [edi + ebp]
 		sub     eax, edx
-		jnz     epilogue
+		jnz     epilog
 		test    edx, edx
-		jz      epilogue
+		jz      epilog
 	byte_loop_increment:
 		inc     ebp
-		jz      epilogue
+		jz      epilog
 		lea     eax, [edi + ebp]
 		lea     ebx, [esi + ebp]
 		test    eax, 3                                      // use only eax for 'test reg, imm'
@@ -84,7 +84,7 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		sub     eax, edx
 		jnz     byte_loop                                   // not equal
 		add     ebp, 4
-		jc      epilogue
+		jc      epilog
 		add     ebx, 4
 		lea     ecx, [edx - 01010101H]
 		xor     edx, -1
@@ -94,7 +94,7 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		and     edx, ecx
 		jz      dword_loop
 		xor     eax, eax
-	epilogue:
+	epilog:
 		pop     edi
 		pop     esi
 		pop     ebp
@@ -114,9 +114,9 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		xor     edx, 0FFFFH
 		jnz     xmmword_not_equal
 		test    ecx, ecx
-		jnz     epilogue
+		jnz     epilog
 		add     ebp, 16
-		jc      epilogue
+		jc      epilog
 		add     ebx, 16
 		and     ebx, PAGE_SIZE - 1
 		jmp     xmmword_loop
@@ -130,11 +130,11 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		xor     ecx, 15
 		shr     ebx, cl
 		and     edx, ebx
-		jz      epilogue
+		jz      epilog
 	xmmword_has_not_null:
 		bsf     edx, edx
 		add     ebp, edx
-		jc      epilogue
+		jc      epilog
 		xor     edx, edx
 		mov     al, byte ptr [esi + ebp]
 		mov     dl, byte ptr [edi + ebp]

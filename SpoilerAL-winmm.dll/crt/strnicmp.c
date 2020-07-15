@@ -9,12 +9,13 @@ int __cdecl _strnicmp(const char *string1, const char *string2, size_t count)
 	string1 += count;
 	string2 += count;
 	count ^= -1;
+	ret = 0;
 	while (++count)
 		if (ret = tolower((unsigned char)string1[count]) - (c = tolower((unsigned char)string2[count])))
-			return ret;
+			break;
 		else if (!c)
 			break;
-	return 0;
+	return ret;
 }
 #else
 #include "page.h"
@@ -77,12 +78,12 @@ __declspec(naked) static int __cdecl strnicmpSSE2(const char *string1, const cha
 		lea     ecx, [edx + 'a' - 'A']
 		cmovb   edx, ecx
 		sub     eax, edx
-		jnz     epilogue
+		jnz     epilog
 		cmp     edx, '\0' - 'A'
-		je      epilogue
+		je      epilog
 	byte_loop_increment:
 		inc     ebx
-		jz      epilogue
+		jz      epilog
 		lea     edx, [edi + ebx]
 		lea     ecx, [esi + ebx]
 		and     edx, 15
@@ -112,9 +113,9 @@ __declspec(naked) static int __cdecl strnicmpSSE2(const char *string1, const cha
 		xor     edx, 0FFFFH
 		jnz     xmmword_not_equal
 		add     ebx, 16
-		jc      epilogue
+		jc      epilog
 		test    ecx, ecx
-		jnz     epilogue
+		jnz     epilog
 		lea     ecx, [esi + ebx]
 		shl     ecx, 32 - PAGE_SHIFT
 		jmp     xmmword_loop
@@ -128,13 +129,13 @@ __declspec(naked) static int __cdecl strnicmpSSE2(const char *string1, const cha
 		xor     ecx, 15
 		shr     eax, cl
 		and     eax, edx
-		jz      epilogue
+		jz      epilog
 		mov     edx, eax
 		xor     eax, eax
 	xmmword_has_not_null:
 		bsf     edx, edx
 		add     ebx, edx
-		jc      epilogue
+		jc      epilog
 		movzx   eax, byte ptr [esi + ebx]
 		movzx   edx, byte ptr [edi + ebx]
 		sub     eax, 'A'
@@ -146,7 +147,7 @@ __declspec(naked) static int __cdecl strnicmpSSE2(const char *string1, const cha
 		lea     ecx, [edx + 'a' - 'A']
 		cmovb   edx, ecx
 		sub     eax, edx
-	epilogue:
+	epilog:
 		pop     edi
 		pop     esi
 		pop     ebx
@@ -205,7 +206,7 @@ __declspec(naked) static int __cdecl strnicmp386(const char *string1, const char
 		cmp     ebx, 'z' - 'a' + 1
 		jb      loop_begin
 		dec     eax
-		jmp     epilogue
+		jmp     epilog
 
 		align   16
 	compare_above:
@@ -214,7 +215,7 @@ __declspec(naked) static int __cdecl strnicmp386(const char *string1, const char
 		cmp     ebx, 'Z' - 'A' + 1
 		jb      loop_begin
 		inc     eax
-		jmp     epilogue
+		jmp     epilog
 
 		align   16
 	not_equal:
@@ -229,7 +230,7 @@ __declspec(naked) static int __cdecl strnicmp386(const char *string1, const char
 		add     edx, 'a' - 'A'
 	difference:
 		sub     eax, edx
-	epilogue:
+	epilog:
 		pop     edi
 		pop     esi
 		pop     ebx

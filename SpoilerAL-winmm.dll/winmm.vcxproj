@@ -1007,7 +1007,7 @@
     <ClCompile Include="FixGetSSGDataFile\Attach_FixGetSSGDataFile.c" />
     <ClCompile Include="FixGetSSGDataFile\FixGetSSGDataFile.c" />
     <ClCompile Include="FixHintWindow\Attach_FixHintWindow.c" />
-    <ClCompile Include="FixHintWindow\TApplication_ActivateHint_epilogue.c" />
+    <ClCompile Include="FixHintWindow\TApplication_ActivateHint_epilog.c" />
     <ClCompile Include="FixListFEP\Attach_FixListFEP.c" />
     <ClCompile Include="FixListFEP\TSSGCtrl_OneRead_with_CheckIO_FEP.c" />
     <ClCompile Include="FixListFEP\TSSGCtrl_OneWrite_with_CheckIO_FEP.c" />

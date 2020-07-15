@@ -213,7 +213,7 @@ __declspec(naked) unsigned __int64 __cdecl _aullrem(unsigned __int64 dividend, u
 		div     esi                         // EDX <- final remainder
 		mov     eax, edx                    // EDX:EAX <- remainder
 		xor     edx, edx
-		jmp     epilogue                    // restore stack and return
+		jmp     epilog                      // restore stack and return
 
 		align   16
 	hard:
@@ -234,7 +234,7 @@ __declspec(naked) unsigned __int64 __cdecl _aullrem(unsigned __int64 dividend, u
 		mov     edx, HIWORD(DVND)
 		sub     eax, ecx
 		sbb     edx, ebx                    // EDX:EAX = remainder
-		jmp     epilogue                    // restore stack and return
+		jmp     epilog                      // restore stack and return
 
 		align   16
 	shift:
@@ -271,12 +271,12 @@ __declspec(naked) unsigned __int64 __cdecl _aullrem(unsigned __int64 dividend, u
 		sbb     edx, ecx
 		mov     eax, ebx                    // EDX:EAX = remainder
 		sbb     esi, 0
-		jz      epilogue                    // if above or equal we're ok, else add
+		jz      epilog                      // if above or equal we're ok, else add
 		add     eax, LOWORD(DVSR)           // add divisor to remainder
 		mov     ecx, HIWORD(DVSR)
 		adc     edx, ecx
 
-	epilogue:
+	epilog:
 		//
 		// Just the cleanup left to do.  EDX:EAX contains the remainder.
 		// Restore the saved registers and return.

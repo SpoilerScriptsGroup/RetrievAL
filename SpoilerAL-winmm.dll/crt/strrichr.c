@@ -103,11 +103,11 @@ __declspec(naked) static char * __cdecl strrichrSSE2(const char *string, int c)
 		align   16
 	process_stored_pointer:
 		test    eax, eax
-		jz      epilogue
+		jz      epilog
 		bsr     edx, esi
 	return_pointer:
 		add     eax, edx
-	epilogue:
+	epilog:
 		pop     edi
 		pop     esi
 		pop     ebx
@@ -249,9 +249,9 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 	process_stored_pointer:
 		mov     eax, ebp
 		test    ebp, ebp
-		jz      epilogue
+		jz      epilog
 		test    eax, 3                                      // append 3 byte (and ebp,imm -> test eax,imm)
-		jnz     epilogue
+		jnz     epilog
 		mov     ecx, dword ptr [eax - 4]
 		bswap   ecx
 		or      ecx, 20202020H
@@ -268,21 +268,21 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		align   16                                          // already aligned
 	byte_0:
 		sub     eax, 4
-		jmp     epilogue
+		jmp     epilog
 
 	byte_1:
 		sub     eax, 3
-		jmp     epilogue
+		jmp     epilog
 
 	byte_2:
 		sub     eax, 2
-		jmp     epilogue
+		jmp     epilog
 
 	byte_3:
 		dec     eax
 
 		align   16                                          // already aligned
-	epilogue:
+	epilog:
 		pop     edi
 		pop     esi
 		pop     ebp

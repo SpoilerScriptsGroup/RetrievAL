@@ -197,14 +197,14 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 		jz      loop_begin                                  // next 16 bytes
 
 		shr     ecx, 1
-		jc      epilogue
+		jc      epilog
 		bsf     ecx, ecx
 		xor     ecx, 15
 		movdqu  xmm2, xmmword ptr [maskbit + ecx]           // load the target bits mask
 		pand    xmm0, xmm2                                  // assign a mask for casebit
 		pxor    xmm0, xmm1                                  // negation of the 5th bit - lowercase letters
 		movdqa  xmmword ptr [edx], xmm0                     // store 16 bytes
-	epilogue:
+	epilog:
 		ret
 	}
 }

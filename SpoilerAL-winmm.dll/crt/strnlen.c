@@ -59,7 +59,7 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 
 	negate_count:
 		sub     ecx, eax                                    // ecx = negative count
-		jae     epilogue
+		jae     epilog
 
 		align   16                                          // already aligned
 	loop_begin:
@@ -78,9 +78,9 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 	found:
 		bsf     edx, edx
 		add     ecx, edx
-		jc      epilogue
+		jc      epilog
 		add     eax, ecx
-	epilogue:
+	epilog:
 		pop     esi                                         // restore esi
 		ret
 

@@ -107,7 +107,7 @@ __declspec(naked) static wchar_t * __cdecl wcspbrk(const wchar_t *string, const 
 		mov     ax, word ptr [ecx]
 		add     ecx, 2
 		test    ax, ax
-		jz      epilogue
+		jz      epilog
 		mov     edx, esi
 
 		align   16
@@ -119,7 +119,7 @@ __declspec(naked) static wchar_t * __cdecl wcspbrk(const wchar_t *string, const 
 		cmp     bx, ax
 		jne     inner_loop
 		lea     eax, [ecx - 2]
-	epilogue:
+	epilog:
 		pop     esi                                         // restore esi
 		pop     ebx                                         // restore ebx
 		ret                                                 // __cdecl return

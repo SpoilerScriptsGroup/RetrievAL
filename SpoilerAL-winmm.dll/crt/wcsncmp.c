@@ -59,12 +59,12 @@ __declspec(naked) static int __cdecl wcsncmpSSE2(const wchar_t *string1, const w
 		movzx   eax, word ptr [esi + ebx * 2]
 		movzx   edx, word ptr [edi + ebx * 2]
 		sub     eax, edx
-		jnz     epilogue
+		jnz     epilog
 		test    edx, edx
-		jz      epilogue
+		jz      epilog
 	word_loop_increment:
 		inc     ebx
-		jz      epilogue
+		jz      epilog
 		lea     edx, [edi + ebx * 2 + 1]
 		lea     ecx, [esi + ebx * 2]
 		and     edx, 14
@@ -87,9 +87,9 @@ __declspec(naked) static int __cdecl wcsncmpSSE2(const wchar_t *string1, const w
 		xor     edx, 0FFFFH
 		jnz     xmmword_not_equal
 		test    ecx, ecx
-		jnz     epilogue
+		jnz     epilog
 		add     ebx, 8
-		jc      epilogue
+		jc      epilog
 		lea     ecx, [esi + ebx * 2]
 		shl     ecx, 32 - PAGE_SHIFT
 		jmp     aligned_xmmword_loop
@@ -107,9 +107,9 @@ __declspec(naked) static int __cdecl wcsncmpSSE2(const wchar_t *string1, const w
 		xor     edx, 0FFFFH
 		jnz     xmmword_not_equal
 		test    ecx, ecx
-		jnz     epilogue
+		jnz     epilog
 		add     ebx, 8
-		jc      epilogue
+		jc      epilog
 		lea     ecx, [esi + ebx * 2]
 		shl     ecx, 32 - PAGE_SHIFT
 		jmp     unaligned_xmmword_loop
@@ -123,18 +123,18 @@ __declspec(naked) static int __cdecl wcsncmpSSE2(const wchar_t *string1, const w
 		xor     ecx, 15
 		shr     eax, cl
 		and     eax, edx
-		jz      epilogue
+		jz      epilog
 		mov     edx, eax
 		xor     eax, eax
 	xmmword_has_not_null:
 		bsf     edx, edx
 		shr     edx, 1
 		add     ebx, edx
-		jc      epilogue
+		jc      epilog
 		movzx   eax, word ptr [esi + ebx * 2]
 		movzx   edx, word ptr [edi + ebx * 2]
 		sub     eax, edx
-	epilogue:
+	epilog:
 		pop     edi
 		pop     esi
 		pop     ebx
@@ -168,14 +168,14 @@ __declspec(naked) static int __cdecl wcsncmp386(const wchar_t *string1, const wc
 		align   16
 	loop_begin:
 		inc     ecx
-		jz      epilogue
+		jz      epilog
 		mov     ax, word ptr [esi + ecx * 2]
 		mov     dx, word ptr [edi + ecx * 2]
 		sub     eax, edx
-		jnz     epilogue
+		jnz     epilog
 		test    edx, edx
 		jnz     loop_begin
-	epilogue:
+	epilog:
 		pop     edi
 		pop     esi
 		ret

@@ -120,9 +120,9 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE2(const wchar_t *string, size_
 		bsf     edx, edx
 		shr     edx, 1
 		add     ecx, edx
-		jc      epilogue
+		jc      epilog
 		add     eax, ecx
-	epilogue:
+	epilog:
 		pop     esi                                         // restore esi
 		ret
 

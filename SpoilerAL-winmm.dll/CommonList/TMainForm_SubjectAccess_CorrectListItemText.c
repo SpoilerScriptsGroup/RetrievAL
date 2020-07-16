@@ -1,4 +1,5 @@
 #include <windows.h>
+#include "TStringDivision.h"
 
 __declspec(naked) void __cdecl TMainForm_SubjectAccess_CorrectListItemText()
 {
@@ -15,20 +16,17 @@ __declspec(naked) void __cdecl TMainForm_SubjectAccess_CorrectListItemText()
 		mov     cl, byte ptr [edx]
 		inc     edx
 		test    cl, cl
-		jz      L3
+		jz      L2
 		cmp     cl, '='
 		jne     L1
+		mov     ecx, edx
+		call    TrimLeftSpace
+		mov     edx, eax
+		lea     eax, [ebp - 176]
+		ret
 
 		align   16
 	L2:
-		mov     cl, byte ptr [edx]
-		inc     edx
-		cmp     cl, ' '
-		je      L2
-		sub     cl, '\t'
-		cmp     cl, '\r' - '\t' + 1
-		jb      L2
-	L3:
 		dec     edx
 		ret
 	}

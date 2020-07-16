@@ -1,4 +1,5 @@
 #include <windows.h>
+#include "TStringDivision.h"
 
 extern const DWORD F0043CC08;
 
@@ -17,7 +18,7 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_CommonList()
 		cmp     al, '+'
 		je      L1
 		cmp     al, '*'
-		je      L4
+		je      L2
 		jmp     dword ptr [F0043CC08]
 
 		align   16
@@ -28,53 +29,33 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_CommonList()
 		jz      L3
 		cmp     al, '='
 		jne     L1
+		call    TrimLeftSpace
+		mov     dword ptr [begin], eax
+		jmp     dword ptr [F0043CC08]
 
 		align   16
 	L2:
 		mov     al, byte ptr [ecx]
 		inc     ecx
-		cmp     al, ' '
-		je      L2
-		sub     al, '\t'
-		cmp     al, '\r' - '\t' + 1
-		jb      L2
+		test    al, al
+		jz      L3
+		cmp     al, '='
+		jne     L2
+		mov     edx, ecx
+		jmp     L4
+
+		align   16
 	L3:
-		dec     ecx
-		mov     dword ptr [begin], ecx
-		jmp     dword ptr [F0043CC08]
+		lea     eax, [ecx - 1]
+		jmp     L5
 
 		align   16
 	L4:
-		mov     al, byte ptr [ecx]
-		inc     ecx
-		test    al, al
-		jz      L5
-		cmp     al, '='
-		jne     L4
-		mov     edx, dword ptr [begin]
-		sub     ecx, 2
-		jmp     L6
-
+		mov     ecx, dword ptr [begin]
+		dec     edx
+		call    TrimRightSpace
 	L5:
-		dec     ecx
-		jmp     L8
-
-		align   16
-	L6:
-		cmp     ecx, edx
-		jb      L7
-		mov     al, byte ptr [ecx]
-		dec     ecx
-		cmp     al, ' '
-		je      L6
-		sub     al, '\t'
-		cmp     al, '\r' - '\t' + 1
-		jb      L6
-		inc     ecx
-	L7:
-		inc     ecx
-	L8:
-		mov     dword ptr [end], ecx
+		mov     dword ptr [end], eax
 		jmp     dword ptr [F0043CC08]
 	}
 }

@@ -366,7 +366,7 @@ __declspec(naked) char * __msfastcall TrimLeftSpace(const char *first)
 
 	L1:
 		mov     al, byte ptr [ecx]
-		dec     ecx
+		inc     ecx
 		cmp     al, ' '
 		je      L1
 		sub     al, '\t'

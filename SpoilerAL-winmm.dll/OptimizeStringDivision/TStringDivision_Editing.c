@@ -31,29 +31,10 @@ string * __cdecl TStringDivision_Editing(
 			        (size_t)&string_begin((string *)NULL)) +                   \
 			    sizeof(void *))
 
-			BYTE  s[SHRINK_SIZEOF_STRING];
-			LPSTR first, last;
+			BYTE s[SHRINK_SIZEOF_STRING];
 
-			first = string_begin(Src);
-			last = string_end(Src);
-			if (first >= last)
-			{
-				first = last;
-			}
-			else
-			{
-				char c;
-
-				while ((c = *(first++)) == ' ' || c == '\t')
-					if (first == last)
-						goto TRIMED;
-				while ((c = *(--last)) == ' ' || c == '\t');
-				--first;
-				++last;
-			}
-		TRIMED:
-			string_begin((string *)s) = first;
-			string_end((string *)s) = last;
+			string_begin((string *)s) = string_begin(Src);
+			string_end((string *)s) = TrimBlank(&string_begin((string *)s), string_end(Src));
 			return TStringDivision_RemoveByMap(Result, this, (const string *)s, NULL, 0);
 
 			#undef SHRINK_SIZEOF_STRING
@@ -90,42 +71,14 @@ __declspec(naked) string * __cdecl TStringDivision_Editing(
 		mov     eax, dword ptr [Option]
 		mov     edx, dword ptr [Src]
 		test    eax, etTRIM
-		jz      L6
+		jz      L2
 		test    eax, etREPLACE
-		jz      L5
+		jz      L1
 		mov     ecx, dword ptr [edx]
 		mov     edx, dword ptr [edx + 4]
-		cmp     ecx, edx
-		jb      L1
-		mov     ecx, edx
-		jmp     L4
-
-		align   16
-	L1:
-		mov     al, byte ptr [ecx]
-		inc     ecx
-		cmp     al, ' '
-		je      L2
-		cmp     al, '\t'
-		jne     L3
-	L2:
-		cmp     ecx, edx
-		jne     L1
-		jmp     L4
-
-		align   16
-	L3:
-		mov     al, byte ptr [edx - 1]
-		dec     edx
-		cmp     al, ' '
-		je      L3
-		cmp     al, '\t'
-		je      L3
-		inc     edx
-		dec     ecx
-	L4:
+		call    __ui64return_TrimBlank
+		push    eax
 		push    edx
-		push    ecx
 		mov     ecx, dword ptr [this + 8]
 		mov     eax, dword ptr [Result + 8]
 		mov     edx, esp
@@ -139,7 +92,7 @@ __declspec(naked) string * __cdecl TStringDivision_Editing(
 		ret
 
 		align   16
-	L5:
+	L1:
 		mov     eax, dword ptr [Result]
 		push    0
 		push    0
@@ -151,9 +104,9 @@ __declspec(naked) string * __cdecl TStringDivision_Editing(
 		ret
 
 		align   16
-	L6:
+	L2:
 		test    eax, etREPLACE
-		jz      L7
+		jz      L3
 		mov     ecx, dword ptr [this]
 		mov     eax, dword ptr [Result]
 		push    0
@@ -166,7 +119,7 @@ __declspec(naked) string * __cdecl TStringDivision_Editing(
 		ret
 
 		align   16
-	L7:
+	L3:
 		mov     ecx, dword ptr [Result]
 		jmp     string_ctor_assign
 

@@ -1,6 +1,7 @@
 #include <windows.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
+#include "TStringDivision.h"
 
 extern const DWORD F00415A60;
 
@@ -23,23 +24,25 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_CorrectDrawText()
 		mov     al, byte ptr [edx]
 		inc     edx
 		test    al, al
-		jz      L4
+		jz      L3
 		cmp     al, '='
 		jne     L2
+		mov     ecx, edx
+		jmp     L4
 
 		align   16
 	L3:
-		mov     al, byte ptr [edx]
-		inc     edx
-		cmp     al, ' '
-		je      L3
-		sub     al, '\t'
-		cmp     al, '\r' - '\t' + 1
-		jb      L3
+		dec     edx
+		jmp     L5
+
+		align   16
 	L4:
+		call    TrimLeftSpace
+		mov     ecx, dword ptr [esp + 12]
+		mov     edx, eax
+	L5:
 		mov     eax, dword ptr [ecx + 4]
 		sub     esp, 24
-		dec     edx
 		mov     ecx, esp
 		push    eax
 		call    string_ctor_assign_range

@@ -185,64 +185,43 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		call    string_dtor
 		lea     ecx, [ebp - 28H]
 		call    string_dtor
-		mov     eax, dword ptr [esi]
-		jmp     L3
-
-	L2:
-		inc     eax
-	L3:
-		mov     dl, byte ptr [eax]
-		cmp     dl, ' '
-		je      L2
-		sub     dl, '\t'
-		cmp     dl, '\r' - '\t' + 1
-		jb      L2
-		mov     edx, dword ptr [esi + 4H]
-	L4:
-		dec     edx
-		cmp     eax, edx
-		jae     L5
-		mov     cl, byte ptr [edx]
-		cmp     cl, ' '
-		je      L4
-		sub     cl, '\t'
-		cmp     cl, '\r' - '\t' + 1
-		jb      L4
-	L5:
-		inc     edx
 		mov     ecx, dword ptr [esi]
-		cmp     edx, dword ptr [esi + 4H]
-		jne     L6
-		cmp     eax, ecx
-		je      L9
-	L6:
-		sub     edx, eax
-		mov     dword ptr [ebp - 0F0H], edx
-		cmp     eax, ecx
-		je      L7
+		mov     edx, dword ptr [esi + 4H]
+		call    __ui64return_TrimSpace
+		mov     ecx, eax
+		mov     eax, dword ptr [esi]
+		cmp     ecx, dword ptr [esi + 4H]
+		jne     L2
+		cmp     eax, edx
+		je      L5
+	L2:
+		sub     ecx, edx
+		cmp     eax, edx
+		mov     dword ptr [ebp - 0F0H], ecx
+		je      L3
+		push    ecx
 		push    edx
 		push    eax
-		push    ecx
 		call    memcpy
 		add     esp, 12
-		mov     edx, dword ptr [ebp - 0F0H]
-	L7:
-		mov     eax, dword ptr [esi + 4H]
-		mov     ecx, dword ptr [esi]
-		sub     eax, ecx
-		mov     dword ptr [ebp - 0F4H], edx
+		mov     ecx, dword ptr [ebp - 0F0H]
+	L3:
+		mov     edx, dword ptr [esi + 4H]
+		mov     eax, dword ptr [esi]
+		sub     edx, eax
+		mov     dword ptr [ebp - 0F4H], ecx
+		cmp     edx, ecx
+		jb      L4
+		mov     edx, dword ptr [esi + 4H]
+		add     eax, ecx
+		mov     dword ptr [ebp - 0F8H], edx
+		mov     dword ptr [ebp - 0FCH], eax
 		cmp     eax, edx
-		jb      L8
-		mov     eax, dword ptr [esi + 4H]
-		add     ecx, edx
-		mov     dword ptr [ebp - 0F8H], eax
-		mov     dword ptr [ebp - 0FCH], ecx
-		cmp     ecx, eax
-		je      L9
+		je      L5
 		mov     dword ptr [ebp - 100H], 1
 		push    1
+		push    edx
 		push    eax
-		push    ecx
 		call    memmove
 		mov     eax, dword ptr [esi + 4H]
 		mov     ecx, dword ptr [ebp - 0F8H]
@@ -252,16 +231,16 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		add     esp, 12
 		mov     dword ptr [ebp - 104H], eax
 		mov     dword ptr [esi + 4H], eax
-		jmp     L9
+		jmp     L5
 
-	L8:
+	L4:
 		mov     eax, dword ptr [esi + 4H]
 		add     edx, ecx
 		sub     edx, eax
 		push    0
 		mov     ecx, esi
 		call    string_append_repeat_char
-	L9:
+	L5:
 		mov     eax, 00641AE4H
 		mov     edx, esi
 		mov     al, byte ptr [eax]

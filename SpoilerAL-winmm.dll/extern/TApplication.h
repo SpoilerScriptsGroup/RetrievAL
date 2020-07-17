@@ -14,9 +14,7 @@ typedef struct _TApplication
 	BOOLEAN           HintShortCuts;
 	BYTE              padding3[3];
 	unsigned int      HintShortPause;
-
-	// ...
-
+	BYTE              padding4[164];
 } TApplication;
 #pragma pack(pop)
 

@@ -64,7 +64,7 @@ void __fastcall _TMainForm_FormMouseWheel(TMainForm *this, LPVOID Sender, WORD S
 						si.nPos = si.nMin;
 					else if (si.nPos > si.nMax)
 						si.nPos = si.nMax;
-					SendMessage(DGridHandle, WM_HSCROLL, MAKEWPARAM(SB_THUMBTRACK, si.nPos), (LPARAM)NULL);
+					SendMessageA(DGridHandle, WM_HSCROLL, MAKEWPARAM(SB_THUMBTRACK, si.nPos), (LPARAM)NULL);
 				}
 			}
 		}

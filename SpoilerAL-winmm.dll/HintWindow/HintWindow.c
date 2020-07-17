@@ -29,7 +29,7 @@ void __cdecl CreateHintWindow()
 		NULL);
 	if (!hToolTip)
 		return;
-    SendMessage(hToolTip, TTM_SETMAXTIPWIDTH, 0, INT_MAX);
+    SendMessageA(hToolTip, TTM_SETMAXTIPWIDTH, 0, INT_MAX);
 }
 
 void __cdecl DestroyHintWindow()
@@ -65,9 +65,9 @@ void __fastcall TApplication_ActivateHint(TApplication *this, LPPOINT CursorPos)
 	else
 	{
 		if (ti.uId)
-			SendMessage(hToolTip, TTM_DELTOOLA, 0, (LPARAM)&ti);
+			SendMessageA(hToolTip, TTM_DELTOOLA, 0, (LPARAM)&ti);
 		ti.uId = (UINT_PTR)hWnd;
-		SendMessage(hToolTip, TTM_ADDTOOLA, 0, (LPARAM)&ti);
+		SendMessageA(hToolTip, TTM_ADDTOOLA, 0, (LPARAM)&ti);
 	}
 	hHook = SetWindowsHookExA(WH_CALLWNDPROCRET, CallWndRetProc, ti.hinst, GetCurrentThreadId());
 }

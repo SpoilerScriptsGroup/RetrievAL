@@ -13,4 +13,4 @@ typedef struct _TWinControl
 } TWinControl;
 #pragma pack(pop)
 
-EXTERN_C HWND __fastcall TWinControl_GetHandle(LPVOID WinControl);
+EXTERN_C HWND __fastcall TWinControl_GetHandle(LPCVOID WinControl);

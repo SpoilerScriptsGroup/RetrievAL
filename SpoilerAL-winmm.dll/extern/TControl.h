@@ -9,7 +9,9 @@
     const int     Height;                       \
     BYTE          padding_TControl2[7];         \
     const BOOLEAN Visible;                      \
-    BYTE          padding_TControl3[264]
+    BYTE          padding_TControl3[40];        \
+    LPCSTR        Hint;                         \
+    BYTE          padding_TControl4[220]
 
 #pragma pack(push, 1)
 typedef struct _TControl

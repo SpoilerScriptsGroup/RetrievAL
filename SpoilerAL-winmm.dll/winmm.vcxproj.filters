@@ -1245,7 +1245,7 @@
     <ClCompile Include="FixHintWindow\Attach_FixHintWindow.c">
       <Filter>FixHintWindow</Filter>
     </ClCompile>
-    <ClCompile Include="FixHintWindow\TApplication_ActivateHint_epilog.c">
+    <ClCompile Include="FixHintWindow\HintWindow.c">
       <Filter>FixHintWindow</Filter>
     </ClCompile>
     <ClCompile Include="FixListFEP\Attach_FixListFEP.c">
@@ -2375,6 +2375,9 @@
     </ClInclude>
     <ClInclude Include="extern\TWinControl.h">
       <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="FixHintWindow\HintWindow.h">
+      <Filter>FixHintWindow</Filter>
     </ClInclude>
     <ClInclude Include="include\ApplicationMessage.h">
       <Filter>include</Filter>

@@ -1,6 +1,6 @@
 #include "TWinControl.h"
 
-__declspec(naked) HWND __fastcall TWinControl_GetHandle(LPVOID WinControl)
+__declspec(naked) HWND __fastcall TWinControl_GetHandle(LPCVOID WinControl)
 {
 	__asm
 	{

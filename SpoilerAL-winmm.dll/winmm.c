@@ -5,6 +5,7 @@
 #include "verbose.h"
 #include "plugin.h"
 #include "crc32\crc32.h"
+#include "FixHintWindow\HintWindow.h"
 #include "ToolTip\ToolTip.h"
 #include "OptimizeAllocator.h"
 
@@ -154,6 +155,7 @@ static BOOL __cdecl Attach()
 			goto LAST_ERROR;
 		LoadComCtl32();
 		hMsImg32 = LoadLibraryW(L"msimg32.dll");
+		CreateHintWindow();
 #if USE_TOOLTIP
 		verbose(VRB_INFO, "_DllMainCRTStartup - begin CreateToolTip");
 		CreateToolTip();
@@ -442,6 +444,7 @@ static __inline void Detach()
 		if (pHeap)
 		{
 			PluginFinalize();
+			DestroyHintWindow();
 #if USE_TOOLTIP
 			DestroyToolTip();
 #endif

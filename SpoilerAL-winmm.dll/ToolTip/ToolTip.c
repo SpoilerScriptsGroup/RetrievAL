@@ -21,14 +21,14 @@ void __cdecl CreateToolTip()
 	if (hToolTip)
 		return;
 	hToolTip = CreateWindowExA(
-		WS_EX_TOPMOST,
+		0,
 		TOOLTIPS_CLASSA,
 		NULL,
-		WS_POPUP | TTS_NOPREFIX | TTS_BALLOON,
+		TTS_NOPREFIX | TTS_BALLOON,
 		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 		NULL,
 		NULL,
-		GetModuleHandleA(NULL),
+		ti.hinst = GetModuleHandleA(NULL),
 		NULL);
 	if (!hToolTip)
 		return;
@@ -151,7 +151,7 @@ void __fastcall ShowToolTip(LPCSTR lpText, HICON hIcon)
 	SendMessageA(hToolTip, TTM_TRACKACTIVATE, bActive = TRUE, (LPARAM)&ti);
 	if (hHook)
 		return;
-	hHook = SetWindowsHookExA(WH_CBT, CBTProc, GetModuleHandleA(NULL), GetCurrentThreadId());
+	hHook = SetWindowsHookExA(WH_CBT, CBTProc, ti.hinst, GetCurrentThreadId());
 }
 
 static __inline void HideToolTip()

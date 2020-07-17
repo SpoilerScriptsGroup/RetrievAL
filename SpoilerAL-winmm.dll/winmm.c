@@ -5,7 +5,7 @@
 #include "verbose.h"
 #include "plugin.h"
 #include "crc32\crc32.h"
-#include "FixHintWindow\HintWindow.h"
+#include "HintWindow\HintWindow.h"
 #include "ToolTip\ToolTip.h"
 #include "OptimizeAllocator.h"
 

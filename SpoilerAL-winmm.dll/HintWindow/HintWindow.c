@@ -1,4 +1,4 @@
-#include <windows.h>
+#include "HintWindow.h"
 #include "commctrl.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "TApplication.h"
@@ -9,9 +9,9 @@
 static HWND      hToolTip = NULL;
 static TOOLINFOA ti = { sizeof(TOOLINFOA), TTF_IDISHWND | TTF_SUBCLASS };
 static HHOOK     hHook = NULL;
-static POINT     TrackPos;
+static DWORD     dwTrackPos;
 
-static LRESULT CALLBACK GetMsgProc(int nCode, WPARAM wParam, LPARAM lParam);
+static LRESULT CALLBACK CallWndRetProc(int nCode, WPARAM wParam, LPARAM lParam);
 
 void __cdecl CreateHintWindow()
 {
@@ -53,7 +53,7 @@ void __fastcall TApplication_ActivateHint(TApplication *this, LPPOINT CursorPos)
 
 	if (hHook || !this->Control || !hToolTip)
 		return;
-	TrackPos = *CursorPos;
+	dwTrackPos = GetMessagePos();
 	SendMessageA(hToolTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, MAKELPARAM(this->HintHidePause, 0));
 	SendMessageA(hToolTip, TTM_SETDELAYTIME, TTDT_INITIAL, MAKELPARAM(this->HintPause, 0));
 	SendMessageA(hToolTip, TTM_SETDELAYTIME, TTDT_RESHOW, MAKELPARAM(this->HintShortPause, 0));
@@ -64,19 +64,20 @@ void __fastcall TApplication_ActivateHint(TApplication *this, LPPOINT CursorPos)
 	}
 	else
 	{
-		SendMessage(hToolTip , TTM_DELTOOL , 0 , (LPARAM)&ti);
+		if (ti.uId)
+			SendMessage(hToolTip , TTM_DELTOOL , 0 , (LPARAM)&ti);
 		ti.uId = (UINT_PTR)hWnd;
 		SendMessage(hToolTip , TTM_ADDTOOLA, 0 , (LPARAM)&ti);
 	}
 	SetCapture((HWND)ti.uId);
 	hHook = SetWindowsHookExA(
-		WH_GETMESSAGE,
-		GetMsgProc,
+		WH_CALLWNDPROCRET,
+		CallWndRetProc,
 		ti.hinst,
 		GetCurrentThreadId());
 }
 
-static LRESULT CALLBACK GetMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK CallWndRetProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT lResult;
 
@@ -87,7 +88,7 @@ static LRESULT CALLBACK GetMsgProc(int nCode, WPARAM wParam, LPARAM lParam)
 			break;
 		if (GetCapture() == (HWND)ti.uId)
 		{
-			if (EqualPoint(&((LPMSG)lParam)->pt, &TrackPos))
+			if (GetMessagePos() == dwTrackPos)
 				break;
 			ReleaseCapture();
 		}

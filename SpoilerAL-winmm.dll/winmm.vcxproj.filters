@@ -97,9 +97,6 @@
     <Filter Include="FixGetSSGDataFile">
       <UniqueIdentifier>{ac81c1e7-5b5b-41b3-87c3-c0109dfd244c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="FixHintWindow">
-      <UniqueIdentifier>{e661b2dc-793f-4961-8ef8-443fd6c89147}</UniqueIdentifier>
-    </Filter>
     <Filter Include="FixListFEP">
       <UniqueIdentifier>{393d8820-fd6b-4866-b880-1f4989f3e3e2}</UniqueIdentifier>
     </Filter>
@@ -153,6 +150,9 @@
     </Filter>
     <Filter Include="FormatNameString">
       <UniqueIdentifier>{19f2a5e1-78e8-4267-9978-d1b32b2ba182}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HintWindow">
+      <UniqueIdentifier>{e661b2dc-793f-4961-8ef8-443fd6c89147}</UniqueIdentifier>
     </Filter>
     <Filter Include="include">
       <UniqueIdentifier>{82c58292-5db5-4907-ad1d-04e29e4603e2}</UniqueIdentifier>
@@ -1242,12 +1242,6 @@
     <ClCompile Include="FixGetSSGDataFile\FixGetSSGDataFile.c">
       <Filter>FixGetSSGDataFile</Filter>
     </ClCompile>
-    <ClCompile Include="FixHintWindow\Attach_FixHintWindow.c">
-      <Filter>FixHintWindow</Filter>
-    </ClCompile>
-    <ClCompile Include="FixHintWindow\HintWindow.c">
-      <Filter>FixHintWindow</Filter>
-    </ClCompile>
     <ClCompile Include="FixListFEP\Attach_FixListFEP.c">
       <Filter>FixListFEP</Filter>
     </ClCompile>
@@ -1517,6 +1511,12 @@
     </ClCompile>
     <ClCompile Include="FormatNameString\FormatNameString.c">
       <Filter>FormatNameString</Filter>
+    </ClCompile>
+    <ClCompile Include="HintWindow\Attach_HintWindow.c">
+      <Filter>HintWindow</Filter>
+    </ClCompile>
+    <ClCompile Include="HintWindow\HintWindow.c">
+      <Filter>HintWindow</Filter>
     </ClCompile>
     <ClCompile Include="intrinsic.c">
       <Filter>ソース ファイル</Filter>
@@ -2376,8 +2376,11 @@
     <ClInclude Include="extern\TWinControl.h">
       <Filter>extern</Filter>
     </ClInclude>
-    <ClInclude Include="FixHintWindow\HintWindow.h">
-      <Filter>FixHintWindow</Filter>
+    <ClInclude Include="HintWindow\commctrl.h">
+      <Filter>HintWindow</Filter>
+    </ClInclude>
+    <ClInclude Include="HintWindow\HintWindow.h">
+      <Filter>HintWindow</Filter>
     </ClInclude>
     <ClInclude Include="include\ApplicationMessage.h">
       <Filter>include</Filter>

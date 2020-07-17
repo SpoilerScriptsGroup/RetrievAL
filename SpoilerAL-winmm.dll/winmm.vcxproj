@@ -1007,8 +1007,6 @@
     <ClCompile Include="FixGetModuleFromName\FixGetModuleFromName.c" />
     <ClCompile Include="FixGetSSGDataFile\Attach_FixGetSSGDataFile.c" />
     <ClCompile Include="FixGetSSGDataFile\FixGetSSGDataFile.c" />
-    <ClCompile Include="FixHintWindow\Attach_FixHintWindow.c" />
-    <ClCompile Include="FixHintWindow\HintWindow.c" />
     <ClCompile Include="FixListFEP\Attach_FixListFEP.c" />
     <ClCompile Include="FixListFEP\TSSGCtrl_OneRead_with_CheckIO_FEP.c" />
     <ClCompile Include="FixListFEP\TSSGCtrl_OneWrite_with_CheckIO_FEP.c" />
@@ -1099,6 +1097,8 @@
     <ClCompile Include="ForceFunnel\TSSString_Write_CheckFunnel.c" />
     <ClCompile Include="FormatNameString\Attach_FormatNameString.c" />
     <ClCompile Include="FormatNameString\FormatNameString.c" />
+    <ClCompile Include="HintWindow\Attach_HintWindow.c" />
+    <ClCompile Include="HintWindow\HintWindow.c" />
     <ClCompile Include="intrinsic.c" />
     <ClCompile Include="IsBadPtr\IsBadCodePtr.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -1583,7 +1583,8 @@
     <ClInclude Include="extern\TStringDivision.h" />
     <ClInclude Include="extern\TTitleSelectForm.h" />
     <ClInclude Include="extern\TWinControl.h" />
-    <ClInclude Include="FixHintWindow\HintWindow.h" />
+    <ClInclude Include="HintWindow\commctrl.h" />
+    <ClInclude Include="HintWindow\HintWindow.h" />
     <ClInclude Include="include\ApplicationMessage.h" />
     <ClInclude Include="include\BuildDate.h" />
     <ClInclude Include="include\noinline_wchar.h" />

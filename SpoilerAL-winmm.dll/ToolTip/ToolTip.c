@@ -151,7 +151,7 @@ void __fastcall ShowToolTip(LPCSTR lpText, HICON hIcon)
 	SendMessageA(hToolTip, TTM_TRACKACTIVATE, bActive = TRUE, (LPARAM)&ti);
 	if (hHook)
 		return;
-	hHook = SetWindowsHookExA(WH_CBT, CBTProc, ti.hinst, GetCurrentThreadId());
+	hHook = SetWindowsHookExA(WH_CBT, CBTProc, ti.hinst, 0);
 }
 
 static __inline void HideToolTip()

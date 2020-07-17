@@ -69,12 +69,7 @@ void __fastcall TApplication_ActivateHint(TApplication *this, LPPOINT CursorPos)
 		ti.uId = (UINT_PTR)hWnd;
 		SendMessage(hToolTip , TTM_ADDTOOLA, 0 , (LPARAM)&ti);
 	}
-	SetCapture((HWND)ti.uId);
-	hHook = SetWindowsHookExA(
-		WH_CALLWNDPROCRET,
-		CallWndRetProc,
-		ti.hinst,
-		GetCurrentThreadId());
+	hHook = SetWindowsHookExA(WH_CALLWNDPROCRET, CallWndRetProc, ti.hinst, 0);
 }
 
 static LRESULT CALLBACK CallWndRetProc(int nCode, WPARAM wParam, LPARAM lParam)
@@ -82,20 +77,12 @@ static LRESULT CALLBACK CallWndRetProc(int nCode, WPARAM wParam, LPARAM lParam)
 	LRESULT lResult;
 
 	lResult = CallNextHookEx(hHook, nCode, wParam, lParam);
-	do	// do { ... } while (0);
+	if (nCode >= 0 && (GetMessagePos() != dwTrackPos || !IsWindowVisible((HWND)ti.uId)))
 	{
-		if (nCode < 0)
-			break;
-		if (GetCapture() == (HWND)ti.uId)
-		{
-			if (GetMessagePos() == dwTrackPos)
-				break;
-			ReleaseCapture();
-		}
 		UnhookWindowsHookEx(hHook);
 		SendMessageA(hToolTip, TTM_TRACKACTIVATE, FALSE, (LPARAM)&ti);
 		hHook = NULL;
-	} while (0);
+	}
 	return lResult;
 }
 

@@ -4,8 +4,6 @@
 #include "TApplication.h"
 #include "TWinControl.h"
 
-#define EqualPoint(lppt1, lppt2) ((lppt1)->x == (lppt2)->x && (lppt1)->y == (lppt2)->y)
-
 static HWND      hToolTip = NULL;
 static TOOLINFOA ti = { sizeof(TOOLINFOA), TTF_IDISHWND | TTF_SUBCLASS };
 static HHOOK     hHook = NULL;
@@ -30,6 +28,9 @@ void __cdecl CreateHintWindow()
 	if (!hToolTip)
 		return;
     SendMessageA(hToolTip, TTM_SETMAXTIPWIDTH, 0, INT_MAX);
+	SendMessageA(hToolTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, MAKELPARAM(2500, 0));
+	SendMessageA(hToolTip, TTM_SETDELAYTIME, TTDT_INITIAL, MAKELPARAM(0, 0));
+	SendMessageA(hToolTip, TTM_SETDELAYTIME, TTDT_RESHOW, MAKELPARAM(0, 0));
 }
 
 void __cdecl DestroyHintWindow()
@@ -54,9 +55,6 @@ void __fastcall TApplication_ActivateHint(TApplication *this, LPPOINT CursorPos)
 	if (hHook || !this->Control || !hToolTip)
 		return;
 	dwTrackPos = GetMessagePos();
-	SendMessageA(hToolTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, MAKELPARAM(this->HintHidePause, 0));
-	SendMessageA(hToolTip, TTM_SETDELAYTIME, TTDT_INITIAL, MAKELPARAM(this->HintPause, 0));
-	SendMessageA(hToolTip, TTM_SETDELAYTIME, TTDT_RESHOW, MAKELPARAM(this->HintShortPause, 0));
 	ti.lpszText = (LPSTR)this->Control->Hint;
 	if ((hWnd = TWinControl_GetHandle(this->Control)) == (HWND)ti.uId)
 	{

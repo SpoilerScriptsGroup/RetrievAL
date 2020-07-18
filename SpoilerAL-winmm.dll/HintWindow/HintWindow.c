@@ -69,7 +69,7 @@ void __fastcall TApplication_ActivateHint(TApplication *this, LPPOINT CursorPos)
 		ti.uId = (UINT_PTR)hWnd;
 		SendMessageA(hToolTip, TTM_ADDTOOLA, 0, (LPARAM)&ti);
 	}
-	hHook = SetWindowsHookExA(WH_CALLWNDPROCRET, CallWndRetProc, ti.hinst, GetCurrentThreadId());
+	hHook = SetWindowsHookExA(WH_CALLWNDPROCRET, CallWndRetProc, NULL, GetCurrentThreadId());
 }
 
 static LRESULT CALLBACK CallWndRetProc(int nCode, WPARAM wParam, LPARAM lParam)

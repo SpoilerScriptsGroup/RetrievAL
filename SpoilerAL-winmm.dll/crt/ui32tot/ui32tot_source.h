@@ -264,8 +264,6 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 
 		align   16
 	L2:
-		push    esi
-		mov     esi, ecx
 		cmp     ecx, 1000
 		jb      PRE3
 		jmp     PRE4
@@ -274,8 +272,6 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 	L3:
 		cmp     ecx, 1000000
 		jae     L4
-		push    esi
-		mov     esi, ecx
 		cmp     ecx, 100000
 		jb      PRE5
 		jmp     PRE6
@@ -315,6 +311,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 
 		align   16
 	PRE5:
+		push    esi                 __asm   mov     esi, ecx
 		shl     ecx, 8              __asm   lea     eax, [esi + esi * 2]
 		push    5                   __asm   lea     eax, [ecx + eax * 2]
 		shr     ecx, 3 + 8          __asm   lea     eax, [esi + eax * 8]
@@ -325,6 +322,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		align   16
 	PRE3:
 		imul    ecx, (1 << (25 - 6)) / 10 + 1
+		push    esi
 		push    3
 		mov     eax, ecx
 		jmp     LENGTH3
@@ -393,6 +391,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 
 		align   16
 	PRE6:
+		push    esi                 __asm   mov     esi, ecx
 		shl     ecx, 3              __asm   lea     eax, [esi + esi * 2]
 		shl     eax, 8              __asm   lea     ecx, [ecx + ecx * 8]
 		add     eax, ecx            __asm   sub     ecx, esi
@@ -404,6 +403,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		align   16
 	PRE4:
 		imul    ecx, (1 << (25 - 4)) / 100 + 1
+		push    esi
 		push    4
 		mov     eax, ecx
 		jmp     LENGTH4

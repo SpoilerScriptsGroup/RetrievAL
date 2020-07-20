@@ -169,7 +169,7 @@ LENGTH10:
 	{
 		uint64_t ull;
 
-		ull = __emulu(value, ((UINT64_C(1) << (32 + 26)) + 100000000 - 1) / 100000000) >> 25);
+		ull = __emulu(value, ((UINT64_C(1) << (32 + 26)) + 100000000 - 1) / 100000000) >> 25;
 		*(tchar2_t *)&buffer[0] = digits100T[ ull                                >> 32];
 		*(tchar2_t *)&buffer[2] = digits100T[(ull = __emulu((uint32_t)ull, 100)) >> 32];
 		*(tchar2_t *)&buffer[4] = digits100T[(ull = __emulu((uint32_t)ull, 100)) >> 32];
@@ -324,7 +324,52 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		align   16
 	L8:
 		cmp     ecx, 100000000
-		jb      LENGTH8
+		jae     LENGTH9
+		push    esi                 __asm   mov     esi, ecx
+		shl     ecx,  5             __asm   lea     eax, [esi + esi]
+		shr     esi,  1             __asm   add     eax, ecx
+		shr     ecx,  4 +  5        __asm   sub     eax, esi
+		shr     esi,  7 -  1        __asm   add     eax, ecx
+		shr     ecx, 12 -  4        __asm   sub     eax, esi
+		shr     esi, 17 -  7        __asm   sub     eax, ecx
+		shr     ecx, 18 - 12        __asm   sub     eax, esi
+		shr     esi, 22 - 17        __asm   sub     eax, ecx
+		push    8                   __asm   add     eax, esi
+		mov     ecx, eax
+		shr     ecx, 25
+		and     eax, (1 << 25) - 1
+		mov     t2(c), tchar2 ptr [digits + ecx * (size TCHAR * 2)]
+		lea     eax, [eax + eax * 4]
+		mov     tchar2 ptr [edx], t2(c)
+		lea     eax, [eax + eax * 4]
+		add     edx, size TCHAR * 2
+		mov     ecx, eax
+	LENGTH6:
+		shr     ecx, 25 - 2
+		and     eax, (1 << (25 - 2)) - 1
+		mov     t2(c), tchar2 ptr [digits + ecx * (size TCHAR * 2)]
+		lea     eax, [eax + eax * 4]
+		mov     tchar2 ptr [edx], t2(c)
+		lea     eax, [eax + eax * 4]
+		add     edx, size TCHAR * 2
+		mov     ecx, eax
+	LENGTH4:
+		shr     ecx, 25 - 4
+		and     eax, (1 << (25 - 4)) - 1
+		mov     t2(c), tchar2 ptr [digits + ecx * (size TCHAR * 2)]
+		lea     eax, [eax + eax * 4]
+		mov     tchar2 ptr [edx], t2(c)
+		lea     ecx, [eax + eax * 4]
+		shr     ecx, 25 - 6
+		pop     eax
+		mov     t2(c), tchar2 ptr [digits + ecx * (size TCHAR * 2)]
+		pop     esi
+		mov     tchar2 ptr [edx + (size TCHAR * 2)], t2(c)
+		mov     tchar ptr [edx + (size TCHAR * 4)], '\0'
+		ret
+
+		align   16
+	LENGTH9:
 		push    esi
 		push    9
 		mov     esi, edx
@@ -378,51 +423,6 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		mov     tchar ptr [edx], t(c)
 		mov     tchar ptr [edx + size TCHAR], '\0'
 #endif
-		ret
-
-		align   16
-	LENGTH8:
-		push    esi                 __asm   mov     esi, ecx
-		shl     ecx,  5             __asm   lea     eax, [esi + esi]
-		shr     esi,  1             __asm   add     eax, ecx
-		shr     ecx,  4 +  5        __asm   sub     eax, esi
-		shr     esi,  7 -  1        __asm   add     eax, ecx
-		shr     ecx, 12 -  4        __asm   sub     eax, esi
-		shr     esi, 17 -  7        __asm   sub     eax, ecx
-		shr     ecx, 18 - 12        __asm   sub     eax, esi
-		shr     esi, 22 - 17        __asm   sub     eax, ecx
-		push    8                   __asm   add     eax, esi
-		mov     ecx, eax
-		shr     ecx, 25
-		and     eax, (1 << 25) - 1
-		mov     t2(c), tchar2 ptr [digits + ecx * (size TCHAR * 2)]
-		lea     eax, [eax + eax * 4]
-		mov     tchar2 ptr [edx], t2(c)
-		lea     eax, [eax + eax * 4]
-		add     edx, size TCHAR * 2
-		mov     ecx, eax
-	LENGTH6:
-		shr     ecx, 25 - 2
-		and     eax, (1 << (25 - 2)) - 1
-		mov     t2(c), tchar2 ptr [digits + ecx * (size TCHAR * 2)]
-		lea     eax, [eax + eax * 4]
-		mov     tchar2 ptr [edx], t2(c)
-		lea     eax, [eax + eax * 4]
-		add     edx, size TCHAR * 2
-		mov     ecx, eax
-	LENGTH4:
-		shr     ecx, 25 - 4
-		and     eax, (1 << (25 - 4)) - 1
-		mov     t2(c), tchar2 ptr [digits + ecx * (size TCHAR * 2)]
-		lea     eax, [eax + eax * 4]
-		mov     tchar2 ptr [edx], t2(c)
-		lea     ecx, [eax + eax * 4]
-		shr     ecx, 25 - 6
-		pop     eax
-		mov     t2(c), tchar2 ptr [digits + ecx * (size TCHAR * 2)]
-		pop     esi
-		mov     tchar2 ptr [edx + (size TCHAR * 2)], t2(c)
-		mov     tchar ptr [edx + (size TCHAR * 4)], '\0'
 		ret
 	}
 

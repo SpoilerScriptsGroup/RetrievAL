@@ -74,7 +74,7 @@ LENGTH2:
 
 LENGTH3:
 	{
-		value = value * ((1 << (25 - 6)) / 10 + 1);
+		value = value * (((1 << (25 - 6)) + 10 - 1) / 10);
 		*(tchar2_t *)&buffer[0] = digits100T[value >> (25 - 6)]; value = (value & ((1 << (25 - 6)) - 1)) * ( 10 >> 1);
 		*(tchar2_t *)&buffer[2] = T2(       (value >> (25 - 7)) + TEXT('0'));
 		return 3;
@@ -82,7 +82,7 @@ LENGTH3:
 
 LENGTH4:
 	{
-		value = value * ((1 << (25 - 4)) / 100 + 1);
+		value = value * (((1 << (25 - 4)) + 100 - 1) / 100);
 		*(tchar2_t *)&buffer[0] = digits100T[value >> (25 - 4)]; value = (value & ((1 << (25 - 4)) - 1)) * (100 >> 2);
 		*(tchar2_t *)&buffer[2] = digits100T[value >> (25 - 6)];
 		              buffer[4] = TEXT('\0');
@@ -91,7 +91,7 @@ LENGTH4:
 
 LENGTH5:
 	{
-		value = value * ((1 << (25 - 4)) / 1000)
+		value = value * ((((1 << (25 - 4)) + 1000 - 1) / 1000) - 1)
 			+ (value >> 3)
 			+ (value >> 5);
 		*(tchar2_t *)&buffer[0] = digits100T[value >> (25 - 4)]; value = (value & ((1 << (25 - 4)) - 1)) * (100 >> 2);
@@ -102,7 +102,7 @@ LENGTH5:
 
 LENGTH6:
 	{
-		value = value * ((1 << (25 - 2)) / 10000 + 1)
+		value = value * (((1 << (25 - 2)) + 10000 - 1) / 10000)
 			- (value >> 3)
 			- (value >> 6)
 			+ (value >> 9);
@@ -115,7 +115,7 @@ LENGTH6:
 
 LENGTH7:
 	{
-		value = value * ((1 << (25 - 2)) / 100000 + 1)
+		value = value * (((1 << (25 - 2)) + 100000 - 1) / 100000)
 			- (value >> 3)
 			+ (value >> 6)
 			- (value >> 8)
@@ -132,7 +132,7 @@ LENGTH7:
 
 LENGTH8:
 	{
-		value = value * ((1 << 25) / 1000000 + 1)
+		value = value * (((1 << 25) + 1000000 - 1) / 1000000)
 			- (value >> 1)
 			+ (value >> 4)
 			- (value >> 7)
@@ -150,7 +150,7 @@ LENGTH8:
 
 LENGTH9:
 	{
-		const uint64_t reciprocal_u8 = (UINT64_C(1) << (32 + 25)) / 10000000;
+		const uint64_t reciprocal_u8 = ((UINT64_C(1) << (32 + 25)) + 10000000 - 1) / 10000000 - 1;
 		const uint32_t reciprocal_lo = (uint32_t)reciprocal_u8;
 		const uint32_t reciprocal_hi = (uint32_t)(reciprocal_u8 >> 32);
 
@@ -169,7 +169,7 @@ LENGTH10:
 	{
 		uint64_t ull;
 
-		ull = __emulu(value, ((UINT64_C(1) << (32 + 26)) + 100000000 - 1) / 100000000) >> 25;
+		ull = __emulu(value, ((UINT64_C(1) << (32 + 25)) + 100000000 - 1) / 100000000) >> 25;
 		*(tchar2_t *)&buffer[0] = digits100T[ ull                                >> 32];
 		*(tchar2_t *)&buffer[2] = digits100T[(ull = __emulu((uint32_t)ull, 100)) >> 32];
 		*(tchar2_t *)&buffer[4] = digits100T[(ull = __emulu((uint32_t)ull, 100)) >> 32];
@@ -286,7 +286,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		push    esi
 		push    9
 		mov     esi, edx
-		mov     edx, 0x5AFE5357	// ((UINT64_C(1) << (32 + 25)) / 10000000) & 0xFFFFFFFF
+		mov     edx, 0x5AFE5357	// (((UINT64_C(1) << (32 + 25)) + 10000000 - 1) / 10000000 - 1) & 0xFFFFFFFF
 		mov     eax, ecx
 		lea     ecx, [ecx + ecx * 2]
 		mul     edx
@@ -321,7 +321,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 
 		align   16
 	PRE3:
-		imul    ecx, (1 << (25 - 6)) / 10 + 1
+		imul    ecx, ((1 << (25 - 6)) + 10 - 1) / 10
 		push    esi
 		push    3
 		mov     eax, ecx
@@ -402,7 +402,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 
 		align   16
 	PRE4:
-		imul    ecx, (1 << (25 - 4)) / 100 + 1
+		imul    ecx, ((1 << (25 - 4)) + 100 - 1) / 100
 		push    esi
 		push    4
 		mov     eax, ecx

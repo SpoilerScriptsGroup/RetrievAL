@@ -43,7 +43,7 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 	}
 	else
 	{
-		const uint64_t reciprocal_u8 = (UINT64_C(1) << (32 + 25)) / 10000000;
+		const uint64_t reciprocal_u8 = ((UINT64_C(1) << (32 + 25)) + 10000000 - 1) / 10000000 - 1;
 		const uint32_t reciprocal_lo = (uint32_t)reciprocal_u8;
 		const uint32_t reciprocal_hi = (uint32_t)(reciprocal_u8 >> 32);
 
@@ -604,7 +604,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		inc_tchar(ecx)
 
 		mov     dword ptr [esp + 8], ebx
-		mov     edx, 0x5AFE5357	// ((UINT64_C(1) << (32 + 25)) / 10000000) & 0xFFFFFFFF
+		mov     edx, 0x5AFE5357	// (((UINT64_C(1) << (32 + 25)) + 10000000 - 1) / 10000000 - 1) & 0xFFFFFFFF
 		lea     ebx, [eax + eax * 2]
 		mul     edx
 		lea     edx, [edx + ebx + 2]

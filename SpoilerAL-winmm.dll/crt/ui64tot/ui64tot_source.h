@@ -82,66 +82,66 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 					else
 						goto LENGTH10;
 
-		#define PUTCHAR(power10)                                  \
-		do                                                        \
-		{                                                         \
-		    if ((int64_t)(value -= 5 * power10) >= 0)             \
-		    {                                                     \
-		        if ((int64_t)(value -= 2 * power10) >= 0)         \
-		        {                                                 \
-		            if ((int64_t)(value -= 1 * power10) >= 0)     \
-		            {                                             \
-		                if ((int64_t)(value -= 1 * power10) >= 0) \
-		                {                                         \
-		                    *(p++) = TEXT('9');                   \
-		                    break;                                \
-		                }                                         \
-		                *(p++) = TEXT('8');                       \
-		            }                                             \
-		            else                                          \
-		            {                                             \
-		                *(p++) = TEXT('7');                       \
-		            }                                             \
-		        }                                                 \
-		        else                                              \
-		        {                                                 \
-		            if ((int64_t)(value += 1 * power10) >= 0)     \
-		            {                                             \
-		                *(p++) = TEXT('6');                       \
-		                break;                                    \
-		            }                                             \
-		            *(p++) = TEXT('5');                           \
-		        }                                                 \
-		    }                                                     \
-		    else                                                  \
-		    {                                                     \
-		        if ((int64_t)(value += 3 * power10) >= 0)         \
-		        {                                                 \
-		            if ((int64_t)(value -= 1 * power10) >= 0)     \
-		            {                                             \
-		                if ((int64_t)(value -= 1 * power10) >= 0) \
-		                {                                         \
-		                    *(p++) = TEXT('4');                   \
-		                    break;                                \
-		                }                                         \
-		                *(p++) = TEXT('3');                       \
-		            }                                             \
-		            else                                          \
-		            {                                             \
-		                *(p++) = TEXT('2');                       \
-		            }                                             \
-		        }                                                 \
-		        else                                              \
-		        {                                                 \
-		            if ((int64_t)(value += 1 * power10) >= 0)     \
-		            {                                             \
-		                *(p++) = TEXT('1');                       \
-		                break;                                    \
-		            }                                             \
-		            *(p++) = TEXT('0');                           \
-		        }                                                 \
-		    }                                                     \
-		    value += 1 * power10;                                 \
+		#define PUTCHAR(power)                                      \
+		do                                                          \
+		{                                                           \
+		    if (!_sub_u64(value, 5 * power, &value))                \
+		    {                                                       \
+		        if (!_sub_u64(value, 2 * power, &value))            \
+		        {                                                   \
+		            if (!_sub_u64(value, 1 * power, &value))        \
+		            {                                               \
+		                if (!_sub_u64(value, 1 * power, &value))    \
+		                {                                           \
+		                    *(p++) = TEXT('9');                     \
+		                    break;                                  \
+		                }                                           \
+		                *(p++) = TEXT('8');                         \
+		            }                                               \
+		            else                                            \
+		            {                                               \
+		                *(p++) = TEXT('7');                         \
+		            }                                               \
+		        }                                                   \
+		        else                                                \
+		        {                                                   \
+		            if (_add_u64(value, 1 * power, &value))         \
+		            {                                               \
+		                *(p++) = TEXT('6');                         \
+		                break;                                      \
+		            }                                               \
+		            *(p++) = TEXT('5');                             \
+		        }                                                   \
+		    }                                                       \
+		    else                                                    \
+		    {                                                       \
+		        if (_add_u64(value, 3 * power, &value))             \
+		        {                                                   \
+		            if (!_sub_u64(value, 1 * power, &value))        \
+		            {                                               \
+		                if (!_sub_u64(value, 1 * power, &value))    \
+		                {                                           \
+		                    *(p++) = TEXT('4');                     \
+		                    break;                                  \
+		                }                                           \
+		                *(p++) = TEXT('3');                         \
+		            }                                               \
+		            else                                            \
+		            {                                               \
+		                *(p++) = TEXT('2');                         \
+		            }                                               \
+		        }                                                   \
+		        else                                                \
+		        {                                                   \
+		            if (_add_u64(value, 1 * power, &value))         \
+		            {                                               \
+		                *(p++) = TEXT('1');                         \
+		                break;                                      \
+		            }                                               \
+		            *(p++) = TEXT('0');                             \
+		        }                                                   \
+		    }                                                       \
+		    value += 1 * power;                                     \
 		} while (0)
 
 	LENGTH20:
@@ -170,14 +170,14 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 
 		do
 		{
-			if (HI(value))
+			if (value >> 32)
 			{
 	LENGTH10:
-				if ((int64_t)(value -= 7000000000) >= 0)
+				if (!_sub_u64(value, 7000000000, &value))
 				{
-					if ((int32_t)(LO(value) -= 1000000000) >= 0)
+					if (!_sub_u32(LO(value), 1000000000, &LO(value)))
 					{
-						if ((int32_t)(LO(value) -= 1000000000) >= 0)
+						if (!_sub_u32(LO(value), 1000000000, &LO(value)))
 						{
 							p[0] = TEXT('9');
 							break;
@@ -191,9 +191,9 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 				}
 				else
 				{
-					if ((int32_t)(LO(value) += 2000000000) >= 0)
+					if (_add_u32(LO(value), 2000000000, &LO(value)))
 					{
-						if ((int32_t)(LO(value) -= 1000000000) >= 0)
+						if (!_sub_u32(LO(value), 1000000000, &LO(value)))
 						{
 							p[0] = TEXT('6');
 							break;
@@ -210,9 +210,9 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 			{
 				if (LO(value) >= 2000000000)
 				{
-					if ((int32_t)(LO(value) -= 3000000000) >= 0)
+					if (!_sub_u32(LO(value), 3000000000, &LO(value)))
 					{
-						if ((int32_t)(LO(value) -= 1000000000) >= 0)
+						if (!_sub_u32(LO(value), 1000000000, &LO(value)))
 						{
 							p[0] = TEXT('4');
 							break;
@@ -226,7 +226,7 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 				}
 				else
 				{
-					if ((int32_t)(LO(value) -= 1000000000) >= 0)
+					if (!_sub_u32(LO(value), 1000000000, &LO(value)))
 					{
 						p[0] = TEXT('1');
 						break;
@@ -287,7 +287,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 	L1:
 		cmp     edx, 0x002386F2	// 10000000000000000 >> 32
 		ja      L2
-		jne     L9
+		jb      L9
 		cmp     eax, 0x6FC10000	// 10000000000000000 & 0xFFFFFFFF
 		jae     L8
 		jmp     L11
@@ -295,7 +295,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 	L2:
 		cmp     edx, 0x0DE0B6B3	// 1000000000000000000 >> 32
 		ja      L3
-		jne     L6
+		jb      L6
 		cmp     eax, 0xA7640000	// 1000000000000000000 & 0xFFFFFFFF
 		jae     L5
 		jmp     L7
@@ -303,35 +303,35 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 	L3:
 		cmp     edx, 0x8AC72304	// 10000000000000000000 >> 32
 		ja      L4
-		jne     L5
+		jb      L5
 		cmp     eax, 0x89E80000	// 10000000000000000000 & 0xFFFFFFFF
 		jb      L5
 	L4:
-		mov     dword ptr [esp + 4], 20
+		push    20
 		jmp     LENGTH20
 
 	L5:
-		mov     dword ptr [esp + 4], 19
+		push    19
 		jmp     LENGTH19
 
 	L6:
 		cmp     edx, 0x01634578	// 100000000000000000 >> 32
 		ja      L7
-		jne     L8
+		jb      L8
 		cmp     eax, 0x5D8A0000	// 100000000000000000 & 0xFFFFFFFF
 		jb      L8
 	L7:
-		mov     dword ptr [esp + 4], 18
+		push    18
 		jmp     LENGTH18
 
 	L8:
-		mov     dword ptr [esp + 4], 17
+		push    17
 		jmp     LENGTH17
 
 	L9:
 		cmp     edx, 0x00000918	// 10000000000000 >> 32
 		ja      L10
-		jne     L15
+		jb      L15
 		cmp     eax, 0x4E72A000	// 10000000000000 & 0xFFFFFFFF
 		jae     L14
 		jmp     L17
@@ -339,31 +339,31 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 	L10:
 		cmp     edx, 0x00038D7E	// 1000000000000000 >> 32
 		ja      L11
-		jne     L12
+		jb      L12
 		cmp     eax, 0xA4C68000	// 1000000000000000 & 0xFFFFFFFF
 		jb      L13
 	L11:
-		mov     dword ptr [esp + 4], 16
+		push    16
 		jmp     LENGTH16
 
 	L12:
 		cmp     edx, 0x00005AF3	// 100000000000000 >> 32
 		ja      L13
-		jne     L14
+		jb      L14
 		cmp     eax, 0x107A4000	// 100000000000000 & 0xFFFFFFFF
 		jb      L14
 	L13:
-		mov     dword ptr [esp + 4], 15
+		push    15
 		jmp     LENGTH15
 
 	L14:
-		mov     dword ptr [esp + 4], 14
+		push    14
 		jmp     LENGTH14
 
 	L15:
 		cmp     edx, 0x00000017	// 100000000000 >> 32
 		ja      L16
-		jne     L19
+		jb      L19
 		cmp     eax, 0x4876E800	// 100000000000 & 0xFFFFFFFF
 		jae     L18
 		jmp     L20
@@ -371,29 +371,29 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 	L16:
 		cmp     edx, 0x000000E8	// 1000000000000 >> 32
 		ja      L17
-		jne     L18
+		jb      L18
 		cmp     eax, 0xD4A51000	// 1000000000000 & 0xFFFFFFFF
 		jb      L18
 	L17:
-		mov     dword ptr [esp + 4], 13
+		push    13
 		jmp     LENGTH13
 
 	L18:
-		mov     dword ptr [esp + 4], 12
+		push    12
 		jmp     LENGTH12
 
 	L19:
 		cmp     edx, 0x00000002	// 10000000000 >> 32
 		ja      L20
-		jne     L21
+		jb      L21
 		cmp     eax, 0x540BE400	// 10000000000 & 0xFFFFFFFF
 		jb      L21
 	L20:
-		mov     dword ptr [esp + 4], 11
+		push    11
 		jmp     LENGTH11
 
 	L21:
-		mov     dword ptr [esp + 4], 10
+		push    10
 		jmp     LENGTH10
 
 	LENGTH20:
@@ -483,55 +483,55 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		0xA7640000, 0x0DE0B6B3,     // 1000000000000000000
 		0x4EC80000, 0x1BC16D67,     // 2000000000000000000
 		0xF62C0000, 0x29A2241A,     // 3000000000000000000
-		0x44F40000, 0x45639182);    // 5000000000000000000
+		0x44F40000, 0x45639182)     // 5000000000000000000
 
 	PUTCHAR(LENGTH18,
 		0x5D8A0000, 0x01634578,     // 100000000000000000
 		0xBB140000, 0x02C68AF0,     // 200000000000000000
 		0x189E0000, 0x0429D069,     // 300000000000000000
-		0xD3B20000, 0x06F05B59);    // 500000000000000000
+		0xD3B20000, 0x06F05B59)     // 500000000000000000
 
 	PUTCHAR(LENGTH17,
 		0x6FC10000, 0x002386F2,     // 10000000000000000
 		0xDF820000, 0x00470DE4,     // 20000000000000000
 		0x4F430000, 0x006A94D7,     // 30000000000000000
-		0x2EC50000, 0x00B1A2BC);    // 50000000000000000
+		0x2EC50000, 0x00B1A2BC)     // 50000000000000000
 
 	PUTCHAR(LENGTH16,
 		0xA4C68000, 0x00038D7E,     // 1000000000000000
 		0x498D0000, 0x00071AFD,     // 2000000000000000
 		0xEE538000, 0x000AA87B,     // 3000000000000000
-		0x37E08000, 0x0011C379);    // 5000000000000000
+		0x37E08000, 0x0011C379)     // 5000000000000000
 
 	PUTCHAR(LENGTH15,
 		0x107A4000, 0x00005AF3,     // 100000000000000
 		0x20F48000, 0x0000B5E6,     // 200000000000000
 		0x316EC000, 0x000110D9,     // 300000000000000
-		0x52634000, 0x0001C6BF);    // 500000000000000
+		0x52634000, 0x0001C6BF)     // 500000000000000
 
 	PUTCHAR(LENGTH14,
 		0x4E72A000, 0x00000918,     // 10000000000000
 		0x9CE54000, 0x00001230,     // 20000000000000
 		0xEB57E000, 0x00001B48,     // 30000000000000
-		0x883D2000, 0x00002D79);    // 50000000000000
+		0x883D2000, 0x00002D79)     // 50000000000000
 
 	PUTCHAR(LENGTH13,
 		0xD4A51000, 0x000000E8,     // 1000000000000
 		0xA94A2000, 0x000001D1,     // 2000000000000
 		0x7DEF3000, 0x000002BA,     // 3000000000000
-		0x27395000, 0x0000048C);    // 5000000000000
+		0x27395000, 0x0000048C)     // 5000000000000
 
 	PUTCHAR(LENGTH12,
 		0x4876E800, 0x00000017,     // 100000000000
 		0x90EDD000, 0x0000002E,     // 200000000000
 		0xD964B800, 0x00000045,     // 300000000000
-		0x6A528800, 0x00000074);    // 500000000000
+		0x6A528800, 0x00000074)     // 500000000000
 
 	PUTCHAR(LENGTH11,
 		0x540BE400, 0x00000002,     // 10000000000
 		0xA817C800, 0x00000004,     // 20000000000
 		0xFC23AC00, 0x00000006,     // 30000000000
-		0xA43B7400, 0x0000000B);    // 50000000000
+		0xA43B7400, 0x0000000B)     // 50000000000
 
 	#undef PUTCHAR
 
@@ -599,11 +599,11 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 	L31:
 		mov     tchar ptr [ecx], '0'
 	L32:
-		add     eax, 1000000000;
+		add     eax, 1000000000
 	L33:
 		inc_tchar(ecx)
 
-		mov     dword ptr [esp + 8], ebx
+		push    ebx
 		mov     edx, 0x5AFE5357	// (((UINT64_C(1) << (32 + 25)) + 10000000 - 1) / 10000000 - 1) & 0xFFFFFFFF
 		lea     ebx, [eax + eax * 2]
 		mul     edx
@@ -640,9 +640,9 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		mov     tchar2 ptr [ecx], t2(b)
 		add     ecx, size TCHAR * 2
 		shr     edx, 25 - 7
-		mov     eax, dword ptr [esp + 4]
+		pop     ebx
 		add     edx, '0'
-		mov     ebx, dword ptr [esp + 8]
+		pop     eax
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 		mov     tchar2 ptr [ecx], t2(d)
 #else

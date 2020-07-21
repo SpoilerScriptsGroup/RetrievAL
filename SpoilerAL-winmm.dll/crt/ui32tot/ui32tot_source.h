@@ -68,7 +68,7 @@ LENGTH1:
 LENGTH2:
 	{
 		*(tchar2_t *)&buffer[0] = digits100T[value];
-		              buffer[2] = TEXT('\0');
+		buffer[2] = TEXT('\0');
 		return 2;
 	}
 
@@ -85,7 +85,7 @@ LENGTH4:
 		value = value * (((1 << (25 - 4)) + 100 - 1) / 100);
 		*(tchar2_t *)&buffer[0] = digits100T[value >> (25 - 4)]; value = (value & ((1 << (25 - 4)) - 1)) * (100 >> 2);
 		*(tchar2_t *)&buffer[2] = digits100T[value >> (25 - 6)];
-		              buffer[4] = TEXT('\0');
+		buffer[4] = TEXT('\0');
 		return 4;
 	}
 
@@ -109,7 +109,7 @@ LENGTH6:
 		*(tchar2_t *)&buffer[0] = digits100T[value >> (25 - 2)]; value = (value & ((1 << (25 - 2)) - 1)) * (100 >> 2);
 		*(tchar2_t *)&buffer[2] = digits100T[value >> (25 - 4)]; value = (value & ((1 << (25 - 4)) - 1)) * (100 >> 2);
 		*(tchar2_t *)&buffer[4] = digits100T[value >> (25 - 6)];
-		              buffer[6] = TEXT('\0');
+		buffer[6] = TEXT('\0');
 		return 6;
 	}
 
@@ -144,7 +144,7 @@ LENGTH8:
 		*(tchar2_t *)&buffer[2] = digits100T[value >> (25 - 2)]; value = (value & ((1 << (25 - 2)) - 1)) * (100 >> 2);
 		*(tchar2_t *)&buffer[4] = digits100T[value >> (25 - 4)]; value = (value & ((1 << (25 - 4)) - 1)) * (100 >> 2);
 		*(tchar2_t *)&buffer[6] = digits100T[value >> (25 - 6)];
-		              buffer[8] = TEXT('\0');
+		buffer[8] = TEXT('\0');
 		return 8;
 	}
 
@@ -175,7 +175,7 @@ LENGTH10:
 		*(tchar2_t *)&buffer[4] = digits100T[(ull = __emulu((uint32_t)ull, 100)) >> 32];
 		*(tchar2_t *)&buffer[6] = digits100T[(ull = __emulu((uint32_t)ull, 100)) >> 32];
 		*(tchar2_t *)&buffer[8] = digits100T[       __emulu((uint32_t)ull, 100)  >> 32];
-		buffer[10] = '\0';
+		buffer[10] = TEXT('\0');
 		return 10;
 	}
 }

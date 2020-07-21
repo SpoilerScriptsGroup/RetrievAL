@@ -5,7 +5,9 @@
 #pragma once
 #endif
 
+#ifndef __cplusplus
 typedef unsigned short wchar_t;
+#endif
 
 #ifdef __cplusplus
 extern "C" {

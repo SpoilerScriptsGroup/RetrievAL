@@ -99,7 +99,7 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		mov     ecx, -1                                     // ecx = -1
 		mov     esi, edi                                    // esi = pointer to string
 		repne   scast                                       // find null
-		sub     edi, size TCHAR * 2                       // string is not empty, move di pointer back
+		sub     edi, size TCHAR * 2                         // string is not empty, move di pointer back
 		                                                    // edi points to last non-null char
 		mov     eax, esi                                    // return value: string addr
 		cmp     ecx, -2                                     // is string empty? (if offset value is 0, the

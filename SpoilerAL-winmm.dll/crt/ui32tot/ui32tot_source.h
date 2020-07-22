@@ -170,11 +170,11 @@ LENGTH10:
 		uint64_t ull;
 
 		ull = __emulu(value, ((UINT64_C(1) << (32 + 25)) + 100000000 - 1) / 100000000) >> 25;
-		*(tchar2_t *)&buffer[0] = digits100T[ ull                                >> 32];
-		*(tchar2_t *)&buffer[2] = digits100T[(ull = __emulu((uint32_t)ull, 100)) >> 32];
-		*(tchar2_t *)&buffer[4] = digits100T[(ull = __emulu((uint32_t)ull, 100)) >> 32];
-		*(tchar2_t *)&buffer[6] = digits100T[(ull = __emulu((uint32_t)ull, 100)) >> 32];
-		*(tchar2_t *)&buffer[8] = digits100T[       __emulu((uint32_t)ull, 100)  >> 32];
+		*(tchar2_t *)&buffer[0] = digits100T[ull   >>  32     ]; value = (uint32_t)(ull = __emulu((uint32_t)ull, 100)) >> (32 - 25);
+		*(tchar2_t *)&buffer[2] = digits100T[ull   >>  32     ]; value = (value & ((1 <<  25     ) - 1)) * (100 >> 2);
+		*(tchar2_t *)&buffer[4] = digits100T[value >> (25 - 2)]; value = (value & ((1 << (25 - 2)) - 1)) * (100 >> 2);
+		*(tchar2_t *)&buffer[6] = digits100T[value >> (25 - 4)]; value = (value & ((1 << (25 - 4)) - 1)) * (100 >> 2);
+		*(tchar2_t *)&buffer[8] = digits100T[value >> (25 - 6)];
 		buffer[10] = TEXT('\0');
 		return 10;
 	}
@@ -183,19 +183,17 @@ LENGTH10:
 __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 {
 #ifdef _UNICODE
-	#define digits       digits100W
-	#define tchar        word
-	#define tchar2       dword
-	#define inc_tchar(r) add r, 2
-	#define t(r)         r##x
-	#define t2(r)        e##r##x
+	#define digits digits100W
+	#define tchar  word
+	#define tchar2 dword
+	#define t(r)   r##x
+	#define t2(r)  e##r##x
 #else
-	#define digits       digits100A
-	#define tchar        byte
-	#define tchar2       word
-	#define inc_tchar(r) inc r
-	#define t(r)         r##l
-	#define t2(r)        r##x
+	#define digits digits100A
+	#define tchar  byte
+	#define tchar2 word
+	#define t(r)   r##l
+	#define t2(r)  r##x
 #endif
 
 	__asm
@@ -204,34 +202,23 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		jb      L1
 	//LENGTH10:
 		push    esi
-		push    edi
+		push    10
 		mov     eax, 0x55E63B89	// ((UINT64_C(1) << (32 + 25)) + 100000000 - 1) / 100000000
 		mov     esi, edx
 		mul     ecx
 		shrd    eax, edx, 25
 		shr     edx, 25
 		xor     ecx, ecx
-		mov     edi, 100
 		mov     t2(c), tchar2 ptr [digits + edx * (size TCHAR * 2)]
-		mul     edi
+		mov     edx, 100
+		mul     edx
 		mov     tchar2 ptr [esi], t2(c)
-		mov     t2(c), tchar2 ptr [digits + edx * (size TCHAR * 2)]
-		mul     edi
-		mov     tchar2 ptr [esi + (size TCHAR * 2)], t2(c)
-		mov     t2(c), tchar2 ptr [digits + edx * (size TCHAR * 2)]
-		mul     edi
-		mov     tchar2 ptr [esi + (size TCHAR * 4)], t2(c)
 		mov     ecx, edx
-		mul     edi
-		mov     t2(c), tchar2 ptr [digits + ecx * (size TCHAR * 2)]
-		mov     t2(d), tchar2 ptr [digits + edx * (size TCHAR * 2)]
-		mov     tchar2 ptr [esi + (size TCHAR * 6)], t2(c)
-		mov     tchar2 ptr [esi + (size TCHAR * 8)], t2(d)
-		mov     tchar ptr [esi + (size TCHAR * 10)], '\0'
-		mov     eax, 10
-		pop     edi
-		pop     esi
-		ret
+		shr     eax, 32 - 25
+		mov     edx, esi
+		and     eax, (1 << 25) - 1
+		add     edx, size TCHAR * 2
+		jmp     POST10
 
 		align   16
 	L1:
@@ -265,24 +252,24 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		align   16
 	L2:
 		cmp     ecx, 1000
-		jb      PRE3
-		jmp     PRE4
+		jb      LENGTH3
+		jmp     LENGTH4
 
 		align   16
 	L3:
 		cmp     ecx, 1000000
 		jae     L4
 		cmp     ecx, 100000
-		jb      PRE5
-		jmp     PRE6
+		jb      LENGTH5
+		jmp     LENGTH6
 
 		align   16
 	L4:
 		cmp     ecx, 10000000
-		jb      PRE7
+		jb      LENGTH7
 		cmp     ecx, 100000000
-		jb      PRE8
-	//PRE9:
+		jb      LENGTH8
+	//LENGTH9:
 		push    esi
 		push    9
 		mov     esi, edx
@@ -293,10 +280,10 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		lea     ecx, [ecx + edx + 2]
 		mov     edx, esi
 		mov     eax, ecx
-		jmp     LENGTH9
+		jmp     POST9
 
 		align   16
-	PRE7:
+	LENGTH7:
 		push    esi                 __asm   push    7
 		mov     esi, ecx            __asm   lea     eax, [ecx + ecx * 4]
 		shr     esi,  6             __asm   lea     eax, [ecx + eax * 4]
@@ -307,28 +294,28 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		shr     ecx, 15 - 11        __asm   sub     eax, esi
 		shr     esi, 17 - 13        __asm   sub     eax, ecx
 		lea     ecx, [eax + esi]    __asm   add     eax, esi
-		jmp     LENGTH7
+		jmp     POST7
 
 		align   16
-	PRE5:
+	LENGTH5:
 		push    esi                 __asm   mov     esi, ecx
 		shl     ecx, 8              __asm   lea     eax, [esi + esi * 2]
 		push    5                   __asm   lea     eax, [ecx + eax * 2]
 		shr     ecx, 3 + 8          __asm   lea     eax, [esi + eax * 8]
 		shr     esi, 5              __asm   add     eax, ecx
 		lea     ecx, [eax + esi]    __asm   add     eax, esi
-		jmp     LENGTH5
+		jmp     POST5
 
 		align   16
-	PRE3:
+	LENGTH3:
 		imul    ecx, ((1 << (25 - 6)) + 10 - 1) / 10
 		push    esi
 		push    3
 		mov     eax, ecx
-		jmp     LENGTH3
+		jmp     POST3
 
 		align   16
-	LENGTH9:
+	POST9:
 		shr     ecx, 25
 		and     eax, (1 << 25) - 1
 		mov     t2(c), tchar2 ptr [digits + ecx * (size TCHAR * 2)]
@@ -337,7 +324,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		lea     eax, [eax + eax * 4]
 		add     edx, size TCHAR * 2
 		mov     ecx, eax
-	LENGTH7:
+	POST7:
 		shr     ecx, 25 - 2
 		and     eax, (1 << (25 - 2)) - 1
 		mov     t2(c), tchar2 ptr [digits + ecx * (size TCHAR * 2)]
@@ -346,7 +333,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		lea     eax, [eax + eax * 4]
 		add     edx, size TCHAR * 2
 		mov     ecx, eax
-	LENGTH5:
+	POST5:
 		shr     ecx, 25 - 4
 		and     eax, (1 << (25 - 4)) - 1
 		mov     t2(c), tchar2 ptr [digits + ecx * (size TCHAR * 2)]
@@ -355,7 +342,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		lea     eax, [eax + eax * 4]
 		add     edx, size TCHAR * 2
 		mov     ecx, eax
-	LENGTH3:
+	POST3:
 		shr     ecx, 25 - 6
 		and     eax, (1 << (25 - 6)) - 1
 		mov     t2(c), tchar2 ptr [digits + ecx * (size TCHAR * 2)]
@@ -375,7 +362,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		ret
 
 		align   16
-	PRE8:
+	LENGTH8:
 		push    esi                 __asm   mov     esi, ecx
 		shl     ecx,  5             __asm   lea     eax, [esi + esi]
 		shr     esi,  1             __asm   add     eax, ecx
@@ -387,10 +374,10 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		shr     esi, 22 - 17        __asm   sub     eax, ecx
 		push    8                   __asm   add     eax, esi
 		mov     ecx, eax
-		jmp     LENGTH8
+		jmp     POST8
 
 		align   16
-	PRE6:
+	LENGTH6:
 		push    esi                 __asm   mov     esi, ecx
 		shl     ecx, 3              __asm   lea     eax, [esi + esi * 2]
 		shl     eax, 8              __asm   lea     ecx, [ecx + ecx * 8]
@@ -398,27 +385,28 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		shr     ecx, 9              __asm   sub     eax, esi
 		push    6                   __asm   sub     eax, ecx
 		mov     ecx, eax
-		jmp     LENGTH6
+		jmp     POST6
 
 		align   16
-	PRE4:
+	LENGTH4:
 		imul    ecx, ((1 << (25 - 4)) + 100 - 1) / 100
 		push    esi
 		push    4
 		mov     eax, ecx
-		jmp     LENGTH4
+		jmp     POST4
 
 		align   16
-	LENGTH8:
+	POST8:
 		shr     ecx, 25
 		and     eax, (1 << 25) - 1
+	POST10:
 		mov     t2(c), tchar2 ptr [digits + ecx * (size TCHAR * 2)]
 		lea     eax, [eax + eax * 4]
 		mov     tchar2 ptr [edx], t2(c)
 		lea     eax, [eax + eax * 4]
 		add     edx, size TCHAR * 2
 		mov     ecx, eax
-	LENGTH6:
+	POST6:
 		shr     ecx, 25 - 2
 		and     eax, (1 << (25 - 2)) - 1
 		mov     t2(c), tchar2 ptr [digits + ecx * (size TCHAR * 2)]
@@ -427,7 +415,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		lea     eax, [eax + eax * 4]
 		add     edx, size TCHAR * 2
 		mov     ecx, eax
-	LENGTH4:
+	POST4:
 		shr     ecx, 25 - 4
 		and     eax, (1 << (25 - 4)) - 1
 		mov     t2(c), tchar2 ptr [digits + ecx * (size TCHAR * 2)]
@@ -446,7 +434,6 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 	#undef digits
 	#undef tchar
 	#undef tchar2
-	#undef inc_tchar
 	#undef t
 	#undef t2
 }

@@ -6,13 +6,10 @@
 #include "TWinControl.h"
 #include "TDrawGrid.h"
 
-#define EqualPoint(lppt1, lppt2) (!(((lppt1)->x ^ (lppt2)->x) | ((lppt1)->y ^ (lppt2)->y)))
-
 static HWND      hToolTip = NULL;
 static TOOLINFOA ti = { sizeof(TOOLINFOA), TTF_IDISHWND | TTF_SUBCLASS };
 static HHOOK     hHook = NULL;
-static POINT     ptTrack;
-static BOOL      IsDrawGrid;
+static DWORD     dwTrackPos;
 static TDrawGrid *DrawGrid;
 
 static LRESULT CALLBACK CallWndRetProc(int nCode, WPARAM wParam, LPARAM lParam);
@@ -61,7 +58,7 @@ void __fastcall TApplication_ActivateHint(TApplication *this, LPPOINT CursorPos)
 
 	if (hHook || !this->Control || !hToolTip)
 		return;
-	ptTrack = *CursorPos;
+	dwTrackPos = GetMessagePos();
 	ti.lpszText = (LPSTR)this->Control->Hint;
 	if ((hWnd = TWinControl_GetHandle(this->Control)) == (HWND)ti.uId)
 	{
@@ -74,13 +71,12 @@ void __fastcall TApplication_ActivateHint(TApplication *this, LPPOINT CursorPos)
 		ti.uId = (UINT_PTR)hWnd;
 		SendMessageA(hToolTip, TTM_ADDTOOLA, 0, (LPARAM)&ti);
 	}
-	IsDrawGrid = 0;
+	DrawGrid = NULL;
 	if (GetClassNameA((HWND)ti.uId, lpClassName, _countof(lpClassName)) == 9 &&
 		*(LPDWORD)&lpClassName[0] == BSWAP32('TDra') &&
 		*(LPDWORD)&lpClassName[4] == BSWAP32('wGri') &&
 		*(LPWORD )&lpClassName[8] == BSWAP16('d\0'))
 	{
-		IsDrawGrid = -1;
 		ScreenToClient((HWND)ti.uId, &ptTrack);
 		TDrawGrid_MouseToCell(DrawGrid = (TDrawGrid *)this->Control, ptTrack.x, ptTrack.y, &ptTrack.x, &ptTrack.y);
 	}
@@ -90,17 +86,28 @@ void __fastcall TApplication_ActivateHint(TApplication *this, LPPOINT CursorPos)
 static LRESULT CALLBACK CallWndRetProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT lResult;
-	POINT   ptCursor;
 
 	lResult = CallNextHookEx(hHook, nCode, wParam, lParam);
 	if (nCode >= 0)
 	{
-		BOOL bSuccess;
+		DWORD dwCursorPos;
+		BOOL  bSuccess;
 
-		if ((bSuccess = GetCursorPos(&ptCursor)) & IsDrawGrid)
-			if (bSuccess = ScreenToClient((HWND)ti.uId, &ptCursor))
-				TDrawGrid_MouseToCell(DrawGrid, ptCursor.x, ptCursor.y, &ptCursor.x, &ptCursor.y);
-		if (!bSuccess || !EqualPoint(&ptCursor, &ptTrack) || !IsWindowVisible((HWND)ti.uId))
+		dwCursorPos = GetMessagePos();
+		bSuccess = TRUE;
+		if (DrawGrid)
+		{
+			POINT pt;
+
+			pt.x = (short)dwCursorPos;
+			pt.y = (long)dwCursorPos >> 16;
+			if (bSuccess = ScreenToClient((HWND)ti.uId, &pt))
+			{
+				TDrawGrid_MouseToCell(DrawGrid, pt.x, pt.y, &pt.x, &pt.y);
+				dwCursorPos = MAKELONG(pt.x, pt.y);
+			}
+		}
+		if (!bSuccess || dwCursorPos != dwTrackPos || !IsWindowVisible((HWND)ti.uId))
 		{
 			UnhookWindowsHookEx(hHook);
 			SendMessageA(hToolTip, TTM_TRACKACTIVATE, FALSE, (LPARAM)&ti);

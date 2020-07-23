@@ -150,13 +150,13 @@ LENGTH8:
 
 LENGTH9:
 	{
-		const uint64_t reciprocal_u8 = ((UINT64_C(1) << (32 + 25)) + 10000000 - 1) / 10000000 - 1;
+		const uint64_t reciprocal_u8 = ((UINT64_C(1) << (32 + 25)) + 10000000 - 1) / 10000000;
 		const uint32_t reciprocal_lo = (uint32_t)reciprocal_u8;
 		const uint32_t reciprocal_hi = (uint32_t)(reciprocal_u8 >> 32);
 
 		value = (uint32_t)(__emulu(value, reciprocal_lo) >> 32)
 			+ value * reciprocal_hi
-			+ 2;
+			+ 1;
 		*(tchar2_t *)&buffer[0] = digits100T[value >>  25     ]; value = (value & ((1 <<  25     ) - 1)) * (100 >> 2);
 		*(tchar2_t *)&buffer[2] = digits100T[value >> (25 - 2)]; value = (value & ((1 << (25 - 2)) - 1)) * (100 >> 2);
 		*(tchar2_t *)&buffer[4] = digits100T[value >> (25 - 4)]; value = (value & ((1 << (25 - 4)) - 1)) * (100 >> 2);
@@ -205,11 +205,11 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 	//LENGTH9:
 		push    esi
 		push    9
-		mov     eax, 0x5AFE5357	// (((UINT64_C(1) << (32 + 25)) + 10000000 - 1) / 10000000 - 1) & UINT32_MAX
+		mov     eax, 0x5AFE5358	// (((UINT64_C(1) << (32 + 25)) + 10000000 - 1) / 10000000) & UINT32_MAX
 		mov     esi, edx
 		mul     ecx
 		lea     ecx, [ecx + ecx * 2]
-		add     edx, 2
+		add     edx, 1
 		add     ecx, edx
 		mov     edx, esi
 		mov     eax, ecx

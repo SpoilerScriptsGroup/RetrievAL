@@ -288,7 +288,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		cmp     edx, 0x002386F2	// 10000000000000000 >> 32
 		ja      L2
 		jb      L9
-		cmp     eax, 0x6FC10000	// 10000000000000000 & 0xFFFFFFFF
+		cmp     eax, 0x6FC10000	// 10000000000000000 & UINT32_MAX
 		jae     L8
 		jmp     L11
 
@@ -296,7 +296,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		cmp     edx, 0x0DE0B6B3	// 1000000000000000000 >> 32
 		ja      L3
 		jb      L6
-		cmp     eax, 0xA7640000	// 1000000000000000000 & 0xFFFFFFFF
+		cmp     eax, 0xA7640000	// 1000000000000000000 & UINT32_MAX
 		jae     L5
 		jmp     L7
 
@@ -304,7 +304,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		cmp     edx, 0x8AC72304	// 10000000000000000000 >> 32
 		ja      L4
 		jb      L5
-		cmp     eax, 0x89E80000	// 10000000000000000000 & 0xFFFFFFFF
+		cmp     eax, 0x89E80000	// 10000000000000000000 & UINT32_MAX
 		jb      L5
 	L4:
 		push    20
@@ -318,7 +318,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		cmp     edx, 0x01634578	// 100000000000000000 >> 32
 		ja      L7
 		jb      L8
-		cmp     eax, 0x5D8A0000	// 100000000000000000 & 0xFFFFFFFF
+		cmp     eax, 0x5D8A0000	// 100000000000000000 & UINT32_MAX
 		jb      L8
 	L7:
 		push    18
@@ -332,7 +332,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		cmp     edx, 0x00000918	// 10000000000000 >> 32
 		ja      L10
 		jb      L15
-		cmp     eax, 0x4E72A000	// 10000000000000 & 0xFFFFFFFF
+		cmp     eax, 0x4E72A000	// 10000000000000 & UINT32_MAX
 		jae     L14
 		jmp     L17
 
@@ -340,7 +340,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		cmp     edx, 0x00038D7E	// 1000000000000000 >> 32
 		ja      L11
 		jb      L12
-		cmp     eax, 0xA4C68000	// 1000000000000000 & 0xFFFFFFFF
+		cmp     eax, 0xA4C68000	// 1000000000000000 & UINT32_MAX
 		jb      L13
 	L11:
 		push    16
@@ -350,7 +350,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		cmp     edx, 0x00005AF3	// 100000000000000 >> 32
 		ja      L13
 		jb      L14
-		cmp     eax, 0x107A4000	// 100000000000000 & 0xFFFFFFFF
+		cmp     eax, 0x107A4000	// 100000000000000 & UINT32_MAX
 		jb      L14
 	L13:
 		push    15
@@ -364,7 +364,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		cmp     edx, 0x00000017	// 100000000000 >> 32
 		ja      L16
 		jb      L19
-		cmp     eax, 0x4876E800	// 100000000000 & 0xFFFFFFFF
+		cmp     eax, 0x4876E800	// 100000000000 & UINT32_MAX
 		jae     L18
 		jmp     L20
 
@@ -372,7 +372,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		cmp     edx, 0x000000E8	// 1000000000000 >> 32
 		ja      L17
 		jb      L18
-		cmp     eax, 0xD4A51000	// 1000000000000 & 0xFFFFFFFF
+		cmp     eax, 0xD4A51000	// 1000000000000 & UINT32_MAX
 		jb      L18
 	L17:
 		push    13
@@ -386,7 +386,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		cmp     edx, 0x00000002	// 10000000000 >> 32
 		ja      L20
 		jb      L21
-		cmp     eax, 0x540BE400	// 10000000000 & 0xFFFFFFFF
+		cmp     eax, 0x540BE400	// 10000000000 & UINT32_MAX
 		jb      L21
 	L20:
 		push    11
@@ -398,7 +398,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 
 	LENGTH20:
 		mov     tchar ptr [ecx], '1'
-		sub     eax, 0x89E80000	// 10000000000000000000 & 0xFFFFFFFF
+		sub     eax, 0x89E80000	// 10000000000000000000 & UINT32_MAX
 		sbb     edx, 0x8AC72304	// 10000000000000000000 >> 32
 		inc_tchar(ecx)
 
@@ -538,7 +538,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		test    edx, edx
 		jz      L27
 	LENGTH10:
-		sub     eax, 0xA13B8600	// 7000000000 & 0xFFFFFFFF
+		sub     eax, 0xA13B8600	// 7000000000 & UINT32_MAX
 		sbb     edx, 0x00000001	// 7000000000 >> 32
 		jc      L24
 		sub     eax, 1000000000
@@ -604,7 +604,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		inc_tchar(ecx)
 
 		push    ebx
-		mov     edx, 0x5AFE5357	// (((UINT64_C(1) << (32 + 25)) + 10000000 - 1) / 10000000 - 1) & 0xFFFFFFFF
+		mov     edx, 0x5AFE5357	// (((UINT64_C(1) << (32 + 25)) + 10000000 - 1) / 10000000 - 1) & UINT32_MAX
 		lea     ebx, [eax + eax * 2]
 		mul     edx
 		lea     edx, [edx + ebx + 2]

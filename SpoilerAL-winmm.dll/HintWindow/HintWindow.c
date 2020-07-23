@@ -51,6 +51,20 @@ void __cdecl DestroyHintWindow()
 	ti.uId = 0;
 }
 
+static BOOL __fastcall MouseToCell(LPDWORD lpdwPos)
+{
+	POINT pt;
+
+	pt.x = ((LPPOINTS)lpdwPos)->x;
+	pt.y = ((LPPOINTS)lpdwPos)->y;
+	if (!ScreenToClient((HWND)ti.uId, &pt))
+		return FALSE;
+	TDrawGrid_MouseToCell(DrawGrid, pt.x, pt.y, &pt.x, &pt.y);
+	((LPPOINTS)lpdwPos)->x = *(short *)&pt.x;
+	((LPPOINTS)lpdwPos)->y = *(short *)&pt.y;
+	return TRUE;
+}
+
 void __fastcall TApplication_ActivateHint(TApplication *this, LPPOINT CursorPos)
 {
 	HWND hWnd;
@@ -77,8 +91,8 @@ void __fastcall TApplication_ActivateHint(TApplication *this, LPPOINT CursorPos)
 		*(LPDWORD)&lpClassName[4] == BSWAP32('wGri') &&
 		*(LPWORD )&lpClassName[8] == BSWAP16('d\0'))
 	{
-		ScreenToClient((HWND)ti.uId, &ptTrack);
-		TDrawGrid_MouseToCell(DrawGrid = (TDrawGrid *)this->Control, ptTrack.x, ptTrack.y, &ptTrack.x, &ptTrack.y);
+		DrawGrid = (TDrawGrid *)this->Control;
+		MouseToCell(&dwTrackPos);
 	}
 	hHook = SetWindowsHookExA(WH_CALLWNDPROCRET, CallWndRetProc, NULL, GetCurrentThreadId());
 }
@@ -90,24 +104,10 @@ static LRESULT CALLBACK CallWndRetProc(int nCode, WPARAM wParam, LPARAM lParam)
 	lResult = CallNextHookEx(hHook, nCode, wParam, lParam);
 	if (nCode >= 0)
 	{
-		DWORD dwCursorPos;
-		BOOL  bSuccess;
+		DWORD dwPos;
 
-		dwCursorPos = GetMessagePos();
-		bSuccess = TRUE;
-		if (DrawGrid)
-		{
-			POINT pt;
-
-			pt.x = (short)dwCursorPos;
-			pt.y = (long)dwCursorPos >> 16;
-			if (bSuccess = ScreenToClient((HWND)ti.uId, &pt))
-			{
-				TDrawGrid_MouseToCell(DrawGrid, pt.x, pt.y, &pt.x, &pt.y);
-				dwCursorPos = MAKELONG(pt.x, pt.y);
-			}
-		}
-		if (!bSuccess || dwCursorPos != dwTrackPos || !IsWindowVisible((HWND)ti.uId))
+		dwPos = GetMessagePos();
+		if (DrawGrid && !MouseToCell(&dwPos) || dwPos != dwTrackPos || !IsWindowVisible((HWND)ti.uId))
 		{
 			UnhookWindowsHookEx(hHook);
 			SendMessageA(hToolTip, TTM_TRACKACTIVATE, FALSE, (LPARAM)&ti);

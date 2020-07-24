@@ -91,7 +91,7 @@ LENGTH4:
 
 LENGTH5:
 	{
-		value = value * ((((1 << (25 - 4)) + 1000 - 1) / 1000) - 1)
+		value = value * (((1 << (25 - 4)) + 1000 - 1) / 1000 - 1)
 			+ (value >> 3)
 			+ (value >> 5);
 		*(tchar2_t *)&buffer[0] = digits100T[value >> (25 - 4)]; value = (value & ((1 << (25 - 4)) - 1)) * (100 >> 2);
@@ -122,7 +122,7 @@ LENGTH7:
 			- (value >> 11)
 			- (value >> 13)
 			- (value >> 15)
-			+ (value >> 17);
+			+ 22;
 		*(tchar2_t *)&buffer[0] = digits100T[value >> (25 - 2)]; value = (value & ((1 << (25 - 2)) - 1)) * (100 >> 2);
 		*(tchar2_t *)&buffer[2] = digits100T[value >> (25 - 4)]; value = (value & ((1 << (25 - 4)) - 1)) * (100 >> 2);
 		*(tchar2_t *)&buffer[4] = digits100T[value >> (25 - 6)]; value = (value & ((1 << (25 - 6)) - 1)) * ( 10 >> 1);
@@ -139,7 +139,7 @@ LENGTH8:
 			- (value >> 12)
 			- (value >> 17)
 			- (value >> 18)
-			+ (value >> 22);
+			+ 10;
 		*(tchar2_t *)&buffer[0] = digits100T[value >>  25     ]; value = (value & ((1 <<  25     ) - 1)) * (100 >> 2);
 		*(tchar2_t *)&buffer[2] = digits100T[value >> (25 - 2)]; value = (value & ((1 << (25 - 2)) - 1)) * (100 >> 2);
 		*(tchar2_t *)&buffer[4] = digits100T[value >> (25 - 4)]; value = (value & ((1 << (25 - 4)) - 1)) * (100 >> 2);
@@ -282,16 +282,16 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		cmp     ecx, 10000000
 		jae     LENGTH8
 	//LENGTH7:
-		push    esi                 __asm   push    7
-		mov     esi, ecx            __asm   lea     eax, [ecx + ecx * 4]
+		push    esi                 __asm   lea     esi, [ecx + 1856]
+		push    7                   __asm   lea     eax, [ecx + ecx * 4]
 		shr     esi,  6             __asm   lea     eax, [ecx + eax * 4]
 		shr     ecx,  3             __asm   lea     eax, [esi + eax * 4]
 		shr     esi,  8 -  6        __asm   sub     eax, ecx
 		shr     ecx, 11 -  3        __asm   sub     eax, esi
 		shr     esi, 13 -  8        __asm   sub     eax, ecx
 		shr     ecx, 15 - 11        __asm   sub     eax, esi
-		shr     esi, 17 - 13        __asm   sub     eax, ecx
-		lea     ecx, [eax + esi]    __asm   add     eax, esi
+		sub     eax, ecx
+		mov     ecx, eax
 		jmp     POST7
 
 		align   16
@@ -361,7 +361,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 
 		align   16
 	LENGTH8:
-		push    esi                 __asm   mov     esi, ecx
+		push    esi                 __asm   lea     esi, [ecx + 7]
 		shl     ecx,  5             __asm   lea     eax, [esi + esi]
 		shr     esi,  1             __asm   add     eax, ecx
 		shr     ecx,  4 +  5        __asm   sub     eax, esi
@@ -369,8 +369,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		shr     ecx, 12 -  4        __asm   sub     eax, esi
 		shr     esi, 17 -  7        __asm   sub     eax, ecx
 		shr     ecx, 18 - 12        __asm   sub     eax, esi
-		shr     esi, 22 - 17        __asm   sub     eax, ecx
-		push    8                   __asm   add     eax, esi
+		push    8                   __asm   sub     eax, ecx
 		mov     ecx, eax
 		jmp     POST8
 

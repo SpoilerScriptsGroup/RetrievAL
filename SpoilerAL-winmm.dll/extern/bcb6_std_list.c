@@ -2,26 +2,28 @@
 #include "bcb6_std_list.h"
 #include "bcb6_std_allocator.h"
 
-__declspec(naked) void __fastcall list_erase(list_iterator *it)
+__declspec(naked) list_iterator __fastcall list_erase(list_iterator it)
 {
 	__asm
 	{
-		mov     ecx, dword ptr [ecx]
 		test    ecx, ecx
 		jz      L1
-		mov     eax, dword ptr [ecx]
-		mov     edx, dword ptr [ecx + 4H]
-		mov     dword ptr [edx], eax
-		mov     dword ptr [eax + 4H], edx
+		mov     eax, dword ptr [ecx + list_node._M_next]
+		mov     edx, dword ptr [ecx + list_node._M_prev]
+		mov     dword ptr [edx + list_node._M_next], eax
+		mov     dword ptr [eax + list_node._M_prev], edx
+		push    eax
 #if !OPTIMIZE_ALLOCATOR
-		push    12
+		push    size list_node + size ULONG// vary with type
 		push    ecx
 		call    dword ptr [node_alloc_deallocate]
 		add     esp, 8
 #else
 		call    node_alloc_deallocate
 #endif
+		pop     ecx
 	L1:
+		mov     eax, ecx
 		ret
 	}
 }

@@ -2,6 +2,7 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "TStringDivision.h"
+#include "TSSGCtrl.h"
 
 void __stdcall ReplaceDefine(void *attributeSelector, void *line);
 
@@ -11,10 +12,9 @@ __declspec(naked) void __cdecl TSSGCtrl_ReadSSRFile_ReplaceDefine()
 {
 	__asm
 	{
-		#define this                                edi
-		#define offsetof_TSSGCtrl_attributeSelector 32
-		#define VIt                                 esi
-		#define tmpS                                (ebp - 68H)
+		#define this edi
+		#define VIt  esi
+		#define tmpS (ebp - 68H)
 
 		cmp     dword ptr [EnableParserFix], 0
 		je      L2
@@ -23,7 +23,7 @@ __declspec(naked) void __cdecl TSSGCtrl_ReadSSRFile_ReplaceDefine()
 		call    string_ctor_assign
 		lea     eax, [tmpS]
 		push    eax
-		lea     eax, [this + offsetof_TSSGCtrl_attributeSelector]
+		lea     eax, [this + TSSGCtrl.attributeSelector]
 		push    eax
 		call    ReplaceDefine
 		push    eax
@@ -52,7 +52,6 @@ __declspec(naked) void __cdecl TSSGCtrl_ReadSSRFile_ReplaceDefine()
 		jmp     dword ptr [TStringDivision_ToULongDef]
 
 		#undef this
-		#undef offsetof_TSSGCtrl_attributeSelector
 		#undef VIt
 		#undef tmpS
 	}

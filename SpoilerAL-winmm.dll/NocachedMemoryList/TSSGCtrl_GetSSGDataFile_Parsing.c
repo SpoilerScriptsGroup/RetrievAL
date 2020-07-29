@@ -5,71 +5,66 @@
 #include "TSSGCtrl.h"
 #include "TSSGSubject.h"
 
-unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
+extern unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 
-static unsigned long __fastcall TSSGCtrl_GetSSGDataFile_Parsing(
-	IN  TSSGCtrl      *this,
-	IN  TSSGSubject   *SSGS,
-	IN  string        *tmpV,
-	IN  unsigned long Address,
+static uint64_t __fastcall TSSGCtrl_GetSSGDataFile_Parsing(
 	OUT unsigned long *RowSize,
-	OUT unsigned long *StepSize)
+	OUT unsigned long *StepSize,
+	IN  unsigned long  Address,
+	IN  const string  *tmpV,
+	IN  TSSGCtrl      *SSGC,
+	IN  TSSGSubject   *SSGS)
 {
-	static LPCSTR const VariableName = "List";
-	unsigned long StrSize;
+	static  const char VariableName[] = "List";
+	unsigned long long StrSize;
 
-	StrSize   = Parsing(this, SSGS, &tmpV[2], 4, VariableName, (uint64_t)Address, 0);
-	*RowSize  = Parsing(this, SSGS, &tmpV[3], 4, VariableName, (uint64_t)Address, 0);
-	*StepSize = Parsing(this, SSGS, &tmpV[4], 4, VariableName, (uint64_t)Address, 0);
-	return StrSize;
+	 StrSize  = Parsing(SSGC, SSGS, &tmpV[2], sizeof(VariableName) - sizeof(VariableName[0]), VariableName, (uint64_t)Address, 0);
+	*RowSize  = Parsing(SSGC, SSGS, &tmpV[3], sizeof(VariableName) - sizeof(VariableName[0]), VariableName, (uint64_t)Address, 0);
+	*StepSize = Parsing(SSGC, SSGS, &tmpV[4], sizeof(VariableName) - sizeof(VariableName[0]), VariableName, (uint64_t)Address, 0);
+	return StrSize << 32 | Address;// can be changed by return different value
 }
 
-__declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing()
+__declspec(naked) uint64_t __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing()
 {
 	extern BOOL FixTheProcedure;
 
-	static const DWORD X004EE312 = 0x004EE312;
-	static const DWORD X004EE34E = 0x004EE34E;
-
 	__asm
-	{
-		#define IsNocache (ebp - 304H)
-		#define this      (ebp + 8H)
-		#define SSGS      edi
-		#define tmpV      (ebp - 30H)
-		#define Address   (ebp - 2FCH)
-		#define StrSize   esi
-		#define RowSize   (ebp - 300H)
-		#define StepSize  (ebp - 308H)
+	{// Borland's fastcall like
+		#define SSGS       edi
+		#define this      (ebp + 0x08)
+		#define tmpV      (ebp - 0x30)
+		#define Address   (ebp - 0x02FC)
+		#define StrSize    esi
+		#define RowSize   (ebp - 0x0300)
+		#define IsNocache (ebp - 0x0304)
+		#define StepSize  (ebp - 0x0308)
 
-		mov     eax, dword ptr [IsNocache]
-		or      eax, FixTheProcedure
+		mov     edx, dword ptr [IsNocache]
+		or      edx, FixTheProcedure
+		neg     edx
+	//	sbb     edx, edx
+		and     edx, eax
 		jz      L1
-		lea     eax, [StepSize]
-		push    eax
-		lea     eax, [RowSize]
-		push    eax
-		push    dword ptr [Address]
+
+		push    SSGS
+		push    dword ptr [this]
 		push    dword ptr [tmpV]
-		mov     edx, SSGS
-		mov     ecx, dword ptr [this]
+		push    eax
+		lea     edx, [StepSize]
+		lea     ecx, [RowSize]
 		call    TSSGCtrl_GetSSGDataFile_Parsing
-		mov     StrSize, eax
-		jmp     dword ptr [X004EE34E]
 
-		align   16
 	L1:
-		push    1
-		mov     ecx, dword ptr [tmpV]
-		jmp     dword ptr [X004EE312]
+		mov     dword ptr [Address], eax
+		ret
 
+		#undef StepSize
 		#undef IsNocache
+		#undef RowSize
+		#undef StrSize
+		#undef Address
+		#undef tmpV
 		#undef this
 		#undef SSGS
-		#undef tmpV
-		#undef Address
-		#undef StrSize
-		#undef RowSize
-		#undef StepSize
 	}
 }

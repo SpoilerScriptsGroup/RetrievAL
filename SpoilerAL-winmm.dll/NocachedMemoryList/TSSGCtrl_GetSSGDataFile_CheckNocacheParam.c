@@ -5,42 +5,6 @@
 #include "bcb6_std_map.h"
 #include "TSSGCtrl.h"
 
-static BOOL __fastcall TSSGCtrl_GetSSGDataFile_CheckNocacheParam(vector_string *tmpV);
-
-map_iterator(__cdecl * const map_string_find)(map* this, string* key) = (LPVOID)0x004F0758;
-
-static map_iterator __fastcall TSSGCtrl_GetSSGDataFile_FindCache(TSSGCtrl* SSGC, string* FName) {
-	map_iterator it = map_string_find(&SSGC->dataFileMap, FName);
-	return it == map_end(&SSGC->dataFileMap) ? NULL : it;
-}
-
-EXTERN_C __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_CheckNocacheParam(string* __x)
-{
-	__asm
-	{
-		lea     ecx, [ebp - 30H]
-		call    TSSGCtrl_GetSSGDataFile_CheckNocacheParam
-		mov     dword ptr [ebp - 0x0304], eax
-		test    eax, eax
-		jnz     NO_CACHE
-
-		lea     edx, [ebp + 0x10]
-		mov     ecx, [ebp + 0x08]
-		call    TSSGCtrl_GetSSGDataFile_FindCache
-		test    eax, eax
-		jz      NO_CACHE
-
-		mov     [ebp - 0x02B8], eax// FNameIt
-		mov     dword ptr [esp], 0x004EF748
-		ret     4// goto FNameIt->second.find(GroupName)
-
-		align   16
-	NO_CACHE:
-		mov     ecx, dword ptr [esp + 4]
-		jmp     string_ctor
-	}
-}
-
 static BOOL __fastcall TSSGCtrl_GetSSGDataFile_CheckNocacheParam(vector_string *tmpV)
 {
 	if (vector_size(tmpV) >= 8)
@@ -58,4 +22,37 @@ static BOOL __fastcall TSSGCtrl_GetSSGDataFile_CheckNocacheParam(vector_string *
 		}
 	}
 	return FALSE;
+}
+
+static map_iterator __fastcall TSSGCtrl_GetSSGDataFile_findCache(TSSGCtrl *const SSGC, const string *const FName)
+{
+	map_iterator it = map_string_find(&SSGC->dataFileMap, FName);
+	return it == map_end(&SSGC->dataFileMap) ? NULL : it;
+}
+
+EXTERN_C __declspec(naked) void __cdecl Caller_TSSGCtrl_GetSSGDataFile_CheckNocacheParam(string* __x)
+{
+	__asm
+	{
+		lea     ecx, [ebp - 0x30]// tmpV
+		call    TSSGCtrl_GetSSGDataFile_CheckNocacheParam
+		mov     [ebp - 0x0304], eax// ReadSize => IsNocache
+		test    eax, eax
+		jnz     NO_CACHE
+
+		lea     edx, [ebp + 0x10]// FName
+		mov     ecx, [ebp + 0x08]// SSGC
+		call    TSSGCtrl_GetSSGDataFile_findCache
+		test    eax, eax
+		jz      NO_CACHE
+
+		mov     [ebp - 0x02B8], eax// FNameIt
+		mov     dword ptr [esp], 0x004EF748
+		ret     4// goto FNameIt->second.find(GroupName)
+
+		align   16
+	NO_CACHE:
+		mov     ecx, [esp + 4]
+		jmp     string_ctor
+	}
 }

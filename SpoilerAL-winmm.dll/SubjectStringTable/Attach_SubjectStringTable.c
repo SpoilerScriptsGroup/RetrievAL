@@ -2,6 +2,8 @@
 #include "intrinsic.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "SubjectStringOperator.h"
+#include "SubjectStringTable.h"
+#include "TSSToggle.h"
 #include "TMainForm.h"
 
 void __cdecl Caller_TSSGSubject_string_ctor1();
@@ -39,41 +41,64 @@ void __cdecl    TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValHeadStr();
 void __cdecl    TMainForm_DrawTreeCell_GetStrParam();
 void __cdecl    TFindNameForm_EnumSubjectNameFind_GetName();
 
-static __declspec(naked) void __cdecl TFindNameForm_EnumSubjectNameFind_StrDGet(
+extern BOOL FixTheProcedure;
+
+static __declspec(naked) void __cdecl TFindNameForm_EnumSubjectNameFind_StrD_Get(
 	string          *Name,
 	TStringDivision *StrD,
 	const string    *Src,
 	string           Token,// never needs to call dtor
 	unsigned long    Index,
 	unsigned long    Option) {
-	extern BOOL FixTheProcedure;
 	__asm {// ecx is StrD already
 		mov  edx, [ebp - 0x0104]// SSGS
 		cmp  FixTheProcedure, 0
 		jne  GetSubjectName
-		lea  ecx, [edx + 0x0044]// subjectName
-		xchg ecx, [esp + 8]
+
+		lea  ecx, [edx + TSSGSubject.subjectName]
+		xchg ecx, [esp + 8]// StrD
 		jmp  TFindNameForm_EnumSubjectNameFind_GetName
 
 		align 16
 	GetSubjectName:// eax is Name already
 		mov  ecx, ds:_MainForm
-#define ssgCtrl          (ecx + 0x0738)
-		lea  ecx, [ssgCtrl]
-#define ssgActionListner (ecx + 0x54)
-		mov  dword ptr [ssgActionListner], 0
+		lea  ecx, [ecx + TMainForm.ssgCtrl]
+		mov  dword ptr [ecx + TSSGCtrl.ssgActionListner], 0
+
 		push ecx
 		push edx
 		push eax
 		call TSSGSubject_GetSubjectName
 		add  esp, 12
+
 		mov  ecx, ds:_MainForm
-		lea  edx, [ecx + 0x0688]// &ssgActionListner
-		lea  ecx, [ssgCtrl]
-		mov  [ssgActionListner], edx
+		lea  edx, [ecx + TMainForm.ssgActionListner]
+		lea  ecx, [ecx + TMainForm.ssgCtrl]
+		mov  [ecx + TSSGCtrl.ssgActionListner], edx
 		ret
-#undef  ssgActionListner
-#undef  ssgCtrl
+	}
+}
+
+typedef struct
+{
+	const string* AddressStr;
+	unsigned long Mode;
+} GetAddressStack;
+
+static GetAddressStack __fastcall TSSToggle_Setting_GetAddress(TSSToggle *const this, TSSGCtrl *const SSGC)
+{
+	return (GetAddressStack) { FixTheProcedure && !TSSGCtrl_GetSSGActionListner(SSGC)
+		? &vector_at(&SubjectStringTable_array, 0)
+		: SubjectStringTable_GetString(&this->addressStr)
+		, atALL };
+}
+
+static void __declspec(naked) TSSToggle_Setting_GetAddressStub(DWORD OffsetAddress)
+{
+	__asm {
+		mov edx, dword ptr [ebp + 0x0C]
+		mov ecx, ebx
+		jmp TSSToggle_Setting_GetAddress
 	}
 }
 
@@ -872,15 +897,15 @@ static __inline void AttachOperator()
 	SET_PROC (0x0048520E, TFindNameForm_EnumSubjectNameFind_GetName);
 #else
 	//   omit Token ctor
-	*(LPBYTE )0x004851DC = (BYTE)-0x10;
-	*(LPBYTE )0x004851EA = 0xBA;
-	*(LPBYTE )0x004851F0 = 0x44;
-	*(LPBYTE )0x004851F2 = 0xFC;
-	*(LPDWORD)0x004851F4 = BSWAP32(0x42895004);
-	*(LPBYTE )0x004851F8 =         0x42;
-	*(LPBYTE )0x004851FD =         0x89;
-	*(LPWORD )0x004851FE = BSWAP16(0x5010);
-	SET_PROC (0x00485237, TFindNameForm_EnumSubjectNameFind_StrDGet);
+	*(LPWORD )0x004851DA = BSWAP16(0x83EC);
+	*(LPBYTE )0x004851DC = sizeof(double) + sizeof(void*);
+	*(LPBYTE )0x004851EA = 0xB8;
+	*(LPBYTE )0x004851F3 =         0x89;
+	*(LPDWORD)0x004851F4 = BSWAP32(0x028D4801);
+	*(LPBYTE )0x004851F8 =         0x51;
+	*(LPBYTE )0x004851FD =         0x50;
+	*(LPWORD )0x004851FE = OPCODE_NOP_X2;
+	SET_PROC (0x00485237, TFindNameForm_EnumSubjectNameFind_StrD_Get);
 #endif
 
 	// TSearchForm::Init
@@ -1615,12 +1640,18 @@ static __inline void AttachOperator()
 	JMP_REL8 (0x0052BE19, 0x0052BE6F);
 	NPAD5    (0x0052BE1B);
 
+#ifndef GET_ADDRESS_IN_SETTING
+	CALL     (0x0052BE77, TSSToggle_Setting_GetAddressStub);
+	*(LPDWORD)0x0052BE7C = BSWAP32(0x525053FF);
+	*(LPWORD )0x0052BE80 = BSWAP16(0x750C);
+#else
 	/*
 		push    15                                      ; 0052BE77 _ 6A, 0F
 		mov     edx, dword ptr [edi]                    ; 0052BE79 _ 8B. 17
 		nop                                             ; 0052BE7B _ 90
 	*/
 	*(LPDWORD)0x0052BE78 = BSWAP32(0x0F8B1790);
+#endif
 
 	/*
 		mov     eax, dword ptr [edi]                    ; 0052BE8D _ 8B. 07

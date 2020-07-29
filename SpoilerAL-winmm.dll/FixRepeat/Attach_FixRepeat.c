@@ -8,30 +8,33 @@ EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_CompareLoopCounter();
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0();
 EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_FixWordRepeat();
 EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_Format();
+EXTERN_C unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, ...);
 
-unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, ...);
 static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(
-	TSSGCtrl     * const SSGC,
-	vector_string* const tmpV,
-	TSSGSubject  * const SSGS,
-	unsigned long* const Begin,
-	unsigned long* const End)
+	unsigned long *const End,
+	unsigned long *const Begin,
+	vector_string *const tmpV,
+	TSSGCtrl      *const SSGC,
+	TSSGSubject   *const SSGS)
 {
-	unsigned long    step;
-	bcb6_std_string* end = &vector_at(tmpV, 2);
-	if (!TSSGCtrl_GetSSGActionListner(SSGC)) {
+	unsigned long   step;
+	bcb6_std_string *end = &vector_at(tmpV, 2);
+	if (!TSSGCtrl_GetSSGActionListner(SSGC))
+	{
 		*Begin = TStringDivision_ToULongDef(&vector_at(tmpV, 1), 0);
 		*End   = TStringDivision_ToULongDef(&vector_at(tmpV, 2), 0);
 		step   = TStringDivision_ToULongDef(&vector_at(tmpV, 3), 1);
-	} else {
+	}
+	else
+	{
 		int error;
 		SetLastError(NO_ERROR);
 		*Begin = Parsing(SSGC, SSGS, &vector_at(tmpV, 1), 0);
 		*End   = Parsing(SSGC, SSGS, &vector_at(tmpV, 2), 0);
 		step   = Parsing(SSGC, SSGS, &vector_at(tmpV, 3), 0);
 		if (!step) step = 1;
-		if ((error = GetLastError()) && error != ERROR_NO_MORE_FILES) {
-			extern HANDLE hHeap;
+		if ((error = GetLastError()) && error != ERROR_NO_MORE_FILES)
+		{
 			LPSTR lpBuffer;
 			*Begin = 0;
 			*End   = 0;
@@ -44,16 +47,18 @@ static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(
 				error,
 				0,
 				(LPSTR)&lpBuffer,
-				8,
-				NULL)) {
+				sizeof(double),
+				NULL))
+			{
 				TMainForm_Guide(lpBuffer, 0);
-				HeapFree(hHeap, 0, lpBuffer);
+				LocalFree(lpBuffer);
 			}
 		}
 	}
-	if (string_empty(end) ||
-		string_length(end) == 1 && string_at(end, 0) == '_') {
-		*End = *Begin;
+	if (string_empty (end) ||
+		string_length(end) == 1 && string_at(end, 0) == '_')
+	{
+		*End   = *Begin;
 		*Begin = 0;
 	}
 	return step;
@@ -99,14 +104,15 @@ EXTERN_C void __cdecl Attach_FixRepeat()
 	*(LPDWORD)0x004FF107 = (DWORD)TSSGCtrl_ReadSSRFile_GetSSGDataFile - (0x004FF107 + sizeof(DWORD));
 
 	// TSSGCtrl::ReadSSRFile
-	*(LPBYTE )0x004FF123 =         0x8D       ;// lea  eax, [ebp - 0xF4]
-	*(LPDWORD)0x004FF124 = BSWAP32(0x850CFFFF);// push eax
-	*(LPDWORD)0x004FF128 = BSWAP32(0xFF508D40);// lea  eax, [eax + 0x04]
-	*(LPDWORD)0x004FF12C = BSWAP32(0x0450FF75);// push eax
-	*(LPWORD )0x004FF130 = BSWAP16(0x18EB    );// push dword ptr [ebp + 0x18]
-	*(LPBYTE )0x004FF132 = 0x004FF156 - (0x004FF132 + sizeof(BYTE));
-	*(LPWORD )0x004FF156 = BSWAP16(0x8BD6    );// mov  edx, esi; tmpV
-	*(LPWORD )0x004FF158 = BSWAP16(0x8BCF    );// mov  ecx, edi; this
+	*(LPBYTE )0x004FF123 =         0xFF       ;// push dword ptr [SSGS]
+	*(LPDWORD)0x004FF124 = BSWAP32(0x75185756);// push this
+	*(LPBYTE )0x004FF128 = JMP_REL8           ;// push tmpV
+	*(LPBYTE )0x004FF129 = 0x004FF151 - (0x004FF129 + sizeof(BYTE));
+
+	*(LPBYTE )0x004FF151 =         0x8D       ;  
+	*(LPWORD )0x004FF152 = BSWAP16(0x9510    );// lea edx, [Begin]
+	*(LPDWORD)0x004FF154 = BSWAP32(0xFFFFFF8D);// lea ecx, [Begin - 4]
+	*(LPWORD )0x004FF158 = BSWAP16(0x4AFC);
 	*(LPBYTE )0x004FF15A = CALL_REL32;
 	*(LPDWORD)0x004FF15B = (DWORD)TSSGCtrl_ReadSSRFile_Parsing - (0x004FF15B + sizeof(DWORD));
 

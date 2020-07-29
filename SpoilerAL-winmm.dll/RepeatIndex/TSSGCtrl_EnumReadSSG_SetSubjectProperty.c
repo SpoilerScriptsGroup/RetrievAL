@@ -4,7 +4,7 @@
 
 extern DWORD RepeatDepth;
 
-void __fastcall SetSubjectProperty(TSSGSubject *SSGS, DWORD RepeatIndex, DWORD ParentRepeat);
+void __fastcall SetSubjectProperty(TSSGSubject *SSGS, DWORD RepeatIndex, DWORD OuterRepeat);
 
 __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_SetSubjectProperty1()
 {
@@ -12,9 +12,9 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_SetSubjectProperty1()
 	{
 		#define SSGS         (ebp - 7C8H)
 		#define RepeatIndex  (ebp + 18H)
-		#define ParentRepeat (ebp + 1CH)
+		#define OuterRepeat  (ebp + 1CH)
 
-		mov     eax, dword ptr [ParentRepeat]
+		mov     eax, dword ptr [OuterRepeat]
 		mov     edx, dword ptr [RepeatIndex]
 		mov     ecx, dword ptr [SSGS]
 		push    eax
@@ -23,7 +23,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_SetSubjectProperty1()
 
 		#undef SSGS
 		#undef RepeatIndex
-		#undef ParentRepeat
+		#undef OuterRepeat
 	}
 }
 
@@ -33,9 +33,9 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_SetSubjectProperty2()
 	{
 		#define SSGS         (ebp - 0EF4H)
 		#define RepeatIndex  (ebp + 18H)
-		#define ParentRepeat (ebp + 1CH)
+		#define OuterRepeat  (ebp + 1CH)
 
-		mov     eax, dword ptr [ParentRepeat]
+		mov     eax, dword ptr [OuterRepeat]
 		mov     edx, dword ptr [RepeatIndex]
 		mov     ecx, dword ptr [SSGS]
 		push    eax
@@ -44,17 +44,17 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_SetSubjectProperty2()
 
 		#undef SSGS
 		#undef RepeatIndex
-		#undef ParentRepeat
+		#undef OuterRepeat
 	}
 }
 
-static void __fastcall SetSubjectProperty(TSSGSubject *SSGS, DWORD RepeatIndex, DWORD ParentRepeat)
+static void __fastcall SetSubjectProperty(TSSGSubject *SSGS, DWORD RepeatIndex, DWORD OuterRepeat)
 {
 	TSSGSubjectProperty *prop = GetSubjectProperty(SSGS);
 	if (prop)
 	{
 		prop->RepeatDepth  = RepeatDepth;
 		prop->RepeatIndex  = RepeatIndex;
-		prop->ParentRepeat = ParentRepeat;
+		prop->OuterRepeat  = OuterRepeat;
 	}
 }

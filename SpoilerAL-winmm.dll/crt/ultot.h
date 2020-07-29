@@ -1,7 +1,7 @@
 #include <windows.h>
 #include <stdint.h>
 #include <tchar.h>
-#include "ui32tot\ui32tot.h"
+#include "uitot\uitot.h"
 
 #define OPTIMIZABLE_C 1
 
@@ -29,18 +29,18 @@ TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int radix)
 		break;
 	case 16:
 		/* hexadecimal */
-		_ui32to16t(value, str, TRUE);
+		_ui32to16t(value, str, FALSE);
 		break;
 	case 32:
 		/* base 32 */
-		_ui32to32t(value, str, TRUE);
+		_ui32to32t(value, str, FALSE);
 		break;
 	case  3: case  5: case  6: case  7: case  9: case 11: case 12: case 13:
 	case 14: case 15: case 17: case 18: case 19: case 20: case 21: case 22:
 	case 23: case 24: case 25: case 26: case 27: case 28: case 29: case 30:
 	case 31: case 33: case 34: case 35: case 36:
 		/* the other base */
-		internal_ui32tot(value, str, TRUE, radix);
+		internal_ui32tot(value, str, FALSE, radix);
 		break;
 	default:
 		/* invalid */
@@ -154,20 +154,20 @@ __declspec(naked) TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int ra
 		ret
 
 	LABEL(RADIX_16)
-		push    TRUE
+		push    FALSE
 		call    _ui32to16t
 		mov     eax, dword ptr [str]
 		ret
 
 	LABEL(RADIX_32)
-		push    TRUE
+		push    FALSE
 		call    _ui32to32t
 		mov     eax, dword ptr [str]
 		ret
 
 	LABEL(RADIX_OTHER)
 		push    eax
-		push    TRUE
+		push    FALSE
 		call    internal_ui32tot
 		mov     eax, dword ptr [str]
 		ret
@@ -186,5 +186,3 @@ __declspec(naked) TCHAR * __cdecl _ultot(unsigned long value, TCHAR *str, int ra
 	#undef LABEL
 }
 #endif
-
-#include "ui32tot\ui32tot_source.h"

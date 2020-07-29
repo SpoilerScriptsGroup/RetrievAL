@@ -4,10 +4,9 @@ __declspec(naked) void __cdecl FixGetModuleFromName()
 {
 	__asm
 	{
-		#define ProcessCtrl                              ecx
-		#define offsetof_ProcessCtrl_entry_th32ProcessID 200
+		#define ProcessCtrl ecx
 
-		cmp     dword ptr [ProcessCtrl + offsetof_ProcessCtrl_entry_th32ProcessID], 0
+		cmp     dword ptr [ProcessCtrl + TProcessCtrl.entry.th32ProcessID], 0
 		je      L1
 		jmp     dword ptr [TProcessCtrl_LoadModuleList]
 
@@ -15,6 +14,5 @@ __declspec(naked) void __cdecl FixGetModuleFromName()
 		jmp     TProcessCtrl_Attach
 
 		#undef ProcessCtrl
-		#undef offsetof_ProcessCtrl_entry_th32ProcessID
 	}
 }

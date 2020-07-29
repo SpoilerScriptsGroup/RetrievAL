@@ -5,69 +5,56 @@
 #include "TSSString.h"
 #include "TranscodeMultiByte.h"
 
-static void __stdcall TSSString_Read_TranscodeString(TSSString *this, unsigned long size, string *Data, char *tmpC);
+static void __cdecl TSSString_Read_TranscodeString(string* Data, const char* tmpC, TSSString* SSGS)
+{
+	int cchMultiByte;
+	string_ctor_null(Data);
+	switch (SSGS->codePage)
+	{
+		BOOL warn;
+	case CP_ACP:
+		string_assign_cstr(Data, tmpC);
+		return;
+	case MAXWORD:
+		string_reserve(Data, SSGS->size);
+		cchMultiByte = WideCharToMultiByte(
+			CP_THREAD_ACP,
+			WC_NO_BEST_FIT_CHARS,
+			(LPCWCH)tmpC,
+			-1,
+			string_begin(Data),
+			string_storage_capacity(Data),
+			"\a",
+			&warn);
+		break;
+	default:
+		string_reserve(Data, SSGS->size);
+		cchMultiByte = TranscodeMultiByte(
+			SSGS->codePage,
+			0,
+			tmpC,
+			-1,
+			CP_THREAD_ACP,
+			WC_NO_BEST_FIT_CHARS,
+			string_begin(Data),
+			string_storage_capacity(Data),
+			"\a",
+			&warn);
+	}
+	if (cchMultiByte)
+		cchMultiByte--;
+	*(string_end(Data) = string_begin(Data) + cchMultiByte) = '\0';
+}
 
-void __declspec(naked) Caller_TSSString_Read_TranscodeString()
+void __declspec(naked) Caller_TSSString_Read_TranscodeString(string* Data, const char* tmpC, LPCVOID __a)
 {
 	__asm
 	{
-		#define NextCallAddress 005D4494H
 		#define this            ebx
-		#define _size           (ebx + 78H)
-		#define Data            (ebp - 1CH)
-		#define tmpC            edi
 
-		mov     eax, dword ptr [_size]
-		lea     ecx, [Data]
-		push    tmpC
-		push    ecx
-		push    eax
-		push    this
-		push    NextCallAddress
+		mov     dword ptr [esp + 12], this
 		jmp     TSSString_Read_TranscodeString
 
-		#undef NextCallAddress
-		#undef this
-		#undef _size
-		#undef Data
-		#undef tmpC
-	}
-}
-
-static void __stdcall TSSString_Read_TranscodeString(TSSString *this, unsigned long size, string *Data, char *tmpC)
-{
-	if (this->codePage == TSSSTRING_CP_UNICODE)
-	{
-		string_resize(Data, size);
-		int cchMultiByte =
-			WideCharToMultiByte(
-				CP_THREAD_ACP,
-				0,
-				(LPCWSTR)tmpC,
-				-1,
-				string_begin(Data),
-				size + 1,
-				NULL,
-				NULL);
-		if (cchMultiByte != 0)
-			cchMultiByte--;
-		*(string_end(Data) = string_begin(Data) + cchMultiByte) = '\0';
-	}
-	else if (this->codePage == TSSSTRING_CP_UTF8)
-	{
-		string_resize(Data, size);
-		int cchMultiByte =
-			Utf8ToMultiByte(
-				CP_THREAD_ACP,
-				0,
-				tmpC,
-				-1,
-				string_begin(Data),
-				size + 1,
-				NULL,
-				NULL);
-		if (cchMultiByte != 0)
-			cchMultiByte--;
-		*(string_end(Data) = string_begin(Data) + cchMultiByte) = '\0';
+		#undef  this
 	}
 }

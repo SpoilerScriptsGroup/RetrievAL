@@ -26,20 +26,18 @@ TSSGSubjectProperty * __fastcall GrowSubjectProperty(DWORD *lpdwIndex)
 
 	do	/* do { ... } while (0); */
 	{
-		if (SubjectPropertyCount != 0)
+		if (SubjectPropertyCount)
 		{
 			if (TSSGCtrl_GetSSGActionListner(&MainForm->ssgCtrl))
 				for (DWORD i = 0; i < SubjectPropertyCount; i++)
-					if (SubjectProperty[i].Width == MAXDWORD)
+					if (SubjectProperty[i].Breadth == MAXDWORD)
 					{
 						 prop = &SubjectProperty[index = i];
 						*prop = (const TSSGSubjectProperty) { 0 };
 						goto RECYCLE;
 					}
-			if ((SubjectPropertyCount & 0x0F) != 0)
-			{
+			if (SubjectPropertyCount & 0x0F)
 				prop = SubjectProperty;
-			}
 			else
 			{
 				prop = (TSSGSubjectProperty *)HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, SubjectProperty, sizeof(TSSGSubjectProperty) * (SubjectPropertyCount + 0x10));
@@ -57,7 +55,7 @@ TSSGSubjectProperty * __fastcall GrowSubjectProperty(DWORD *lpdwIndex)
 		}
 		prop += index = SubjectPropertyCount++;
 	RECYCLE:
-		prop->ParentRepeat = MAXDWORD;
+		prop->OuterRepeat = MAXDWORD;
 	} while (0);
 	*lpdwIndex = prop == NULL ? MAXDWORD : index;
 	return prop;

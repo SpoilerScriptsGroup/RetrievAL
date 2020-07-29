@@ -52,11 +52,8 @@
     <Filter Include="crt\msvc">
       <UniqueIdentifier>{62f0b878-ecc3-419c-a379-e4dfec950af4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="crt\ui32tot">
+    <Filter Include="crt\uitot">
       <UniqueIdentifier>{9d33f3e8-d27c-48e7-8b36-16fdeeef65c1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="crt\ui64tot">
-      <UniqueIdentifier>{ead7fcb0-1bd8-4d15-a7a2-c3b828587958}</UniqueIdentifier>
     </Filter>
     <Filter Include="EnumReadSSG">
       <UniqueIdentifier>{f60cf8c0-9521-4161-a638-ef28e2f73053}</UniqueIdentifier>
@@ -870,20 +867,14 @@
     <ClCompile Include="crt\time.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\ui32tot\ui32toa.c">
-      <Filter>crt\ui32tot</Filter>
+    <ClCompile Include="crt\uitot\uitoa.c">
+      <Filter>crt\uitot</Filter>
     </ClCompile>
-    <ClCompile Include="crt\ui32tot\ui32tow.c">
-      <Filter>crt\ui32tot</Filter>
+    <ClCompile Include="crt\uitot\uitow.c">
+      <Filter>crt\uitot</Filter>
     </ClCompile>
     <ClCompile Include="crt\ui64toa.c">
       <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\ui64tot\ui64toa.c">
-      <Filter>crt\ui64tot</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\ui64tot\ui64tow.c">
-      <Filter>crt\ui64tot</Filter>
     </ClCompile>
     <ClCompile Include="crt\ui64tow.c">
       <Filter>crt</Filter>
@@ -2154,20 +2145,14 @@
     <ClInclude Include="crt\ttoi64.h">
       <Filter>crt</Filter>
     </ClInclude>
-    <ClInclude Include="crt\ui32tot\ui32tot.h">
-      <Filter>crt\ui32tot</Filter>
+    <ClInclude Include="crt\uitot\uitot.h">
+      <Filter>crt\uitot</Filter>
     </ClInclude>
-    <ClInclude Include="crt\ui32tot\ui32tot_source.h">
-      <Filter>crt\ui32tot</Filter>
+    <ClInclude Include="crt\uitot\uitot_source.h">
+      <Filter>crt\uitot</Filter>
     </ClInclude>
     <ClInclude Include="crt\ui64tot.h">
       <Filter>crt</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\ui64tot\ui64ton.h">
-      <Filter>crt\ui64tot</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\ui64tot\ui64tot_source.h">
-      <Filter>crt\ui64tot</Filter>
     </ClInclude>
     <ClInclude Include="crt\ultot.h">
       <Filter>crt</Filter>
@@ -2254,6 +2239,9 @@
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\bcb6_std_vector_template.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\rtl.h">
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\TApplication.h">

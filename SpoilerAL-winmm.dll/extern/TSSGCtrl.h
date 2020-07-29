@@ -2,12 +2,12 @@
 
 #include <windows.h>
 #include "bcb6_std_vector_string.h"
-#include "TSSGAttributeSelector.h"
 #include "TStringDivision.h"
-#include "TSSGSubject.h"
 #include "TProcessCtrl.h"
-#include "TSSGScriptStruct.h"
 #include "TSSGAttributeElement.h"
+#include "TSSGAttributeSelector.h"
+#include "TSSGScriptStruct.h"
+#include "TSSGSubject.h"
 
 typedef struct _TSSGCtrl
 {
@@ -49,7 +49,9 @@ typedef struct _TSSGCtrl
 #define TSSGCtrl_GetSSGActionListner(/*IN TSSGCtrl * */this) \
 	(this)->ssgActionListner
 
-EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, bcb6_std_vector_string *SSGFile, LPVOID ParentStack, TDialogAdjustmentAttribute *ADJElem, DWORD RepeatIndex, DWORD ParentRepeat);
+EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG(
+	TSSGCtrl *this, bcb6_std_vector_string *SSGFile, LPVOID ParentStack, struct _TDialogAdjustmentAttribute *ADJElem, DWORD RepeatIndex, DWORD OuterRepeat);
+EXTERN_C BOOLEAN __cdecl TSSGCtrl_IsEnabled(TSSGCtrl *this, struct _TSSGSubject *SSGS);
 EXTERN_C unsigned long __cdecl TSSGCtrl_MakeSubjectType(const bcb6_std_string *Tag);
 EXTERN_C struct _TSSGSubject *(__cdecl * const TSSGCtrl_MakeSubjectClass)(const bcb6_std_string *Tag);
 EXTERN_C LPVOID(__cdecl * const TSSGCtrl_MakeAdjustmentClass)(const bcb6_std_string *);

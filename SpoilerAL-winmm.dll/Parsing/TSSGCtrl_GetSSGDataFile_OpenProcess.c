@@ -1,7 +1,7 @@
 #include <windows.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
-#include "TProcessCtrl.h"
+#include "TSSGCtrl.h"
 
 extern HANDLE __stdcall TSSGCtrl_OpenProcess(TProcessCtrl *processCtrl, DWORD Mode, LPCSTR addressStr);
 
@@ -11,16 +11,18 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_OpenProcess(
 {
 	__asm
 	{
-		#define StepSize (ebp - 308H)
-		#define SHandle  (ebp - 350H)
+		#define SSGC     (ebp + 0x08)
+		#define StepSize (ebp - 0x0308)
+		#define SHandle  (ebp - 0x0350)
 
 		call    string_trim_blank
 		cmp     dword ptr [StepSize], 0
 		je      L2
-		mov     ecx, dword ptr [ebp + 0x08]
-		add     ecx, 0x01B0// processCtrl
-		push    dword ptr [eax - 24 * 5]
-		push    16
+
+		mov     ecx, dword ptr [SSGC]
+		lea     ecx, [ecx + TSSGCtrl.processCtrl]
+		push    dword ptr [eax - size string * 5]
+		push    PROCESS_VM_READ
 		push    ecx
 		call    TSSGCtrl_OpenProcess
 		lea     edx, [SHandle]
@@ -31,9 +33,10 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_OpenProcess(
 	L2:
 		mov     ecx, dword ptr [esp + 4]
 		mov     edx, dword ptr [esp + 8]
-		jmp     string_ctor_assign	// construct ErrorStr
-
-		#undef StepSize
+		jmp     string_ctor_assign// construct ErrorStr
+			
 		#undef SHandle
+		#undef StepSize
+		#undef SSGC
 	}
 }

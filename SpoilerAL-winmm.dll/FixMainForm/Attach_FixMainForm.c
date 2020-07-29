@@ -52,7 +52,7 @@ static __declspec(naked) void __cdecl TMainForm_SubjectAccess_break_ListLBox()
 }
 
 static HANDLE __fastcall TMainForm_SubjectAccess_GetCautionHandle(TMainForm* this, TSSString* SSGS) {
-	return SSGS->caution ? TWinControl_GetHandle(this->CautionREdit) : NULL;
+	return SSGS->cautious ? TWinControl_GetHandle(this->CautionREdit) : NULL;
 }
 
 static __declspec(naked) void __cdecl TMainForm_SubjectAccess_CautiousString() {
@@ -152,7 +152,7 @@ static __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueStrin
 #endif
 
 static uint64_t __fastcall TMainForm_DrawTreeCell_shadowMode(TMainForm* this, TSSGSubject* SSGS) {
-	return (uint64_t)(SSGS && SSGS->type == stDIR && SSGS->status & ssOPEN) << 34 | this->shadowMode;
+	return (uint64_t)(SSGS && SSGS->type == stDIR && SSGS->isOpen) << 34 | this->shadowMode;
 }
 
 static __declspec(naked) long __cdecl TMainForm_DrawTreeCell_shadowModeStub() {
@@ -355,8 +355,8 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 
 #ifndef FORMAT_NOT_IMPLEMENTED
 	// TMainForm::DrawTreeCell
-	*(LPBYTE )0x004452BD =         0x8D       ;// lea  edx,[ebp-18h]
-	*(LPWORD )0x004452BE = BSWAP16(0x55E8    );// mov  ecx, ebx
+	*(LPBYTE )0x004452BD =         0x8D       ;// lea  edx,[DrawStr]
+	*(LPWORD )0x004452BE = BSWAP16(0x55E8    );// mov  ecx, this
 	*(LPDWORD)0x004452C0 = BSWAP32(0x89D9E800);// call ...
 	*(LPDWORD)0x004452C3 = (DWORD)TMainForm_DrawTreeCell_DrawStr - (0x004452C3 + sizeof(DWORD));
 	*(LPBYTE )0x004452C7 = JMP_REL32;
@@ -364,7 +364,7 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPBYTE )0x004452CC = NOP;
 #else
 	// TMainForm::DrawTreeCell
-	*(LPDWORD)0x00445402 = (DWORD)TMainForm_DrawTreeCell_ModifyNowValueString;
+	*(LPDWORD)0x00445402;// = (DWORD)TMainForm_DrawTreeCell_ModifyNowValueString;
 
 	// TMainForm::DrawTreeCell
 	*(LPDWORD)0x00445406 = (DWORD)TMainForm_DrawTreeCell_ModifyNowValueBoolVector;

@@ -4,12 +4,11 @@ __declspec(naked) void __cdecl TMainForm_DGridMouseMove_DrawTree()
 {
 	__asm
 	{
-		#define _NULL                       0
-		#define this                        ebx
-		#define offsetof_TMainForm_userMode 448H
-		#define ReturnAddress               00446C6DH
+		#define _NULL         0
+		#define this          ebx
+		#define ReturnAddress 00446C6DH
 
-		mov     ecx, dword ptr [this + offsetof_TMainForm_userMode]
+		mov     ecx, dword ptr [this + TMainForm.userMode]
 		xor     eax, eax
 		cmp     ecx, 4
 		setae   al
@@ -23,7 +22,6 @@ __declspec(naked) void __cdecl TMainForm_DGridMouseMove_DrawTree()
 
 		#undef _NULL
 		#undef this
-		#undef offsetof_TMainForm_userMode
 		#undef ReturnAddress
 	}
 }

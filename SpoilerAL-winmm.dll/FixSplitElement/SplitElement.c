@@ -12,16 +12,14 @@
 #define string_begin(s)                                              (s)->begin()
 #define string_end(s)                                                (s)->end()
 #define vector_TSSGAttributeElement                                  vector<TSSGAttributeElement *>
-#define offsetof_TSSGCtrl_strD                                       offsetof(TSSGCtrl, strD)
 #define offsetof_TSSGCtrl_attributeSelector                          (size_t)((TSSGCtrl *)NULL)->GetAttributeSelector()
 #define TSSGAttributeSelector_GetNowAtteributeVec(attributeSelector) attributeSelector->GetNowAtteributeVec()
 #else
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "TSSGCtrl.h"
-#define vector_TSSGAttributeElement vector
-#define offsetof_TSSGCtrl_strD               offsetof(TSSGCtrl, strD)
-#define offsetof_TSSGCtrl_attributeSelector  offsetof(TSSGCtrl, attributeSelector)
+#define vector_TSSGAttributeElement                                  vector
+#define offsetof_TSSGCtrl_attributeSelector                          offsetof(TSSGCtrl, attributeSelector)
 #endif
 
 extern HANDLE hHeap;
@@ -87,7 +85,7 @@ string * __cdecl SplitElement(string *Result, LPVOID SSGC_strD, string *Src, str
 		if (!buffer)
 			goto FAILED1;
 		memcpy(buffer, p, length + 1);
-		attributeSelector = (TSSGAttributeSelector *)((LPBYTE)SSGC_strD - (offsetof_TSSGCtrl_strD - offsetof_TSSGCtrl_attributeSelector));
+		attributeSelector = (TSSGAttributeSelector *)((LPBYTE)SSGC_strD - (offsetof(TSSGCtrl, strD) - offsetof_TSSGCtrl_attributeSelector));
 		attributes = TSSGAttributeSelector_GetNowAtteributeVec(attributeSelector);
 		if (attributes)
 		{

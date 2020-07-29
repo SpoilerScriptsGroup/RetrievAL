@@ -1,6 +1,7 @@
 #include <windows.h>
+#include "TSSGCtrl.h"
 
-void __stdcall ReplaceDefine(void *attributeSelector, void *line);
+extern void __stdcall ReplaceDefine(void *attributeSelector, void *line);
 
 extern BOOL EnableParserFix;
 
@@ -162,15 +163,14 @@ __declspec(naked) static void __cdecl TSSGCtrl_EnumReadSSG_ReplaceDefine()
 {
 	__asm
 	{
-		#define this                                (ebp + 8H)
-		#define LineS                               (ebp - 38H)
-		#define offsetof_TSSGCtrl_attributeSelector 32
+		#define this  (ebp + 8H)
+		#define LineS (ebp - 38H)
 
 		mov     eax, dword ptr [EnableParserFix]
 		mov     ecx, dword ptr [this]
 		test    eax, eax
 		jz      L1
-		add     ecx, offsetof_TSSGCtrl_attributeSelector
+		add     ecx, offset TSSGCtrl.attributeSelector
 		lea     eax, [LineS]
 		push    eax
 		push    ecx
@@ -180,6 +180,5 @@ __declspec(naked) static void __cdecl TSSGCtrl_EnumReadSSG_ReplaceDefine()
 
 		#undef this
 		#undef LineS
-		#undef offsetof_TSSGCtrl_attributeSelector
 	}
 }

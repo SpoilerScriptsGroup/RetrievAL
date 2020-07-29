@@ -1,26 +1,33 @@
 #pragma once
 
+#include <stdbool.h>
 #include <windows.h>
+#include "bcb6_std_string.h"
 
 typedef struct _Rb_tree_node
 {
-	BOOLEAN               _M_color;
+	bool                  _M_color;
+	BYTE                  padding[3];
 	struct _Rb_tree_node *_M_parent;
 	struct _Rb_tree_node *_M_left;
 	struct _Rb_tree_node *_M_right;
 	BYTE                  _M_value_field[];
-} bcb6_std_map_node, *bcb6_std_map_iterator, **pbcb6_std_map_iterator;
+} *_Rb_tree_iterator, bcb6_std_map_node, *bcb6_std_map_iterator, **pbcb6_std_map_iterator;
 
 typedef struct _Rb_tree
 {
-	DWORD                 padding1[2];
-	bcb6_std_map_iterator _M_data;
-	DWORD                 padding2;
+	LPCVOID               _M_node_allocator_type[2];
+	struct _Rb_tree_node *_M_header;
+	LPCVOID               padding2;
 	size_t                _M_node_count;
-	DWORD                 padding3;
-	void *                _M_key_compare;
-	DWORD                 padding4;
+	LPCVOID               padding3;
+	const void *const     _M_key_compare[2];
 } bcb6_std_map, *pbcb6_std_map;
+
+EXTERN_C bcb6_std_map_iterator(__cdecl *const bcb6_std_map_find)(bcb6_std_map *this, const DWORD *key);
+EXTERN_C bcb6_std_map_iterator(__cdecl *const bcb6_std_map_lower_bound)(bcb6_std_map *this, const DWORD *key);
+EXTERN_C void(__cdecl *const bcb6_std_ulong_pair_uu_insert)(bcb6_std_map_iterator *it, bcb6_std_map *this, bcb6_std_map_iterator pos, const void *pair);
+EXTERN_C bcb6_std_map_iterator(__cdecl *const bcb6_std_map_string_find)(bcb6_std_map *this, const bcb6_std_string *key);
 
 #ifdef USING_NAMESPACE_BCB6_STD
 typedef bcb6_std_map_iterator  map_iterator;
@@ -29,7 +36,8 @@ typedef bcb6_std_map           map;
 typedef pbcb6_std_map          pmap;
 #define map_find               bcb6_std_map_find
 #define map_lower_bound        bcb6_std_map_lower_bound
-#define map_insert             bcb6_std_map_insert
+#define map_dword_dw_dw_insert bcb6_std_ulong_pair_uu_insert
+#define map_string_find        bcb6_std_map_string_find
 #define map_begin              bcb6_std_map_begin
 #define map_end                bcb6_std_map_end
 #define pair_first             bcb6_std_pair_first
@@ -41,16 +49,12 @@ typedef pbcb6_std_map          pmap;
 #define map_erase              bcb6_std_map_erase
 #endif
 
-EXTERN_C bcb6_std_map_iterator(__cdecl * const bcb6_std_map_find)(bcb6_std_map *map, LPVOID key);
-EXTERN_C bcb6_std_map_iterator(__cdecl * const bcb6_std_map_lower_bound)(bcb6_std_map *, void *key);
-EXTERN_C void(__cdecl * const bcb6_std_map_insert)(bcb6_std_map_iterator *, bcb6_std_map *, bcb6_std_map_iterator pos, void *pair);
-
-#define bcb6_std_map_begin(map) (map)->_M_data->_M_left
-#define bcb6_std_map_end(map) (map)->_M_data
+#define bcb6_std_map_begin(this) (this)->_M_header->_M_left
+#define bcb6_std_map_end(this)   (this)->_M_header
 
 #define bcb6_std_pair_first(it) (LPVOID)(it)->_M_value_field
-#define bcb6_std_pair_second(it, typeOfFirst) (LPVOID)((it)->_M_value_field + sizeof(typeOfFirst))
-#define bcb6_std_pair_second_aligned(it, typeOfFirst) (LPVOID)((it)->_M_value_field + ((sizeof(typeOfFirst) + (8 - 1)) & (ptrdiff_t)-8))
+#define bcb6_std_pair_second(it, first) (LPVOID)((it)->_M_value_field + sizeof(first))
+#define bcb6_std_pair_second_aligned(it, first) (LPVOID)((it)->_M_value_field + ((sizeof(first) + __alignof(double) - 1) & -(signed)__alignof(double)))
 
 EXTERN_C bcb6_std_map_iterator(__cdecl * const bcb6_std_map_iterator_increment)(bcb6_std_map_iterator it);
 EXTERN_C bcb6_std_map_iterator(__cdecl * const bcb6_std_map_iterator_sub_one)(bcb6_std_map_iterator it);

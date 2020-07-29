@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <mbstring.h>
 #include "intrinsic.h"
+#include "rtl.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "TMainForm.h"
 #include "TSSCalc.h"
@@ -14,47 +15,47 @@ string * __fastcall SubjectStringTable_GetString(string *s);
 TSSArg* (__cdecl * const TSSGSubject_MakeArg)(TSSGSubject*) = (LPVOID)0x0052CFB4;
 
 void __fastcall TMainForm_DrawTreeCell_DrawStr(
-	TMainForm   * const main,
-	string      * const DrawStr,// it's constructed
-	string      * const Subject,// must be destruct
-	TSSGSubject * const SSGS,
-	TSSGCtrl    * const ssgCtrl)
+	TMainForm   *const main,
+	string      *const DrawStr,// it's constructed
+	string      *const Subject,// must be destruct
+	TSSGSubject *const SSGS,
+	TSSGCtrl    *const ssgCtrl)
 {
 	extern BOOL EnableParserFix;
-	unsigned long aType;
-	const vector* attrs;
-	TSSArg* Arg;
-	const TFormatAttribute* format = NULL;
-	string Current = { NULL };
 
-	aType = TSSGSubject_GetArgType  (SSGS);
-	attrs = TSSGSubject_GetAttribute(SSGS);
-	for (const TFormatAttribute** pos = vector_end(attrs);
-		 --pos >= (TFormatAttribute**)vector_begin(attrs) &&
-		 (*pos)->type >= atFORMAT; )
-	{
-		if ((*pos)->type == atFORMAT && (*pos)->offsetNum & 1 << aType)
-		{
-			format = *pos;
-			break;
-		}
-	}
+	string Current;
+	TSSArg *Arg = NULL;
+	const TFormatAttribute *format = NULL;
+	const vector *atV = TSSGSubject_GetAttribute(SSGS);
+	const ULONG aType = TSSGSubject_GetArgType(SSGS);
+	const COORD index = TSSGAttributeElement_GetViaCoord(atFORMAT, atV).dwFontSize;
+
+	if (index.X)
+		for (TFormatAttribute **base = &vector_type_at(atV, TFormatAttribute *, index.Y),
+			 **cur  = base + index.X;
+			 --cur >= base; )
+			if ((*cur)->offsetNum & 1 << aType)
+			{
+				format = *cur;
+				break;
+			}
+
+	string_ctor_null(&Current);
 
 	if (main->isNowValueDraw &&
 		(!format ||
 		 string_length(&format->offsetCode) != 1 ||
-		 string_at(&format->offsetCode,  0) != '_') &&
+		 string_at(&format->offsetCode, 0u) != '_') &&
 		(Arg = TSSGSubject_MakeArg(SSGS)) &&
 		!TSSGSubject_Read(SSGS, ssgCtrl, Arg))
 	{
 		LPCSTR spec = format ? string_c_str(&format->offsetCode) : "";
-		string_ctor(&Current);
 		switch (Arg->type)
 		{
 		case atLONG:
 			{
 				int len;
-				TSSCalc *SS = (TSSCalc*)SSGS;
+				TSSCalc *SS = (TSSCalc *)SSGS;
 				string  *VH = SubjectStringTable_GetString(&SS->nowValHeadStr);
 
 				if (EnableParserFix && string_at(VH, 0) == '_' && string_length(VH) > 1)
@@ -62,22 +63,22 @@ void __fastcall TMainForm_DrawTreeCell_DrawStr(
 				else if (!*spec)
 					spec = SS->isUnsigned ? "[%u]" : "[%d]";
 
-				string_reserve(&Current, 0x7F);
-				len = _snprintf(string_begin(&Current), 0x80, spec, ((TSSArgLong*)Arg)->value);
-				if (len >= 0) string_end(&Current) = string_begin(&Current) + min(0x7F, len);
+				string_reserve(&Current, SCHAR_MAX);
+				len = _snprintf(string_begin(&Current), string_storage_capacity(&Current), spec, ((TSSArgLong *)Arg)->value);
+				if (len >= 0) string_end(&Current) = string_begin(&Current) + min(string_capacity(&Current), (size_t)len);
 			}
 			break;
 		case atLONG_INDEX:
 			{
 				string FName, DefaultExt;
-				vector_string* ListFile;
-				char prefix;
-				unsigned long Val = ((TSSArgLongIndex*)Arg)->value;
+				vector_string *ListFile;
+				BOOL prefix;
+				unsigned long Val = ((TSSArgLongIndex *)Arg)->value;
 
 				TSSArgLongIndexSubject_GetIndexFileName(&FName, SSGS);
 				if (prefix = string_at(&FName, 0) == '+')
 				{
-					__movsb(string_begin(&FName), string_begin(&FName) + 1, string_length(&FName));
+					__movsb(string_begin(&FName), string_begin(&FName) + 1, string_size(&FName));
 					--string_end(&FName);
 				}
 
@@ -116,17 +117,15 @@ void __fastcall TMainForm_DrawTreeCell_DrawStr(
 				static LPCSTR const check[] = { "off", "on" };
 				int len;
 
-				string_reserve(&Current, 0x7F);
-				len = _snprintf(string_begin(&Current), 0x80, *spec ? spec : "[%s]", check[((TSSArgBool*)Arg)->value]);
-				if (len >= 0) string_end(&Current) = string_begin(&Current) + min(0x7F, len);
+				string_reserve(&Current, SCHAR_MAX);
+				len = _snprintf(string_begin(&Current), string_storage_capacity(&Current), *spec ? spec : "[%s]", check[((TSSArgBool *)Arg)->value]);
+				if (len >= 0) string_end(&Current) = string_begin(&Current) + min(string_capacity(&Current), (size_t)len);
 			}
 			break;
 		case atSTRING:
 			{
-				LPSTR pos;
-				string* val = &((TSSArgString*)Arg)->value;
-				if (((TSSString*)SSGS)->caution && (pos = string_begin(val) + strcspn(string_begin(val), "\r\n")) < string_end(val))
-					*(string_end(val) = pos) = '\0';
+				string *val = &((TSSArgString *)Arg)->value;
+				*(string_end(val) = string_begin(val) + strcspn(string_begin(val), "\r\f\v\n\b\a")) = '\0';
 				if (*spec)
 				{
 					int cap, len = string_length(val) + strlen(spec);
@@ -152,14 +151,14 @@ void __fastcall TMainForm_DrawTreeCell_DrawStr(
 				string bits;
 				int    len;
 
-				if (vector_bool_size(((TSSArgBoolVector*)Arg)->value) <= 32)
+				if (bvector_size(((TSSArgBoolVector *)Arg)->value) <= 32)
 					TSSArg_ToString(&bits, Arg);
 				else
 					string_ctor_assign_cstr_with_length(&bits, "..", 2);
 
-				string_reserve(&Current, 0x7F);
-				len = _snprintf(string_begin(&Current), 0x80, *spec ? spec : "[%s]", string_c_str(&bits));
-				if (len >= 0) string_end(&Current) = string_begin(&Current) + min(0x7F, len);
+				string_reserve(&Current, SCHAR_MAX);
+				len = _snprintf(string_begin(&Current), string_storage_capacity(&Current), *spec ? spec : "[%s]", string_c_str(&bits));
+				if (len >= 0) string_end(&Current) = string_begin(&Current) + min(string_capacity(&Current), (size_t)len);
 
 				string_dtor(&bits);
 			}
@@ -167,16 +166,16 @@ void __fastcall TMainForm_DrawTreeCell_DrawStr(
 		case atDOUBLE:
 			{
 				int len;
-				string *VH = SubjectStringTable_GetString(&((TSSFloatCalc*)SSGS)->nowValHeadStr);
+				string *VH = SubjectStringTable_GetString(&((TSSFloatCalc *)SSGS)->nowValHeadStr);
 
 				if (EnableParserFix && string_at(VH, 0) == '_' && string_length(VH) > 1)
 					spec = string_c_str(VH) + 1;
 				else if (!*spec)
 					spec = "[%f]";
 
-				string_reserve(&Current, 0x7F);
-				len = _snprintf(string_begin(&Current), 0x80, spec, ((TSSArgDouble*)Arg)->value);
-				if (len >= 0) string_end(&Current) = string_begin(&Current) + min(0x7F, len);
+				string_reserve(&Current, SCHAR_MAX);
+				len = _snprintf(string_begin(&Current), string_storage_capacity(&Current), spec, ((TSSArgDouble *)Arg)->value);
+				if (len >= 0) string_end(&Current) = string_begin(&Current) + min(string_capacity(&Current), (size_t)len);
 			}
 			break;
 		default:
@@ -185,8 +184,8 @@ void __fastcall TMainForm_DrawTreeCell_DrawStr(
 			else
 				string_assign_cstr_with_length(&Current, "[?]", 3);
 		}
-		delete_TSSArg(Arg);
 	}
+	if (Arg) delete_TSSArg(Arg);
 
 	if (!format || string_empty(&format->fileName))
 	{
@@ -212,24 +211,43 @@ void __fastcall TMainForm_DrawTreeCell_DrawStr(
 		string_append(DrawStr, &Current);
 	else
 	{
-		string_swap(DrawStr, &Current);
+		string_swap  (DrawStr, &Current);
 		string_append(DrawStr, &Current);
 	}
 	string_dtor(&Current);
 	string_dtor(Subject);
 }
 
-static void __fastcall ModifyNowValueBoolVector(string *DrawStr, TSSArg *Arg);
+static void __fastcall ModifyNowValueBoolVector(string *DrawStr, TSSArgBoolVector *Arg)
+{
+	string str;
+	size_t len, cap;
+	LPSTR  end;
+
+	if (bvector_size(Arg->value) > 32)
+		string_ctor_assign_cstr_with_length(&str, "..", 2);
+	else
+		TSSArg_ToString(&str, Arg);
+	len = string_length(&str);
+	cap = string_length(DrawStr) + len + 2;
+	if (cap >= string_storage_capacity(DrawStr))
+		string_reserve(DrawStr, cap);
+	end = string_end(DrawStr);
+	*end++ = '[';
+	__movsb(end, string_c_str(&str), len);
+	*(end += len) = ']';
+	*(string_end(DrawStr) = end + 1) = '\0';
+	string_dtor(&str);
+}
 
 __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueCalc()
 {
 	__asm
 	{
-		#define SSC                            edi
-		#define offsetof_TSSCalc_nowValHeadStr 160
-		#define Format                         (esp + 12)
+		#define SSC    edi
+		#define Format (esp + 12)
 
-		lea     ecx, [SSC + offsetof_TSSCalc_nowValHeadStr]
+		lea     ecx, [SSC + TSSCalc.nowValHeadStr]
 		call    SubjectStringTable_GetString
 		mov     ecx, dword ptr [eax + 4]
 		mov     eax, dword ptr [eax]
@@ -244,7 +262,6 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueCalc()
 		jmp     TStringDivision_ToString
 
 		#undef SSC
-		#undef offsetof_TSSCalc_nowValHeadStr
 		#undef Format
 	}
 }
@@ -253,11 +270,10 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueFloatCalc()
 {
 	__asm
 	{
-		#define SSFC                                edi
-		#define offsetof_TSSFloatCalc_nowValHeadStr 176
-		#define Format                              (esp + 16)
+		#define SSFC   edi
+		#define Format (esp + 16)
 
-		lea     ecx, [SSFC + offsetof_TSSFloatCalc_nowValHeadStr]
+		lea     ecx, [SSFC + TSSFloatCalc.nowValHeadStr]
 		call    SubjectStringTable_GetString
 		mov     ecx, dword ptr [eax + 4]
 		mov     eax, dword ptr [eax]
@@ -272,7 +288,6 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueFloatCalc()
 		jmp     TStringDivision_ToStringDouble
 
 		#undef SSFC
-		#undef offsetof_TSSFloatCalc_nowValHeadStr
 		#undef Format
 	}
 }
@@ -294,27 +309,4 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueBoolVector(s
 		#undef DrawStr
 		#undef Arg
 	}
-}
-
-static void __fastcall ModifyNowValueBoolVector(string *DrawStr, TSSArg *Arg)
-{
-	string s;
-	size_t insertLength, requireLength;
-	LPSTR  p, dest;
-
-	if (vector_bool_size(((TSSArgBoolVector*)Arg)->value) > 32)
-		string_ctor_assign_cstr_with_length(&s, "..", 2);
-	else
-		TSSArg_ToString(&s, Arg);
-	insertLength = string_length(&s);
-	requireLength = string_length(DrawStr) + insertLength + 2;
-	if (requireLength >= (size_t)(string_end_of_storage(DrawStr) - string_begin(DrawStr)))
-		string_reserve(DrawStr, requireLength);
-	p = string_end(DrawStr);
-	*p = '[';
-	dest = ++p;
-	*(LPWORD)(p += insertLength) = BSWAP16(']\0');
-	string_end(DrawStr) = p + 1;
-	__movsb(dest, string_c_str(&s), insertLength);
-	string_dtor(&s);
 }

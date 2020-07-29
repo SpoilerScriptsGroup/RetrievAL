@@ -550,6 +550,22 @@ unsigned __int64 __msreturn __fastcall __emulu(unsigned int a, unsigned int b);
 #define __emulu(a, b) ((uint64_t)(unsigned int)(a) * (unsigned int)(b))
 #endif
 
+#if defined(_MSC_VER) && defined(_M_X64)
+#pragma intrinsic(__umulh)
+#else
+__forceinline unsigned __int64 __umulh(unsigned __int64 a, unsigned __int64 b)
+{
+	return
+		(
+			(
+				(__emulu((uint32_t)a, (uint32_t)b) >> 32) +
+				__emulu(a >> 32, (uint32_t)b) +
+				__emulu((uint32_t)a, b >> 32)
+			) >> 32
+		) + __emulu(a >> 32, b >> 32);
+}
+#endif
+
 #if defined(_MSC_VER) && _MSC_VER >= 1920
 #pragma intrinsic(_udiv64)
 #elif defined(_MSC_VER) && _MSC_VER < 1920 && defined(_M_IX86)

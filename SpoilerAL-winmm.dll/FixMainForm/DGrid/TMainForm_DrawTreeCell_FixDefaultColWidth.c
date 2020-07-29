@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <assert.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "TCanvas.h"
@@ -57,11 +58,16 @@ static void __stdcall FixDefaultColWidth(TSSGSubject *SSGS, LPVOID Canvas, int X
 	size.cx += X + 6;
 	if (SSGS)
 	{
+#if EMBED_BREADTH
+		assert(size.cx <= MAXWORD);
+		SSGS->breadth = (WORD)size.cx;
+#else
 		TSSGSubjectProperty *elem;
 
 		elem = GetSubjectProperty(SSGS);
 		if (elem)
-			elem->Width = size.cx;
+			elem->Breadth = size.cx;
+#endif
 	}
 	else
 	{

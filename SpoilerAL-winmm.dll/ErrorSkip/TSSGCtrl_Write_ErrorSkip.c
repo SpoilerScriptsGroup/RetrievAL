@@ -6,12 +6,11 @@ __declspec(naked) void __cdecl TSSGCtrl_Write_ErrorSkip()
 {
 	__asm
 	{
-		#define this                        ebx
-		#define SSGS                        (ebp + 0CH)
-		#define ssgActionListner            (ebx + 54H)
-		#define OldAddress                  edi
-		#define result                      esi
-		#define offsetof_TMainForm_userMode 448H
+		#define this             ebx
+		#define SSGS             (ebp + 0CH)
+		#define ssgActionListner (ebx + 54H)
+		#define OldAddress       edi
+		#define result           esi
 
 		mov     ecx, dword ptr [SSGS]
 		push    atON_ERROR
@@ -24,7 +23,7 @@ __declspec(naked) void __cdecl TSSGCtrl_Write_ErrorSkip()
 		jz      L1
 		mov     ecx, dword ptr ds:[_MainForm]
 		xor     esi, esi
-		cmp     dword ptr [ecx + offsetof_TMainForm_userMode], 3
+		cmp     dword ptr [ecx + TMainForm.userMode], 3
 		je      L2
 	L1:
 		mov     eax, 0051C45AH
@@ -39,6 +38,5 @@ __declspec(naked) void __cdecl TSSGCtrl_Write_ErrorSkip()
 		#undef ssgActionListner
 		#undef OldAddress
 		#undef result
-		#undef offsetof_TMainForm_userMode
 	}
 }

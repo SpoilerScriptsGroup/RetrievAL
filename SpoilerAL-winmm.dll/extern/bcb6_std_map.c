@@ -4,13 +4,14 @@
 
 #pragma warning(disable:4733)
 
-map_iterator(__cdecl * const map_find)(map *map, LPVOID key) = (LPVOID)0x004D4008;
-map_iterator(__cdecl * const map_lower_bound)(map *, void *key) = (LPVOID)0x004D0A44;
-void(__cdecl * const map_insert)(map_iterator *, map *, map_iterator pos, void *pair) = (LPVOID)0x004D0ABC;
+map_iterator(__cdecl * const map_find)(map *, const DWORD *) = (LPVOID)0x004D4008;
+map_iterator(__cdecl * const map_lower_bound)(map *, const DWORD *) = (LPVOID)0x004D0A44;// string-double 0x0051A770;
+void(__cdecl * const map_dword_dw_dw_insert)(map_iterator *, map *, map_iterator, const void *) = (LPVOID)0x004D0ABC;// string-double = 0x0051AF0C;
+map_iterator(__cdecl * const map_string_find)(map *, const string *) = (LPVOID)0x004F0758;
 map_iterator(__cdecl * const map_iterator_increment)(map_iterator it) = (LPVOID)0x005F532C;
 map_iterator(__cdecl * const map_iterator_sub_one)(map_iterator it) = (LPVOID)0x005F5360;
 
-extern const DWORD F005D54CC;
+extern const DWORD __InitExceptBlockLDTC;
 extern const DWORD F005F5078;
 extern const DWORD F004D3BAC;
 
@@ -39,7 +40,7 @@ __declspec(naked) void __stdcall map_erase(map *map, map_iterator it)
 		sub     esp, 152
 		push    ebx
 		mov     ebx, dword ptr [ebp + 8H]
-		call    dword ptr [F005D54CC]
+		call    dword ptr [__InitExceptBlockLDTC]
 		mov     eax, dword ptr [ebx + 8H]
 		mov     edx, dword ptr [ebp + 0CH]
 		add     eax, 12

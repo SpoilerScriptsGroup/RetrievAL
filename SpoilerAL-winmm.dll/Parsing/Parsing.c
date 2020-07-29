@@ -133,6 +133,7 @@ EXTERN_C size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attri
 #endif
 #include "TStringDivision.h"
 #include "Unescape.h"
+#include "SubjectStringOperator.h"
 
 #ifdef _MSC_VER
 EXTERN_C int __fastcall internal_vsnprintf(char *buffer, size_t count, const char *format, va_list argptr, const va_list endarg);
@@ -1090,11 +1091,7 @@ typedef struct {
 	LPCSTR   String;
 	VARIABLE Value;
 #if SCOPE_SUPPORT
-#if !defined(__BORLANDC__)
 	map_iterator Node;
-#else
-	map<unsigned long, pair<unsigned long, unsigned long> >::iterator Node;
-#endif
 #endif
 } MARKUP_VARIABLE, *PMARKUP_VARIABLE;
 
@@ -3906,7 +3903,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					lpTag[1].Tag == TAG_AT &&
 					lpTag[1].String == lpTag[0].String + TAG_SUB_LENGTH &&
 					lpTag[2].Tag == TAG_PARENTHESIS_OPEN &&
-					(end = TrimRightSpace(lpTag[1].String + TAG_AT_LENGTH, lpTag[2].String)) > lpTag[1].String + TAG_AT_LENGTH)
+					(end = TrimRightSpace(lpTag[1].String + TAG_AT_LENGTH, lpTag[2].String)) >= lpTag[1].String + TAG_AT_LENGTH)
 				{
 					// function
 					lpMarkup->Tag      = TAG_FUNCTION;
@@ -5093,11 +5090,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	size_t                         nSrcLength;
 	char                           *p, *end, c;
 #if ADDITIONAL_TAGS || SCOPE_SUPPORT
-#if defined(__BORLANDC__)
-	vector<TSSGAttributeElement *> *attributes;
-#else
 	vector_TSSGAttributeElement    *attributes;
-#endif
 #endif
 	size_t                         nNumberOfMarkup;
 	MARKUP                         *lpMarkupArray;
@@ -5543,18 +5536,18 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	lpVariable[3].String = "Type";
 	if (IsInteger)
 	{
-		lpVariable[0].Value.Quad = (uint64_t)SSGS->address;
-		lpVariable[0].Value.IsQuad = sizeof(SSGS->address) > sizeof(uint32_t);
+		lpVariable[0].Value.Quad = (uint64_t)SSGS->lastAddr;
+		lpVariable[0].Value.IsQuad = sizeof(SSGS->lastAddr) > sizeof(uint32_t);
 		lpVariable[1].Value.Quad = (uint64_t)SSGS->evaluateAtRead;
 		lpVariable[1].Value.IsQuad = sizeof(SSGS->evaluateAtRead) > sizeof(uint32_t);
 		lpVariable[2].Value.Quad = (uint64_t)TSSGSubject_GetSize(SSGS);
-		lpVariable[2].Value.IsQuad = FALSE;
+		lpVariable[2].Value.IsQuad = sizeof(unsigned long) > sizeof(uint32_t);
 		lpVariable[3].Value.Quad = (uint64_t)SSGS->type;
 		lpVariable[3].Value.IsQuad = sizeof(SSGS->type) > sizeof(uint32_t);
 	}
 	else
 	{
-		lpVariable[0].Value.Real = (double)(size_t)SSGS->address;
+		lpVariable[0].Value.Real = (double)(size_t)SSGS->lastAddr;
 		lpVariable[0].Value.IsQuad = TRUE;
 		lpVariable[1].Value.Real = (double)SSGS->evaluateAtRead;
 		lpVariable[1].Value.IsQuad = TRUE;
@@ -5681,7 +5674,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			else
 				lpVariable[nNumberOfVariable].Value.Real = (double)lpProperty->RepeatIndex;
 			nNumberOfVariable++;
-		} while ((lpProperty = GetParentRepeat(lpProperty)) && lpProperty->RepeatDepth);
+		} while ((lpProperty = GetOuterRepeat(lpProperty)) && lpProperty->RepeatDepth);
 		for (size_t i = nPrevNumberOfVariable; i < nNumberOfVariable; i++)
 		{
 			lpVariable[i].String += (size_t)lpVariableStringBuffer;
@@ -12258,82 +12251,94 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				typedef struct {
 					size_t   Length;
 					LPCSTR   String;
-					uint64_t Value;
+					uint64_t Actual;
 				} PARAMETER;
 
 				const size_t Terminator = 0;
+				const WCHAR static VA[] = L"0123456789";
 
 				vector_string *File;
 				string        FName, DefaultExt;
 				PARAMETER     *lpParams;
-				size_t        count;
+				const string  *Source, *Finish;
+				size_t        count, extra = 0;
+				TSSGSubject   *Object = NULL;
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
-				string_ctor_assign_cstr_with_length(&FName, lpMarkup->String, lpMarkup->Length);
-				string_ctor_assign_cstr_with_length(&DefaultExt, ".CHN", 4);
-				File = TSSGCtrl_GetSSGDataFile(this, SSGS, FName, DefaultExt, NULL);
-				if (!File || vector_empty(File))
-					goto PARSING_ERROR;
-				lpParams = NULL;
-				if (vector_size(File) > 1 && (count = min(vector_size(File) - 1, lpMarkup->NumberOfOperand)))
+				if (lpMarkup->Length != 3 || *lpMarkup->String != '@')
 				{
-					PARAMETER *dest;
-					string    *it;
-					size_t    i;
+					string_ctor_assign_cstr_with_length(&FName, lpMarkup->String, lpMarkup->Length);
+					string_ctor_assign_cstr_with_length(&DefaultExt, ".CHN", 4);
+					File = TSSGCtrl_GetSSGDataFile(this, SSGS, FName, DefaultExt, NULL);
+					if (!File || vector_empty(File))	
+						goto PARSING_ERROR;
+					Source = vector_begin(File);
+					Finish = vector_end(File);
+				}
+				else
+				{
+					TDirAttribute *dir = TSSGCtrl_GetAttribute(this, SSGS, atDIR_LEVEL);
+					if (dir && dir->identity && (Object = dir->ref))
+						Finish = (Source = SubjectStringTable_GetString(&Object->code)) + 1;
+					else 
+						goto PARSING_ERROR;
+				}
+				lpParams = NULL;
+				if (count = lpMarkup->NumberOfOperand)
+				{
+					PARAMETER    *arg;
+					const string *it;
+					size_t        i;
 
-					lpParams = (PARAMETER *)HeapAlloc(hHeap, 0, sizeof(PARAMETER) * count + sizeof(size_t));
+					lpParams = (PARAMETER *)HeapAlloc(hHeap, 0, sizeof(*lpParams) * count + sizeof(*lpParams) + sizeof(lpParams->Length));
 					if (!lpParams)
 						goto ALLOC_ERROR;
-					dest = lpParams;
-					it = vector_begin(File);
+					arg = lpParams;
+					it = Source;
 					i = 0;
 					do
 					{
-						size_t length;
-
-						it++;
-						if (!(length = string_length(it)))
+						if (++it < Finish)
+						{
+							if (!(arg->Length = string_length(it)))
+								continue;// anonymous parameter ignore argument
+							arg->String = string_c_str(it);
+						}
+						else if (extra < 9)
+						{
+							arg->Length = sizeof(CHAR);
+							arg->String = (LPSTR)&VA[++extra];
+						}
+						else
 							break;
-						dest->Length = length;
-						dest->String = string_c_str(it);
-						dest->Value  = lpOperandTop[i].Quad;
-						dest++;
+						arg->Actual = lpOperandTop[i].Quad;
+						arg++;
 					} while (++i < count);
-					dest->Length = 0;
+					if (extra)
+					{
+						arg->Length = sizeof(CHAR);
+						arg->String = (LPSTR)&VA[0];
+						arg->Actual = extra;
+						arg++;
+					}
+					arg->Length = 0;
 				}
 #if SCOPE_SUPPORT
-				for (size_t i = 0; i < nNumberOfVariable; i++)
-				{
-					register PMARKUP_VARIABLE v = &lpVariable[i];
+				for (register PMARKUP_VARIABLE v = lpVariable, end = v + nNumberOfVariable; v < end; v++)
 					if (v->Node)
-					{
-#if !defined(__BORLANDC__)
-						*(uint64_t *)pair_second(v->Node, uint32_t) = v->Value.Quad;
-#else
-						v->Node->second = make_pair(v->Value.Low, v->Value.High);
+						((ScopeVariant *)pair_first(v->Node))->Quad = v->Value.Quad;
 #endif
-					}
-				}
-#endif
-				lpOperandTop->Quad = InternalParsing(this, SSGS, vector_begin(File), IsInteger, lpParams ? (va_list)lpParams : (va_list)&Terminator);
+				lpOperandTop->Quad = InternalParsing(this, Object ? Object : SSGS, Source, IsInteger, lpParams ? (va_list)lpParams : (va_list)&Terminator);
 				lpOperandTop->IsQuad = !IsInteger || lpOperandTop->High;
 #if SCOPE_SUPPORT
-				for (size_t i = 0; i < nNumberOfVariable; i++)
-				{
-					register PMARKUP_VARIABLE v = &lpVariable[i];
+				for (register PMARKUP_VARIABLE v = lpVariable, end = v + nNumberOfVariable; v < end; v++)
 					if (v->Node)
 					{
-#if !defined(__BORLANDC__)
-						v->Value.Quad = *(uint64_t *)pair_second(v->Node, uint32_t);
-#else
-						v->Value.Low = v->Node->second.first;
-						v->Value.High = v->Node->second.second;
-#endif
+						v->Value.Quad   = ((ScopeVariant *)pair_first(v->Node))->Quad;
 						v->Value.IsQuad = !IsInteger || !!v->Value.High;
 					}
-				}
 #endif
 				if (lpParams)
 					HeapFree(hHeap, 0, lpParams);
@@ -12352,6 +12357,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				end = (p = lpMarkup->String) + (length = lpMarkup->Length);
 				element = NULL;
 				endptr = NULL;
+#pragma region Null_terminated
+				c = *end;
+				*end = '\0';
 				do	/* do { ... } while (0); */
 				{
 					size_t prefixLength;
@@ -12371,19 +12379,16 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 								if (!--length)
 									break;
 							}
-							c = *end;
-							*end = '\0';
-							if (IsInteger)
+							else if (IsInteger)
 							{
-								operand.Quad = _strtoui64(p, &endptr, 0);
+								operand.Quad   = _strtoui64(p, &endptr, 0);
 								operand.IsQuad = !!operand.High;
 							}
 							else
 							{
-								operand.Real = strtod(p, &endptr);
+								operand.Real   = strtod(p, &endptr);
 								operand.IsQuad = TRUE;
 							}
-							*end = c;
 						}
 						else
 						{
@@ -12429,9 +12434,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					}
 				} while (0);
 				lpNext = lpPostfix + 1 < lpEndOfPostfix ? lpPostfix[1] : NULL;
-				if (!element && length && (p[0] == SCOPE_PREFIX || lpNext && (lpNext->Tag == TAG_INC ||
-				                                                              lpNext->Tag == TAG_DEC ||
-				                                                              lpNext->Tag == TAG_ADDRESS_OF)))
+				if (!element && length && (
+#if SCOPE_SUPPORT
+					p[0] == SCOPE_PREFIX || 
+#endif
+					lpNext && (lpNext->Tag == TAG_INC ||
+							   lpNext->Tag == TAG_DEC ||
+							   lpNext->Tag == TAG_ADDRESS_OF)
+					))
 				{
 					if (!(nNumberOfVariable & 0x0F))
 					{
@@ -12450,65 +12460,47 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					element->Value.Quad = 0;
 					element->Value.IsQuad = !IsInteger;
 #if SCOPE_SUPPORT
-					if (attributes && element->String[0] == SCOPE_PREFIX)
+					if (attributes && p[0] == SCOPE_PREFIX)
 					{
-						TScopeAttribute *scope = NULL;
-						uint32_t key = HashBytes(element->String + 1, element->Length - 1);
-						for (TSSGAttributeElement **pos = vector_end(attributes);// enum is signed integer ...
-							 --pos >= (TSSGAttributeElement **)vector_begin(attributes) && (*pos)->type >= atSCOPE; )
+						COORD const idx = TSSGAttributeElement_GetViaCoord(atSCOPE, attributes).dwFontSize;
+						if (idx.X)
 						{
-							if ((*pos)->type == atSCOPE)
+							TScopeAttribute *scope;
+							map_iterator it;
+							LPSTR const s[] = { p + 1, p + length };
+							ScopeVariant sv = { SubjectStringTable_insert((string *)&s), 0, 0 };
+							for (TScopeAttribute **base = &vector_type_at(attributes, TScopeAttribute *, idx.Y),
+								 **cur  = base + idx.X;
+								 --cur >= base; )
 							{
-								scope = (TScopeAttribute *)*pos;
-#if !defined(__BORLANDC__)
-								map_iterator it = map_find(&scope->heapMap, &key);
-								if (it != map_end(&scope->heapMap))
+								it = map_lower_bound(&(scope = *cur)->heapMap, &sv.Identity);
+								if (it != map_end(&scope->heapMap) && ((ScopeVariant *)pair_first(it))->Identity == sv.Identity)
 								{
-									element->Value.Quad = *(uint64_t *)pair_second(it, key);
-									element->Value.IsQuad = !IsInteger || !!element->Value.High;
+									element->Value.Quad    = ((ScopeVariant *)pair_first(it))->Quad;
+									element->Value.IsQuad |= !!element->Value.High;
 									element->Node = it;
 									break;
 								}
-#else
-								map<unsigned long, pair<unsigned long, unsigned long> >::iterator
-									it = scope->heapMap.find(key);
-								if (it != scope->heapMap.end())
-								{
-									element->Value.Low = it->second.first;
-									element->Value.High = it->second.second;
-									element->Value.IsQuad = !IsInteger || !!element->Value.High;
-									element->Node = it;
-									break;
-								}
-#endif
 							}
-						}
-						if (scope && !element->Node) {
-#if !defined(__BORLANDC__)
-							heapMapPair val = { key, { element->Value.Low, element->Value.High } };
-							map_insert(&element->Node, &scope->heapMap, map_lower_bound(&scope->heapMap, &val.key), &val);
-#else
-							element->Node = scope->heapMap.insert(make_pair(key, make_pair(element->Value.Low, element->Value.High))).first;
-#endif
+							if (!element->Node)
+								map_dword_dw_dw_insert(&element->Node, &scope->heapMap, it, &sv);
 						}
 					}
 #endif
 				}
+				*end = c;
+#pragma endregion end
 				switch (lpNext ? lpNext->Tag : -1)
 				{
-#if SCOPE_SUPPORT
 				case TAG_ADDRESS_OF:
 					if (!element)
 						break;
-#if !defined(__BORLANDC__)
-					operand.Quad = element->Node && (&lpPostfix[2] >= lpEndOfPostfix || lpPostfix[2]->Tag == TAG_RETURN)
-						? (uint64_t)pair_second(element->Node, uint32_t)
-						: (uint64_t)&element->Value;
-#else
-					operand.Quad = element->Node && (&lpPostfix[2] >= lpEndOfPostfix || lpPostfix[2]->Tag == TAG_RETURN)
-						? (uint64_t)&element->Node->second
-						: (uint64_t)&element->Value;
+					operand.Quad =
+#if SCOPE_SUPPORT
+						element->Node && (&lpPostfix[2] >= lpEndOfPostfix || lpPostfix[2]->Tag == TAG_RETURN) ?
+						(uint64_t)&((ScopeVariant *)pair_first(element->Node))->Quad :
 #endif
+						(uint64_t)&element->Value;
 #if INTPTR_MAX > INT32_MAX
 					operand.IsQuad = TRUE;
 					if (!IsInteger)
@@ -12525,7 +12517,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					nGuideTextLength = 14;
 #endif
 					goto OUTPUT_GUIDE;
-#endif
 				case TAG_INC:
 					if (!element)
 						break;
@@ -12918,18 +12909,9 @@ FAILED:
 	if (hProcess)
 		CloseHandle(hProcess);
 #if SCOPE_SUPPORT
-	for (size_t i = 0; i < nNumberOfVariable; i++)
-	{
-		register PMARKUP_VARIABLE v = &lpVariable[i];
+	for (register PMARKUP_VARIABLE v = lpVariable, end = v + nNumberOfVariable; v < end; v++)
 		if (v->Node)
-		{
-#if !defined(__BORLANDC__)
-			*(uint64_t*)pair_second(v->Node, uint32_t) = v->Value.Quad;
-#else
-			v->Node->second = make_pair(v->Value.Low, v->Value.High);
-#endif
-		}
-	}
+			((ScopeVariant *)pair_first(v->Node))->Quad = v->Value.Quad;
 #endif
 	if (TSSGCtrl_GetSSGActionListner(this) && TMainForm_GetUserMode(MainForm) >= 3 &&
 		nNumberOfProcessMemory && !HeapValidate(pHeap, 0, NULL)) {

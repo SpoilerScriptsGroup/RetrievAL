@@ -15,7 +15,7 @@ extern HANDLE hHeap;
 
 __inline void Attribute_define(TSSGCtrl *this, LPVOID ParentStack, LPCSTR Line, LPCSTR EndOfLine)
 {
-	#define stack_PTSSDir_top(Stack) ((TSSDir *)stack_dword_top((stack_dword *)Stack))
+	#define stack_PTSSDir_top(Stack) stack_top((stack *)(Stack), TSSDir *)[0]
 
 	const char       *key, *value, *p;
 	char             c;
@@ -43,42 +43,37 @@ __inline void Attribute_define(TSSGCtrl *this, LPVOID ParentStack, LPCSTR Line, 
 	while (--p >= value && ((c = *p) == ' ' || c == '\t'));
 	valueLength = ++p - value;
 
-	for (TDefineAttribute **it = vector_begin(this->attributeSelector.nowAttributeVec), **end = vector_end(this->attributeSelector.nowAttributeVec); it < end; it++)
+	if (attribute = TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(this)))
 	{
-		if ((*it)->type != atDEFINE)
-			continue;
-		if (string_length(&(*it)->inputCode) != keyLength + 2)
-			continue;
-		if (memcmp(string_c_str(&(*it)->inputCode) + 1, key, keyLength) != 0)
-			continue;
-		string_assign_cstr_with_length(&(*it)->outputCode, value, valueLength);
-		return;
-	}
-
-	if (attribute = stack_PTSSDir_top(ParentStack)->super.attribute)
-	{
-		for (TDefineAttribute **it = vector_begin(attribute), **end = vector_end(attribute); it < end; it++)
+		signed rel;
+		const COORD index = TSSGAttributeElement_GetViaCoord(atDEFINE, attribute).dwFontSize;
+		for (TAdjustmentAttribute **cur,
+			 **base = &vector_type_at(attribute, TAdjustmentAttribute *, index.Y),
+			 **apex = base + index.X;
+			 base < apex; )
 		{
-			if ((*it)->type != atDEFINE)
-				continue;
-			if (string_length(&(*it)->inputCode) != keyLength + 2)
-				continue;
-			if (memcmp(string_c_str(&(*it)->inputCode) + 1, key, keyLength) != 0)
-				continue;
-			string_assign_cstr_with_length(&(*it)->outputCode, value, valueLength);
-			return;
+			cur = &base[apex - base >> 1];
+			rel = strncmp((*cur)->c_str + 1, key, keyLength);
+			if (rel > 0)
+				apex = cur;
+			else if (rel == 0 && (*cur)->seqElement == keyLength + 2)
+			{
+				string_assign_cstr_with_length(&((TDefineAttribute *)*cur)->outputCode, value, valueLength);
+				return;
+			}
+			else
+				base = cur + 1;
 		}
 	}
 
-	define = new_TIO_FEPAttribute();
-	if (define)
+	if (define = new_TIO_FEPAttribute())
 	{
 		define->type = atDEFINE;
 		string_reserve(&define->inputCode, keyLength + 2);
 		*string_begin(&define->inputCode) = '{';
 		memcpy(string_begin(&define->inputCode) + 1, key, keyLength);
-		string_end(&define->inputCode) = string_begin(&define->inputCode) + keyLength + 2;
-		*(LPWORD)(string_end(&define->inputCode) - 1) = BSWAP16('}\0');
+		string_at(&define->inputCode, 1 + keyLength) = '}';
+		*(string_end(&define->inputCode) = string_begin(&define->inputCode) + keyLength + 2) = '\0';
 		string_assign_cstr_with_length(&define->outputCode, value, valueLength);
 		TSSGAttributeSelector_AddElement(&this->attributeSelector, define);
 	}

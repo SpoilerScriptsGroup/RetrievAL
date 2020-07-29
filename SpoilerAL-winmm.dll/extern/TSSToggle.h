@@ -1,7 +1,5 @@
 #pragma once
 
-#include <windows.h>
-#include "bcb6_std_string.h"
 #include "TSSGSubject.h"
 
 #pragma pack(push, 1)

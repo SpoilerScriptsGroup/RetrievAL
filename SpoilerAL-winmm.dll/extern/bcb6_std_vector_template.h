@@ -14,14 +14,13 @@
 #define type typename
 #endif
 
-typedef struct
+typedef struct CONCAT(_Vector_, typename)
 {
 	type *_M_start;
 	type *_M_finish;
-	void *padding1;
-	void *padding2;
+	void *allocator_type[2];
 	type *_M_end_of_storage;
-	void *padding3;
+	DWORD tblIndex;
 } BCB6_STD_VECTOR_NAME, *PBCB6_STD_VECTOR_NAME;
 
 #ifdef USING_NAMESPACE_BCB6_STD

@@ -11,8 +11,57 @@ void __stdcall repeat_ReadSSRFile(
 	LPVOID       ADJElem,
 	const string *LineS,
 	DWORD        RepeatIndex,
-	DWORD        ParentRepeat,
-	TSSGSubject  *SSGS);
+	DWORD        OuterRepeat,
+	TSSGSubject  *SSGS)
+{
+	vector_string tmpV;
+	vector_dword  indices;
+
+	vector_ctor(&indices);
+	TSSGCtrl_ReadSSRFile(&tmpV, this, LineS, &indices, SSGS);
+	if (!vector_empty(&tmpV))
+	{
+		if (!vector_empty(&indices))
+		{
+			DWORD               outer;
+			TSSGSubjectProperty *prop;
+			string              *it;
+			LPDWORD             repeat;
+			size_t              elementSize;
+
+			if (!RepeatDepth)
+				outer = MAXDWORD;
+			else if (SSGS && SSGS->type && SSGS->propertyIndex != MAXDWORD)
+				outer = SSGS->propertyIndex;
+			else if (prop = GrowSubjectProperty(&outer))
+			{
+				prop->RepeatDepth  = RepeatDepth;
+				prop->RepeatIndex  = RepeatIndex;
+				prop->OuterRepeat  = OuterRepeat;
+			}
+			RepeatDepth++;
+			it = vector_begin(&tmpV);
+			repeat = vector_begin(&indices);
+			elementSize = vector_byte_size(&tmpV) / vector_size(&indices);
+			do
+			{
+				vector_string constElem;
+
+				vector_begin(&constElem) = it;
+				(LPBYTE)it += elementSize;
+				vector_end_of_storage(&constElem) = vector_end(&constElem) = (string *)it;
+				TSSGCtrl_EnumReadSSG(this, &constElem, ParentStack, ADJElem, *(repeat++), outer);
+			} while (it != vector_end(&tmpV));
+			RepeatDepth--;
+		}
+		else
+		{
+			TSSGCtrl_EnumReadSSG(this, &tmpV, ParentStack, ADJElem, RepeatIndex, OuterRepeat);
+		}
+	}
+	vector_dtor(&indices);
+	vector_string_dtor(&tmpV);
+}
 
 #if 0
 __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile()
@@ -25,10 +74,10 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile()
 		#define ParentStack     (ebp +  10H)
 		#define ADJElem         (ebp +  14H)
 		#define RepeatIndex     (ebp +  18H)
-		#define ParentRepeat    (ebp +  1CH)
+		#define OuterRepeat     (ebp +  1CH)
 		#define LineS           (ebp -  38H)
 
-		mov     edx, dword ptr [ParentRepeat]
+		mov     edx, dword ptr [OuterRepeat]
 		mov     ecx, dword ptr [RepeatIndex]
 		push    offset SSGS
 		lea     eax, [LineS]
@@ -49,67 +98,8 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_repeat_ReadSSRFile()
 		#undef ParentStack
 		#undef ADJElem
 		#undef RepeatIndex
-		#undef ParentRepeat
+		#undef OuterRepeat
 		#undef LineS
 	}
 }
 #endif
-
-void __stdcall repeat_ReadSSRFile(
-	TSSGCtrl     *this,
-	LPVOID       ParentStack,
-	LPVOID       ADJElem,
-	const string *LineS,
-	DWORD        RepeatIndex,
-	DWORD        ParentRepeat,
-	TSSGSubject  *SSGS)
-{
-	vector_string tmpV;
-	vector_dword  indices;
-
-	vector_ctor(&indices);
-	TSSGCtrl_ReadSSRFile(&tmpV, this, LineS, &indices, SSGS);
-	if (!vector_empty(&tmpV))
-	{
-		if (!vector_empty(&indices))
-		{
-			DWORD               parent;
-			TSSGSubjectProperty *prop;
-			string              *it;
-			LPDWORD             repeat;
-			size_t              elementSize;
-
-			if (!RepeatDepth)
-				parent = MAXDWORD;
-			else if (SSGS && SSGS->type == stDIR)
-				parent = SSGS->propertyIndex;
-			else if (prop = GrowSubjectProperty(&parent))
-			{
-				prop->RepeatDepth  = RepeatDepth;
-				prop->RepeatIndex  = RepeatIndex;
-				prop->ParentRepeat = ParentRepeat;
-			}
-			RepeatDepth++;
-			it = vector_begin(&tmpV);
-			repeat = vector_begin(&indices);
-			elementSize = vector_byte_size(&tmpV) / vector_size(&indices);
-			do
-			{
-				vector_string constElem;
-
-				vector_begin(&constElem) = it;
-				(LPBYTE)it += elementSize;
-				vector_end_of_storage(&constElem) = vector_end(&constElem) = (string *)it;
-				TSSGCtrl_EnumReadSSG(this, &constElem, ParentStack, ADJElem, *(repeat++), parent);
-			} while (it != vector_end(&tmpV));
-			RepeatDepth--;
-		}
-		else
-		{
-			TSSGCtrl_EnumReadSSG(this, &tmpV, ParentStack, ADJElem, RepeatIndex, ParentRepeat);
-		}
-	}
-	vector_dtor(&indices);
-	vector_string_dtor(&tmpV);
-}
-

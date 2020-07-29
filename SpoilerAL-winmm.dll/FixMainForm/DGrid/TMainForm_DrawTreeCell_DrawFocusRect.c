@@ -1,4 +1,5 @@
 #include <windows.h>
+#include "TDrawGrid.h"
 
 extern const DWORD F0055E74C;
 
@@ -25,13 +26,11 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawFocusRect()
 
 	__asm
 	{
-		#define MainForm                        ebx
-		#define ARow                            (ebp + 16)
-		#define nowSelectSubjectIndex           (MainForm + 1364)
-		#define DGrid                           (MainForm + 932)
-		#define offsetof_DGrid_DefaultColWidth  560
-		#define offsetof_DGrid_DefaultRowHeight 564
-		#define BSCanvas                        esi
+		#define MainForm              ebx
+		#define ARow                  (ebp + 16)
+		#define nowSelectSubjectIndex (MainForm + 1364)
+		#define DGrid                 (MainForm + 932)
+		#define BSCanvas              esi
 
 		mov     eax, dword ptr [nowSelectSubjectIndex]
 		mov     ecx, dword ptr [ARow]
@@ -48,8 +47,8 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawFocusRect()
 		#define rcItem_bottom (esp + 12)
 
 		mov     ecx, dword ptr [DGrid]
-		mov     eax, dword ptr [ecx + offsetof_DGrid_DefaultColWidth]
-		mov     ecx, dword ptr [ecx + offsetof_DGrid_DefaultRowHeight]
+		mov     eax, dword ptr [ecx + TDrawGrid.DefaultColWidth]
+		mov     ecx, dword ptr [ecx + TDrawGrid.DefaultRowHeight]
 		sub     eax, 2
 		sub     ecx, 2
 		mov     dword ptr [rcItem_left  ], 2
@@ -76,8 +75,6 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawFocusRect()
 		#undef ARow
 		#undef nowSelectSubjectIndex
 		#undef DGrid
-		#undef offsetof_DGrid_DefaultColWidth
-		#undef offsetof_DGrid_DefaultRowHeight
 		#undef BSCanvas
 	}
 }

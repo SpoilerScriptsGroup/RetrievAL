@@ -1,7 +1,9 @@
 #pragma once
 
+#include <stdbool.h>
 #include <windows.h>
 #include "bcb6_std_string.h"
+#include "bcb6_std_vector.h"
 
 typedef enum {
 	atUNKNOWN,
@@ -16,10 +18,17 @@ typedef enum {
 	atSPLIT
 } ssgCtrl;
 
+typedef struct _TSSArgVTbl
+{
+	void(__cdecl *const dtor)(void *this, enum flagsClean);
+	void(__cdecl *const SetValue)(void *this, const char *Val);
+	bcb6_std_string *(__cdecl *const ToString)(bcb6_std_string *, void *this);
+} TSSArgVTbl;
+
 #pragma pack(push, 1)
 typedef struct _TSSArg
 {
-	LPVOID       *VTable;
+	TSSArgVTbl   *VTable;
 	unsigned long type;
 } TSSArg;
 #pragma pack(pop)
@@ -27,7 +36,7 @@ typedef struct _TSSArg
 #pragma pack(push, 1)
 typedef struct _TSSArgLong
 {
-	LPVOID       *VTable;
+	TSSArgVTbl   *VTable;
 	unsigned long type;
 	long          value;
 } TSSArgLong, TSSArgLongIndex;
@@ -36,57 +45,38 @@ typedef struct _TSSArgLong
 #pragma pack(push, 1)
 typedef struct _TSSArgBool
 {
-	LPVOID       *VTable;
+	TSSArgVTbl   *VTable;
 	unsigned long type;
-	BOOLEAN       value;
+	bool          value;
 } TSSArgBool;
 #pragma pack(pop)
 
 #pragma pack(push, 1)
 typedef struct _TSSArgString
 {
-	LPVOID         *VTable;
+	TSSArgVTbl     *VTable;
 	unsigned long   type;
 	bcb6_std_string value;
 } TSSArgString;
 #pragma pack(pop)
 
 #pragma pack(push, 1)
-typedef struct _Bit_iter {
-	unsigned int* _M_p;
-	unsigned int  _M_offset;
-} _Bit_iterator;
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-typedef struct _TSSArgBoolVector {
-	LPVOID       *VTable;
-	unsigned long type;
-	struct _Bvector {
-		_Bit_iterator _M_start;
-		_Bit_iterator _M_finish;
-		void         *padding1;
-		void         *padding2;
-		unsigned int *_M_end_of_storage;
-		void         *padding3;
-	} value;
+typedef struct _TSSArgBoolVector{
+	TSSArgVTbl      *VTable;
+	unsigned long    type;
+	bcb6_std_bvector value;
 } TSSArgBoolVector;
 #pragma pack(pop)
-
-#define vector_bool_size(bvec) (size_t)((bvec._M_finish._M_p - bvec._M_start._M_p << 5)\
-	+ bvec._M_finish._M_offset - bvec._M_start._M_offset)
 
 #pragma pack(push, 1)
 typedef struct _TSSArgDouble
 {
-	LPVOID       *VTable;
+	TSSArgVTbl   *VTable;
 	unsigned long type;
 	double        value;
 } TSSArgDouble;
 #pragma pack(pop)
 
-#define TSSArg_dtor(Arg, bfDel) ((void (__cdecl *)(void*, BYTE))(Arg)->VTable[0])(Arg, bfDel)
-#define delete_TSSArg(Arg) TSSArg_dtor(Arg, 0x03)
-typedef void(__cdecl * const LPFN_TSSARG_TOSTRING)(bcb6_std_string *ret, TSSArg *this);
-#define TSSArg_ToString(ret, Arg) ((LPFN_TSSARG_TOSTRING)(Arg)->VTable[2])(ret, Arg)
+#define delete_TSSArg(Arg)        (Arg)->VTable->dtor(Arg, DTCVF_PTRVAL | DTCVF_DELPTR)
+#define TSSArg_ToString(ret, Arg) (Arg)->VTable->ToString(ret, Arg)
 

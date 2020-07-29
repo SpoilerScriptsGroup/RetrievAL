@@ -308,7 +308,7 @@ static BOOL __fastcall ProcessCmdlineInspect(DWORD pid, LPCSTR lpCommandArg) {
 		PROCESS_BASIC_INFORMATION pbi;
 		LPSTR cmdLine;
 		if (!NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), NULL)
-			&& ReadProcessMemory(hProcess, pbi.PebBaseAddress, &peb, sizeof(peb), NULL)
+			&& ReadProcessMemory(hProcess, pbi.PebBaseAddress   , &peb, sizeof(peb), NULL)
 			&& ReadProcessMemory(hProcess, peb.ProcessParameters, &upp, sizeof(upp), NULL)
 			&& (cmdLine = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, upp.CommandLine.MaximumLength << 1))
 			)
@@ -317,7 +317,7 @@ static BOOL __fastcall ProcessCmdlineInspect(DWORD pid, LPCSTR lpCommandArg) {
 			if (ReadProcessMemory(hProcess, upp.CommandLine.Buffer, &cmdLine[upp.CommandLine.MaximumLength], upp.CommandLine.Length, NULL)
 				&& WideCharToMultiByte(CP_THREAD_ACP, 0, (LPCWCH)&cmdLine[upp.CommandLine.MaximumLength], upp.CommandLine.Length >> 1,
 									   cmdLine, upp.CommandLine.MaximumLength, NULL, NULL)
-				&& !regcomp(&cmdArg, lpCommandArg, REG_EXTENDED | REG_ICASE | REG_NOSUB)
+				&& !regcomp(&cmdArg, lpCommandArg, REG_EXTENDED | REG_NEWLINE | REG_NOSUB)
 				)
 			{
 				match = !regexec(&cmdArg, cmdLine, 0, NULL, 0);

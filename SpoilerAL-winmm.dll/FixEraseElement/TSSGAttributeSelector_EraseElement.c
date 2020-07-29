@@ -3,35 +3,38 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TSSGAttributeSelector.h"
 #include "TSSGAttributeElement.h"
-#include "bcb6_std_deque.h"
+#include "bcb6_std_stack.h"
 #include "bcb6_std_list.h"
 
-void __cdecl TSSGAttributeSelector_EraseElement(TSSGAttributeSelector *attributeSelector, TSSGAttributeElement *AElem)
+void __cdecl TSSGAttributeSelector_EraseElement(TSSGAttributeSelector *attributeSelector, TDefineAttribute *AElem)
 {
-	map_iterator MIt = map_find(attributeSelector->stackElemMap, &AElem->type);
+	map_iterator MIt = map_find(attributeSelector->stackElemMap, (LPDWORD)&AElem->type);
 	if (MIt == map_end(attributeSelector->stackElemMap))
 		return;
-	deque *second = (deque *)pair_second_aligned(MIt, unsigned long);
-	if (second->_M_finish._M_cur == second->_M_start._M_cur)
+	deque *second = stack_Get_c(pair_second_aligned(MIt, unsigned long));
+	if (deque_empty(second))
 		return;
-	deque_iterator it = second->_M_finish;
-	for (deque_iterator_decrement(&it); deque_iterator_greater_or_equal(&it, &second->_M_start); deque_iterator_decrement(&it))
+	for (deque_iterator it = deque_end(second);
+		 deque_iterator_decrement(&it, void *), !deque_iterator_less_than(&it, &deque_begin(second));
+		 )
 	{
-		if (!TSSGAttributeElement_IsEqual(AElem, *(TSSGAttributeElement **)it._M_cur))
+		if (!TSSGAttributeElement_IsEqual(*(TSSGAttributeElement **)it._M_cur, AElem))
 			continue;
-		deque_erase_element_size_4(second, &it);
-		if (second->_M_finish._M_cur == second->_M_start._M_cur)
-			map_erase(attributeSelector->stackElemMap, MIt);
-		for (list_iterator SIt = list_begin(attributeSelector->nowAttributeList);
-			 SIt != list_end(attributeSelector->nowAttributeList);
-			 list_iterator_increment(SIt))
+		for (list_iterator SIt = list_end(attributeSelector->nowAttributeList);
+			 list_iterator_decrement(SIt) != list_end(attributeSelector->nowAttributeList);
+			 )
 		{
-			if (!TSSGAttributeElement_IsEqual(AElem, *(TSSGAttributeElement **)SIt->_M_data))
+			if (!TSSGAttributeElement_IsEqual(*(TSSGAttributeElement **)SIt->_M_data, AElem))
 				continue;
-			list_erase(&SIt);
+			list_erase(SIt);
+			deque_dword_erase(second, &it);
 			break;
 		}
 		break;
 	}
+#ifdef PURGE_WHEN_EMPTY
+	if (deque_empty(second))
+		map_erase(attributeSelector->stackElemMap, MIt);
+#endif
 	TSSGAttributeSelector_MakeNowAttributeVec(attributeSelector);
 }

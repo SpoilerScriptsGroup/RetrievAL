@@ -17,6 +17,7 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 	size_t     nest;
 	size_t     length;
 
+	lastFound = NULL;
 	if (!Src)
 		goto FAILED;
 	if (!TokenLength)
@@ -24,7 +25,6 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 	srcLength = string_length(Src);
 	if (srcLength < TokenLength)
 		goto FAILED;
-	lastFound = NULL;
 	p = string_c_str(Src);
 	end = string_end(Src) - TokenLength + 1;
 	nest = 0;

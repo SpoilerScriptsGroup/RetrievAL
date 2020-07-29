@@ -3,12 +3,11 @@
 #include <windows.h>
 #include "intrinsic.h"
 
-typedef struct
+typedef struct _String_base
 {
 	LPSTR  _M_start;
 	LPSTR  _M_finish;
-	LPVOID padding1;
-	LPVOID padding2;// using as order at element
+	LPVOID allocator_type[2];// using as order @ TSSGAttributeElement
 	LPCSTR _M_end_of_storage;
 	size_t sstIndex;
 } bcb6_std_string, *pbcb6_std_string;

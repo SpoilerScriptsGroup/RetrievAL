@@ -1,7 +1,6 @@
 #pragma once
 
 #include <windows.h>
-#include "bcb6_std_string.h"
 #define typename byte
 #define type     BYTE
 #include "bcb6_std_vector_template.h"
@@ -11,19 +10,39 @@
 #define typename size_t
 #include "bcb6_std_vector_template.h"
 
-typedef struct
+typedef struct _Vector_base
 {
 	LPVOID _M_start;
 	LPVOID _M_finish;
-	LPVOID padding1;
-	LPVOID padding2;
+	LPVOID allocator_type[2];
 	LPVOID _M_end_of_storage;
-	LPVOID padding3;
+	size_t tblIndex;
 } bcb6_std_vector, *pbcb6_std_vector;
+
+typedef struct _Bit_iterator_base
+{
+	unsigned int *_M_p;
+	unsigned int  _M_offset;
+} _Bit_iter;
+
+typedef struct _Bvector_base
+{
+	_Bit_iter     _M_start;
+	_Bit_iter     _M_finish;
+	void   const *__chunk_allocator_type;
+	ptrdiff_t     tblIndex;
+	unsigned int *_M_end_of_storage;
+	LPCVOID       padding;
+} bcb6_std_bvector, *pbcb6_std_bvector;
+
+#define bcb6_std_bvector_size(Bvec) \
+    (size_t)((Bvec._M_finish._M_p - Bvec._M_start._M_p << 5) + Bvec._M_finish._M_offset - Bvec._M_start._M_offset)
 
 #ifdef USING_NAMESPACE_BCB6_STD
 typedef bcb6_std_vector  vector;
 typedef pbcb6_std_vector pvector;
+typedef bcb6_std_bvector bvector;
+#define bvector_size              bcb6_std_bvector_size
 #define vector_ctor               bcb6_std_vector_ctor
 #define vector_size               bcb6_std_vector_size
 #define vector_size_by_type       bcb6_std_vector_size_by_type

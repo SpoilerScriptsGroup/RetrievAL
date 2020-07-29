@@ -17,18 +17,16 @@ __declspec(naked) string * __cdecl TTitleSelectForm_CnvString(string *Result, TT
 {
 	__asm
 	{
-		#define this                               (esp + 8)
-		#define Locale                             (esp + 8)
-		#define offsetof_TTitleSelectForm_sortLCID 872
+		#define this   (esp + 8)
+		#define Locale (esp + 8)
 
 		mov     eax, dword ptr [this]
-		mov     eax, dword ptr [eax + offsetof_TTitleSelectForm_sortLCID]
+		mov     eax, dword ptr [eax + TTitleSelectForm.sortLCID]
 		mov     dword ptr [Locale], eax
 		jmp     CnvString
 
 		#undef this
 		#undef Locale
-		#undef offsetof_TTitleSelectForm_sortLCID
 	}
 }
 
@@ -36,18 +34,16 @@ __declspec(naked) string * __cdecl TFindNameForm_CnvString(string *Result, TFind
 {
 	__asm
 	{
-		#define this                            (esp + 8)
-		#define Locale                          (esp + 8)
-		#define offsetof_TFindNameForm_findLCID 780
+		#define this   (esp + 8)
+		#define Locale (esp + 8)
 
 		mov     eax, dword ptr [this]
-		mov     eax, dword ptr [eax + offsetof_TFindNameForm_findLCID]
+		mov     eax, dword ptr [eax + TFindNameForm.findLCID]
 		mov     dword ptr [Locale], eax
 		jmp     CnvString
 
 		#undef this
 		#undef Locale
-		#undef offsetof_TFindNameForm_findLCID
 	}
 }
 

@@ -17,7 +17,7 @@ extern TMainForm *MainForm;
 #include "TMainForm.h"
 #endif
 
-extern const DWORD F005D54CC;
+extern const DWORD __InitExceptBlockLDTC;
 
 volatile DWORD dwErrorMessageId = ERROR_SUCCESS;
 
@@ -136,7 +136,7 @@ __declspec(naked) void __cdecl TSSGActionListner_OnSubjectDisabled_SetErrorMessa
 	__asm
 	{
 		mov     dword ptr [dwErrorMessageId], ERROR_INVALID_FLAGS
-		jmp     dword ptr [F005D54CC]
+		jmp     dword ptr [__InitExceptBlockLDTC]
 	}
 }
 #endif

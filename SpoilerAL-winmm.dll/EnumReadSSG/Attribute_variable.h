@@ -12,7 +12,7 @@ extern HANDLE hHeap;
 
 __inline void Attribute_variable_open(TSSGCtrl *this, LPVOID ParentStack, LPCSTR Code, LPCSTR EndOfCode)
 {
-	#define stack_PTSSDir_top(Stack) ((TSSDir *)stack_dword_top((stack_dword *)Stack))
+	#define stack_PTSSDir_top(Stack) stack_top((stack *)(Stack), TSSDir*)[0]
 
 	TPrologueAttribute*lpNewVariable;
 	TPrologueAttribute*lpParentVariable;

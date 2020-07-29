@@ -41,7 +41,6 @@ EXTERN_C void __cdecl TSSGCtrl_Funneling_ReplaceDefineDynamic();
 EXTERN_C void __cdecl TSSGCtrl_GetSSGDataFile_OpenProcess();
 EXTERN_C HANDLE __stdcall TSSGCtrl_OpenProcess(LPVOID, DWORD, LPCSTR);
 EXTERN_C void __cdecl TSSGCtrl_Funneling_Write();
-EXTERN_C void __cdecl Caller_TSSGCtrl_IsEnabled_except1();
 EXTERN_C void __cdecl TSSBundleCalc_Read_Read();
 EXTERN_C void __cdecl TSSBundleCalc_Write_Write();
 EXTERN_C void __cdecl TSSBundleList_Read_OneRead();
@@ -419,7 +418,7 @@ EXTERN_C void __cdecl Attach_Parsing()
 
 	// TSSGCtrl::IsEnabled
 	*(LPBYTE )0x005111E0 = JMP_REL32;
-	*(LPDWORD)0x005111E1 = (DWORD)Caller_TSSGCtrl_IsEnabled_except1 - (0x005111E1 + sizeof(DWORD));
+	*(LPDWORD)0x005111E1 = (DWORD)TSSGCtrl_IsEnabled - (0x005111E1 + sizeof(DWORD));
 	*(LPBYTE )0x005111E5 = NOP;
 
 	// TSSGCtrl::IsEnabled

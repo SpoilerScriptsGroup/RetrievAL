@@ -4,72 +4,65 @@
 #include "TSSString.h"
 #include "TranscodeMultiByte.h"
 
-static void __fastcall TSSString_string_reserve_MapToCodePage(TSSString *this, string *Val, string *s, size_t n);
+static void __fastcall TSSString_string_reserve_MapToCodePage(TSSString *SSGS, string *value, string *dest)
+{
+	size_t cch = string_length(value);
+	string_ctor_null(dest);
+	switch (SSGS->codePage)
+	{
+	case CP_ACP:
+		string_assign_cstr_with_length(dest, string_c_str(value), cch);
+		return;
+	case MAXWORD:
+		string_reserve(dest, cch * sizeof(wchar_t));
+		cch = MultiByteToWideChar(
+			CP_THREAD_ACP,
+			0,
+			string_c_str(value),
+			cch,
+			(LPWSTR)string_begin(dest),
+			cch) * sizeof(wchar_t);
+		break;
+	default:
+		string_reserve(dest, cch << 1);
+		cch = TranscodeMultiByte(
+			CP_THREAD_ACP,
+			0,
+			string_c_str(value),
+			cch,
+			SSGS->codePage,
+			0,
+			string_begin(dest),
+			cch << 1,
+			NULL,
+			NULL);
+	}
+	*(string_end(dest) = string_begin(dest) + min(cch, SSGS->size)) = '\0';
+}
 
-void __declspec(naked) Caller_TSSString_Write_WriteString_reserve()
+void __declspec(naked) Caller_TSSString_Write_Str_ctor()
 {
 	__asm
-	{
-		#define ReturnAddress 0052B360H
+	{// edx is value already
 		#define this          (ebp + 8)
-		#define Str           (ebp - 1CH)
 
-		mov     dword ptr [esp], ReturnAddress
-		lea     edx, [Str]
 		mov     ecx, dword ptr [this]
 		jmp     TSSString_string_reserve_MapToCodePage
 
-		#undef ReturnAddress
 		#undef this
-		#undef Str
 	}
 }
 
-void __declspec(naked) Caller_TSSString_ToByteCode_tmpS_reserve()
+void __declspec(naked) Caller_TSSString_ToByteCode_Val_ctor()
 {
 	__asm
 	{
-		#define ReturnAddress 0052B805H
-		#define this          ecx
-		#define Val           (ebp - 1CH)
+		#define this          (ebp + 12)
 
-		mov     dword ptr [esp], eax
-		push    edx
-		push    ReturnAddress
-		lea     edx, [Val]
+		mov     edx, ebx
+		mov     ecx, dword ptr [this]
 		jmp     TSSString_string_reserve_MapToCodePage
 
-		#undef ReturnAddress
 		#undef this
-		#undef Val
-	}
-}
-
-static void __fastcall TSSString_string_reserve_MapToCodePage(TSSString *this, string *Val, string *s, size_t n)
-{
-	string_reserve(s, n);
-	if (this->codePage == TSSSTRING_CP_UNICODE)
-	{
-		size_t unicodeSize = MultiByteToWideChar(
-			CP_THREAD_ACP,
-			0,
-			string_c_str(Val),
-			string_length(Val),
-			(LPWSTR)string_begin(s),
-			n / 2) * 2;
-		string_assign_cstr_with_length(Val, string_begin(s), min(unicodeSize, this->size));
-		string_clear(s);
-	}
-	else if (this->codePage == TSSSTRING_CP_UTF8)
-	{
-		size_t utf8Size = MultiByteToUtf8(
-			CP_THREAD_ACP,
-			0,
-			string_c_str(Val),
-			string_length(Val),
-			string_begin(s),
-			n);
-		string_assign_cstr_with_length(Val, string_begin(s), min(utf8Size, this->size));
-		string_clear(s);
 	}
 }

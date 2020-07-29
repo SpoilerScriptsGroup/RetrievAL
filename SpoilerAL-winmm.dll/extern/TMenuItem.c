@@ -2,7 +2,7 @@
 
 #pragma warning(disable:4733)
 
-extern const DWORD F005D54CC;
+extern const DWORD __InitExceptBlockLDTC;
 extern const DWORD F005E0D50;
 extern const DWORD F0054B87C;
 extern const DWORD F005E0EA8;
@@ -36,7 +36,7 @@ __declspec(naked) void __stdcall TMenuItem_SetCaption(LPVOID MenuItem, LPCSTR lp
 		mov     eax, offset data2
 		mov     ebp, esp
 		sub     esp, 40
-		call    dword ptr [F005D54CC]
+		call    dword ptr [__InitExceptBlockLDTC]
 		mov     edx, dword ptr [ebp + 0CH]
 		lea     eax, [ebp - 4H]
 		call    dword ptr [F005E0D50]

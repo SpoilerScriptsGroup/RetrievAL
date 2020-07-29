@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "TSSString.h"
 
 #if 0
@@ -7,28 +8,32 @@ EXTERN_C void __cdecl Caller_TSSString_Setting_CheckCodePage();
 #endif
 EXTERN_C void __cdecl Caller_TSSString_Read_TranscodeString();
 EXTERN_C void __cdecl Caller_TSSString_Read_terminate_Data();
-EXTERN_C void __cdecl Caller_TSSString_Write_WriteString_reserve();
-EXTERN_C void __cdecl Caller_TSSString_ToByteCode_tmpS_reserve();
+EXTERN_C void __cdecl Caller_TSSString_Write_Str_ctor();
+EXTERN_C void __cdecl Caller_TSSString_ToByteCode_Val_ctor();
 
-static ptrdiff_t __fastcall TSSString_Setting_CheckCaution(TSSString* SSGS, bcb6_std_vector_string* tmpV) {
-	bcb6_std_string* sz3 = &bcb6_std_vector_type_at(tmpV, bcb6_std_string, 3);
-	SSGS->caution = bcb6_std_vector_size_by_type(tmpV, bcb6_std_string) > 3 && !strncmp(bcb6_std_string_c_str(sz3), "caution", 8);
-	return bcb6_std_vector_size_by_type(tmpV, BYTE);
+static size_t __fastcall TSSString_Setting_ExtraArgs(TSSString *SSGS, vector_string *tmpV) {
+	string* sz3 = &vector_at(tmpV, 3);
+	SSGS->cautious = vector_size(tmpV) > 3 && string_length(sz3) == 7
+		&& *(LPDWORD)string_begin(sz3) == BSWAP32('caut')
+		&& *(LPDWORD)&string_at(sz3, sizeof(DWORD)) == BSWAP32('ion\0')
+		;
+	return vector_size_by_type(tmpV, unsigned __int8);
 }
 
-static __declspec(naked) ptrdiff_t TSSString_Setting_CheckCautionStub() {
+static __declspec(naked) size_t TSSString_Setting_ExtraArgsStub() {
 	__asm {
 		mov edx, edi
 		mov ecx, ebx
-		jmp TSSString_Setting_CheckCaution
-	}// must return tmpV.size() : BYTE*
+		jmp TSSString_Setting_ExtraArgs
+	}// must return tmpV.size() in bytes
 }
 
 EXTERN_C void __cdecl Attach_StringSubject()
 {
 	// TSSString::Setting
+	//   tmpV.resize(3);
 	*(LPWORD )0x0052A7F8 = 0xE8;// call ...
-	*(LPDWORD)0x0052A7F9 = (DWORD)TSSString_Setting_CheckCautionStub - (0x0052A7F9 + sizeof(DWORD));
+	*(LPDWORD)0x0052A7F9 = (DWORD)TSSString_Setting_ExtraArgsStub - (0x0052A7F9 + sizeof(DWORD));
 
 	// replaced at "SubjectStringTable\SubjectStringOperator.c" - TSSString_Setting_SetEndWord
 #if 0
@@ -37,52 +42,33 @@ EXTERN_C void __cdecl Attach_StringSubject()
 #endif
 
 	// TSSString::Read
-	//   char *tmpC = new char[size+1]; -> new char[size+2]
-	/*
-		mov     edi, esp                                ; 0052AF98 _ 8B. FC
-		lea     ecx, [ebx + 7FH]                        ; 0052AF9A _ 8D. 4B, 7F
-		push    15                                      ; 0052AF9D _ 6A, 0F
-		inc     ecx                                     ; 0052AF9F _ 41
-	*/
-	*(LPDWORD)0x0052AF98 = BSWAP32(0x8BFC8D4B);
-	*(LPDWORD)0x0052AF9C = BSWAP32(0x7F6A0F41);
-	/*
-		mov     dword ptr [ebp - 4CH], eax              ; 0052AFA8 _ 89. 45, B4
-		mov     eax, dword ptr [ebx + 78H]              ; 0052AFAB _ 8B. 43, 78
-		mov     esp, edi                                ; 0052AFAE _ 8B. E7
-		inc     eax                                     ; 0052AFB0 _ 40
-	*/
-	*(LPDWORD)0x0052AFA8 = BSWAP32(0x8945B48B);
-	*(LPDWORD)0x0052AFAC = BSWAP32(0x43788BE7);
-	*(LPBYTE )0x0052AFB0 =         0x40       ;
+	//   new char[size+1]; => new char[size+2];
+	*(LPDWORD)0x0052AF98 = BSWAP32(0x8D4B7F41);// lea ecx, [ebx + 0x7F]; inc  ecx
+	*(LPDWORD)0x0052AF9C = BSWAP32(0x8BFC6A0F);// mov edi,  esp        ; push 0x0F
 
-	//   tmpC[size] = (char)NULL; -> *(LPWSTR)&tmpC[size] = NULL
-	/*
-		mov     edx, dword ptr [ebx + 78H]              ; 0052AFBA _ 8B. 53, 78
-		mov     word ptr [edi + edx], 0                 ; 0052AFBE _ 66: C7. 04 3A, 0000
-		nop                                             ; 0052AFC4 _ 90
-	*/
-	*(LPBYTE )0x0052AFBB =               0x53 ;
-	*(LPWORD )0x0052AFBE = BSWAP16(    0x66C7);
-	*(LPDWORD)0x0052AFC0 = BSWAP32(0x043A0000);
-	*(LPBYTE )0x0052AFC4 =         0x90       ;
+	*(LPDWORD)0x0052AFA8 = BSWAP32(0x8BE78945);// mov esp,  edi
+	*(LPDWORD)0x0052AFAC = BSWAP32(0xB48B4378);// mov dword ptr [ebp - 0x4C], eax
+	*(LPBYTE )0x0052AFB0 =         0x40       ;// mov eax, dword ptr [ebx + 0x78]; inc eax
 
-	//   delete[] tmpC;
-	*(LPDWORD)(0x0052B034 + 1) = (DWORD)Caller_TSSString_Read_TranscodeString - (0x0052B034 + 1 + sizeof(DWORD));
+	//   tmpC[size] = (char)NULL; => *(LPWSTR)&tmpC[size] = L'\0';
+	*(LPBYTE )(0x0052AFBA + 1) =         0x53       ;// eax => edx
+	*(LPWORD ) 0x0052AFBE      = BSWAP16(0x66C7    );// mov word ptr 
+	*(LPDWORD) 0x0052AFC0      = BSWAP32(0x043A0000);// [edi + edx], 0
+	*(LPBYTE ) 0x0052AFC4      =         0x90       ;// nop
+
+	//   string Data(tmpC);
+	*(LPDWORD)(0x0052B01E + 1) = (DWORD)Caller_TSSString_Read_TranscodeString - (0x0052B01E + 1 + sizeof(DWORD));
 
 	//   Data[Pos]=(byte)NULL;
-	/*
-		push    eax                                     ; 0052B122 _ 50
-		call    Caller_TSSString_Read_terminate_Data    ; 0052B123 _ E8, <offset Caller_TSSString_Read_terminate_Data - 0052B128H>
-		nop                                             ; 0052B128 _ 90
-	*/
-	*(LPWORD )0x0052B122 = BSWAP16(    0x50E8);
+	*(LPWORD )0x0052B122 = BSWAP16(0x50E8);// push Pos; call ...
 	*(LPDWORD)0x0052B124 = (DWORD)Caller_TSSString_Read_terminate_Data - (0x0052B124 + sizeof(DWORD));
-	*(LPBYTE )0x0052B128 =         0x90       ;
+	*(LPBYTE )0x0052B128 =         0x90   ;
 
 	// TSSString::Write
-	*(LPDWORD)(0x0052B358 + 1) = (DWORD)Caller_TSSString_Write_WriteString_reserve - (0x0052B358 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x0052B2DC + 1) = (DWORD)Caller_TSSString_Write_Str_ctor - (0x0052B2DC + 1 + sizeof(DWORD));
+	*(LPBYTE )(0x0052B2EB + 2) = 4;// discard stack size
 
 	// TSSString::ToByteCode
-	*(LPDWORD)(0x0052B800 + 1) = (DWORD)Caller_TSSString_ToByteCode_tmpS_reserve - (0x0052B800 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x0052B7C3 + 1) = (DWORD)Caller_TSSString_ToByteCode_Val_ctor - (0x0052B7C3 + 1 + sizeof(DWORD));
+	*(LPBYTE )(0x0052B7CC + 2) = 4;// discard stack size
 }

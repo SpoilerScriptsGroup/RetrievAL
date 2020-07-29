@@ -11,10 +11,10 @@ extern "C" {
 #endif
 
 typedef struct _TSSGSubjectProperty {
-	DWORD Width;
+	LONG  Breadth;
 	DWORD RepeatDepth;
 	DWORD RepeatIndex;
-	DWORD ParentRepeat;
+	INT   OuterRepeat;
 } TSSGSubjectProperty;
 
 extern TSSGSubjectProperty *SubjectProperty;
@@ -27,8 +27,10 @@ TSSGSubjectProperty * __fastcall GrowSubjectProperty(DWORD *lpdwIndex);
 	GrowSubjectProperty(&(SSGS)->propertyIndex)
 #define GetSubjectProperty(SSGS) \
 	((SSGS) && (SSGS)->propertyIndex != MAXDWORD ? SubjectProperty + (SSGS)->propertyIndex : NULL)
-#define GetParentRepeat(Property) \
-	(((Property)->ParentRepeat) != MAXDWORD ? SubjectProperty + (Property)->ParentRepeat : NULL)
+#define GetOuterRepeat(Property) \
+	(((Property)->OuterRepeat) != MAXDWORD ? SubjectProperty + (Property)->OuterRepeat : NULL)
+
+#define EMBED_BREADTH 1
 
 #ifdef __cplusplus
 }

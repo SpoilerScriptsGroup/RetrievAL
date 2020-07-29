@@ -19,7 +19,7 @@ __declspec(naked) void __fastcall TMainForm_StringEnterBtnClick(TMainForm *this,
 
 __declspec(naked) void __stdcall TMainForm_Guide(const char *Mes, int Flags)
 {
-	extern const DWORD F005D54CC;
+	extern const DWORD __InitExceptBlockLDTC;
 	extern const DWORD F0048C1F8;
 	extern const DWORD F0056DDBC;
 
@@ -31,7 +31,7 @@ __declspec(naked) void __stdcall TMainForm_Guide(const char *Mes, int Flags)
 		sub     esp, 36
 		push    ebx
 		mov     ebx, dword ptr ds:[_MainForm]
-		call    dword ptr [F005D54CC]
+		call    dword ptr [__InitExceptBlockLDTC]
 		mov     ecx, dword ptr [ebx + 448H]
 		mov     eax, dword ptr [ebx + 56CH]
 		dec     ecx

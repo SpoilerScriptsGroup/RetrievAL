@@ -61,7 +61,7 @@ EXTERN_C void __stdcall TMainForm_OnCommand(HWND hWnd, WORD wNotifyCode, WORD wI
 		for (TSSGSubject** it = vector_end(&MainForm->treeSubjectVec);
 			 --it >= vector_begin(&MainForm->treeSubjectVec);
 			 ) {
-			if ((*it)->type == stDIR && (*it)->status & ssOPEN)
+			if ((*it)->type == stDIR && (*it)->isOpen)
 				TSSGCtrl_ChangeDirectorySubject(
 					&MainForm->ssgCtrl,
 					*it,

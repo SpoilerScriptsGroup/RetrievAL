@@ -234,7 +234,7 @@ string * __cdecl TStringDivision_Trim(
 					size_t length;
 
 					set_iterator_decrement(it);
-					str = (string *)it->element;
+					str = (string *)it->_M_value_field;
 					if (memcmp(begin, string_c_str(str), length = string_length(str)) == 0)
 					{
 						begin += length;
@@ -261,7 +261,7 @@ string * __cdecl TStringDivision_Trim(
 				string *str;
 
 				set_iterator_decrement(it);
-				str = (string *)it->element;
+				str = (string *)it->_M_value_field;
 				if (string_length(str) > 1 || __intrinsic_istrailbyte(*string_begin(str)))
 				{
 					reverseScan = FALSE;
@@ -285,7 +285,7 @@ string * __cdecl TStringDivision_Trim(
 						string *str;
 
 						set_iterator_decrement(it);
-						str = (string *)it->element;
+						str = (string *)it->_M_value_field;
 						if (*string_begin(str) == ch)
 							goto NESTED_CONTINUE2;
 					} while (it != set_begin(TrimSet));
@@ -308,7 +308,7 @@ string * __cdecl TStringDivision_Trim(
 						size_t length;
 
 						set_iterator_decrement(it);
-						str = (string *)it->element;
+						str = (string *)it->_M_value_field;
 						if (memcmp(p, string_c_str(str), length = string_length(str)) == 0)
 						{
 							if (end == NULL)

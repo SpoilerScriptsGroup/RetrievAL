@@ -1,15 +1,6 @@
 #pragma once
 
-#include <windows.h>
-#include "bcb6_std_string.h"
 #include "TSSGSubject.h"
-
-enum
-{
-	TSSSTRING_CP_ANSI = 0,
-	TSSSTRING_CP_UNICODE,
-	TSSSTRING_CP_UTF8,
-};
 
 #pragma pack(push, 1)
 typedef struct _TSSString
@@ -18,8 +9,8 @@ typedef struct _TSSString
 	bcb6_std_string lockStr;
 	unsigned long   size;
 	WORD            codePage;// reserved for fully code page
-	BYTE            padding3;
-	BOOLEAN         caution;
+	BYTE            padString;
+	bool            cautious;
 	bcb6_std_string addressStr;
 	bcb6_std_string endWord;
 	bcb6_std_string nowValHeadStr;

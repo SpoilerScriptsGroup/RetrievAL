@@ -6,19 +6,6 @@
 #include "TProcessAccessElementData.h"
 #include "TSSGSubject.h"
 
-#pragma pack(push, 1)
-typedef struct _TSSBitList {
-	TSSGSubject     grandParent;
-	bcb6_std_string lockStr;
-	BYTE            size;
-	BYTE            padding[7];
-	bcb6_std_string addressStr;
-	bcb6_std_string indexFileName;
-	bcb6_std_string realFileName;
-	unsigned long   maskByte;
-} TSSBitList;
-#pragma pack(pop)
-
 static __declspec(naked) void TProcessAccessElementMaskData_Execute_Masking()
 {
 #define data      (ebx + 0x10)
@@ -122,7 +109,7 @@ static TProcessAccessElementMaskData* __fastcall TSSGCtrl_StrToProcessAccessElem
 		vector_byte_push_back(TProcessAccessElementMaskData_GetMask(NowAE), 0x00);
 		goto L_PUSH_DATA;
 	default:
-		list_dword_push_back(CodeList, &NowAE);
+		list_dword_push_back(CodeList, (LPDWORD)&NowAE);
 		 NowAE = bcb6_operator_new(sizeof(TProcessAccessElementMaskData));
 		*NowAE = (const TProcessAccessElementMaskData) { (LPVOID)0x00627294, atDATA };
 		vector_byte_reserve  (TProcessAccessElementData_GetData(NowAE), sizeof(uint64_t));
@@ -143,7 +130,7 @@ static TProcessAccessElementMaskData* __fastcall TSSGCtrl_StrToProcessAccessElem
 		vector_byte_resize   (TProcessAccessElementMaskData_GetMask(NowAE), vector_size    (&data));
 		goto L_PUSH_MASK_DATA;
 	default:
-		list_dword_push_back(CodeList, &NowAE);
+		list_dword_push_back(CodeList, (LPDWORD)&NowAE);
 		 NowAE = bcb6_operator_new(sizeof(TProcessAccessElementMaskData));
 		*NowAE = (const TProcessAccessElementMaskData) { (LPVOID)0x0063FE38, atMASK_DATA };
 		vector_byte_reserve  (TProcessAccessElementData_GetData    (NowAE), sizeof(uint64_t));

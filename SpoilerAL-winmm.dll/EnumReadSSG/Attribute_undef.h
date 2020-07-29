@@ -31,16 +31,26 @@ __inline void Attribute_undef(TSSGCtrl *this, LPCSTR Line)
 	while ((c = *(--p)) == ' ' || c == '\t');
 	keyLength = ++p - key;
 
-	attribute = this->attributeSelector.nowAttributeVec;
-	for (TDefineAttribute **it = (TDefineAttribute **)vector_end(attribute) - 1, **end = (TDefineAttribute **)vector_begin(attribute) - 1; it > end; it--)
+	if (attribute = TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(this)))
 	{
-		if ((*it)->type != atDEFINE)
-			continue;
-		if (string_length(&(*it)->inputCode) != keyLength + 2)
-			continue;
-		if (memcmp(string_c_str(&(*it)->inputCode) + 1, key, keyLength) != 0)
-			continue;
-		TSSGAttributeSelector_EraseElement(&this->attributeSelector, *it);
-		break;
+		signed rel;
+		const COORD index = TSSGAttributeElement_GetViaCoord(atDEFINE, attribute).dwFontSize;
+		for (TAdjustmentAttribute **cur,
+			 **base = &vector_type_at(attribute, TAdjustmentAttribute *, index.Y),
+			 **apex = base + index.X;
+			 base < apex; )
+		{
+			cur = &base[apex - base >> 1];
+			rel = strncmp((*cur)->c_str + 1, key, keyLength);
+			if (rel > 0)
+				apex = cur;
+			else if (rel == 0 && (*cur)->seqElement == keyLength + 2)
+			{
+				TSSGAttributeSelector_EraseElement(&this->attributeSelector, *cur);
+				return;
+			}
+			else
+				base = cur + 1;
+		}
 	}
 }

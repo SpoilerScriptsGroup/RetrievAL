@@ -5,12 +5,15 @@
 void __fastcall TSSGSubject_ctor(TSSGSubject *this, BOOL prop)
 {// prop is generally given the same value as this
 	this->type = stNONE;
-	this->isFEP = FALSE;
+	this->breadth = 0;
 	this->evaluateAtRead = FALSE;
-	this->address = NULL;
+	this->stable = MAXWORD;
+	this->lastAddr = NULL;
+#if !EMBED_BREADTH
 	if (prop)
 		AppendSubjectProperty(this);
 	else
+#endif
 		this->propertyIndex = MAXDWORD;
 }
 

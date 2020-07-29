@@ -61,13 +61,18 @@ void __cdecl TMainForm_CheckTreeSize(TMainForm *this, BOOLEAN AllWidthCheck)
 	SubjectWidth = TitleWidth;
 	for (TSSGSubject **it = vector_begin(&this->treeSubjectVec); it != vector_end(&this->treeSubjectVec); it++)
 	{
+#if EMBED_BREADTH
+		if (SubjectWidth < (*it)->breadth)
+			SubjectWidth = (*it)->breadth;
+#else
 		TSSGSubjectProperty *elem;
 
 		elem = GetSubjectProperty(*it);
 		if (elem == NULL)
 			continue;
-		if (SubjectWidth < elem->Width)
-			SubjectWidth = elem->Width;
+		if (SubjectWidth < (ULONG)elem->Breadth)
+			SubjectWidth = (ULONG)elem->Breadth;
+#endif
 	}
 
 	// calculate height of all rows

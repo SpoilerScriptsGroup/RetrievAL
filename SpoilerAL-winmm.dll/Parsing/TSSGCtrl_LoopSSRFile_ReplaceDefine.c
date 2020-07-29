@@ -1,6 +1,7 @@
 #include <windows.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
+#include "TSSGCtrl.h"
 
 void __stdcall ReplaceDefine(void *attributeSelector, void *line);
 
@@ -10,11 +11,10 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_ReplaceDefine()
 {
 	__asm
 	{
-		#define this                                (ebp + 8H)
-		#define offsetof_TSSGCtrl_attributeSelector 32
-		#define _Str                                (ebp - 110H)
-		#define begin                               (ebp - 1F8H)
-		#define _end                                (ebp - 1F4H)
+		#define this  (ebp + 8H)
+		#define _Str  (ebp - 110H)
+		#define begin (ebp - 1F8H)
+		#define _end  (ebp - 1F4H)
 
 		mov     ecx, dword ptr [EnableParserFix]
 		mov     eax, dword ptr [_end]
@@ -25,7 +25,7 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_ReplaceDefine()
 		call    string_ctor_assign_range
 		mov     eax, dword ptr [this]
 		lea     ecx, [_Str]
-		add     eax, offsetof_TSSGCtrl_attributeSelector
+		add     eax, TSSGCtrl.attributeSelector
 		push    ecx
 		push    eax
 		call    ReplaceDefine
@@ -36,7 +36,6 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_ReplaceDefine()
 		ret
 
 		#undef this
-		#undef offsetof_TSSGCtrl_attributeSelector
 		#undef _Str
 		#undef begin
 		#undef _end

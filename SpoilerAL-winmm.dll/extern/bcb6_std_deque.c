@@ -2,11 +2,61 @@
 #include "bcb6_std_deque.h"
 #include "bcb6_std_allocator.h"
 
-extern const DWORD F004D4A10;
-extern const DWORD F004D4064;
-
-__declspec(naked) void __stdcall deque_erase_element_size_4(deque *deque, deque_iterator *it)
+__declspec(naked) void __fastcall deque_ptr_pop_back(pdeque deque)
 {
+	extern const DWORD deque_ptr_pop_back_aux;
+
+	__asm
+	{
+		lea     edx, [ecx + bcb6_std_deque._M_finish]
+		mov     eax, dword ptr [edx + deque_iterator._M_cur]
+		cmp     eax, dword ptr [edx + deque_iterator._M_first]
+		jne     L1
+
+		push    ecx
+		call    dword ptr [deque_ptr_pop_back_aux]
+		pop     ecx
+		ret
+
+		align   16
+	L1:
+		lea     eax, [eax - size LPVOID]
+		mov     dword ptr [edx + deque_iterator._M_cur], eax
+		ret
+	}
+}
+
+__declspec(naked) void __fastcall deque_ptr_push_back(pdeque deque, const void *const *value)
+{
+	extern const DWORD deque_ptr_push_back_aux_v;
+
+	__asm
+	{
+		mov     eax, dword ptr [ecx + bcb6_std_deque._M_finish._M_cur]
+		lea     eax, [eax + size LPVOID]
+		cmp     eax, dword ptr [ecx + bcb6_std_deque._M_finish._M_last]
+		jne     L1
+
+		push    edx
+		push    ecx
+		call    dword ptr [deque_ptr_push_back_aux_v]
+		add     esp, 8
+		ret
+
+		align   16
+	L1:
+		mov     edx, dword ptr [edx]
+		mov     dword ptr [eax - size LPVOID], edx
+		mov     dword ptr [ecx + bcb6_std_deque._M_finish._M_cur], eax
+		ret
+	}
+}
+
+__declspec(naked) void __stdcall deque_dword_erase(pdeque deque, pdeque_iterator it)
+{
+	extern const DWORD F004D4064;
+	extern const DWORD F004D4A10;
+
 	__asm
 	{
 		push    ebp

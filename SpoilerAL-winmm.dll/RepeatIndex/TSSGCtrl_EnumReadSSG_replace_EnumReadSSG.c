@@ -8,10 +8,10 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_replace_EnumReadSSG()
 		#define ParentStack  (ebp +  10H)
 		#define ADJElem      (ebp +  14H)
 		#define RepeatIndex  (ebp +  18H)
-		#define ParentRepeat (ebp +  1CH)
+		#define OuterRepeat  (ebp +  1CH)
 		#define tmpL         (ebp - 904H)
 
-		mov     ecx, dword ptr [ParentRepeat]
+		mov     ecx, dword ptr [OuterRepeat]
 		mov     eax, dword ptr [RepeatIndex]
 		push    ecx
 		push    eax
@@ -30,7 +30,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_replace_EnumReadSSG()
 		#undef ParentStack
 		#undef ADJElem
 		#undef RepeatIndex
-		#undef ParentRepeat
+		#undef OuterRepeat
 		#undef tmpL
 	}
 }

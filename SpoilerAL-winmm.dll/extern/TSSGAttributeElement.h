@@ -1,13 +1,14 @@
 #pragma once
 
+#include <stdbool.h>
 #include <windows.h>
 #include "bcb6_std_string.h"
 #include "bcb6_std_map.h"
-#include "TSSArg.h"
 #include "TStringDivision.h"
+#include "TSSGSubject.h"
 
-typedef LPVOID(__cdecl * const LPFN_TSSGATTRIBUTEELEMENT_ISEQUAL)(LPCVOID elem1, LPCVOID elem2);
-#define TSSGAttributeElement_IsEqual(elem1, elem2) (*(*(LPFN_TSSGATTRIBUTEELEMENT_ISEQUAL **)(elem1) + 1))((LPCVOID)(elem1), (LPCVOID)(elem2))
+typedef bool(__cdecl *const LPFN_TSSGATTRIBUTEELEMENT_ISEQUAL)(LPCVOID elem1, LPCVOID elem2);
+#define TSSGAttributeElement_IsEqual(elem1, elem2) (*(LPFN_TSSGATTRIBUTEELEMENT_ISEQUAL **)(elem1))[1]((LPCVOID)(elem1), (LPCVOID)(elem2))
 
 typedef enum AttrType {
 	//atUNKNOWN,
@@ -29,6 +30,8 @@ typedef enum AttrType {
 	atSCOPE        = 0x4000,
 	atFORMAT       = 0x8000,
 } AtType;// for debugger
+
+EXTERN_C CONSOLE_FONT_INFO __fastcall TSSGAttributeElement_GetViaCoord(AtType Type, const bcb6_std_vector *AttrV);
 
 //---------------------------------------------------------------------
 //「クラス宣言」
@@ -68,6 +71,8 @@ typedef struct _TDirAttribute {
 		TSSGAttributeElement super;
 	};
 	unsigned long level;
+	size_t        identity;
+	struct _TSSGSubject *ref;
 } TDirAttribute;
 #pragma pack(pop)
 
@@ -78,6 +83,8 @@ __inline TDirAttribute * TDirAttribute_ctor(TDirAttribute *this)
 	this->VTable = TDirAttribute_VTable;
 	this->type = atDIR_LEVEL;
 	this->level = 0;
+	this->identity = 0;
+	this->ref = NULL;
 	return this;
 }
 __inline void TDirAttribute_dtor(TDirAttribute *this)
@@ -134,7 +141,7 @@ typedef struct _TReplaceAttribute {
 	bcb6_std_string offsetCode;
 	bcb6_std_string fileName;
 	unsigned long   offsetNum;
-	DWORD           padding;
+	struct _TSSGSubject *context;
 } TReplaceAttribute, TFormatAttribute;
 #pragma pack(pop)
 
@@ -147,6 +154,7 @@ __inline TReplaceAttribute * TReplaceAttribute_ctor(TReplaceAttribute *this)
 	bcb6_std_string_ctor(&this->offsetCode);
 	bcb6_std_string_ctor(&this->fileName);
 	this->offsetNum = 0;
+	this->context = NULL;
 	return this;
 }
 __inline void TReplaceAttribute_dtor(TReplaceAttribute *this)
@@ -376,8 +384,8 @@ typedef struct _TAdjustCheckAttribute {
 		};
 		TSSGAttributeElement super;
 	};
-	BOOLEAN check;
-	BOOLEAN mustCheck;
+	bool    check;
+	bool    mustCheck;
 	BYTE    padding[2];
 } TAdjustCheckAttribute;
 #pragma pack(pop)
@@ -410,10 +418,14 @@ typedef struct _TAdjustmentAttribute {
 		};
 		TSSGAttributeElement super;
 	};
-	unsigned long status;
+	union
+	{
+		ULONG     status;
+		LPCSTR    c_str;
+	};
 	unsigned long checkType;
 	unsigned long adjustVal;
-	int           elemOrder;// define here for convenience' sake.
+	unsigned      seqElement;// define here for convenience' sake.
 } TAdjustmentAttribute, TSimpleAdjustmentAttribute;
 #pragma pack(pop)
 
@@ -435,13 +447,21 @@ typedef struct _THeapAdjustmentAttribute {
 } THeapAdjustmentAttribute, TScopeAttribute;
 #pragma pack(pop)
 //----------------------------------------------------------------------------
-typedef struct value_type {
-	unsigned long key;
-	struct {
-		unsigned long low;
-		unsigned long high;
+typedef struct value_type
+{
+	const    long unsigned Identity;
+#pragma pack(push, 4)
+	union
+	{
+		struct
+		{
+			 long unsigned Low;
+			 long unsigned High;
+		};
+		long long unsigned Quad;
 	};
-} heapMapPair;
+#pragma pack(pop)
+} ScopeVariant;
 //----------------------------------------------------------------------------
 //「CRC補正属性クラス」
 //----------------------------------------------------------------------------
@@ -492,7 +512,7 @@ typedef struct _TDialogAdjustmentAttribute {
 	};
 	bcb6_std_string        fileName;
 	bcb6_std_string        valStr;
-	BOOLEAN                isMemoWordWrap;
+	bool                   isMemoWordWrap;
 	BYTE                   padding3[7];
 	bcb6_std_vector_string memo;
 	bcb6_std_vector_string answerVec;

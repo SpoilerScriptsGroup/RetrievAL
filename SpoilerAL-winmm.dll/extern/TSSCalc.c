@@ -8,7 +8,7 @@
 
 __declspec(naked) TSSCalc * __cdecl new_TSSCalc()
 {
-	extern const DWORD F005D54CC;
+	extern const DWORD __InitExceptBlockLDTC;
 
 	__asm
 	{
@@ -22,7 +22,7 @@ __declspec(naked) TSSCalc * __cdecl new_TSSCalc()
 		lea     ebx, [ebp - 124]
 		push    edi
 		push    ecx
-		jmp     dword ptr [F005D54CC]
+		jmp     dword ptr [__InitExceptBlockLDTC]
 	}
 }
 

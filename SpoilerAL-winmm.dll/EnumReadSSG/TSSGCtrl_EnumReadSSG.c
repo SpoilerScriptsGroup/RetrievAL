@@ -4,8 +4,8 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_operator.h"
 #include "bcb6_std.h"
-#include "bcb6_std_string.h"
 #include "bcb6_std_stack.h"
+#include "bcb6_std_string.h"
 #include "TStringDivision.h"
 #include "TSSGCtrl.h"
 #include "TSSDir.h"
@@ -21,9 +21,10 @@
 #include "Attribute_error_skip.h"
 #include "Attribute_scope.h"
 #include "Attribute_offset.h"
+#include "TSSArg.h"
 
 extern void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, string *line);
-extern void __stdcall repeat_ReadSSRFile(TSSGCtrl *this, LPVOID ParentStack, LPVOID ADJElem, const string *LineS, DWORD RepeatIndex, DWORD ParentRepeat, TSSGSubject *SSGS);
+extern void __stdcall repeat_ReadSSRFile(TSSGCtrl *this, LPVOID ParentStack, LPVOID ADJElem, const string *LineS, DWORD RepeatIndex, DWORD OuterRepeat, TSSGSubject *SSGS);
 
 extern DWORD  RepeatDepth;
 extern string ProcessAttachCode;
@@ -35,29 +36,28 @@ TSSGSubject dummySSGS = {
 	TSSGSubject_VTable,                     // LPVOID          *VTable;
 	FALSE,                                  // BOOLEAN         isSeted;
 	stNONE,                                 // BYTE            type;
-	0,                                      // WORD            fixed;
+	0,                                      // WORD            breadth;
 	NULL,                                   // bcb6_std_vector *attribute;
 	0,                                      // BYTE            status;
-	FALSE,                                  // BOOLEAN         isFEP;
 	FALSE,                                  // BOOLEAN         evaluateAtRead;
-	0,                                      // BYTE            padding2;
-	MAXDWORD,                               // DWORD           propertyIndex;
+	MAXWORD,                                // WORD            stable;
+	NULL,                                   // LPCVOID         lastAddr;
 	{ NULL, NULL, NULL, NULL, NULL, 0 },    // bcb6_std_string name;
 	{ NULL, NULL, NULL, NULL, NULL, 0 },    // bcb6_std_string code;
 	{ NULL, NULL, NULL, NULL, NULL, 0 },    // bcb6_std_string subjectName;
-	NULL                                    // const BYTE      *address;
+	MAXDWORD,                               // ptrdiff_t       propertyIndex;
 };
 
-void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID ParentStack, TDialogAdjustmentAttribute *ADJElem, DWORD RepeatIndex/* = 0*/, DWORD ParentRepeat/* = MAXDWORD*/)
+void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID ParentStack, TDialogAdjustmentAttribute *ADJElem, DWORD RepeatIndex/* = 0*/, DWORD OuterRepeat/* = MAXDWORD*/)
 {
 	extern unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 
 	size_t invalid, condition;
 
-	#define stack_PTSSDir_size(Stack)        stack_dword_size((stack_dword *)(Stack))
-	#define stack_PTSSDir_top(Stack)         ((TSSDir *)stack_dword_top((stack_dword *)(Stack)))
-	#define stack_PTSSDir_push(Stack, Value) stack_dword_push((stack_dword *)(Stack), (DWORD)(TSSDir *)(Value))
-	#define stack_PTSSDir_pop(Stack)         stack_dword_pop((stack_dword *)(Stack))
+	#define stack_PTSSDir_size(Stack)        stack_size((stack *)(Stack), void *)
+	#define stack_PTSSDir_top(Stack)         stack_top((stack *)(Stack), TSSDir *)[0]
+	#define stack_PTSSDir_push(Stack, Value) stack_ptr_push((stack_ptr *)(Stack), Value)
+	#define stack_PTSSDir_pop(Stack)         stack_ptr_pop((stack_ptr *)(Stack))
 
 	invalid = 0;
 	condition = 1;
@@ -623,27 +623,31 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 					break;
 
 				vector_push_back(&stack_PTSSDir_top(ParentStack)->childVec, SSGS);
-				SSGS->attribute = this->attributeSelector.nowAttributeVec;
+				SSGS->attribute = TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(this));
 				if (SSGS->type == stDIR)
 				{
 					TDirAttribute *NewAElem;
 
 					// dir
 					NewAElem = new_TDirAttribute();
-					NewAElem->level = TSSGCtrl_GetDirLevel(this, SSGS) + 1;
+					TDirAttribute_Setting(NewAElem, TSSGCtrl_GetDirLevel(this, SSGS) + 1);
+					NewAElem->identity = (NewAElem->ref = SSGS)->name.sstIndex;
 					TSSGAttributeSelector_PushElement(&this->attributeSelector, NewAElem);
 
-					stack_PTSSDir_push(ParentStack, (TSSDir *)SSGS);	// 親の切り替え
+					stack_PTSSDir_push(ParentStack, &SSGS);	// 親の切り替え
 				}
 
 				TSSGSubject_Setting(SSGS, this);
 
-				prop = GetSubjectProperty(SSGS);
-				if (prop)
+#if EMBED_BREADTH
+				if (RepeatDepth && (prop = AppendSubjectProperty(SSGS)))
+#else
+				if (prop = GetSubjectProperty(SSGS))
+#endif
 				{
 					prop->RepeatDepth  = RepeatDepth;
 					prop->RepeatIndex  = RepeatIndex;
-					prop->ParentRepeat = ParentRepeat;
+					prop->OuterRepeat  = OuterRepeat;
 				}
 			}
 			break;
@@ -702,7 +706,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				TSSGAttributeSelector_AddElement(&this->attributeSelector, NewAElem);
 
 				// 再帰
-				TSSGCtrl_EnumReadSSG(this, tmpL, ParentStack, ADJElem, RepeatIndex, ParentRepeat);
+				TSSGCtrl_EnumReadSSG(this, tmpL, ParentStack, ADJElem, RepeatIndex, OuterRepeat);
 				// 帰ってきたので、[replace]属性を外す
 				TSSGAttributeSelector_EraseElementByType(&this->attributeSelector, atREPLACE);
 			}
@@ -816,7 +820,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				// 繰り返し書式発動！
 				string_ctor_assign_cstr_with_length(&LineS, p, string_end(it) - p);
 				ReplaceDefine(&this->attributeSelector, &LineS);
-				repeat_ReadSSRFile(this, ParentStack, ADJElem, &LineS, RepeatIndex, ParentRepeat, &dummySSGS);
+				repeat_ReadSSRFile(this, ParentStack, ADJElem, &LineS, RepeatIndex, OuterRepeat, &dummySSGS);
 				string_dtor(&LineS);
 			}
 			break;
@@ -1125,13 +1129,16 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				string_dtor(&LineS);
 				TSSGSubject_Setting(SSGS, this);
 				vector_push_back(&stack_PTSSDir_top(ParentStack)->childVec, SSGS);
-				SSGS->attribute = this->attributeSelector.nowAttributeVec;
-				prop = GetSubjectProperty(SSGS);
-				if (prop)
+				SSGS->attribute = TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(this));
+#if EMBED_BREADTH
+				if (RepeatDepth && (prop = AppendSubjectProperty(SSGS)))
+#else
+				if (prop = GetSubjectProperty(SSGS))
+#endif
 				{
 					prop->RepeatDepth  = RepeatDepth;
 					prop->RepeatIndex  = RepeatIndex;
-					prop->ParentRepeat = ParentRepeat;
+					prop->OuterRepeat  = OuterRepeat;
 				}
 			}
 			break;
@@ -1184,7 +1191,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				{
 					*(--string_end(&ProcessAttachCode)) = '\0';
 					string_shrink_to_fit(&ProcessAttachCode);
-					ProcessAttachAttribute = this->attributeSelector.nowAttributeVec;
+					ProcessAttachAttribute = TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(this));
 				}
 				if (it == vector_end(SSGFile))
 					return;  // [/attach]が存在しない
@@ -1225,7 +1232,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				{
 					*(--string_end(&ProcessDetachCode)) = '\0';
 					string_shrink_to_fit(&ProcessDetachCode);
-					ProcessDetachAttribute = this->attributeSelector.nowAttributeVec;
+					ProcessDetachAttribute = TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(this));
 				}
 				if (it == vector_end(SSGFile))
 					return;  // [/detach]が存在しない
@@ -1296,7 +1303,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				string code;
 
 				string_ctor_assign_cstr_with_length(&code, p, string_end(it) - p);
-				Attribute_offset_open(this, &code);
+				Attribute_offset_open(this, &code, stack_PTSSDir_top(ParentStack));
 				string_dtor(&code);
 			}
 			break;
@@ -1309,13 +1316,14 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 		// [format]
 		case FORMAT_OPEN:
 			{
-				static struct _Constant {
-					struct _Term {
-						size_t   Length;
-						LPCSTR   String;
-						uint64_t Value;
-					} const terms[10];
-				} const constants = { {
+				static struct ArgTp {
+					struct Constant {
+						size_t   const Length;
+						LPCSTR   const String;
+						uint64_t const Number;
+					} const Constants[10];
+					const size_t Sentinel;
+				} const specifier = { {
 					{ 7, "UNKNOWN", 1 << atUNKNOWN     },
 					{ 4, "LONG"   , 1 << atLONG        },
 					{ 5, "INDEX"  , 1 << atLONG_INDEX  },
@@ -1326,7 +1334,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 					{ 3, "ANY"    , ~(-1 << atDIR)     },
 					{ 3, "DIR"    , 1 << atDIR         },
 					{ 3, "ALT"    , (uint32_t)LONG_MIN },
-				} };
+				}, 0 };
 
 				string           LineS, Token;
 				TFormatAttribute *NewAElem;
@@ -1339,10 +1347,11 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				vector_string_resize(&tmpV, 3);
 				string_dtor(&LineS);
 
-				NewAElem = operator_new(sizeof(TReplaceAttribute));
+				NewAElem = operator_new(sizeof(TFormatAttribute));
 				NewAElem->VTable    = TReplaceAttribute_VTable;
 				NewAElem->type      = atFORMAT;
-				NewAElem->offsetNum = Parsing(this, &dummySSGS, &vector_at(&tmpV, 0), constants, 0);
+				NewAElem->context   = NULL;
+				NewAElem->offsetNum = Parsing(this, &dummySSGS, &vector_at(&tmpV, 0), specifier);
 				string_ctor_assign(&NewAElem->offsetCode , &vector_at(&tmpV, 1));
 				string_ctor_assign(&NewAElem->fileName   , &vector_at(&tmpV, 2));
 				vector_dtor(&tmpV);

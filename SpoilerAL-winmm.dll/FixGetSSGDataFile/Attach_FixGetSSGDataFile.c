@@ -102,8 +102,8 @@ static BOOL __fastcall FunctionableGroup(string *name, vector_string *func)
 	#undef BOM
 }
 
-map_iterator (__cdecl * const map_string_lower_bound)(map*, string* key) = (LPVOID)0x004F20E4;
-map_iterator*(__cdecl * const map_string_vector_insert)(map_iterator*, map*, map_iterator pos, void* pair) = (LPVOID)0x004F2424;
+map_iterator  (__cdecl *const map_string_lower_bound)(map *, const string *key) = (LPVOID)0x004F20E4;
+map_iterator *(__cdecl *const map_string_vector_insert)(map_iterator *, map *, map_iterator pos, const void *pair) = (LPVOID)0x004F2424;
 
 static void __fastcall TSSGCtrl_SetSSGDataFile_IsSSL(
 	TSSGCtrl*  const SSGC,
@@ -148,11 +148,9 @@ static void __fastcall TSSGCtrl_SetSSGDataFile_IsSSL(
 				struct {
 					string        GroupTag;
 					vector_string GroupV;
-				} tmpMpair = { NULL };
+				} tmpMpair = { *name };
 
-				string_ctor_assign(&tmpMpair.GroupTag, name);
 				map_string_vector_insert(&it, tmpM, it, &tmpMpair);
-				string_dtor(&tmpMpair.GroupTag);
 			}
 			Data = (vector_string *)pair_second_aligned(it, string);
 			if (vector_empty(&func))

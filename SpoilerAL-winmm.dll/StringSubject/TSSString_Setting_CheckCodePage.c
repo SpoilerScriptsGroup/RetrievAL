@@ -4,7 +4,28 @@
 #include "bcb6_std_string.h"
 #include "TSSString.h"
 
-static void __fastcall TSSString_Setting_CheckCodePage(TSSString *this, LPCSTR stack[]);
+static void __fastcall TSSString_Setting_CheckCodePage(TSSString *this, LPCSTR stack[])
+{
+	this->codePage = CP_ACP;
+	size_t length = stack[1] - stack[0];
+	if (length == 7)
+	{
+		if (*(LPDWORD)stack[0] != BSWAP32('unic') || *(LPDWORD)(stack[0] + 4) != BSWAP32('ode\0'))
+			return;
+		this->codePage = MAXWORD;
+		*(LPDWORD)stack[0] = '0000';
+		*(LPBYTE)(stack[1] = stack[0] + 4) = '\0';
+		this->size &= -2;
+	}
+	else if (length == 4)
+	{
+		if (*(LPDWORD)stack[0] != BSWAP32('utf8'))
+			return;
+		this->codePage = CP_UTF8;
+		*(LPDWORD)stack[0] = BSWAP24('00\0');
+		stack[1] = stack[0] + 2;
+	}
+}
 
 void __declspec(naked) Caller_TSSString_Setting_CheckCodePage()
 {
@@ -22,29 +43,6 @@ void __declspec(naked) Caller_TSSString_Setting_CheckCodePage()
 		#undef CallAddress
 		#undef this
 		#undef stack
-	}
-}
-
-static void __fastcall TSSString_Setting_CheckCodePage(TSSString *this, LPCSTR stack[])
-{
-	this->codePage = TSSSTRING_CP_ANSI;
-	size_t length = stack[1] - stack[0];
-	if (length == 7)
-	{
-		if (*(LPDWORD)stack[0] != BSWAP32('unic') || *(LPDWORD)(stack[0] + 4) != BSWAP32('ode\0'))
-			return;
-		this->codePage = TSSSTRING_CP_UNICODE;
-		*(LPDWORD)stack[0] = '0000';
-		*(LPBYTE)(stack[1] = stack[0] + 4) = '\0';
-		this->size &= -2;
-	}
-	else if (length == 4)
-	{
-		if (*(LPDWORD)stack[0] != BSWAP32('utf8'))
-			return;
-		this->codePage = TSSSTRING_CP_UTF8;
-		*(LPDWORD)stack[0] = BSWAP24('00\0');
-		stack[1] = stack[0] + 2;
 	}
 }
 #endif

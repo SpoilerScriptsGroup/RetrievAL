@@ -11,8 +11,6 @@ void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
 
 #define array SubjectStringTable_array
 
-#define offsetof_TMainForm_ssgCtrl 0x738
-
 void __cdecl SubjectStringTable_StringCtor(string *s)
 {
 	*s = (const string) { NULL };
@@ -48,7 +46,7 @@ __declspec(naked) void __cdecl TMainForm_SubjectAccess_TSSToggle_GetNowValHeadSt
 		#define SSGS (ebp - 2BCH)
 
 		mov     edx, dword ptr [SSGS]
-		lea     ecx, [this + offsetof_TMainForm_ssgCtrl]
+		lea     ecx, [this + TMainForm.ssgCtrl]
 		jmp     TMainForm_FormatNameString
 
 		#undef this
@@ -64,7 +62,7 @@ __declspec(naked) void __cdecl TMainForm_SubjectAccess_TSSString_GetNowValHeadSt
 		#define SSGS (ebp - 2FCH)
 
 		mov     edx, dword ptr [SSGS]
-		lea     ecx, [this + offsetof_TMainForm_ssgCtrl]
+		lea     ecx, [this + TMainForm.ssgCtrl]
 		jmp     TMainForm_FormatNameString
 
 		#undef this
@@ -80,7 +78,7 @@ __declspec(naked) void __cdecl TMainForm_StringEnterBtnClick_TSSString_GetNowVal
 		#define SSGS edi
 
 		mov     edx, SSGS
-		lea     ecx, [this + offsetof_TMainForm_ssgCtrl]
+		lea     ecx, [this + TMainForm.ssgCtrl]
 		jmp     TMainForm_FormatNameString
 
 		#undef this
@@ -96,7 +94,7 @@ __declspec(naked) void __cdecl TMainForm_SetCalcNowValue_TSSCalc_GetNowValHeadSt
 		#define SSGS (ebp - 3B0H)
 
 		mov     edx, dword ptr [SSGS]
-		lea     ecx, [this + offsetof_TMainForm_ssgCtrl]
+		lea     ecx, [this + TMainForm.ssgCtrl]
 		jmp     TMainForm_FormatNameString
 
 		#undef this
@@ -112,7 +110,7 @@ __declspec(naked) void __cdecl TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValH
 		#define SSGS (ebp - 47CH)
 
 		mov     edx, dword ptr [SSGS]
-		lea     ecx, [this + offsetof_TMainForm_ssgCtrl]
+		lea     ecx, [this + TMainForm.ssgCtrl]
 		jmp     TMainForm_FormatNameString
 
 		#undef this
@@ -294,24 +292,26 @@ __declspec(naked) void __cdecl TSSGCtrl_MakeADJFile_GetAddressStr()
 
 static __inline void TSSString_Setting_CheckCodePage(TSSString *this, string *s)
 {
-	this->codePage = TSSSTRING_CP_ANSI;
-	size_t length = string_length(s);
-	if (length == 7)
+	this->codePage = CP_ACP;
+	switch (string_length(s))
 	{
-		if (*(LPDWORD)string_begin(s) != BSWAP32('unic') || *(LPDWORD)(string_begin(s) + 4) != BSWAP32('ode\0'))
-			return;
-		this->codePage = TSSSTRING_CP_UNICODE;
-		*(LPDWORD)string_begin(s) = '0000';
-		*(string_end(s) = string_begin(s) + 4) = '\0';
-		this->size &= -2;
-	}
-	else if (length == 4)
-	{
-		if (*(LPDWORD)string_begin(s) != BSWAP32('utf8'))
-			return;
-		this->codePage = TSSSTRING_CP_UTF8;
-		*(LPDWORD)string_begin(s) = BSWAP24('00\0');
-		string_end(s) = string_begin(s) + 2;
+	case 4:
+		if (*(LPDWORD)string_begin(s) == BSWAP32('utf8'))
+		{
+			this->codePage = CP_UTF8;
+			*(LPWORD )string_begin(s) = '00';
+			*(string_end(s) = string_begin(s) + 2) = '\0';
+		}
+		break;
+	case 7:
+		if (*(LPDWORD)string_begin(s) == BSWAP32('unic') && *(LPDWORD)&string_at(s, sizeof(DWORD)) == BSWAP32('ode\0'))
+		{
+			this->codePage = MAXWORD;
+			*(LPDWORD)string_begin(s) = '0000';
+			*(string_end(s) = string_begin(s) + 4) = '\0';
+			this->size &= -(signed)sizeof(wchar_t);
+		}
+		break;
 	}
 }
 

@@ -1,7 +1,7 @@
 #include <windows.h>
 #include <stdint.h>
 #include <tchar.h>
-#include "ui64tot\ui64tot.h"
+#include "uitot\uitot.h"
 
 #define OPTIMIZABLE_C 1
 
@@ -29,18 +29,18 @@ TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, int radix)
 		break;
 	case 16:
 		/* hexadecimal */
-		_ui64to16t(value, str, TRUE);
+		_ui64to16t(value, str, FALSE);
 		break;
 	case 32:
 		/* base 32 */
-		_ui64to32t(value, str, TRUE);
+		_ui64to32t(value, str, FALSE);
 		break;
 	case  3: case  5: case  6: case  7: case  9: case 11: case 12: case 13:
 	case 14: case 15: case 17: case 18: case 19: case 20: case 21: case 22:
 	case 23: case 24: case 25: case 26: case 27: case 28: case 29: case 30:
 	case 31: case 33: case 34: case 35: case 36:
 		/* the other base */
-		internal_ui64tot(value, str, TRUE, radix);
+		internal_ui64tot(value, str, FALSE, radix);
 		break;
 	default:
 		/* invalid */
@@ -174,7 +174,7 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 		mov     eax, dword ptr [value_lo]
 		push    edx
 		push    eax
-		mov     edx, TRUE
+		mov     edx, FALSE
 		call    _ui64to16t
 		mov     eax, dword ptr [str]
 		ret
@@ -184,7 +184,7 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 		mov     eax, dword ptr [value_lo]
 		push    edx
 		push    eax
-		mov     edx, TRUE
+		mov     edx, FALSE
 		call    _ui64to32t
 		mov     eax, dword ptr [str]
 		ret
@@ -195,7 +195,7 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 		mov     eax, dword ptr [value_lo + 4]
 		push    edx
 		push    eax
-		mov     edx, TRUE
+		mov     edx, FALSE
 		call    internal_ui64tot
 		mov     eax, dword ptr [str]
 		ret
@@ -215,5 +215,3 @@ __declspec(naked) TCHAR * __cdecl _ui64tot(unsigned __int64 value, TCHAR *str, i
 	#undef LABEL
 }
 #endif
-
-#include "ui64tot\ui64tot_source.h"

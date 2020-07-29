@@ -2,47 +2,70 @@
 
 #include <windows.h>
 
-typedef struct
+typedef struct _Deque_iterator_base
 {
-	LPVOID *_M_cur;
-	LPVOID *_M_first;
-	LPVOID *_M_last;
-	LPVOID **_M_node;
-} bcb6_std_deque_iterator, *pbcb6_std_deque_iterator;
+	void *_M_cur;
+	void *_M_first;
+	void *_M_last;
+	void**_M_node;
+} _Deque_iterator, bcb6_std_deque_iterator, *pbcb6_std_deque_iterator;
 
-typedef struct
+#define bcb6_std_deque_iterator_less_than(__x, __y) \
+	((__x)->_M_node == (__y)->_M_node && (__x)->_M_cur < (__y)->_M_cur || (__x)->_M_node < (__y)->_M_node)
+
+#define _Deque_iterator_set_node(this, type, __new_node) \
+	((this)->_M_last = (type*)((this)->_M_first = *((this)->_M_node = (__new_node))) + 1)
+
+#define bcb6_std_deque_iterator_increment(this, type) \
+	(++(type*)(this)->_M_cur == (this)->_M_last ? (_Deque_iterator_set_node(this, type, (this)->_M_node + 1), (this)->_M_cur = (this)->_M_first) : (this)->_M_cur)
+
+#define bcb6_std_deque_iterator_decrement(this, type) \
+	((this)->_M_cur = (type*)((this)->_M_cur == (this)->_M_first ? _Deque_iterator_set_node(this, type, (this)->_M_node - 1) : (this)->_M_cur) - 1)
+
+typedef struct _Deque_base
 {
-	bcb6_std_deque_iterator _M_start;
-	bcb6_std_deque_iterator _M_finish;
-	DWORD                   padding1[2];
-	void**                  _M_map;
-	DWORD                   padding2[1];
-	DWORD                   padding3[2];
-	size_t                  _M_map_size;
-	DWORD                   padding4[1];
+	_Deque_iterator _M_start;
+	_Deque_iterator _M_finish;
+	LPCVOID         _Map_alloc_type[2];
+	void    const **_M_map;
+	LPCVOID         padding2;
+	LPCVOID         allocator_type[2];
+	size_t          _M_map_size;
+	LPCVOID         padding4;
 } bcb6_std_deque, *pbcb6_std_deque;
+
+#define bcb6_std_deque_empty(this) ((this)->_M_finish._M_cur == (this)->_M_start._M_cur)
+#define bcb6_std_deque_begin(this) ((this)->_M_start)
+#define bcb6_std_deque_end(this)   ((this)->_M_finish)
+
+#define bcb6_std_deque_size(this, type) \
+	(size_t)(((this)->_M_finish._M_node - (this)->_M_start._M_node - 1) \
+		+ ((type*)(this)->_M_finish._M_cur - (type*)(this)->_M_finish._M_first) \
+		+ ((type*)(this)->_M_start._M_last - (type*)(this)->_M_start._M_cur))
+
+#define bcb6_std_deque_back(this, type) \
+	((this)->_M_finish._M_cur == (this)->_M_finish._M_first \
+		? &((type*)(this)->_M_finish._M_node[-1])[1-1] \
+		: &((type*)(this)->_M_finish._M_cur)[-1])
 
 #ifdef USING_NAMESPACE_BCB6_STD
 typedef bcb6_std_deque_iterator  deque_iterator;
 typedef pbcb6_std_deque_iterator pdeque_iterator;
 typedef bcb6_std_deque           deque;
 typedef pbcb6_std_deque          pdeque;
-#define deque_empty                     bcb6_std_deque_empty
-#define deque_begin                     bcb6_std_deque_begin
-#define deque_end                       bcb6_std_deque_end
-#define deque_iterator_decrement        bcb6_std_deque_iterator_decrement
-#define deque_iterator_greater_or_equal bcb6_std_deque_iterator_greater_or_equal
-#define deque_erase_element_size_4      bcb6_std_deque_erase_element_size_4
+#define deque_empty              bcb6_std_deque_empty
+#define deque_begin              bcb6_std_deque_begin
+#define deque_end                bcb6_std_deque_end
+#define deque_size               bcb6_std_deque_size
+#define deque_back               bcb6_std_deque_back
+#define deque_iterator_decrement bcb6_std_deque_iterator_decrement
+#define deque_iterator_increment bcb6_std_deque_iterator_increment
+#define deque_iterator_less_than bcb6_std_deque_iterator_less_than
+#define deque_ptr_pop_back       bcb6_std_deque_ptr_pop_back
+#define deque_ptr_push_back      bcb6_std_deque_ptr_push_back
+#define deque_dword_erase        bcb6_std_deque_ptr_erase
 #endif
 
-#define bcb6_std_deque_empty(deque) (deque->_M_finish._M_cur == deque->_M_start._M_cur)
-#define bcb6_std_deque_begin(deque) &deque->_M_start
-#define bcb6_std_deque_end(deque) &deque->_M_finish
-
-#define bcb6_std_deque_iterator_decrement(it) \
-	((it)->_M_cur = ((it)->_M_cur != (it)->_M_first) ? (it)->_M_cur - 1 : ((it)->_M_last = ((it)->_M_first = *--(it)->_M_node) + 1) - 1)
-
-#define bcb6_std_deque_iterator_greater_or_equal(it1, it2) \
-	(((it1)->_M_node == (it2)->_M_node && (it1)->_M_cur >= (it2)->_M_cur) || (it1)->_M_node >= (it2)->_M_node)
-
-EXTERN_C void __stdcall bcb6_std_deque_erase_element_size_4(bcb6_std_deque *deque, bcb6_std_deque_iterator *it);
+EXTERN_C void __fastcall bcb6_std_deque_ptr_pop_back(bcb6_std_deque *deque);
+EXTERN_C void __fastcall bcb6_std_deque_ptr_push_back(bcb6_std_deque *deque, const void *const *value);
+EXTERN_C void __stdcall  bcb6_std_deque_ptr_erase(bcb6_std_deque *deque, bcb6_std_deque_iterator *it);

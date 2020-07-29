@@ -118,7 +118,7 @@ void __fastcall TSSGSubject_CheckFEPParam(TSSGSubject *this, const string *s)
 		{
 			while (__intrinsic_isspace(*(p + length - 1)) && --length >= 3);
 			if (length == 3 && p[0] == 'f' && p[1] == 'e' && p[2] == 'p')
-				this->isFEP = TRUE;
+				this->withFEP = TRUE;
 		}
 	}
 }

@@ -3,10 +3,8 @@ __declspec(naked) void * __fastcall TFindNameForm_FindStartBtnClick_FixGetSelect
 {
 	__asm
 	{
-		#define MainForm                         ecx
-		#define offsetof_TMainForm_selectSubject 0x0524
-		#define offset_stNONE                    0x0048413C
-		#define offsetof_TSSGSubject_type        5
+		#define MainForm      ecx
+		#define offset_stNONE 0x0048413C
 
 		mov     eax, dword ptr [ecx + 524H]
 		test    eax, eax
@@ -16,8 +14,6 @@ __declspec(naked) void * __fastcall TFindNameForm_FindStartBtnClick_FixGetSelect
 		ret
 
 		#undef MainForm
-		#undef offsetof_TMainForm_selectSubject
 		#undef offset_stNONE
-		#undef offsetof_TSSGSubject_type
 	}
 }

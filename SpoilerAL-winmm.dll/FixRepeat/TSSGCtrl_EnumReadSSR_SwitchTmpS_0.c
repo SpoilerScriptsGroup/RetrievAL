@@ -1,5 +1,6 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TStringDivision.h"
+#include "TSSGCtrl.h"
 
 #pragma warning(push)
 #pragma warning(disable:4163)
@@ -13,7 +14,7 @@ void __cdecl TSSGCtrl_TrimString();
 
 extern const DWORD bcb6_std_string_substr;
 extern const DWORD F0050123C;
-extern const DWORD F005D54CC;
+extern const DWORD __InitExceptBlockLDTC;
 
 __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 {
@@ -104,10 +105,9 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 
 	FormatPrefix:
 
-		#define this                   (ebp + 5A8H + 8H)
-		#define offsetof_TSSGCtrl_strD 992
-		#define LineList               (ebp + 5A8H - 40H)
-		#define tmpS                   (ebp + 5A8H - 18H)
+		#define this     (ebp + 5A8H + 8H)
+		#define LineList (ebp + 5A8H - 40H)
+		#define tmpS     (ebp + 5A8H - 18H)
 
 		push    ebp
 		mov     eax, offset data5
@@ -117,8 +117,8 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		push    esi
 		mov     ebx, dword ptr [this]
 		lea     esi, [tmpS]
-		add     ebx, offsetof_TSSGCtrl_strD
-		call    dword ptr [F005D54CC]
+		add     ebx, offset TSSGCtrl.strD
+		call    dword ptr [__InitExceptBlockLDTC]
 		push    0
 		push    0
 		sub     esp, 24
@@ -277,7 +277,6 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		jmp     dword ptr [x00500DFF]
 
 		#undef this
-		#undef offsetof_TSSGCtrl_strD
 		#undef LineList
 		#undef tmpS
 	}

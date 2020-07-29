@@ -17,7 +17,7 @@ extern const DWORD F004F21F8;
 extern const DWORD F004F2424;
 extern const DWORD F004F32FC;
 extern const DWORD F004F3410;
-extern const DWORD F005D54CC;
+extern const DWORD __InitExceptBlockLDTC;
 
 __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile()
 {
@@ -156,7 +156,7 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile()
 		push    ebx
 		lea     ebx, [ebp - 90H]
 		push    esi
-		call    dword ptr [F005D54CC]
+		call    dword ptr [__InitExceptBlockLDTC]
 		mov     eax, dword ptr [Data]
 		mov     edx, 00631A92H
 		push    eax

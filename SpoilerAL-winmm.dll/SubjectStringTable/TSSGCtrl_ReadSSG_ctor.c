@@ -1,6 +1,6 @@
 #include "SubjectStringTable.h"
 
-extern const DWORD F005D54CC;
+extern const DWORD __InitExceptBlockLDTC;
 
 __declspec(naked) void __cdecl TSSGCtrl_ReadSSG_ctor()
 {
@@ -8,6 +8,6 @@ __declspec(naked) void __cdecl TSSGCtrl_ReadSSG_ctor()
 	{
 		call    SubjectStringTable_clear
 		mov     eax, 00633D68H
-		jmp     dword ptr [F005D54CC]
+		jmp     dword ptr [__InitExceptBlockLDTC]
 	}
 }

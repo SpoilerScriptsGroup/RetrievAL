@@ -1,5 +1,7 @@
 #include <windows.h>
+#include "TMainForm.h"
 #include "TDrawGrid.h"
+#undef MainForm
 
 extern const DWORD F0055E74C;
 
@@ -26,13 +28,11 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawFocusRect()
 
 	__asm
 	{
-		#define MainForm              ebx
-		#define ARow                  (ebp + 16)
-		#define nowSelectSubjectIndex (MainForm + 1364)
-		#define DGrid                 (MainForm + 932)
-		#define BSCanvas              esi
+		#define MainForm ebx
+		#define ARow     (ebp + 16)
+		#define BSCanvas esi
 
-		mov     eax, dword ptr [nowSelectSubjectIndex]
+		mov     eax, dword ptr [MainForm + TMainForm.nowSelectSubjectIndex]
 		mov     ecx, dword ptr [ARow]
 		inc     eax
 		cmp     eax, ecx
@@ -40,21 +40,17 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawFocusRect()
 
 		sub     esp, size RECT
 
-		#define rcItem        esp
-		#define rcItem_left   esp
-		#define rcItem_top    (esp +  4)
-		#define rcItem_right  (esp +  8)
-		#define rcItem_bottom (esp + 12)
+		#define rcItem esp
 
-		mov     ecx, dword ptr [DGrid]
+		mov     ecx, dword ptr [MainForm + TMainForm.DGrid]
 		mov     eax, dword ptr [ecx + TDrawGrid.DefaultColWidth]
 		mov     ecx, dword ptr [ecx + TDrawGrid.DefaultRowHeight]
 		sub     eax, 2
 		sub     ecx, 2
-		mov     dword ptr [rcItem_left  ], 2
-		mov     dword ptr [rcItem_top   ], 2
-		mov     dword ptr [rcItem_right ], eax
-		mov     dword ptr [rcItem_bottom], ecx
+		mov     dword ptr [rcItem + RECT.left  ], 2
+		mov     dword ptr [rcItem + RECT.top   ], 2
+		mov     dword ptr [rcItem + RECT.right ], eax
+		mov     dword ptr [rcItem + RECT.bottom], ecx
 		mov     eax, BSCanvas
 		call    dword ptr [F0055E74C]
 		push    rcItem
@@ -66,15 +62,9 @@ __declspec(naked) void __cdecl TMainForm_DrawTreeCell_DrawFocusRect()
 		jmp     dword ptr [X004460A0]
 
 		#undef rcItem
-		#undef rcItem_left
-		#undef rcItem_top
-		#undef rcItem_right
-		#undef rcItem_bottom
 
 		#undef MainForm
 		#undef ARow
-		#undef nowSelectSubjectIndex
-		#undef DGrid
 		#undef BSCanvas
 	}
 }

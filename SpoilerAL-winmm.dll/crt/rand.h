@@ -11,6 +11,9 @@
 extern "C" {
 #endif
 
+#pragma warning(push)
+#pragma warning(disable:4273)
+
 void __cdecl srand(unsigned int seed);
 int __cdecl rand();
 uint8_t __cdecl rand8();
@@ -19,6 +22,8 @@ uint32_t __cdecl rand32();
 uint64_t __cdecl rand64();
 float __cdecl randf32();
 double __cdecl randf64();
+
+#pragma warning(pop)
 
 #ifdef __cplusplus
 }

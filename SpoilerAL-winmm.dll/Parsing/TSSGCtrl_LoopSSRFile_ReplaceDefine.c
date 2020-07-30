@@ -25,7 +25,7 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_ReplaceDefine()
 		call    string_ctor_assign_range
 		mov     eax, dword ptr [this]
 		lea     ecx, [_Str]
-		add     eax, TSSGCtrl.attributeSelector
+		add     eax, offset TSSGCtrl.attributeSelector
 		push    ecx
 		push    eax
 		call    ReplaceDefine

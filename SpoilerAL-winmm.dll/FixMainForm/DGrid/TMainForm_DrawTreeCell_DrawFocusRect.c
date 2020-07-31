@@ -1,6 +1,6 @@
 #include <windows.h>
-#include "TMainForm.h"
 #include "TDrawGrid.h"
+#include "TMainForm.h"
 #undef MainForm
 
 extern const DWORD F0055E74C;

@@ -1146,6 +1146,12 @@ __forceinline unsigned char _BitScanReverse64(unsigned long *Index, uint64_t Mas
 }
 #endif
 
+#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
+#pragma intrinsic(__ull_rshift)
+#else
+#define __ull_rshift(mask, nBit) ((unsigned __int64)(mask) >> (nBit))
+#endif
+
 #ifdef __cplusplus
 }
 #endif

@@ -4,7 +4,7 @@
 #include "TStringDivision.h"
 #include "TSSGCtrl.h"
 
-void __stdcall ReplaceDefine(void *attributeSelector, void *line);
+extern void __stdcall ReplaceDefine(void *attributeSelector, void *line);
 
 extern BOOL EnableParserFix;
 

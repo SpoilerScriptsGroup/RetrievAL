@@ -3,7 +3,7 @@
 #include "bcb6_std_string.h"
 #include "TSSGCtrl.h"
 
-void __stdcall ReplaceDefine(void *attributeSelector, void *line);
+extern void __stdcall ReplaceDefine(void *attributeSelector, void *line);
 
 extern BOOL EnableParserFix;
 

@@ -842,31 +842,20 @@ unsigned __int64 __msreturn __fastcall __emulu(unsigned int a, unsigned int b);
 #else
 __forceinline unsigned __int64 __umulh(unsigned __int64 a, unsigned __int64 b)
 {
-	uint32_t x;
-	uint64_t y, z;
+	uint64_t x, y;
 
-	x = __emulu((uint32_t)a, (uint32_t)b) >> 32;
-	y = __emulu(a >> 32, (uint32_t)b);
-	x = _addcarry_u32(
+	x = (__emulu((uint32_t)a, (uint32_t)b) >> 32) + __emulu(a >> 32, (uint32_t)b);
+	y = __emulu((uint32_t)a, b >> 32);
+	*((uint32_t *)&x + 1) = _addcarry_u32(
 			_addcarry_u32(
 				0,
+				(uint32_t)x,
 				(uint32_t)y,
-				x,
-				(uint32_t *)&y),
-			y >> 32,
-			0,
-			(uint32_t *)&y + 1);
-	z = __emulu((uint32_t)a, b >> 32);
-	x += _addcarry_u32(
-			_addcarry_u32(
-				0,
-				(uint32_t)y,
-				(uint32_t)z,
 				(uint32_t*)&y),
+			x >> 32,
 			y >> 32,
-			z >> 32,
-			(uint32_t *)&y + 1);
-	return (((uint64_t)x << 32) | (y >> 32)) + __emulu(a >> 32, b >> 32);
+			(uint32_t *)&x);
+	return x + __emulu(a >> 32, b >> 32);
 }
 #endif
 

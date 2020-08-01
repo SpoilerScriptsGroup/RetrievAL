@@ -2668,20 +2668,18 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 		mov     eax, dword ptr [esp]
 		mov     edi, edx
 		mul     ecx
+		add     edi, eax
+		mov     eax, dword ptr [esp + 4]
+		adc     esi, edx
+		mov     edx, dword ptr [reciprocal64 + radix * 8 + 4]
+		mul     edx
 		xor     ecx, ecx
 		add     edi, eax
 		adc     esi, edx
-		mov     eax, dword ptr [esp + 4]
-		adc     ecx, ecx
-		mov     edx, dword ptr [reciprocal64 + radix * 8 + 4]
-		mul     edx
-		add     edi, eax
 		mov     eax, dword ptr [esp]
-		adc     esi, edx
-		mov     edx, dword ptr [reciprocal64 + radix * 8 + 4]
-		adc     ecx, 0
+		adc     ecx, ecx
 		mov     edi, dword ptr [mask64 + radix * 4]
-		mul     edx
+		mul     dword ptr [reciprocal64 + radix * 8 + 4]
 		add     eax, esi
 		mov     esi, dword ptr [esp + 4]
 		adc     edx, ecx

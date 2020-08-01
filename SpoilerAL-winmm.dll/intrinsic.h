@@ -851,7 +851,7 @@ __forceinline unsigned __int64 __umulh(unsigned __int64 a, unsigned __int64 b)
 				0,
 				(uint32_t)x,
 				(uint32_t)y,
-				(uint32_t*)&y),
+				(uint32_t *)&y),
 			x >> 32,
 			y >> 32,
 			(uint32_t *)&x);
@@ -1136,9 +1136,21 @@ __forceinline unsigned char _BitScanReverse64(unsigned long *Index, uint64_t Mas
 #endif
 
 #if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
+#pragma intrinsic(__ll_lshift)
+#else
+#define __ll_lshift(Mask, nBit) ((unsigned __int64)(Mask) << ((nBit) & (sizeof(void *) * 8) - 1))
+#endif
+
+#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
+#pragma intrinsic(__ll_rshift)
+#else
+#define __ll_rshift(Mask, nBit) ((__int64)(Mask) >> ((nBit) & (sizeof(void *) * 8) - 1))
+#endif
+
+#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
 #pragma intrinsic(__ull_rshift)
 #else
-#define __ull_rshift(mask, nBit) ((unsigned __int64)(mask) >> (nBit))
+#define __ull_rshift(Mask, nBit) ((unsigned __int64)(Mask) >> ((nBit) & (sizeof(void *) * 8) - 1))
 #endif
 
 #ifdef __cplusplus

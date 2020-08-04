@@ -2235,14 +2235,14 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 #define RECIPROCAL32(divisor) \
     (((UINT64_C(1) << (32 + PRECISION32(divisor))) + (divisor) - 1) / (divisor))
 
-#define RECIPROCAL64_FOMULA(operand, divisor) \
+#define RECIPROCAL64_FORMULA(operand, divisor) \
     ((UINT64_C(1) << (32 + PRECISION64(divisor))) operand (divisor))
 
 #define RECIPROCAL64_HIGH(divisor) \
-    RECIPROCAL64_FOMULA(/, divisor)
+    RECIPROCAL64_FORMULA(/, divisor)
 
 #define RECIPROCAL64(divisor) \
-    ((RECIPROCAL64_HIGH(divisor) << 32) + (((RECIPROCAL64_FOMULA(%, divisor) << 32) + (divisor) - 1) / (divisor)))
+    ((RECIPROCAL64_HIGH(divisor) << 32) + (((RECIPROCAL64_FORMULA(%, divisor) << 32) + (divisor) - 1) / (divisor)))
 
 #define RADIX_MIN 3
 #define RADIX_MAX 36
@@ -2364,7 +2364,7 @@ static const uint8_t _precision64[] = {
 #undef PRECISION32
 #undef PRECISION64
 #undef RECIPROCAL32
-#undef RECIPROCAL64_FOMULA
+#undef RECIPROCAL64_FORMULA
 #undef RECIPROCAL64_HIGH
 #undef RECIPROCAL64
 
@@ -2538,7 +2538,7 @@ size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buffer, BOOL upper, un
 	const TCHAR *digits;
 	TCHAR       *p1, *p2;
 
-	__assume(radix >= 2 && radix <= 36);
+	__assume(radix >= RADIX_MIN && radix <= RADIX_MAX);
 	digits = upper ? digitsLarge : digitsSmall;
 	p1 = buffer;
 #if INTPTR_MAX != INT32_MAX

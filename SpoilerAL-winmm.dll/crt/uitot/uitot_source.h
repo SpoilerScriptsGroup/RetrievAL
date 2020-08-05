@@ -2478,27 +2478,87 @@ __declspec(naked) size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buff
 		mov     tchar ptr [p1], t(d)
 		jnz     L1
 
-		pop     p2
-		lea     eax, [p1 + size TCHAR]
-		mov     tchar ptr [eax], '\0'
-		sub     eax, p2
 #ifdef _UNICODE
+		inc_tchar(p1)
+		pop     p2
+		mov     eax, p1
+		mov     tchar ptr [p1], '\0'
+		sub     eax, p2
+		sub     p1, 4
 		shr     eax, 1
-#endif
 		jmp     L3
 
 		align   16
 	L2:
-		mov     t(c), tchar ptr [p1]
-		mov     t(d), tchar ptr [p2]
-		mov     tchar ptr [p1], t(d)
-		mov     tchar ptr [p2], t(c)
-		dec_tchar(p1)
-		inc_tchar(p2)
+		mov     ecx, dword ptr [p1]
+		mov     edx, dword ptr [p2]
+		rol     ecx, 16
+		add     p2, 4
+		rol     edx, 16
+		sub     p1, 4
+		mov     dword ptr [p2 - 4], ecx
+		mov     dword ptr [p1 + 4], edx
 	L3:
 		cmp     p1, p2
 		ja      L2
 
+		jb      L4
+		mov     t(c), tchar ptr [p1 + 4 - size TCHAR]
+		mov     t(d), tchar ptr [p2]
+		mov     tchar ptr [p1 + 4 - size TCHAR], t(d)
+		mov     tchar ptr [p2], t(c)
+	L4:
+#else
+		inc_tchar(p1)
+		pop     p2
+		mov     eax, p1
+		mov     tchar ptr [p1], '\0'
+		sub     eax, p2
+		jmp     L3
+
+		align   16
+	L2:
+		mov     ecx, dword ptr [p1]
+		mov     edx, dword ptr [p2]
+		bswap   ecx
+		bswap   edx
+		mov     dword ptr [p2], ecx
+		add     p2, 4
+		mov     dword ptr [p1], edx
+	L3:
+		sub     p1, 4
+		cmp     p1, p2
+		ja      L2
+
+		lea     p1, [p1 + 4 - size TCHAR]
+		jb      L4
+		mov     ecx, dword ptr [p2]
+		bswap   ecx
+		mov     dword ptr [p2], ecx
+		jmp     L5
+
+		align   16
+	L4:
+		sub     p1, p2
+		jbe     L5
+		mov     t(c), tchar ptr [p2 + p1]
+		mov     t(d), tchar ptr [p2]
+		mov     tchar ptr [p2 + p1], t(d)
+		mov     tchar ptr [p2], t(c)
+		dec_tchar(p1)
+		jz      L5
+		mov     t(c), tchar ptr [p2 + p1]
+		mov     t(d), tchar ptr [p2 + size TCHAR]
+		mov     tchar ptr [p2 + p1], t(d)
+		mov     tchar ptr [p2 + size TCHAR], t(c)
+		dec_tchar(p1)
+		jz      L5
+		mov     t(c), tchar ptr [p2 + p1]
+		mov     t(d), tchar ptr [p2 + (size TCHAR * 2)]
+		mov     tchar ptr [p2 + p1], t(d)
+		mov     tchar ptr [p2 + (size TCHAR * 2)], t(c)
+	L5:
+#endif
 		pop     edi
 		pop     esi
 		pop     ebp
@@ -2550,7 +2610,7 @@ size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buffer, BOOL upper, un
 		remainder = (uint32_t)value;
 		carry = _add_u64(
 			__umulh(value, reciprocal64[radix]),
-			value & (((uint64_t)mask64[radix] << 32) | mask64[radix]),
+			value & mask64[radix],
 			&value);
 		value = __shiftright128(value, carry, precision64[radix]);
 		remainder -= (uint32_t)value * radix;
@@ -2726,27 +2786,87 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 		mov     tchar ptr [p1], t(d)
 		jnz     L2
 
-		pop     p2
-		lea     eax, [p1 + size TCHAR]
-		mov     tchar ptr [eax], '\0'
-		sub     eax, p2
 #ifdef _UNICODE
+		inc_tchar(p1)
+		pop     p2
+		mov     eax, p1
+		mov     tchar ptr [p1], '\0'
+		sub     eax, p2
+		sub     p1, 4
 		shr     eax, 1
-#endif
 		jmp     L4
 
 		align   16
 	L3:
-		mov     t(c), tchar ptr [p1]
-		mov     t(d), tchar ptr [p2]
-		mov     tchar ptr [p1], t(d)
-		mov     tchar ptr [p2], t(c)
-		dec_tchar(p1)
-		inc_tchar(p2)
+		mov     ecx, dword ptr [p1]
+		mov     edx, dword ptr [p2]
+		rol     ecx, 16
+		add     p2, 4
+		rol     edx, 16
+		sub     p1, 4
+		mov     dword ptr [p2 - 4], ecx
+		mov     dword ptr [p1 + 4], edx
 	L4:
 		cmp     p1, p2
 		ja      L3
 
+		jb      L5
+		mov     t(c), tchar ptr [p1 + 4 - size TCHAR]
+		mov     t(d), tchar ptr [p2]
+		mov     tchar ptr [p1 + 4 - size TCHAR], t(d)
+		mov     tchar ptr [p2], t(c)
+	L5:
+#else
+		inc_tchar(p1)
+		pop     p2
+		mov     eax, p1
+		mov     tchar ptr [p1], '\0'
+		sub     eax, p2
+		jmp     L4
+
+		align   16
+	L3:
+		mov     ecx, dword ptr [p1]
+		mov     edx, dword ptr [p2]
+		bswap   ecx
+		bswap   edx
+		mov     dword ptr [p2], ecx
+		add     p2, 4
+		mov     dword ptr [p1], edx
+	L4:
+		sub     p1, 4
+		cmp     p1, p2
+		ja      L3
+
+		lea     p1, [p1 + 4 - size TCHAR]
+		jb      L5
+		mov     ecx, dword ptr [p2]
+		bswap   ecx
+		mov     dword ptr [p2], ecx
+		jmp     L6
+
+		align   16
+	L5:
+		sub     p1, p2
+		jbe     L6
+		mov     t(c), tchar ptr [p2 + p1]
+		mov     t(d), tchar ptr [p2]
+		mov     tchar ptr [p2 + p1], t(d)
+		mov     tchar ptr [p2], t(c)
+		dec_tchar(p1)
+		jz      L6
+		mov     t(c), tchar ptr [p2 + p1]
+		mov     t(d), tchar ptr [p2 + size TCHAR]
+		mov     tchar ptr [p2 + p1], t(d)
+		mov     tchar ptr [p2 + size TCHAR], t(c)
+		dec_tchar(p1)
+		jz      L6
+		mov     t(c), tchar ptr [p2 + p1]
+		mov     t(d), tchar ptr [p2 + (size TCHAR * 2)]
+		mov     tchar ptr [p2 + p1], t(d)
+		mov     tchar ptr [p2 + (size TCHAR * 2)], t(c)
+	L6:
+#endif
 		pop     edi
 		pop     esi
 		pop     ebp

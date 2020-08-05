@@ -1,14 +1,5 @@
 #include <windows.h>
-
-#ifndef _tcsrev
-#if !defined(_UNICODE) && !defined(_MBCS)
-#define _tcsrev _strrev
-#elif defined(_MBCS)
-#define _tcsrev _mbsrev
-#else
-#define _tcsrev _wcsrev
-#endif
-#endif
+#include <tchar.h>
 
 #ifdef _MBCS
 extern HANDLE hHeap;
@@ -38,7 +29,7 @@ TCHAR * __cdecl _tcsrev(TCHAR *string)
 	return string;
 }
 #else	// _MBCS
-const char * __cdecl _mbsrev(const char *string)
+unsigned char * __cdecl _mbsrev(unsigned char *string)
 {
 	size_t         length;
 	unsigned short *buffer;
@@ -72,19 +63,19 @@ const char * __cdecl _mbsrev(const char *string)
 #endif	// _MBCS
 #else	// _M_IX86
 #ifndef _MBCS
+#pragma function(_tcslen)
 __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 {
 #ifdef _UNICODE
 	#define scast        scasw
-	#define tchar_ptr    word ptr
+	#define tchar        word
 	#define t(r)         r##x
 	#define inc_tchar(r) add r, 2
 	#define dec_tchar(r) sub r, 2
 #else
 	#define scast        scasb
-	#define tchar_ptr    byte ptr
+	#define tchar        byte
 	#define t(r)         r##l
-	#define inc_tchar(r) inc r
 	#define dec_tchar(r) dec r
 #endif
 
@@ -94,27 +85,84 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 
 		push    esi
 		push    edi
-		mov     edi, dword ptr [string + 8]                 // edi = string; save return value
-		xor     eax, eax                                    // search value (null)
-		mov     ecx, -1                                     // ecx = -1
-		mov     esi, edi                                    // esi = pointer to string
-		repne   scast                                       // find null
-		sub     edi, size TCHAR * 2                         // string is not empty, move di pointer back
-		                                                    // edi points to last non-null char
+		mov     edi, -4
+		mov     esi, dword ptr [string + 8]                 // esi = string; save return value
+		add     edi, esi
+		push    esi
+		call    _tcslen                                     // find null
+		pop     ecx
+#ifdef _UNICODE
+		lea     edi, [edi + eax * size TCHAR]               // edi points to last null char - 4
+#else
+		add     edi, eax
+#endif
+		test    eax, eax                                    // is not string empty? (if offset value is 0, the
 		mov     eax, esi                                    // return value: string addr
-		cmp     ecx, -2                                     // is string empty? (if offset value is 0, the
-		je      done                                        // cmp below will not catch it and we'll hang).
+		jne     entry                                       // cmp below will not catch it and we'll hang).
+		jmp     done
 
 		align   16
+#ifdef _UNICODE
 	lupe:
-		mov     t(c), tchar_ptr [esi]                       // get front char...
-		mov     t(d), tchar_ptr [edi]                       //   and end char
-		mov     tchar_ptr [esi], t(d)                       // put end char in front...
-		mov     tchar_ptr [edi], t(c)                       //   and front char at end
-		inc_tchar(esi)                                      // front moves up...
-		dec_tchar(edi)                                      //   and end moves down
+		mov     ecx, dword ptr [esi]                        // get front chars...
+		mov     edx, dword ptr [edi]                        //   and end chars
+		rol     ecx, 16                                     // swap front chars...
+		add     esi, 4                                      //   and moves down
+		rol     edx, 16                                     // swap end chars...
+		sub     edi, 4                                      //   and moves up
+		mov     dword ptr [esi - 4], edx                    // put front chars in end...
+		mov     dword ptr [edi + 4], ecx                    //   and end chars at front
+	entry:
 		cmp     esi, edi                                    // see if pointers have crossed yet
 		jb      lupe                                        // exit when pointers meet (or cross)
+
+		jne     done
+		mov     t(c), tchar ptr [esi]                       // get front char...
+		mov     t(d), tchar ptr [edi + 4 - size TCHAR]      //   and end char
+		mov     tchar ptr [esi], t(d)                       // put front char in end...
+		mov     tchar ptr [edi + 4 - size TCHAR], t(c)      //   and end char at front
+#else
+	lupe:
+		mov     ecx, dword ptr [esi]                        // get front chars...
+		mov     edx, dword ptr [edi]                        //   and end chars
+		bswap   ecx                                         // swap front chars...
+		bswap   edx                                         //   and end chars
+		mov     dword ptr [edi], ecx                        // put end chars in front...
+		sub     edi, 4                                      //   and moves down
+		mov     dword ptr [esi], edx                        // put front chars in end...
+		add     esi, 4                                      //   and moves up
+	entry:
+		cmp     esi, edi                                    // see if pointers have crossed yet
+		jb      lupe                                        // exit when pointers meet (or cross)
+
+		lea     edi, [edi + 4 - size TCHAR]
+		jne     less_than_dword
+		mov     ecx, dword ptr [esi]                        // get chars
+		bswap   ecx                                         // swap chars
+		mov     dword ptr [esi], ecx                        // put chars
+		jmp     done
+
+		align   16
+	less_than_dword:
+		sub     edi, esi
+		jbe     done
+		mov     t(c), tchar ptr [esi]                       // get front char...
+		mov     t(d), tchar ptr [esi + edi]                 //   and end char
+		mov     tchar ptr [esi], t(d)                       // put front char in end...
+		mov     tchar ptr [esi + edi], t(c)                 //   and end char at front
+		dec_tchar(edi)
+		jz      done
+		mov     t(c), tchar ptr [esi + size TCHAR]          // get front char...
+		mov     t(d), tchar ptr [esi + edi]                 //   and end char
+		mov     tchar ptr [esi + size TCHAR], t(d)          // put front char in end...
+		mov     tchar ptr [esi + edi], t(c)                 //   and end char at front
+		dec_tchar(edi)
+		jz      done
+		mov     t(c), tchar ptr [esi + (size TCHAR * 2)]    // get front char...
+		mov     t(d), tchar ptr [esi + edi]                 //   and end char
+		mov     tchar ptr [esi + (size TCHAR * 2)], t(d)    // put front char in end...
+		mov     tchar ptr [esi + edi], t(c)                 //   and end char at front
+#endif
 
 	done:
 		pop     edi
@@ -125,13 +173,12 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 	}
 
 	#undef scast
-	#undef tchar_ptr
+	#undef tchar
 	#undef t
-	#undef inc_tchar
 	#undef dec_tchar
 }
 #else	// _MBCS
-__declspec(naked) const char * __cdecl _mbsrev(const char *string)
+__declspec(naked) unsigned char * __cdecl _mbsrev(unsigned char *string)
 {
 	__asm
 	{

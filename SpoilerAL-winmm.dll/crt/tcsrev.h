@@ -70,7 +70,6 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 	#define scast        scasw
 	#define tchar        word
 	#define t(r)         r##x
-	#define inc_tchar(r) add r, 2
 	#define dec_tchar(r) sub r, 2
 #else
 	#define scast        scasb

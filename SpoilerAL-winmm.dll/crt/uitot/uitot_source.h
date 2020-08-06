@@ -652,7 +652,7 @@ size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		*(tchar2_t *)&p[3] = digits100T[value >> (25 - 2)]; value = (value & ((1 << (25 - 2)) - 1)) * (100 >> 2);
 		*(tchar2_t *)&p[5] = digits100T[value >> (25 - 4)]; value = (value & ((1 << (25 - 4)) - 1)) * (100 >> 2);
 		*(tchar2_t *)&p[7] = digits100T[value >> (25 - 6)]; value = (value & ((1 << (25 - 6)) - 1)) * ( 10 >> 1);
-		*(tchar2_t *)&p[9] = T2(       (value >> (25 - 7)) + TEXT('0');
+		*(tchar2_t *)&p[9] = T2(       (value >> (25 - 7))) + TEXT('0');
 
 		#undef value
 
@@ -2247,6 +2247,14 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 #define RADIX_MIN 3
 #define RADIX_MAX 36
 
+#if RADIX_MIN <= 2
+#define MAX_LENGTH32 32
+#define MAX_LENGTH64 64
+#else
+#define MAX_LENGTH32 21
+#define MAX_LENGTH64 41
+#endif
+
 static const uint32_t _reciprocal32[] = {
 #if RADIX_MIN <= 2
 	(uint32_t)RECIPROCAL32( 2),
@@ -2371,17 +2379,18 @@ static const uint8_t _precision64[] = {
 #ifndef _M_IX86
 size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
 {
-	#define reciprocal32 (_reciprocal32 - RADIX_MIN)
-	#define mask32       (_mask32       - RADIX_MIN)
-	#define precision32  (_precision32  - RADIX_MIN)
+	#define sizeof_buffer ((MAX_LENGTH32 * sizeof(TCHAR) + sizeof(void *) - 1) & -(int)sizeof(void *))
+	#define reciprocal32  (_reciprocal32 - RADIX_MIN)
+	#define mask32        (_mask32       - RADIX_MIN)
+	#define precision32   (_precision32  - RADIX_MIN)
 
 	size_t      length;
 	const TCHAR *digits;
-	TCHAR       *p1, *p2;
+	TCHAR       stack[sizeof_buffer / sizeof(TCHAR)], *p;
 
 	__assume(radix >= RADIX_MIN && radix <= RADIX_MAX);
 	digits = upper ? digitsLarge : digitsSmall;
-	p1 = buffer;
+	p = stack + _countof(stack);
 	do
 	{
 		uint32_t remainder;
@@ -2393,21 +2402,13 @@ size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buffer, BOOL upper, un
 				(value & mask32[radix])
 			) >> precision32[radix];
 		remainder -= value * radix;
-		*(p1++) = digits[remainder];
+		*(--p) = digits[remainder];
 	} while (value);
-	length = p1 - (p2 = buffer);
-	*(p1--) = TEXT('\0');
-	while (p1 > p2)
-	{
-		TCHAR c1, c2;
-
-		c1 = *p1;
-		c2 = *p2;
-		*(p1--) = c2;
-		*(p2++) = c1;
-	}
+	memcpy(buffer, p, (length = stack + _countof(stack) - p) * sizeof(TCHAR));
+	buffer[length] = TEXT('\0');
 	return length;
 
+	#undef sizeof_buffer
 	#undef reciprocal32
 	#undef mask32
 	#undef precision32
@@ -2415,9 +2416,10 @@ size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buffer, BOOL upper, un
 #else
 __declspec(naked) size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
 {
-	#define reciprocal32 (_reciprocal32 - RADIX_MIN * 4)
-	#define mask32       (_mask32       - RADIX_MIN * 4)
-	#define precision32  (_precision32  - RADIX_MIN    )
+	#define sizeof_buffer ((MAX_LENGTH32 * (size TCHAR) + 3) & -4)
+	#define reciprocal32  (_reciprocal32 - RADIX_MIN * 4)
+	#define mask32        (_mask32       - RADIX_MIN * 4)
+	#define precision32   (_precision32  - RADIX_MIN    )
 
 #ifdef _UNICODE
 	#define t(r)         r##x
@@ -2448,14 +2450,14 @@ __declspec(naked) size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buff
 
 		mov     digits, dword ptr [upper]
 		mov     radix, dword ptr [esp + 16 + 8]
-		mov     eax, value
+		mov     p1, esp
 		cmp     digits, 1
 		sbb     digits, digits
-		mov     p1, buffer
+		mov     eax, value
 		and     digits, ptrdiff_digitsSmall
-		push    buffer
+		sub     esp, sizeof_buffer
 		add     digits, offset digitsLarge
-		dec_tchar(p1)
+		push    buffer
 
 		align   16
 	L1:
@@ -2472,93 +2474,49 @@ __declspec(naked) size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buff
 		mov     eax, edx
 		imul    edx, radix
 		sub     ebx, edx
-		inc_tchar(p1)
+		dec_tchar(p1)
 		mov     t(d), tchar ptr [digits + ebx * size TCHAR]
 		test    eax, eax
 		mov     tchar ptr [p1], t(d)
 		jnz     L1
 
+		mov     ecx, -4
+		lea     eax, [esp + sizeof_buffer + 4]
+		pop     p2
+		sub     eax, p1
+		add     ecx, eax
+		jnc     L3
+
+		align   16
+	L2:
+		mov     edx, dword ptr [p1]
+		add     p1, 4
+		mov     dword ptr [p2], edx
+		add     p2, 4
+		sub     ecx, 4
+		jae     L2
+	L3:
+		cmp     ecx, -2
+		jb      L4
+		mov     dx, word ptr [p1]
+		add     p1, 2
+		mov     word ptr [p2], dx
+		add     p2, 2
+	L4:
 #ifdef _UNICODE
-		inc_tchar(p1)
-		pop     p2
-		mov     eax, p1
-		mov     tchar ptr [p1], '\0'
-		sub     eax, p2
-		sub     p1, 4
 		shr     eax, 1
-		jmp     L3
-
-		align   16
-	L2:
-		mov     ecx, dword ptr [p1]
-		mov     edx, dword ptr [p2]
-		rol     ecx, 16
-		add     p2, 4
-		rol     edx, 16
-		sub     p1, 4
-		mov     dword ptr [p2 - 4], ecx
-		mov     dword ptr [p1 + 4], edx
-	L3:
-		cmp     p1, p2
-		ja      L2
-
-		jb      L4
-		mov     t(c), tchar ptr [p1 + 4 - size TCHAR]
-		mov     t(d), tchar ptr [p2]
-		mov     tchar ptr [p1 + 4 - size TCHAR], t(d)
-		mov     tchar ptr [p2], t(c)
-	L4:
+		xor     ecx, ecx
 #else
-		inc_tchar(p1)
-		pop     p2
-		mov     eax, p1
-		mov     tchar ptr [p1], '\0'
-		sub     eax, p2
-		jmp     L3
-
-		align   16
-	L2:
-		mov     ecx, dword ptr [p1]
-		mov     edx, dword ptr [p2]
-		bswap   ecx
-		bswap   edx
-		mov     dword ptr [p2], ecx
-		add     p2, 4
-		mov     dword ptr [p1], edx
-	L3:
-		sub     p1, 4
-		cmp     p1, p2
-		ja      L2
-
-		lea     p1, [p1 + 4 - size TCHAR]
-		jb      L4
-		mov     ecx, dword ptr [p2]
-		bswap   ecx
-		mov     dword ptr [p2], ecx
-		jmp     L5
-
-		align   16
-	L4:
-		sub     p1, p2
-		jbe     L5
-		mov     t(c), tchar ptr [p2 + p1]
-		mov     t(d), tchar ptr [p2]
-		mov     tchar ptr [p2 + p1], t(d)
-		mov     tchar ptr [p2], t(c)
-		dec_tchar(p1)
+		and     ecx, 1
 		jz      L5
-		mov     t(c), tchar ptr [p2 + p1]
-		mov     t(d), tchar ptr [p2 + size TCHAR]
-		mov     tchar ptr [p2 + p1], t(d)
-		mov     tchar ptr [p2 + size TCHAR], t(c)
-		dec_tchar(p1)
-		jz      L5
-		mov     t(c), tchar ptr [p2 + p1]
-		mov     t(d), tchar ptr [p2 + (size TCHAR * 2)]
-		mov     tchar ptr [p2 + p1], t(d)
-		mov     tchar ptr [p2 + (size TCHAR * 2)], t(c)
+		mov     dl, byte ptr [p1]
+		dec     ecx
+		mov     byte ptr [p2], dl
+		inc     p2
 	L5:
 #endif
+		mov     tchar ptr [p2], t(c)
+		add     esp, sizeof_buffer
 		pop     edi
 		pop     esi
 		pop     ebp
@@ -2574,6 +2532,7 @@ __declspec(naked) size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buff
 		#undef p2
 	}
 
+	#undef sizeof_buffer
 	#undef reciprocal32
 	#undef mask32
 	#undef precision32
@@ -2587,20 +2546,21 @@ __declspec(naked) size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buff
 #ifndef _M_IX86
 size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
 {
-	#define reciprocal32 (_reciprocal32 - RADIX_MIN)
-	#define mask32       (_mask32       - RADIX_MIN)
-	#define precision32  (_precision32  - RADIX_MIN)
-	#define reciprocal64 (_reciprocal64 - RADIX_MIN)
-	#define mask64       (_mask64       - RADIX_MIN)
-	#define precision64  (_precision64  - RADIX_MIN)
+	#define sizeof_buffer ((MAX_LENGTH64 * sizeof(TCHAR) + sizeof(void *) - 1) & -(int)sizeof(void *))
+	#define reciprocal32  (_reciprocal32 - RADIX_MIN)
+	#define mask32        (_mask32       - RADIX_MIN)
+	#define precision32   (_precision32  - RADIX_MIN)
+	#define reciprocal64  (_reciprocal64 - RADIX_MIN)
+	#define mask64        (_mask64       - RADIX_MIN)
+	#define precision64   (_precision64  - RADIX_MIN)
 
 	size_t      length;
 	const TCHAR *digits;
-	TCHAR       *p1, *p2;
+	TCHAR       stack[sizeof_buffer / sizeof(TCHAR)], *p;
 
 	__assume(radix >= RADIX_MIN && radix <= RADIX_MAX);
 	digits = upper ? digitsLarge : digitsSmall;
-	p1 = buffer;
+	p = stack + _countof(stack);
 #if INTPTR_MAX != INT32_MAX
 	do
 	{
@@ -2614,7 +2574,7 @@ size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buffer, BOOL upper, un
 			&value);
 		value = __shiftright128(value, carry, precision64[radix]);
 		remainder -= (uint32_t)value * radix;
-		*(p1++) = digits[remainder];
+		*(--p) = digits[remainder];
 	} while (value);
 #else
 	while (value >> 32)
@@ -2630,7 +2590,7 @@ size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buffer, BOOL upper, un
 			(uint32_t)__ull_rshift(value, precision64[radix]) |
 			(__ull_rshift(((uint64_t)carry << 32) | (value >> 32), precision64[radix]) << 32);
 		remainder -= (uint32_t)value * radix;
-		*(p1++) = digits[remainder];
+		*(--p) = digits[remainder];
 	}
 	do
 	{
@@ -2643,22 +2603,14 @@ size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buffer, BOOL upper, un
 				(LO(value) & mask32[radix])
 			) >> precision32[radix];
 		remainder -= LO(value) * radix;
-		*(p1++) = digits[remainder];
+		*(--p) = digits[remainder];
 	} while (LO(value));
 #endif
-	length = p1 - (p2 = buffer);
-	*(p1--) = TEXT('\0');
-	while (p1 > p2)
-	{
-		TCHAR c1, c2;
-
-		c1 = *p1;
-		c2 = *p2;
-		*(p1--) = c2;
-		*(p2++) = c1;
-	}
+	memcpy(buffer, p, (length = stack + _countof(stack) - p) * sizeof(TCHAR));
+	buffer[length] = TEXT('\0');
 	return length;
 
+	#undef sizeof_buffer
 	#undef reciprocal32
 	#undef mask32
 	#undef precision32
@@ -2669,12 +2621,13 @@ size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buffer, BOOL upper, un
 #else
 __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
 {
-	#define reciprocal32 (_reciprocal32 - RADIX_MIN * 4)
-	#define mask32       (_mask32       - RADIX_MIN * 4)
-	#define precision32  (_precision32  - RADIX_MIN    )
-	#define reciprocal64 (_reciprocal64 - RADIX_MIN * 8)
-	#define mask64       (_mask64       - RADIX_MIN * 4)
-	#define precision64  (_precision64  - RADIX_MIN    )
+	#define sizeof_buffer ((MAX_LENGTH64 * (size TCHAR) + 3) & -4)
+	#define reciprocal32  (_reciprocal32 - RADIX_MIN * 4)
+	#define mask32        (_mask32       - RADIX_MIN * 4)
+	#define precision32   (_precision32  - RADIX_MIN    )
+	#define reciprocal64  (_reciprocal64 - RADIX_MIN * 8)
+	#define mask64        (_mask64       - RADIX_MIN * 4)
+	#define precision64   (_precision64  - RADIX_MIN    )
 
 #ifdef _UNICODE
 	#define t(r)         r##x
@@ -2701,19 +2654,19 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 		#define hi     edx
 		#define radix  ebp
 		#define digits edi
-		#define p1     ebx
-		#define p2     esi
+		#define p1     esi
+		#define p2     edi
 
-		push    buffer
+		mov     p1, esp
 		cmp     upper, 1
 		sbb     digits, digits
-		mov     lo, dword ptr [esp + 20 + 4]
-		mov     hi, dword ptr [esp + 20 + 8]
-		mov     radix, dword ptr [esp + 20 + 12]
+		mov     lo, dword ptr [esp + 16 + 4]
+		mov     hi, dword ptr [esp + 16 + 8]
+		mov     radix, dword ptr [esp + 16 + 12]
+		sub     esp, sizeof_buffer
 		and     digits, ptrdiff_digitsSmall
-		mov     p1, buffer
+		push    buffer
 		add     digits, offset digitsLarge
-		dec_tchar(p1)
 		test    hi, hi
 		jz      L2
 		push    digits
@@ -2723,43 +2676,43 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 		push    lo
 		push    hi
 		mov     ecx, dword ptr [reciprocal64 + radix * 8]
-		xor     esi, esi
+		xor     ebx, ebx
 		mul     ecx
 		mov     eax, dword ptr [esp]
 		mov     edi, edx
 		mul     ecx
 		add     edi, eax
 		mov     eax, dword ptr [esp + 4]
-		adc     esi, edx
+		adc     ebx, edx
 		mov     edx, dword ptr [reciprocal64 + radix * 8 + 4]
 		mul     edx
 		xor     ecx, ecx
 		add     edi, eax
-		adc     esi, edx
+		adc     ebx, edx
 		mov     eax, dword ptr [esp]
 		adc     ecx, ecx
 		mov     edi, dword ptr [mask64 + radix * 4]
 		mul     dword ptr [reciprocal64 + radix * 8 + 4]
-		add     eax, esi
-		mov     esi, dword ptr [esp + 4]
+		add     eax, ebx
+		mov     ebx, dword ptr [esp + 4]
 		adc     edx, ecx
 		pop     ecx
-		and     esi, edi
+		and     ebx, edi
 		and     ecx, edi
 		xor     edi, edi
-		add     eax, esi
+		add     eax, ebx
 		adc     edx, ecx
 		mov     cl, byte ptr [precision64 + radix]
 		adc     edi, edi
-		pop     esi
+		pop     ebx
 		shrd    eax, edx, cl
 		shrd    edx, edi, cl
 		mov     ecx, eax
 		mov     digits, dword ptr [esp]
 		imul    ecx, radix
-		sub     esi, ecx
-		inc_tchar(p1)
-		mov     t(c), tchar ptr [digits + esi * size TCHAR]
+		sub     ebx, ecx
+		dec_tchar(p1)
+		mov     t(c), tchar ptr [digits + ebx * size TCHAR]
 		test    hi, hi
 		mov     tchar ptr [p1], t(c)
 		jnz     L1
@@ -2768,7 +2721,7 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 		align   16
 	L2:
 		mov     ecx, dword ptr [mask32 + radix * 4]
-		mov     esi, eax
+		mov     ebx, eax
 		mov     edx, dword ptr [reciprocal32 + radix * 4]
 		and     ecx, eax
 		mul     edx
@@ -2779,94 +2732,50 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 		shrd    edx, eax, cl
 		mov     eax, edx
 		imul    edx, radix
-		sub     esi, edx
-		inc_tchar(p1)
-		mov     t(d), tchar ptr [digits + esi * size TCHAR]
+		sub     ebx, edx
+		dec_tchar(p1)
+		mov     t(d), tchar ptr [digits + ebx * size TCHAR]
 		test    eax, eax
 		mov     tchar ptr [p1], t(d)
 		jnz     L2
 
+		mov     ecx, -4
+		lea     eax, [esp + sizeof_buffer + 4]
+		pop     p2
+		sub     eax, p1
+		add     ecx, eax
+		jnc     L4
+
+		align   16
+	L3:
+		mov     edx, dword ptr [p1]
+		add     p1, 4
+		mov     dword ptr [p2], edx
+		add     p2, 4
+		sub     ecx, 4
+		jae     L3
+	L4:
+		cmp     ecx, -2
+		jb      L5
+		mov     dx, word ptr [p1]
+		add     p1, 2
+		mov     word ptr [p2], dx
+		add     p2, 2
+	L5:
 #ifdef _UNICODE
-		inc_tchar(p1)
-		pop     p2
-		mov     eax, p1
-		mov     tchar ptr [p1], '\0'
-		sub     eax, p2
-		sub     p1, 4
 		shr     eax, 1
-		jmp     L4
-
-		align   16
-	L3:
-		mov     ecx, dword ptr [p1]
-		mov     edx, dword ptr [p2]
-		rol     ecx, 16
-		add     p2, 4
-		rol     edx, 16
-		sub     p1, 4
-		mov     dword ptr [p2 - 4], ecx
-		mov     dword ptr [p1 + 4], edx
-	L4:
-		cmp     p1, p2
-		ja      L3
-
-		jb      L5
-		mov     t(c), tchar ptr [p1 + 4 - size TCHAR]
-		mov     t(d), tchar ptr [p2]
-		mov     tchar ptr [p1 + 4 - size TCHAR], t(d)
-		mov     tchar ptr [p2], t(c)
-	L5:
+		xor     ecx, ecx
 #else
-		inc_tchar(p1)
-		pop     p2
-		mov     eax, p1
-		mov     tchar ptr [p1], '\0'
-		sub     eax, p2
-		jmp     L4
-
-		align   16
-	L3:
-		mov     ecx, dword ptr [p1]
-		mov     edx, dword ptr [p2]
-		bswap   ecx
-		bswap   edx
-		mov     dword ptr [p2], ecx
-		add     p2, 4
-		mov     dword ptr [p1], edx
-	L4:
-		sub     p1, 4
-		cmp     p1, p2
-		ja      L3
-
-		lea     p1, [p1 + 4 - size TCHAR]
-		jb      L5
-		mov     ecx, dword ptr [p2]
-		bswap   ecx
-		mov     dword ptr [p2], ecx
-		jmp     L6
-
-		align   16
-	L5:
-		sub     p1, p2
-		jbe     L6
-		mov     t(c), tchar ptr [p2 + p1]
-		mov     t(d), tchar ptr [p2]
-		mov     tchar ptr [p2 + p1], t(d)
-		mov     tchar ptr [p2], t(c)
-		dec_tchar(p1)
+		and     ecx, 1
 		jz      L6
-		mov     t(c), tchar ptr [p2 + p1]
-		mov     t(d), tchar ptr [p2 + size TCHAR]
-		mov     tchar ptr [p2 + p1], t(d)
-		mov     tchar ptr [p2 + size TCHAR], t(c)
-		dec_tchar(p1)
-		jz      L6
-		mov     t(c), tchar ptr [p2 + p1]
-		mov     t(d), tchar ptr [p2 + (size TCHAR * 2)]
-		mov     tchar ptr [p2 + p1], t(d)
-		mov     tchar ptr [p2 + (size TCHAR * 2)], t(c)
+		mov     dl, byte ptr [p1]
+		dec     ecx
+		mov     byte ptr [p2], dl
+		inc     p2
 	L6:
 #endif
+		mov     tchar ptr [p2], t(c)
+		add     esp, sizeof_buffer
 		pop     edi
 		pop     esi
 		pop     ebp
@@ -2883,6 +2792,7 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 		#undef p2
 	}
 
+	#undef sizeof_buffer
 	#undef reciprocal32
 	#undef mask32
 	#undef precision32
@@ -2898,3 +2808,5 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 
 #undef RADIX_MIN
 #undef RADIX_MAX
+#undef MAX_LENGTH32
+#undef MAX_LENGTH64

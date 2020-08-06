@@ -93,7 +93,7 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		test    eax, eax                                    // is not string empty? (if offset value is 0, the
 		lea     edi, [edi + eax * size TCHAR]               // edi points to last null char - 4
 		mov     eax, esi                                    // return value: string addr
-		jne     entry                                       // cmp below will not catch it and we'll hang).
+		jnz     entry                                       // cmp below will not catch it and we'll hang).
 		pop     ecx
 		jmp     done
 

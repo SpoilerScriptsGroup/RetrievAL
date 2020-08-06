@@ -2156,6 +2156,17 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 }
 #endif
 
+#define RADIX_MIN 3
+#define RADIX_MAX 36
+
+#if RADIX_MIN <= 2
+#define MAX_LENGTH32 32
+#define MAX_LENGTH64 64
+#else
+#define MAX_LENGTH32 21
+#define MAX_LENGTH64 41
+#endif
+
 #define PRECISION32(divisor) (  \
     (divisor) ==  2 ? 0 :       \
     (divisor) ==  3 ? 1 :       \
@@ -2243,17 +2254,6 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 
 #define RECIPROCAL64(divisor) \
     ((RECIPROCAL64_HIGH(divisor) << 32) + (((RECIPROCAL64_FORMULA(%, divisor) << 32) + (divisor) - 1) / (divisor)))
-
-#define RADIX_MIN 3
-#define RADIX_MAX 36
-
-#if RADIX_MIN <= 2
-#define MAX_LENGTH32 32
-#define MAX_LENGTH64 64
-#else
-#define MAX_LENGTH32 21
-#define MAX_LENGTH64 41
-#endif
 
 static const uint32_t _reciprocal32[] = {
 #if RADIX_MIN <= 2

@@ -90,15 +90,11 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		add     edi, esi
 		push    esi
 		call    _tcslen                                     // find null
-		pop     ecx
-#ifdef _UNICODE
-		lea     edi, [edi + eax * size TCHAR]               // edi points to last null char - 4
-#else
-		add     edi, eax
-#endif
 		test    eax, eax                                    // is not string empty? (if offset value is 0, the
+		lea     edi, [edi + eax * size TCHAR]               // edi points to last null char - 4
 		mov     eax, esi                                    // return value: string addr
 		jne     entry                                       // cmp below will not catch it and we'll hang).
+		pop     ecx
 		jmp     done
 
 		align   16
@@ -116,6 +112,7 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		cmp     esi, edi                                    // see if pointers have crossed yet
 		jb      lupe                                        // exit when pointers meet (or cross)
 
+		pop     ecx
 		jne     done
 		mov     t(c), tchar ptr [esi]                       // get front char...
 		mov     t(d), tchar ptr [edi + 4 - size TCHAR]      //   and end char
@@ -135,7 +132,7 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		cmp     esi, edi                                    // see if pointers have crossed yet
 		jb      lupe                                        // exit when pointers meet (or cross)
 
-		lea     edi, [edi + 4 - size TCHAR]
+		pop     ecx
 		jne     less_than_dword
 		mov     ecx, dword ptr [esi]                        // get chars
 		bswap   ecx                                         // swap chars
@@ -144,6 +141,7 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 
 		align   16
 	less_than_dword:
+		add     edi, 4 - size TCHAR
 		sub     edi, esi
 		jbe     done
 		mov     t(c), tchar ptr [esi]                       // get front char...

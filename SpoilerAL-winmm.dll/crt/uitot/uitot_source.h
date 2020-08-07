@@ -2379,14 +2379,14 @@ static const uint8_t _precision64[] = {
 #ifndef _M_IX86
 size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
 {
-	#define sizeof_buffer ((MAX_LENGTH32 * sizeof(TCHAR) + sizeof(void *) - 1) & -(int)sizeof(void *))
-	#define reciprocal32  (_reciprocal32 - RADIX_MIN)
-	#define mask32        (_mask32       - RADIX_MIN)
-	#define precision32   (_precision32  - RADIX_MIN)
+	#define sizeof_stack ((MAX_LENGTH32 * sizeof(TCHAR) + sizeof(void *) - 1) & -(int)sizeof(void *))
+	#define reciprocal32 (_reciprocal32 - RADIX_MIN)
+	#define mask32       (_mask32       - RADIX_MIN)
+	#define precision32  (_precision32  - RADIX_MIN)
 
 	size_t      length;
 	const TCHAR *digits;
-	TCHAR       stack[sizeof_buffer / sizeof(TCHAR)], *p;
+	TCHAR       stack[sizeof_stack / sizeof(TCHAR)], *p;
 
 	__assume(radix >= RADIX_MIN && radix <= RADIX_MAX);
 	digits = upper ? digitsLarge : digitsSmall;
@@ -2408,7 +2408,7 @@ size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buffer, BOOL upper, un
 	buffer[length] = TEXT('\0');
 	return length;
 
-	#undef sizeof_buffer
+	#undef sizeof_stack
 	#undef reciprocal32
 	#undef mask32
 	#undef precision32
@@ -2416,10 +2416,10 @@ size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buffer, BOOL upper, un
 #else
 __declspec(naked) size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
 {
-	#define sizeof_buffer ((MAX_LENGTH32 * (size TCHAR) + 3) & -4)
-	#define reciprocal32  (_reciprocal32 - RADIX_MIN * 4)
-	#define mask32        (_mask32       - RADIX_MIN * 4)
-	#define precision32   (_precision32  - RADIX_MIN    )
+	#define sizeof_stack ((MAX_LENGTH32 * (size TCHAR) + 3) & -4)
+	#define reciprocal32 (_reciprocal32 - RADIX_MIN * 4)
+	#define mask32       (_mask32       - RADIX_MIN * 4)
+	#define precision32  (_precision32  - RADIX_MIN    )
 
 #ifdef _UNICODE
 	#define t(r)         r##x
@@ -2455,7 +2455,7 @@ __declspec(naked) size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buff
 		sbb     digits, digits
 		mov     eax, value
 		and     digits, ptrdiff_digitsSmall
-		sub     esp, sizeof_buffer
+		sub     esp, sizeof_stack
 		add     digits, offset digitsLarge
 		push    buffer
 
@@ -2481,7 +2481,7 @@ __declspec(naked) size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buff
 		jnz     L1
 
 		mov     ecx, -4
-		lea     eax, [esp + sizeof_buffer + 4]
+		lea     eax, [esp + sizeof_stack + 4]
 		pop     p2
 		sub     eax, p1
 		add     ecx, eax
@@ -2516,7 +2516,7 @@ __declspec(naked) size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buff
 	L5:
 #endif
 		mov     tchar ptr [p2], t(c)
-		add     esp, sizeof_buffer
+		add     esp, sizeof_stack
 		pop     edi
 		pop     esi
 		pop     ebp
@@ -2532,7 +2532,7 @@ __declspec(naked) size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buff
 		#undef p2
 	}
 
-	#undef sizeof_buffer
+	#undef sizeof_stack
 	#undef reciprocal32
 	#undef mask32
 	#undef precision32
@@ -2546,17 +2546,17 @@ __declspec(naked) size_t __fastcall internal_ui32tot(uint32_t value, TCHAR *buff
 #ifndef _M_IX86
 size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
 {
-	#define sizeof_buffer ((MAX_LENGTH64 * sizeof(TCHAR) + sizeof(void *) - 1) & -(int)sizeof(void *))
-	#define reciprocal32  (_reciprocal32 - RADIX_MIN)
-	#define mask32        (_mask32       - RADIX_MIN)
-	#define precision32   (_precision32  - RADIX_MIN)
-	#define reciprocal64  (_reciprocal64 - RADIX_MIN)
-	#define mask64        (_mask64       - RADIX_MIN)
-	#define precision64   (_precision64  - RADIX_MIN)
+	#define sizeof_stack ((MAX_LENGTH64 * sizeof(TCHAR) + sizeof(void *) - 1) & -(int)sizeof(void *))
+	#define reciprocal32 (_reciprocal32 - RADIX_MIN)
+	#define mask32       (_mask32       - RADIX_MIN)
+	#define precision32  (_precision32  - RADIX_MIN)
+	#define reciprocal64 (_reciprocal64 - RADIX_MIN)
+	#define mask64       (_mask64       - RADIX_MIN)
+	#define precision64  (_precision64  - RADIX_MIN)
 
 	size_t      length;
 	const TCHAR *digits;
-	TCHAR       stack[sizeof_buffer / sizeof(TCHAR)], *p;
+	TCHAR       stack[sizeof_stack / sizeof(TCHAR)], *p;
 
 	__assume(radix >= RADIX_MIN && radix <= RADIX_MAX);
 	digits = upper ? digitsLarge : digitsSmall;
@@ -2610,7 +2610,7 @@ size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buffer, BOOL upper, un
 	buffer[length] = TEXT('\0');
 	return length;
 
-	#undef sizeof_buffer
+	#undef sizeof_stack
 	#undef reciprocal32
 	#undef mask32
 	#undef precision32
@@ -2621,13 +2621,13 @@ size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buffer, BOOL upper, un
 #else
 __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buffer, BOOL upper, unsigned int radix)
 {
-	#define sizeof_buffer ((MAX_LENGTH64 * (size TCHAR) + 3) & -4)
-	#define reciprocal32  (_reciprocal32 - RADIX_MIN * 4)
-	#define mask32        (_mask32       - RADIX_MIN * 4)
-	#define precision32   (_precision32  - RADIX_MIN    )
-	#define reciprocal64  (_reciprocal64 - RADIX_MIN * 8)
-	#define mask64        (_mask64       - RADIX_MIN * 4)
-	#define precision64   (_precision64  - RADIX_MIN    )
+	#define sizeof_stack ((MAX_LENGTH64 * (size TCHAR) + 3) & -4)
+	#define reciprocal32 (_reciprocal32 - RADIX_MIN * 4)
+	#define mask32       (_mask32       - RADIX_MIN * 4)
+	#define precision32  (_precision32  - RADIX_MIN    )
+	#define reciprocal64 (_reciprocal64 - RADIX_MIN * 8)
+	#define mask64       (_mask64       - RADIX_MIN * 4)
+	#define precision64  (_precision64  - RADIX_MIN    )
 
 #ifdef _UNICODE
 	#define t(r)         r##x
@@ -2663,7 +2663,7 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 		mov     lo, dword ptr [esp + 16 + 4]
 		mov     hi, dword ptr [esp + 16 + 8]
 		mov     radix, dword ptr [esp + 16 + 12]
-		sub     esp, sizeof_buffer
+		sub     esp, sizeof_stack
 		and     digits, ptrdiff_digitsSmall
 		push    buffer
 		add     digits, offset digitsLarge
@@ -2740,7 +2740,7 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 		jnz     L2
 
 		mov     ecx, -4
-		lea     eax, [esp + sizeof_buffer + 4]
+		lea     eax, [esp + sizeof_stack + 4]
 		pop     p2
 		sub     eax, p1
 		add     ecx, eax
@@ -2775,7 +2775,7 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 	L6:
 #endif
 		mov     tchar ptr [p2], t(c)
-		add     esp, sizeof_buffer
+		add     esp, sizeof_stack
 		pop     edi
 		pop     esi
 		pop     ebp
@@ -2792,7 +2792,7 @@ __declspec(naked) size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buff
 		#undef p2
 	}
 
-	#undef sizeof_buffer
+	#undef sizeof_stack
 	#undef reciprocal32
 	#undef mask32
 	#undef precision32

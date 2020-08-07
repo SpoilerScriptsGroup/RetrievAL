@@ -89,15 +89,15 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		add     edi, esi
 		push    esi
 		call    _tcslen                                     // find null
-		test    eax, eax                                    // is not string empty? (if offset value is 0, the
+#ifdef _UNICODE
+		test    eax, eax                                    // is not string empty?
 		lea     edi, [edi + eax * size TCHAR]               // edi points to last null char - 4
 		mov     eax, esi                                    // return value: string addr
-		jnz     entry                                       // cmp below will not catch it and we'll hang).
+		jnz     entry
 		pop     ecx
 		jmp     done
 
 		align   16
-#ifdef _UNICODE
 	lupe:
 		mov     ecx, dword ptr [esi]                        // get front chars...
 		mov     edx, dword ptr [edi]                        //   and end chars
@@ -118,6 +118,14 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		mov     tchar ptr [esi], t(d)                       // put front char in end...
 		mov     tchar ptr [edi + 4 - size TCHAR], t(c)      //   and end char at front
 #else
+		add     edi, eax                                    // edi points to last null char - 4
+		test    eax, eax                                    // is not string empty?
+		mov     eax, esi                                    // return value: string addr
+		jnz     entry
+		pop     ecx
+		jmp     done
+
+		align   16
 	lupe:
 		mov     ecx, dword ptr [esi]                        // get front chars...
 		mov     edx, dword ptr [edi]                        //   and end chars

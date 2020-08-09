@@ -18,7 +18,7 @@ EXTERN_C BOOL __cdecl VerifyInternalSpecificationOfHeapID();
 
 #define JMP_REL32 (BYTE )0xE9
 #define NOP       (BYTE )0x90
-#define NOP_X4    (DWORD)0x90909090
+#define NOP_X4    (DWORD)0x00401F0F
 
 EXTERN_C void __cdecl Attach_ProcessMonitor()
 {
@@ -141,4 +141,22 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 	//	missing Listner->OnSearchEnd()
 	*(LPBYTE )0x004A6C73 = JMP_REL32;
 	*(LPDWORD)0x004A6C74 = 0x004A6B9A - (0x004A6C74 + sizeof(DWORD));
+
+	// TSSBundleList::Read
+	//   SSGC.processCtrl.Open => SSGC.Open
+	*(LPBYTE )(0x004BF377 + 0) = 0xFF;
+	*(LPBYTE )(0x004BF377 + 1) = 0xB5;
+	*(LPDWORD)(0x004BF377 + 2) = 8;
+	*(LPDWORD)(0x004BF37E + 1) = 0x0051C338 - (0x004BF37E + 1 + sizeof(DWORD));
+	*(LPBYTE )(0x004BF383 + 2) = 12;
+
+	// TSSTrace::Write
+	//   SSGC.processCtrl.Open => SSGC.Open
+	*(LPBYTE )(0x0052CE9E + 0) = 0x68;
+	*(LPDWORD)(0x0052CE9E + 1) = PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION;
+	*(LPBYTE ) 0x0052CEA3      = 0x53;
+	*(LPBYTE )(0x0052CEAD + 0) = 0x8B;
+	*(LPBYTE )(0x0052CEAD + 1) = 0xC6;
+	*(LPDWORD)(0x0052CEB0 + 1) = 0x0051C338 - (0x0052CEB0 + 1 + sizeof(DWORD));
+	*(LPBYTE )(0x0052CEB5 + 2) = 12;
 }

@@ -28,11 +28,11 @@ void __fastcall TMainForm_DrawTreeCell_DrawStr(
 	const TFormatAttribute *format = NULL;
 	const vector *atV = TSSGSubject_GetAttribute(SSGS);
 	const ULONG aType = TSSGSubject_GetArgType(SSGS);
-	const COORD index = TSSGAttributeElement_GetViaCoord(atFORMAT, atV).dwFontSize;
+	const COORD coord = TSSGAttributeElement_GetViaCoord(atFORMAT, atV).dwFontSize;
 
-	if (index.X)
-		for (TFormatAttribute **base = &vector_type_at(atV, TFormatAttribute *, index.Y),
-			 **cur  = base + index.X;
+	if (coord.X)
+		for (TFormatAttribute **base = &vector_type_at(atV, TFormatAttribute *, coord.Y),
+			 **cur  = base + coord.X;
 			 --cur >= base; )
 			if ((*cur)->offsetNum & 1 << aType)
 			{

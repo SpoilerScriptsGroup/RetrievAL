@@ -1,13 +1,11 @@
 
-__declspec(naked) unsigned long __fastcall TSSGCtrl_ReadSSRFile_DestReserve(int signedLoop)
+__declspec(naked) long __fastcall TSSGCtrl_ReadSSRFile_DestReserve(int unsign)
 {
 	__asm
 	{
-		#define signedLoop ecx
-		#define Step       (ebp - 0F8H)
+		#define Step       (ebp - 0xF8)
 
-		bt      signedLoop, 0
-		jc      SIGNED
+		jecxz   SIGNED
 		xor     edx, edx
 		div     dword ptr [Step]
 		ret
@@ -18,7 +16,6 @@ __declspec(naked) unsigned long __fastcall TSSGCtrl_ReadSSRFile_DestReserve(int 
 		idiv    dword ptr [Step]
 		ret
 
-		#undef signedLoop
 		#undef Step
 	}
 }

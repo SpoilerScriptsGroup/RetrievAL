@@ -1,36 +1,46 @@
 #include "TSSGCtrl.h"
-#include "TSSGAttributeElement.h"
+#include "TSSArg.h"
 
-__declspec(naked) void __fastcall TSSDir_WriteChildren_ErrorSkip(LPCVOID vtable)
+__declspec(naked) unsigned long __stdcall TSSDir_WriteChildren_ErrorSkip(TSSGSubject *SSGS, TSSGCtrl *SSGC, TSSArg *Arg)
 {
 	__asm
 	{
-		#define ReturnAddress 004C32A4H
 		#define SSGC          edi
 		#define VIt           ebx
 
-		mov     dword ptr [esp], offset L1
-		jmp     dword ptr [ecx + 12]
+		mov     edx, dword ptr [VIt]
+		cmp     [edx]TSSGSubject.type, stSPLIT
+		je      SPLIT
 
-	L1:
-		test    eax, eax
-		jz      L4
-		mov     dword ptr [esp], eax
+		mov     ecx, eax
+		neg     ecx
+		sbb     ecx, ecx
+		inc     ecx
+		jnz     REVERT
+
+		push    eax
 		push    atON_ERROR
-		push    dword ptr [VIt]
+		push    edx
 		push    SSGC
-		call    dword ptr [TSSGCtrl_GetAttribute]
+		call    TSSGCtrl_GetAttribute
 		add     esp, 12
-		neg     eax
-		sbb     eax, eax
-		inc     eax
-		cmovnz  eax, dword ptr [esp]
-	L4:
-		mov     dword ptr [esp], ReturnAddress
-		ret     8
+		mov     ecx, eax
+		pop     eax
+		jmp     REVERT
+
+	SPLIT:
+		push    atCHILD_RW
+		push    edx
+		push    SSGC
+		call    TSSGCtrl_GetAttribute
+		add     esp, 12// eax is never null here
+		movzx   ecx, [eax]TChildRWAttribute.spIgnore
+		mov     eax, reNO_ERROR
+	REVERT:
+		ret     12// break if ecx is 0
+
 
 		#undef VIt
 		#undef SSGC
-		#undef ReturnAddress
 	}
 }

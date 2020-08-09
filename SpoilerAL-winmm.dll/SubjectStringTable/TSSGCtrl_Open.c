@@ -3,14 +3,13 @@
 #include "bcb6_std_string.h"
 #include "TProcessCtrl.h"
 #include "TSSGActionListner.h"
-#include "TSSGAttributeElement.h"
+#include "SubjectStringOperator.h"
 
 BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p);
-const string * __fastcall SubjectStringTable_GetString(string *s);
 
 static __inline const string *GetAddressStrPointer(TSSGSubject *SSGS)
 {
-	string *s;
+	const string *s;
 
 	switch (SSGS->type)
 	{
@@ -25,8 +24,8 @@ static __inline const string *GetAddressStrPointer(TSSGSubject *SSGS)
 		s = (string *)((LPBYTE)SSGS + 120);
 		break;
 	case stSTRING:
-	case stCOPY:
 	case stBITLIST:
+	case stCOPY:
 		s = (string *)((LPBYTE)SSGS + 128);
 		break;
 	case stD_LIST:

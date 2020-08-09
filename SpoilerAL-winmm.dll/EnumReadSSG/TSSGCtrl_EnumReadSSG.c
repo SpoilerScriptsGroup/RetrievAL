@@ -13,6 +13,7 @@
 #include "TSSToggle.h"
 #include "TSSString.h"
 #include "SSGSubjectProperty.h"
+#include "SubjectStringOperator.h"
 #include "Attribute_variable.h"
 #include "Attribute_expr.h"
 #include "Attribute_define.h"
@@ -24,8 +25,16 @@
 #include "TSSArg.h"
 
 extern void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, string *line);
-extern void __stdcall repeat_ReadSSRFile(TSSGCtrl *this, LPVOID ParentStack, LPVOID ADJElem, const string *LineS, DWORD RepeatIndex, DWORD OuterRepeat, TSSGSubject *SSGS);
+extern void __stdcall repeat_ReadSSRFile(
+	TSSGCtrl     *this,
+	stack        *ParentStack,
+	LPVOID       ADJElem,
+	const string *LineS,
+	DWORD        RepeatIndex,
+	DWORD        OuterRepeat,
+	TSSGSubject  *SSGS);
 
+extern BOOL   FixTheProcedure;
 extern DWORD  RepeatDepth;
 extern string ProcessAttachCode;
 extern vector *ProcessAttachAttribute;
@@ -33,13 +42,13 @@ extern string ProcessDetachCode;
 extern vector *ProcessDetachAttribute;
 
 TSSGSubject dummySSGS = {
-	TSSGSubject_VTable,                     // LPVOID          *VTable;
-	FALSE,                                  // BOOLEAN         isSeted;
+	TSSGSubject_VTable,                     // SubjectVtbl     *VTable;
+	FALSE,                                  // bool            isSeted;
 	stNONE,                                 // BYTE            type;
 	0,                                      // WORD            breadth;
 	NULL,                                   // bcb6_std_vector *attribute;
 	0,                                      // BYTE            status;
-	FALSE,                                  // BOOLEAN         evaluateAtRead;
+	FALSE,                                  // bool            evaluateAtRead;
 	MAXWORD,                                // WORD            stable;
 	NULL,                                   // LPCVOID         lastAddr;
 	{ NULL, NULL, NULL, NULL, NULL, 0 },    // bcb6_std_string name;
@@ -48,7 +57,13 @@ TSSGSubject dummySSGS = {
 	MAXDWORD,                               // ptrdiff_t       propertyIndex;
 };
 
-void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID ParentStack, TDialogAdjustmentAttribute *ADJElem, DWORD RepeatIndex/* = 0*/, DWORD OuterRepeat/* = MAXDWORD*/)
+void __cdecl TSSGCtrl_EnumReadSSG(
+	TSSGCtrl                   *this,
+	vector_string              *SSGFile,
+	stack                      *ParentStack,
+	TDialogAdjustmentAttribute *ADJElem,
+	DWORD                       RepeatIndex/* = 0*/,
+	DWORD                       OuterRepeat/* = MAXDWORD*/)
 {
 	extern unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 
@@ -623,31 +638,45 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 					break;
 
 				vector_push_back(&stack_PTSSDir_top(ParentStack)->childVec, SSGS);
-				SSGS->attribute = TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(this));
+				TSSGSubject_SetAttribute(SSGS, TSSGAttributeSelector_GetNowAtteributeVec(&this->attributeSelector));
+				TSSGSubject_Setting(SSGS, this);
+
+				if (prop = GetSubjectProperty(SSGS))
+				{
+					if (RepeatDepth)
+					{
+						prop->OuterRepeat = OuterRepeat;
+						prop->RepeatDepth = RepeatDepth;
+						prop->RepeatIndex = RepeatIndex;
+					}
+#if EMBED_BREADTH
+					if (!ADJElem)
+						prop->ParentEntry = stack_PTSSDir_top(ParentStack);
+#endif
+				}
+
 				if (SSGS->type == stDIR)
 				{
 					TDirAttribute *NewAElem;
+					string  const *code = SubjectStringTable_GetString(&SSGS->code);
+					if (!string_empty(code))
+					{
+						string_ctor_assign_char(&Tag, ',');
+						SSGS->isRepeatable = TStringDivision_FindBack(
+							&this->strD,
+							SubjectStringTable_GetString(&SSGS->code),
+							Tag,
+							MAXDWORD,
+							0,
+							dtNEST) != MAXDWORD;
+					}
 
 					// dir
 					NewAElem = new_TDirAttribute();
 					TDirAttribute_Setting(NewAElem, TSSGCtrl_GetDirLevel(this, SSGS) + 1);
-					NewAElem->identity = (NewAElem->ref = SSGS)->name.sstIndex;
 					TSSGAttributeSelector_PushElement(&this->attributeSelector, NewAElem);
 
 					stack_PTSSDir_push(ParentStack, &SSGS);	// êeÇÃêÿÇËë÷Ç¶
-				}
-
-				TSSGSubject_Setting(SSGS, this);
-
-#if EMBED_BREADTH
-				if (RepeatDepth && (prop = AppendSubjectProperty(SSGS)))
-#else
-				if (prop = GetSubjectProperty(SSGS))
-#endif
-				{
-					prop->RepeatDepth  = RepeatDepth;
-					prop->RepeatIndex  = RepeatIndex;
-					prop->OuterRepeat  = OuterRepeat;
 				}
 			}
 			break;
@@ -802,14 +831,20 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				NewAElem = new_TFunnelAttribute();
 				TFunnelAttribute_Setting(NewAElem, &LineS);
 				string_dtor(&LineS);
-				TSSGAttributeSelector_PushElement(&this->attributeSelector, NewAElem);
+				if (FixTheProcedure)
+					TSSGAttributeSelector_AddElement (&this->attributeSelector, NewAElem);
+				else
+					TSSGAttributeSelector_PushElement(&this->attributeSelector, NewAElem);
 			}
 			break;
 
 		// [/funnel]
 		case FUNNEL_CLOSE:
 			// [funnel]ëÆê´Çèúãé
-			TSSGAttributeSelector_PopElementByType(&this->attributeSelector, atFUNNEL);
+			if (FixTheProcedure)
+				TSSGAttributeSelector_EraseElementByType(&this->attributeSelector, atFUNNEL);
+			else
+				TSSGAttributeSelector_PopElementByType  (&this->attributeSelector, atFUNNEL);
 			break;
 
 		// [repeat]
@@ -837,14 +872,20 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				NewAElem = new_TIO_FEPAttribute(); // io_fep
 				TIO_FEPAttribute_Setting(NewAElem, &this->strD, string_c_str(&LineS));
 				string_dtor(&LineS);
-				TSSGAttributeSelector_PushElement(&this->attributeSelector, NewAElem);
+				if (FixTheProcedure)
+					TSSGAttributeSelector_AddElement (&this->attributeSelector, NewAElem);
+				else
+					TSSGAttributeSelector_PushElement(&this->attributeSelector, NewAElem);
 			}
 			break;
 
 		// [/io_fep]
 		case IO_FEP_CLOSE:
 			// [io_fep]ëÆê´Çèúãé
-			TSSGAttributeSelector_PopElementByType(&this->attributeSelector, atIO_FEP);
+			if (FixTheProcedure)
+				TSSGAttributeSelector_EraseElementByType(&this->attributeSelector, atIO_FEP);
+			else
+				TSSGAttributeSelector_PopElementByType  (&this->attributeSelector, atIO_FEP);
 			break;
 
 		// [e_with]
@@ -901,7 +942,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				string_ctor_assign_cstr_with_length(&LineS, p, string_end(it) - p);
 				ReplaceDefine(&this->attributeSelector, &LineS);
 				NewAElem = new_TChildRWAttribute(); // child_rw
-				TChildRWAttribute_Setting(NewAElem, NULL, string_c_str(&LineS));
+				TChildRWAttribute_Setting(NewAElem, &this->strD, string_c_str(&LineS));
 				string_dtor(&LineS);
 				TSSGAttributeSelector_PushElement(&this->attributeSelector, NewAElem);
 			}
@@ -1129,16 +1170,13 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				string_dtor(&LineS);
 				TSSGSubject_Setting(SSGS, this);
 				vector_push_back(&stack_PTSSDir_top(ParentStack)->childVec, SSGS);
-				SSGS->attribute = TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(this));
-#if EMBED_BREADTH
-				if (RepeatDepth && (prop = AppendSubjectProperty(SSGS)))
-#else
-				if (prop = GetSubjectProperty(SSGS))
-#endif
+				TSSGSubject_SetAttribute(SSGS, TSSGAttributeSelector_GetNowAtteributeVec(&this->attributeSelector));
+
+				if (RepeatDepth && (prop = GetSubjectProperty(SSGS)))
 				{
+					prop->OuterRepeat  = OuterRepeat;
 					prop->RepeatDepth  = RepeatDepth;
 					prop->RepeatIndex  = RepeatIndex;
-					prop->OuterRepeat  = OuterRepeat;
 				}
 			}
 			break;
@@ -1191,7 +1229,8 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				{
 					*(--string_end(&ProcessAttachCode)) = '\0';
 					string_shrink_to_fit(&ProcessAttachCode);
-					ProcessAttachAttribute = TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(this));
+					ProcessAttachAttribute = TSSGAttributeSelector_GetNowAtteributeVec(&this->attributeSelector);
+					ProcessAttachAttribute->allocator_type[0] = NULL;
 				}
 				if (it == vector_end(SSGFile))
 					return;  // [/attach]Ç™ë∂ç›ÇµÇ»Ç¢
@@ -1232,7 +1271,8 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				{
 					*(--string_end(&ProcessDetachCode)) = '\0';
 					string_shrink_to_fit(&ProcessDetachCode);
-					ProcessDetachAttribute = TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(this));
+					ProcessDetachAttribute = TSSGAttributeSelector_GetNowAtteributeVec(&this->attributeSelector);
+					ProcessDetachAttribute->allocator_type[0] = NULL;
 				}
 				if (it == vector_end(SSGFile))
 					return;  // [/detach]Ç™ë∂ç›ÇµÇ»Ç¢
@@ -1303,7 +1343,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				string code;
 
 				string_ctor_assign_cstr_with_length(&code, p, string_end(it) - p);
-				Attribute_offset_open(this, &code, stack_PTSSDir_top(ParentStack));
+				Attribute_offset_open(this, &code);
 				string_dtor(&code);
 			}
 			break;
@@ -1333,7 +1373,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 					{ 6, "DOUBLE" , 1 << atDOUBLE      },
 					{ 3, "ANY"    , ~(-1 << atDIR)     },
 					{ 3, "DIR"    , 1 << atDIR         },
-					{ 3, "ALT"    , (uint32_t)LONG_MIN },
+					{ 3, "ALT"    , (unsigned)INT_MIN  },
 				}, 0 };
 
 				string           LineS, Token;
@@ -1350,7 +1390,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(TSSGCtrl *this, vector_string *SSGFile, LPVOID
 				NewAElem = operator_new(sizeof(TFormatAttribute));
 				NewAElem->VTable    = TReplaceAttribute_VTable;
 				NewAElem->type      = atFORMAT;
-				NewAElem->context   = NULL;
+				NewAElem->displace  = FALSE;
 				NewAElem->offsetNum = Parsing(this, &dummySSGS, &vector_at(&tmpV, 0), specifier);
 				string_ctor_assign(&NewAElem->offsetCode , &vector_at(&tmpV, 1));
 				string_ctor_assign(&NewAElem->fileName   , &vector_at(&tmpV, 2));

@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <mbstring.h>
 #include "intrinsic.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "SubjectStringOperator.h"
@@ -55,15 +56,15 @@ static __declspec(naked) void __cdecl TFindNameForm_EnumSubjectNameFind_StrD_Get
 		cmp  FixTheProcedure, 0
 		jne  GetSubjectName
 
-		lea  ecx, [edx + TSSGSubject.subjectName]
+		lea  ecx, [edx]TSSGSubject.subjectName
 		xchg ecx, [esp + 8]// StrD
 		jmp  TFindNameForm_EnumSubjectNameFind_GetName
 
 		align 16
 	GetSubjectName:// eax is Name already
 		mov  ecx, ds:_MainForm
-		lea  ecx, [ecx + TMainForm.ssgCtrl]
-		mov  dword ptr [ecx + TSSGCtrl.ssgActionListner], 0
+		lea  ecx, [ecx]TMainForm.ssgCtrl
+		mov  [ecx]TSSGCtrl.ssgActionListner, 0
 
 		push ecx
 		push edx
@@ -72,24 +73,26 @@ static __declspec(naked) void __cdecl TFindNameForm_EnumSubjectNameFind_StrD_Get
 		add  esp, 12
 
 		mov  ecx, ds:_MainForm
-		lea  edx, [ecx + TMainForm.ssgActionListner]
-		lea  ecx, [ecx + TMainForm.ssgCtrl]
-		mov  [ecx + TSSGCtrl.ssgActionListner], edx
+		lea  edx, [ecx]TMainForm.ssgActionListner
+		mov  [ecx]TMainForm.ssgCtrl.ssgActionListner, edx
 		ret
 	}
 }
 
 typedef struct
 {
-	const string* AddressStr;
+	string const *AddressStr;
 	unsigned long Mode;
 } GetAddressStack;
 
 static GetAddressStack __fastcall TSSToggle_Setting_GetAddress(TSSToggle *const this, TSSGCtrl *const SSGC)
 {
-	return (GetAddressStack) { FixTheProcedure && !TSSGCtrl_GetSSGActionListner(SSGC)
-		? &vector_at(&SubjectStringTable_array, 0)
-		: SubjectStringTable_GetString(&this->addressStr)
+	string const *const addressStr = SubjectStringTable_GetString(&this->addressStr);
+	return (GetAddressStack) { FixTheProcedure
+		&& !TSSGCtrl_GetSSGActionListner(SSGC)
+		&& string_at(addressStr, 0) == '_'
+		&& !_mbschr(string_c_str(SubjectStringTable_GetString(&this->onCode)), '-')
+		? &vector_at(&SubjectStringTable_array, 0) : addressStr
 		, atALL };
 }
 
@@ -1642,8 +1645,10 @@ static __inline void AttachOperator()
 
 #ifndef GET_ADDRESS_IN_SETTING
 	CALL     (0x0052BE77, TSSToggle_Setting_GetAddressStub);
-	*(LPDWORD)0x0052BE7C = BSWAP32(0x525053FF);
-	*(LPWORD )0x0052BE80 = BSWAP16(0x750C);
+	PUSH_EAX (0x0052BE7D);
+	PUSH_EBX (0x0052BE7E);
+	*(LPBYTE )0x0052BE7F =         0xFF   ;// push 
+	*(LPWORD )0x0052BE80 = BSWAP16(0x750C);// dword ptr [ebp + 0x0C]
 #else
 	/*
 		push    15                                      ; 0052BE77 _ 6A, 0F

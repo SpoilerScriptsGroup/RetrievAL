@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "intrinsic.h"
+#include "TSSArg.h"
 #include "TSSGCtrl.h"
 
 EXTERN_C void __cdecl TSSBitList_Write_CheckFunnel();
@@ -10,19 +11,23 @@ EXTERN_C void __cdecl TSSFloatCalc_Write_CheckFunnel();
 EXTERN_C void __cdecl TSSString_Write_CheckFunnel();
 EXTERN_C void __cdecl TSSBundleFloatCalc_Write_CheckFunnel();
 
-static __declspec(naked) BOOLEAN __cdecl TSSCalc_Write_CheckFunnel(TSSGCtrl *SSGC, TSSGSubject *SSGS, unsigned long Val) {
+static __declspec(naked) bool __cdecl TSSCalc_Write_CheckFunnel(TSSGCtrl *SSGC, TSSGSubject *SSGS, unsigned long Val) {
 	extern BOOL FixTheProcedure;
 	__asm {
 		cmp FixTheProcedure, 0
-		je  SKIP
+		je  PASS
 		mov ecx, [ebp + 0x10]// Arg
-		mov edx, [ecx + 0x08]// TSSArgLong*->value
+		mov edx, [ecx]TSSArgLong.value
 		mov [esp + 0x0C], edx// Val
-	SKIP:
+	PASS:
 		jmp TSSGCtrl_CheckFunnel
 	}
 }
 
+#define PUSH_EDX   (BYTE)0x52
+#define PUSH_IMM8  (BYTE)0x6A
+#define JZ_SHORT   (BYTE)0x74
+#define JNZ_SHORT  (BYTE)0x75
 #define JZ_REL32   (WORD)0x840F
 #define JNZ_REL32  (WORD)0x850F
 #define NOP        (BYTE)0x90
@@ -31,65 +36,61 @@ static __declspec(naked) BOOLEAN __cdecl TSSCalc_Write_CheckFunnel(TSSGCtrl *SSG
 EXTERN_C void __cdecl Attach_ForceFunnel()
 {
 	// TSSBitList::Write - CheckFunnel
-	*(LPDWORD)0x004BB703 = JNZ_REL32;
-	*(LPDWORD)0x004BB705 = (DWORD)TSSBitList_Write_CheckFunnel - (0x004BB705 + sizeof(DWORD));
+	*(LPBYTE )0x004BB703 = JNZ_SHORT;
+	*(LPBYTE )0x004BB705 = PUSH_IMM8;
+	*(LPBYTE )0x004BB706 = reACCESS_ERROR;
+	*(LPBYTE )0x004BB708 = 0x004BB70F - (0x004BB708 + sizeof(BYTE));
+	*(LPBYTE )0x004BB709 = CALL_REL32;
+	*(LPDWORD)0x004BB70A = (DWORD)TSSBitList_Write_CheckFunnel - (0x004BB70A + sizeof(DWORD));
 
 	// TSSBundleCalc::Write - CheckFunnel
-	*(LPDWORD)0x004BE6B4 = CALL_REL32;
 	*(LPDWORD)0x004BE6B5 = (DWORD)TSSCalc_Write_CheckFunnel - (0x004BE6B5 + sizeof(DWORD));
 
 	// TSSCalc::Write - CheckFunnel
-	*(LPDWORD)0x004C20F1 = CALL_REL32;
 	*(LPDWORD)0x004C20F2 = (DWORD)TSSCalc_Write_CheckFunnel - (0x004C20F2 + sizeof(DWORD));
 
 	// TSSDoubleList::Write - CheckFunnel
-	*(LPDWORD)0x004C5507 = JNZ_REL32;
-	*(LPDWORD)0x004C5509 = (DWORD)TSSDoubleList_WriteOne_CheckFunnel - (0x004C5509 + sizeof(DWORD));
+	*(LPBYTE )0x004C5507 = JNZ_SHORT;
+	*(LPBYTE )0x004C5509 = PUSH_IMM8;
+	*(LPBYTE )0x004C550A = reACCESS_ERROR;
+	*(LPBYTE )0x004C550C = 0x004C5513 - (0x004C550C + sizeof(BYTE));
+	*(LPBYTE )0x004C550D = CALL_REL32;
+	*(LPDWORD)0x004C550E = (DWORD)TSSDoubleList_WriteOne_CheckFunnel - (0x004C550E + sizeof(DWORD));
 
-	/*
-		call    TSSDoubleList_Write_CheckFunnel         ; 004C6280 _ E8, ????????
-		mov     eax, dword ptr [ebp - 4H]               ; 004C6285 _ 8B. 45, FC
-		test    eax, eax                                ; 004C6288 _ 85. C0
-		jz      004C6292H                               ; 004C628A _ 74, 06
-		push    eax                                     ; 004C628C _ 50
-	*/
-	*(LPBYTE )0x004C6280 = CALL_REL32;
-	*(LPDWORD)0x004C6281 = (DWORD)TSSDoubleList_Write_CheckFunnel - (0x004C6281 + sizeof(DWORD));
-	*(LPDWORD)0x004C6285 = BSWAP32(0x8B45FC85);
-	*(LPDWORD)0x004C6289 = BSWAP32(0xC0740650);
+	*(LPBYTE )0x004C6283 = CALL_REL32;
+	*(LPDWORD)0x004C6284 = (DWORD)TSSDoubleList_Write_CheckFunnel - (0x004C6284 + sizeof(DWORD));
+	*(LPWORD )0x004C6288 = BSWAP16(0x85D2);// test edx, edx
+	*(LPBYTE )0x004C628A = JZ_SHORT;
+	*(LPBYTE )0x004C628B = 0x004C6292 - (0x004C628B + sizeof(BYTE));
 
 	// TSSDoubleToggle::Write - CheckFunnel
-	*(LPBYTE )0x004CD90B = CALL_REL32;
-	*(LPDWORD)0x004CD90C = (DWORD)TSSDoubleToggle_Write_CheckFunnel - (0x004CD90C + sizeof(DWORD));
-	*(LPBYTE )0x004CD910 = NOP;
+	*(LPBYTE )0x004CD908 = CALL_REL32;
+	*(LPDWORD)0x004CD909 = (DWORD)TSSDoubleToggle_Write_CheckFunnel - (0x004CD909 + sizeof(DWORD));
+	*(LPBYTE )0x004CD90D = PUSH_EDX;
+	*(LPWORD )0x004CD90E = BSWAP16(0x836B);// sub dword ptr [ebx + ...], 2
+	*(LPBYTE )0x004CD911 =         0x02   ;
+	*(LPWORD )0x004CD912 = BSWAP16(0x3955);// cmp dword ptr [ebp - 3Ch], edx
+	*(LPBYTE )0x004CD914 =         0xC4   ;
 
 	// TSSFloatCalc::Write - CheckFunnel
-	/*
-		call    TSSFloatCalc_Write_CheckFunnel          ; 004CE697 _ E8, ????????
-		mov     eax, dword ptr [ebp - 4H]               ; 004CE69C _ 8B. 45, FC
-		test    eax, eax                                ; 004CE69F _ 85. C0
-		jz      004CE6A9H                               ; 004CE6A1 _ 74, 06
-		push    eax                                     ; 004CE6A3 _ 50
-	*/
-	*(LPBYTE )0x004CE697 = CALL_REL32;
-	*(LPDWORD)0x004CE698 = (DWORD)TSSFloatCalc_Write_CheckFunnel - (0x004CE698 + sizeof(DWORD));
-	*(LPDWORD)0x004CE69C = BSWAP32(0x8B45FC85);
-	*(LPDWORD)0x004CE6A0 = BSWAP32(0xC0740650);
+	*(LPBYTE )0x004CE69A = CALL_REL32;
+	*(LPDWORD)0x004CE69B = (DWORD)TSSFloatCalc_Write_CheckFunnel - (0x004CE69B + sizeof(DWORD));
+	*(LPBYTE )0x004CE69F =         0x85;// test edx, edx
+	*(LPWORD )0x004CE6A0 = BSWAP16(0xD2 << 8 | JZ_SHORT);
+	*(LPBYTE )0x004CE6A2 = 0x004CE6A9 - (0x004CE6A2 + sizeof(BYTE));
 
 	// TSSString::Write - CheckFunnel
-	*(LPDWORD)0x0052B558 = JZ_REL32;
-	*(LPDWORD)0x0052B55A = (DWORD)TSSString_Write_CheckFunnel - (0x0052B55A + sizeof(DWORD));
+	*(LPBYTE )0x0052B558 = JZ_SHORT;
+	*(LPBYTE )0x0052B55A = PUSH_IMM8;
+	*(LPBYTE )0x0052B55B = reACCESS_ERROR;
+	*(LPBYTE )0x0052B55D = 0x0052B564 - (0x0052B55D + sizeof(BYTE));
+	*(LPBYTE )0x0052B55E = CALL_REL32;
+	*(LPDWORD)0x0052B55F = (DWORD)TSSString_Write_CheckFunnel - (0x0052B55F + sizeof(DWORD));
 
 	// TSSBundleFloatCalc::Write - CheckFunnel
-	/*
-		call    TSSBundleFloatCalc_Write_CheckFunnel    ; 0052EAFA _ E8, ????????
-		mov     eax, dword ptr [ebp - 4H]               ; 0052EAFF _ 8B. 45, FC
-		test    eax, eax                                ; 0052EB02 _ 85. C0
-		jz      0052EB0CH                               ; 0052EB04 _ 74, 06
-		push    eax                                     ; 0052EB06 _ 50
-	*/
-	*(LPBYTE )0x0052EAFA = CALL_REL32;
-	*(LPDWORD)0x0052EAFB = (DWORD)TSSBundleFloatCalc_Write_CheckFunnel - (0x0052EAFB + sizeof(DWORD));
-	*(LPDWORD)0x0052EAFF = BSWAP32(0x8B45FC85);
-	*(LPDWORD)0x0052EB03 = BSWAP32(0xC0740650);
+	*(LPBYTE )0x0052EAFD = CALL_REL32;
+	*(LPDWORD)0x0052EAFE = (DWORD)TSSBundleFloatCalc_Write_CheckFunnel - (0x0052EAFE + sizeof(DWORD));
+	*(LPWORD )0x0052EB02 = BSWAP16(0x85D2);// test edx, edx
+	*(LPBYTE )0x0052EB04 = JZ_SHORT;
+	*(LPBYTE )0x0052EB05 = 0x0052EB0C - (0x0052EB05 + sizeof(BYTE));
 }

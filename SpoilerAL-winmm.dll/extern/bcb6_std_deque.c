@@ -8,20 +8,20 @@ __declspec(naked) void __fastcall deque_ptr_pop_back(pdeque deque)
 
 	__asm
 	{
-		lea     edx, [ecx + bcb6_std_deque._M_finish]
-		mov     eax, dword ptr [edx + deque_iterator._M_cur]
-		cmp     eax, dword ptr [edx + deque_iterator._M_first]
+		lea     edx, [ecx]bcb6_std_deque._M_finish
+		mov     eax, [edx]deque_iterator._M_cur
+		cmp     eax, [edx]deque_iterator._M_first
 		jne     L1
 
 		push    ecx
-		call    dword ptr [deque_ptr_pop_back_aux]
+		call    deque_ptr_pop_back_aux
 		pop     ecx
 		ret
 
 		align   16
 	L1:
 		lea     eax, [eax - size LPVOID]
-		mov     dword ptr [edx + deque_iterator._M_cur], eax
+		mov     [edx]deque_iterator._M_cur, eax
 		ret
 	}
 }
@@ -32,14 +32,14 @@ __declspec(naked) void __fastcall deque_ptr_push_back(pdeque deque, const void *
 
 	__asm
 	{
-		mov     eax, dword ptr [ecx + bcb6_std_deque._M_finish._M_cur]
+		mov     eax, [ecx]bcb6_std_deque._M_finish._M_cur
 		lea     eax, [eax + size LPVOID]
-		cmp     eax, dword ptr [ecx + bcb6_std_deque._M_finish._M_last]
+		cmp     eax, [ecx]bcb6_std_deque._M_finish._M_last
 		jne     L1
 
 		push    edx
 		push    ecx
-		call    dword ptr [deque_ptr_push_back_aux_v]
+		call    deque_ptr_push_back_aux_v
 		add     esp, 8
 		ret
 
@@ -47,7 +47,7 @@ __declspec(naked) void __fastcall deque_ptr_push_back(pdeque deque, const void *
 	L1:
 		mov     edx, dword ptr [edx]
 		mov     dword ptr [eax - size LPVOID], edx
-		mov     dword ptr [ecx + bcb6_std_deque._M_finish._M_cur], eax
+		mov     [ecx]bcb6_std_deque._M_finish._M_cur, eax
 		ret
 	}
 }

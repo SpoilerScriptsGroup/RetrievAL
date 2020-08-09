@@ -1,13 +1,16 @@
 #include <windows.h>
 #include "intrinsic.h"
 
-#if defined(__BORLANDC__)
+#if !defined(__BORLANDC__)
+#define LOCAL_MEMORY_SUPPORT 1
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_vector_string.h"
+#include "TSSGAttributeElement.h"
+#include "TSSGAttributeSelector.h"
+#include "TSSGSubject.h"
+typedef vector vector_TSSGAttributeElement;
+#else
 #pragma warn -8060
-#endif
-
-extern HANDLE hHeap;
-
-#if defined(__BORLANDC__)
 #ifndef SIZE_MAX
 #ifdef _WIN64
 #define SIZE_MAX _UI64_MAX
@@ -26,15 +29,9 @@ extern HANDLE hHeap;
 #define TIO_FEPAttribute_GetOutputCode(IO_FEPAttribute)              ((string *)((LPBYTE)(IO_FEPAttribute) + 8) + 1)
 #define TSSGAttributeSelector_GetNowAtteributeVec(attributeSelector) attributeSelector->GetNowAtteributeVec()
 #define TSSGSubject_GetAttribute(SSGS)                               (SSGS)->GetAttribute()
-#else
-#define LOCAL_MEMORY_SUPPORT 1
-#define USING_NAMESPACE_BCB6_STD
-#include "bcb6_std_vector_string.h"
-#include "TSSGAttributeElement.h"
-#include "TSSGAttributeSelector.h"
-#include "TSSGSubject.h"
-typedef vector vector_TSSGAttributeElement;
 #endif
+
+extern HANDLE hHeap;
 
 static void __stdcall ReplaceDefineByAttributeVector(vector_TSSGAttributeElement *attributes, string *line);
 
@@ -101,31 +98,38 @@ size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LP
 					LPCSTR key;
 					size_t keyLength;
 					LPCSTR end;
+					COORD  coord = TSSGAttributeElement_GetViaCoord(atDEFINE, attributes).dwFontSize;
 
 					end = key = p;
 					while ((c = *(++end)) && c != '}');
 					if (!c)
 						goto NESTED_BREAK;
 					keyLength = end - p + 1;
-#if defined(__BORLANDC__)
-					for (vector<TSSGAttributeElement *>::iterator it = attributes->begin(); it < attributes->end(); it++)
-#else
-					for (TDefineAttribute **it = vector_begin(attributes); it < (TDefineAttribute **)vector_end(attributes); it++)
-#endif
+
+					for (TAdjustmentAttribute **it,
+						 **base = &vector_type_at(attributes, TAdjustmentAttribute *, coord.Y),
+						 **apex = base + coord.X;
+						   base < apex; )
 					{
-						const string *inputCode;
 						const string *outputCode;
 						size_t       valueLength;
 						LPCSTR       value;
 						ptrdiff_t    diff;
+						signed       hl;
 
-						if (TSSGAttributeElement_GetType(*it) != atDEFINE)
+						it = &base[apex - base >> 1];
+						hl = strncmp((*it)->c_str, key, keyLength);
+						if (hl < 0)
+						{
+							base = it + 1;
 							continue;
-						inputCode = TIO_FEPAttribute_GetInputCode((TIO_FEPAttribute *)*it);
-						if (string_length(inputCode) != keyLength)
+						}
+						else if (hl > 0)
+						{
+							apex = it;
 							continue;
-						if (memcmp(string_begin(inputCode), key, keyLength) != 0)
-							continue;
+						}
+
 						outputCode = TIO_FEPAttribute_GetOutputCode((TIO_FEPAttribute *)*it);
 						valueLength = string_length(outputCode);
 						diff = valueLength - keyLength;
@@ -162,13 +166,11 @@ size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LP
 				}
 			}
 		}
-		else
-		{
-			if (!*(++p))
-				break;
-		}
+		else if (!*(++p))
+			break;
 		p++;
-	NESTED_CONTINUE:;
+	NESTED_CONTINUE:
+		;
 	}
 NESTED_BREAK:
 	return p - *line;
@@ -287,31 +289,38 @@ size_t __stdcall ByteArrayReplaceDefineByHeap(vector_TSSGAttributeElement *attri
 					LPCSTR key;
 					size_t keyLength;
 					LPCSTR end;
+					COORD  coord = TSSGAttributeElement_GetViaCoord(atDEFINE, attributes).dwFontSize;
 
 					end = key = p;
 					while ((c = *(++end)) && c != '}');
 					if (!c)
 						goto NESTED_BREAK;
 					keyLength = end - p + 1;
-#if defined(__BORLANDC__)
-					for (vector<TSSGAttributeElement *>::iterator it = attributes->begin(); it < attributes->end(); it++)
-#else
-					for (TDefineAttribute **it = vector_begin(attributes); it < (TDefineAttribute **)vector_end(attributes); it++)
-#endif
+
+					for (TAdjustmentAttribute **it,
+						 **base = &vector_type_at(attributes, TAdjustmentAttribute *, coord.Y),
+						 **apex = base + coord.X;
+						   base < apex; )
 					{
-						const string *inputCode;
 						const string *outputCode;
 						size_t       valueLength;
 						LPCSTR       value;
 						ptrdiff_t    diff;
+						signed       hl;
 
-						if (TSSGAttributeElement_GetType(*it) != atDEFINE)
+						it = &base[apex - base >> 1];
+						hl = strncmp((*it)->c_str, key, keyLength);
+						if (hl < 0)
+						{
+							base = it + 1;
 							continue;
-						inputCode = TIO_FEPAttribute_GetInputCode((TIO_FEPAttribute *)*it);
-						if (string_length(inputCode) != keyLength)
+						}
+						else if (hl > 0)
+						{
+							apex = it;
 							continue;
-						if (memcmp(string_begin(inputCode), key, keyLength) != 0)
-							continue;
+						}
+
 						outputCode = TIO_FEPAttribute_GetOutputCode((TIO_FEPAttribute *)*it);
 						valueLength = string_length(outputCode);
 						diff = valueLength - keyLength;

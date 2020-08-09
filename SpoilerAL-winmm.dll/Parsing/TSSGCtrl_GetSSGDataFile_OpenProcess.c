@@ -20,7 +20,7 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_OpenProcess(
 		je      L2
 
 		mov     ecx, dword ptr [SSGC]
-		lea     ecx, [ecx + TSSGCtrl.processCtrl]
+		lea     ecx, [ecx]TSSGCtrl.processCtrl
 		push    dword ptr [eax - size string * 5]
 		push    PROCESS_VM_READ
 		push    ecx

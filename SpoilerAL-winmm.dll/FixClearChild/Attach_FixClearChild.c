@@ -5,86 +5,99 @@
 #include "SubjectStringOperator.h"
 
 extern unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
-
+extern unsigned seqElement;
+extern BOOL  FixTheProcedure;
 extern DWORD RepeatDepth;
 extern void __stdcall repeat_ReadSSRFile(
 	TSSGCtrl     *this,
-	LPVOID       ParentStack,
+	stack        *ParentStack,
 	LPVOID       ADJElem,
 	const string *LineS,
 	DWORD        RepeatIndex,
 	DWORD        OuterRepeat,
 	TSSGSubject  *SSGS);
-
-static void(__cdecl * const stack_ptr_ctor)(pdeque this, rsize_t __n) = (void*)0x004E49B0;
-static void(__cdecl * const stack_ptr_dtor)(pdeque this, BOOL delete) = (void*)0x004E4FA8;
-static void __fastcall TSSDir_GetSubjectVec_onOpen(TSSGSubject *SSGS, TSSGCtrl *SSGC)
+#define ABBREV_SELECT 1
+static void(__cdecl *const stack_ptr_ctor)(pdeque this, rsize_t __n) = (void *)0x004E49B0;
+static void(__cdecl *const stack_ptr_dtor)(pdeque this, BOOL delete) = (void *)0x004E4FA8;
+static void __fastcall TSSDir_GetSubjectVec_onOpen(TSSGSubject *const SSGS, TSSGCtrl *const SSGC)
 {
 	const string *Code = SubjectStringTable_GetString(&SSGS->code);
-	if (!string_empty(Code))
+	if (SSGS->isRepeatable)
 	{
-		string Token;
-		vector_string List = { NULL };
-		string_ctor_assign_char(&Token, ',');
-		if (TStringDivision_List(&SSGC->strD, Code, Token, &List, FALSE) > 1)
+		TSSDir *const this = (void *)SSGS;
+		vector *const attr = TSSGSubject_GetAttribute(SSGS);
+		AeType const multi = atREPLACE | FixTheProcedure << 4 | FixTheProcedure << 5 | atENABLED
+#if !ABBREV_SELECT
+			| atDEFINE
+#endif
+			| atSCOPE | atFORMAT | atREPEAT;
+		if (SSGS->stable != MAXWORD)
 		{
-			vector *attr = TSSGSubject_GetAttribute(SSGS);
-			TSSDir *this = (TSSDir *)SSGS;
-			if (SSGS->stable != MAXWORD)
+			TSSGSubject **discard = &vector_at(&this->childVec, SSGS->stable);
+			for (TSSGSubject **it = discard; it < vector_end(&this->childVec); it++)
 			{
-				TSSGSubject **discard = &vector_at(&this->childVec, SSGS->stable);
-				for (TSSGSubject **it = discard; it < vector_end(&this->childVec); it++)
+				if ((*it)->isLocked)
+					TSSGCtrl_SetLock(SSGC, FALSE, *it, NULL);
+				delete_TSSGSubject(*it);
+			}
+			vector_end(&this->childVec) = discard;
+		}
+		else
+			SSGS->stable = (WORD)vector_size(&this->childVec);
+		TSSGAttributeSelector_StartElementCheck(TSSGCtrl_GetAttributeSelector(SSGC));
+		for (TAdjustmentAttribute *const *pos = &vector_type_at(attr, TAdjustmentAttribute *, 1);
+			 pos < (TAdjustmentAttribute **)vector_end(attr);
+			 pos++)
+		{
+			TAdjustmentAttribute *const AElem = *pos;
+#if ABBREV_SELECT
+			list_dword_push_back(TSSGCtrl_GetAttributeSelector(SSGC)->nowAttributeList, (LPDWORD)pos);
+			if (TSSGAttributeElement_GetType(AElem) & multi && AElem->seqElement >= seqElement)
+				seqElement = AElem->seqElement + 1;
+#else
+			for (list_iterator LIt = list_begin(&TSSGCtrl_GetAttributeSelector(SSGC)->allAtteributeList);
+				 LIt != list_end(&TSSGCtrl_GetAttributeSelector(SSGC)->allAtteributeList);
+				 list_iterator_increment(LIt))
+			{
+				if (TSSGAttributeElement_IsEqual(AElem, *(TSSGAttributeElement **)LIt->_M_data))
 				{
-					if ((*it)->isLocked)
-						TSSGCtrl_SetLock(SSGC, FALSE, *it, NULL);
-					delete_TSSGSubject(*it);
+					list_erase(LIt);// prevent delete in TSSGAttributeSelector::MakeOnlyOneAtteribute
+					break;
 				}
-				vector_end(&this->childVec) = discard;
+			}
+			if (TSSGAttributeElement_GetType(AElem) & multi)
+				TSSGAttributeSelector_AddElement (TSSGCtrl_GetAttributeSelector(SSGC), AElem);
+			else
+				TSSGAttributeSelector_PushElement(TSSGCtrl_GetAttributeSelector(SSGC), AElem);
+#endif
+		}
+		{
+			TDirAttribute *NewAElem = new_TDirAttribute();
+			TDirAttribute_Setting(NewAElem, TSSGCtrl_GetDirLevel(SSGC, SSGS) + 1);
+			TSSGAttributeSelector_PushElement(TSSGCtrl_GetAttributeSelector(SSGC), NewAElem);
+		}
+		{
+			stack_ptr ParentStack;
+			const TSSGSubjectProperty *prop;
+
+			stack_ptr_ctor(&ParentStack, 0);
+			stack_ptr_push(&ParentStack, &SSGS);
+			if (prop = GetSubjectProperty(SSGS))
+			{
+				RepeatDepth = prop->RepeatDepth;
+				repeat_ReadSSRFile(SSGC, &ParentStack, NULL, Code, prop->RepeatIndex, prop->OuterRepeat, SSGS);
 			}
 			else
-				SSGS->stable = (WORD)vector_size(&this->childVec);
-			TSSGAttributeSelector_StartElementCheck(TSSGCtrl_GetAttributeSelector(SSGC));
 			{
-				TDirAttribute *NewAElem = new_TDirAttribute();
-				TDirAttribute_Setting(NewAElem, TSSGCtrl_GetDirLevel(SSGC, SSGS) + 1);
-				NewAElem->identity = (NewAElem->ref = SSGS)->name.sstIndex;
-				TSSGAttributeSelector_PushElement(TSSGCtrl_GetAttributeSelector(SSGC), NewAElem);
+				RepeatDepth = 0;
+				repeat_ReadSSRFile(SSGC, &ParentStack, NULL, Code, 0, MAXDWORD, SSGS);
 			}
-			for (TSSGAttributeElement **pos = &vector_type_at(attr, TSSGAttributeElement *, 1);
-				 pos < (TSSGAttributeElement **)vector_end(attr);
-				 pos++)
-			{
-				TSSGAttributeElement *AElem = *pos;
-				for (list_iterator SIt = list_begin(&TSSGCtrl_GetAttributeSelector(SSGC)->allAtteributeList);
-					 SIt != list_end(&TSSGCtrl_GetAttributeSelector(SSGC)->allAtteributeList);
-					 list_iterator_increment(SIt))
-				{
-					if (TSSGAttributeElement_IsEqual(*(TSSGAttributeElement **)SIt->_M_data, AElem))
-					{
-						list_erase(SIt);// prevent delete in TSSGAttributeSelector::MakeOnlyOneAtteribute
-						break;
-					}
-				}
-				if (TSSGAttributeElement_GetType(AElem) & (atREPLACE | atENABLED | atDEFINE | atSCOPE | atFORMAT))
-					TSSGAttributeSelector_AddElement (TSSGCtrl_GetAttributeSelector(SSGC), AElem);
-				else
-					TSSGAttributeSelector_PushElement(TSSGCtrl_GetAttributeSelector(SSGC), AElem);
-			}
-			{
-				stack_ptr ParentStack;
-				TSSGSubjectProperty *prop = GetSubjectProperty(SSGS);
-				RepeatDepth = prop ? prop->RepeatDepth : 0;
-
-				stack_ptr_ctor(&ParentStack, 0);
-				stack_ptr_push(&ParentStack, &SSGS);
-				repeat_ReadSSRFile(SSGC, &ParentStack, NULL, Code, prop ? prop->RepeatIndex : 0, prop ? prop->OuterRepeat : MAXDWORD, SSGS);
-				stack_ptr_dtor(&ParentStack, FALSE);
-			}
-			TSSGAttributeSelector_EndElementCheck(TSSGCtrl_GetAttributeSelector(SSGC));
+			stack_ptr_dtor(&ParentStack, FALSE);
 		}
-		else Parsing(SSGC, SSGS, Code, 0);
-		vector_string_dtor(&List);
+		TSSGAttributeSelector_EndElementCheck(TSSGCtrl_GetAttributeSelector(SSGC));
 	}
+	else if (!string_empty(Code))
+		Parsing(SSGC, SSGS, Code, 0);
 }
 
 static void __declspec(naked) TSSGCtrl_ChangeDirectorySubject_GetSubjectVec(TSSDir *this, long Mode, pvector_PTSSGSubject Vec)

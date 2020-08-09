@@ -2,19 +2,22 @@
 #define _SSGSUBJECTPROPERTY_H_
 
 #include <windows.h>
-#ifndef __BORLANDC__
-#include "TSSGSubject.h"
-#endif
+#define EMBED_BREADTH 1
+#include "TSSDir.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef struct _TSSGSubjectProperty {
-	LONG  Breadth;
-	DWORD RepeatDepth;
-	DWORD RepeatIndex;
-	INT   OuterRepeat;
+	INT     OuterRepeat;
+	INT32   RepeatDepth;
+	DWORD   RepeatIndex;
+#if	EMBED_BREADTH
+	TSSDir *ParentEntry;
+#else
+	LONG    Breadth;
+#endif
 } TSSGSubjectProperty;
 
 extern TSSGSubjectProperty *SubjectProperty;
@@ -24,13 +27,11 @@ extern DWORD               TitleWidth;
 void __cdecl ClearSubjectProperty();
 TSSGSubjectProperty * __fastcall GrowSubjectProperty(DWORD *lpdwIndex);
 #define AppendSubjectProperty(SSGS) \
-	GrowSubjectProperty(&(SSGS)->propertyIndex)
+	GrowSubjectProperty((LPDWORD)&(SSGS)->propertyIndex)
 #define GetSubjectProperty(SSGS) \
 	((SSGS) && (SSGS)->propertyIndex != MAXDWORD ? SubjectProperty + (SSGS)->propertyIndex : NULL)
 #define GetOuterRepeat(Property) \
 	(((Property)->OuterRepeat) != MAXDWORD ? SubjectProperty + (Property)->OuterRepeat : NULL)
-
-#define EMBED_BREADTH 1
 
 #ifdef __cplusplus
 }

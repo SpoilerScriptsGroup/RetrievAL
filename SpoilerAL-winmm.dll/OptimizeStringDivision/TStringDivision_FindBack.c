@@ -78,7 +78,7 @@ unsigned long __cdecl TStringDivision_FindBack(
 									NCount++;
 									continue;
 								}
-								if (SrcIt[0] == string_at(&this->nestEndTag, 0) && (NestStartTagLength <= 1 || SrcIt[1] == string_at(&this->nestEndTag, 1)))
+								if (SrcIt[0] == string_at(&this->nestEndTag, 0) && (NestEndTagLength <= 1 || SrcIt[1] == string_at(&this->nestEndTag, 1)))
 								{
 									// ネスト(一段)解除
 									SrcIt += NestEndTagLength;
@@ -117,48 +117,47 @@ unsigned long __cdecl TStringDivision_FindBack(
 		}
 		else
 		{
-			while (SrcIt < SrcEnd)
+			LPCSTR const SrcLow = SrcIt;
+			SrcIt = SrcEnd;
+			while (--SrcIt >= SrcLow)
 			{
-				if (SrcIt[0] == string_at(&this->nestStartTag, 0) && (NestStartTagLength <= 1 || SrcIt[1] == string_at(&this->nestStartTag, 1)))
+				if (SrcIt > SrcLow && __intrinsic_isleadbyte(SrcIt[-1]))
+					SrcIt--;
+				if (SrcIt[0] == string_at(&this->nestEndTag, 0) && (NestEndTagLength <= 1 || SrcIt[1] == string_at(&this->nestEndTag, 1)))
 				{
 					size_t NCount;
 
 					// ネスト開始
 					NCount = 1;
-					SrcIt += NestStartTagLength;
-					while (SrcIt < SrcEnd)
+					while (--SrcIt >= SrcLow)
 					{
-						if (SrcIt[0] == string_at(&this->nestStartTag, 0) && (NestStartTagLength <= 1 || SrcIt[1] == string_at(&this->nestStartTag, 1)))
+						if (SrcIt > SrcLow && __intrinsic_isleadbyte(SrcIt[-1]))
+							SrcIt--;
+						if (SrcIt[0] == string_at(&this->nestEndTag, 0) && (NestEndTagLength <= 1 || SrcIt[1] == string_at(&this->nestEndTag, 1)))
 						{
 							// さらにネスト
-							SrcIt += NestStartTagLength;
 							NCount++;
 							continue;
 						}
-						if (SrcIt[0] == string_at(&this->nestEndTag, 0) && (NestStartTagLength <= 1 || SrcIt[1] == string_at(&this->nestEndTag, 1)))
+						if (SrcIt[0] == string_at(&this->nestStartTag, 0) && (NestStartTagLength <= 1 || SrcIt[1] == string_at(&this->nestStartTag, 1)))
 						{
 							// ネスト(一段)解除
-							SrcIt += NestEndTagLength;
 							if (--NCount == 0)
 								break;	// ネスト完全脱出
 							continue;
 						}
-						if (!__intrinsic_isleadbyte(*SrcIt))
-							SrcIt++;
-						else
-							SrcIt += 2;
 					}
 					continue;	// 直後にまたネスト開始もありえるでの。
 				}
 
 				// 基本比較処理
+				if (SrcEnd - SrcIt < (ptrdiff_t)TokenLength)
+					continue;
 				if (memcmp(SrcIt, string_c_str(&Token), TokenLength) == 0)
+				{
 					FindIndex = SrcIt - string_c_str(Src);
-
-				if (!__intrinsic_isleadbyte(*SrcIt))
-					SrcIt++;
-				else
-					SrcIt += 2;
+					break;
+				}
 			}
 		}
 	}

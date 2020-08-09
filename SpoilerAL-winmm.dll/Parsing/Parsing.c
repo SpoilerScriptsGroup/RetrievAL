@@ -1864,15 +1864,15 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			switch (p[1])
 			{
 			case '1':
-				if (*(uint32_t *)(p + 2) != BSWAP16('toI4'))
+				if (*(uint32_t *)(p + 2) != BSWAP32('toI4'))
 					break;
 				APPEND_FUNCTION_SINGLE_PARAM(TAG_I1TOI4, 6);
 			case '2':
-				if (*(uint32_t *)(p + 2) != BSWAP16('toI4'))
+				if (*(uint32_t *)(p + 2) != BSWAP32('toI4'))
 					break;
 				APPEND_FUNCTION_SINGLE_PARAM(TAG_I2TOI4, 6);
 			case '4':
-				if (*(uint32_t *)(p + 2) != BSWAP16('toI8'))
+				if (*(uint32_t *)(p + 2) != BSWAP32('toI8'))
 					break;
 				APPEND_FUNCTION_SINGLE_PARAM(TAG_I4TOI8, 6);
 			case 's':
@@ -5151,7 +5151,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 #if ADDITIONAL_TAGS
 		attributes = SSGS->type// check for TSSGCtrl::LoopSSRFile
 			? TSSGSubject_GetAttribute(SSGS)
-			: TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(this));
+			: TSSGAttributeSelector_GetNowAtteributeVec(&this->attributeSelector);
 		variable = (TPrologueAttribute *)TSSGCtrl_GetAttribute(this, SSGS, atPROLOGUE);
 #endif
 		if (string_length(Src) < sizeof(size_t) * 2 || *(size_t *)string_begin(Src) != BOM)
@@ -5167,18 +5167,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			if (variable && string_length(code = TEndWithAttribute_GetCode(variable)))
 				nSizeOfReplace = string_length(code);
 			if (attributes)
-#if defined(__BORLANDC__)
-				for (vector<TSSGAttributeElement *>::iterator it = attributes->begin(); it < attributes->end(); it++)
-#else
-				for (TDefineAttribute **it = vector_begin(attributes); it < (TDefineAttribute **)vector_end(attributes); it++)
-#endif
-				{
-					if (TSSGAttributeElement_GetType(*it) != atDEFINE)
-						continue;
+			{
+				const COORD coord = TSSGAttributeElement_GetViaCoord(atDEFINE, attributes).dwFontSize;
+				for (TDefineAttribute **it = &vector_type_at(attributes, TDefineAttribute *, coord.Y), **end = it + coord.X;
+					 it < end;
+					 it++)
 					nSizeOfReplace +=
-						string_length(TIO_FEPAttribute_GetInputCode((TIO_FEPAttribute *)*it)) + 1 +
+						string_length(TIO_FEPAttribute_GetInputCode ((TIO_FEPAttribute *)*it)) + 1 +
 						string_length(TIO_FEPAttribute_GetOutputCode((TIO_FEPAttribute *)*it)) + 1;
-				}
+			}
 			if (nSizeOfReplace)
 			{
 				LPBYTE p, dest;
@@ -5194,14 +5191,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				}
 				*(p++) = '\0';
 				if (attributes)
-#if defined(__BORLANDC__)
-					for (vector<TSSGAttributeElement *>::iterator it = attributes->begin(); it < attributes->end(); it++)
-#else
-					for (TDefineAttribute **it = vector_begin(attributes); it < (TDefineAttribute **)vector_end(attributes); it++)
-#endif
+				{
+					const COORD coord = TSSGAttributeElement_GetViaCoord(atDEFINE, attributes).dwFontSize;
+					for (TDefineAttribute **it = &vector_type_at(attributes, TDefineAttribute *, coord.Y), **end = it + coord.X;
+						 it < end;
+						 it++)
 					{
-						if (TSSGAttributeElement_GetType(*it) != atDEFINE)
-							continue;
 						code = TIO_FEPAttribute_GetInputCode((TIO_FEPAttribute *)*it);
 						p = (dest = p) + (n = string_length(code) + 1);
 						memcpy(dest, string_c_str(code), n);
@@ -5209,6 +5204,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						p = (dest = p) + (n = string_length(code) + 1);
 						memcpy(dest, string_c_str(code), n);
 					}
+				}
 				*p = '\0';
 			}
 #endif
@@ -5587,14 +5583,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		size_t              nPrevNumberOfVariable;
 		size_t              nSize, nCapacity, nForward;
 
-		lpVariableStringBuffer = (LPSTR)HeapAlloc(hHeap, 0, 32);
-		if (!lpVariableStringBuffer)
-			goto ALLOC_ERROR;
 		lpProperty = GetSubjectProperty(SSGS);
 		if (!lpProperty)
 			break;
 		if (!lpProperty->RepeatDepth)
 			break;
+		lpVariableStringBuffer = (LPSTR)HeapAlloc(hHeap, 0, 32);
+		if (!lpVariableStringBuffer)
+			goto ALLOC_ERROR;
 		nPrevNumberOfVariable = nNumberOfVariable;
 		p = lpVariableStringBuffer;
 		nSize = 0;
@@ -12262,7 +12258,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				PARAMETER     *lpParams;
 				const string  *Source, *Finish;
 				size_t        count, extra = 0;
-				TSSGSubject   *Object = NULL;
+				TSSGSubject   *Object = SSGS;
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
 					goto PARSING_ERROR;
@@ -12279,10 +12275,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				}
 				else
 				{
-					TDirAttribute *dir = TSSGCtrl_GetAttribute(this, SSGS, atDIR_LEVEL);
-					if (dir && dir->identity && (Object = dir->ref))
+#if EMBED_BREADTH
+					const TSSGSubjectProperty *prop;
+					if ((prop = GetSubjectProperty(SSGS)) && !(Object = &prop->ParentEntry->super)->isRepeatable)
 						Finish = (Source = SubjectStringTable_GetString(&Object->code)) + 1;
-					else 
+					else
+#endif
 						goto PARSING_ERROR;
 				}
 				lpParams = NULL;
@@ -12330,7 +12328,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					if (v->Node)
 						((ScopeVariant *)pair_first(v->Node))->Quad = v->Value.Quad;
 #endif
-				lpOperandTop->Quad = InternalParsing(this, Object ? Object : SSGS, Source, IsInteger, lpParams ? (va_list)lpParams : (va_list)&Terminator);
+				lpOperandTop->Quad = InternalParsing(this, Object, Source, IsInteger, lpParams ? (va_list)lpParams : (va_list)&Terminator);
 				lpOperandTop->IsQuad = !IsInteger || lpOperandTop->High;
 #if SCOPE_SUPPORT
 				for (register PMARKUP_VARIABLE v = lpVariable, end = v + nNumberOfVariable; v < end; v++)
@@ -12462,19 +12460,19 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 #if SCOPE_SUPPORT
 					if (attributes && p[0] == SCOPE_PREFIX)
 					{
-						COORD const idx = TSSGAttributeElement_GetViaCoord(atSCOPE, attributes).dwFontSize;
-						if (idx.X)
+						const COORD coord = TSSGAttributeElement_GetViaCoord(atSCOPE, attributes).dwFontSize;
+						if (coord.X)
 						{
 							TScopeAttribute *scope;
 							map_iterator it;
 							LPSTR const s[] = { p + 1, p + length };
 							ScopeVariant sv = { SubjectStringTable_insert((string *)&s), 0, 0 };
-							for (TScopeAttribute **base = &vector_type_at(attributes, TScopeAttribute *, idx.Y),
-								 **cur  = base + idx.X;
+							for (TScopeAttribute **base = &vector_type_at(attributes, TScopeAttribute *, coord.Y),
+								 **cur  = base + coord.X;
 								 --cur >= base; )
 							{
-								it = map_lower_bound(&(scope = *cur)->heapMap, &sv.Identity);
-								if (it != map_end(&scope->heapMap) && ((ScopeVariant *)pair_first(it))->Identity == sv.Identity)
+								it = map_lower_bound(&(scope = *cur)->heapMap, &sv.Identifier);
+								if (it != map_end(&scope->heapMap) && ((ScopeVariant *)pair_first(it))->Identifier == sv.Identifier)
 								{
 									element->Value.Quad    = ((ScopeVariant *)pair_first(it))->Quad;
 									element->Value.IsQuad |= !!element->Value.High;

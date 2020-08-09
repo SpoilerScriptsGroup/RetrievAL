@@ -40,7 +40,7 @@ void __stdcall TMainForm_DrawTree(TMainForm *this, LPVOID DestCanvas, long LeftO
 	SCROLLINFO si;
 	int        span;
 	int        i, end;
-	LPVOID     ssgActionListner;
+	long       userMode;
 
 	DGridHandle = TWinControl_GetHandle(this->DGrid);
 	GetClientRect(DGridHandle, &rect);
@@ -88,8 +88,8 @@ void __stdcall TMainForm_DrawTree(TMainForm *this, LPVOID DestCanvas, long LeftO
 		end = this->DGrid->RowCount;
 	if (IgnoreDebugString)
 	{
-		ssgActionListner = this->ssgCtrl.ssgActionListner;
-		this->ssgCtrl.ssgActionListner = NULL;
+		userMode = this->userMode;
+		this->userMode = 1;// quiet mode
 	}
 	for (end--; i < end; i++)
 	{
@@ -100,7 +100,7 @@ void __stdcall TMainForm_DrawTree(TMainForm *this, LPVOID DestCanvas, long LeftO
 	rect.bottom = rect.top + TDrawGrid_GetRowHeights(this->DGrid, end);
 	TMainForm_DrawTreeCell(this, DestCanvas, end, &rect);
 	if (IgnoreDebugString)
-		this->ssgCtrl.ssgActionListner = ssgActionListner;
+		this->userMode = userMode;
 }
 
 void __fastcall TMainForm_LockCBoxClick_CellRectAfter(TMainForm *this, RECT *R)

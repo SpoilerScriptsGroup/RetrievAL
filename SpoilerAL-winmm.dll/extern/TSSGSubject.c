@@ -14,13 +14,13 @@ __declspec(naked) void __fastcall delete_TSSGSubject(TSSGSubject *this)
 {
 	static const struct DTT vt[] = {
 		(void *)0x00462E80, 0x0000500F, -(signed)sizeof(LPVOID) * 3,
-		NULL,// sentinel
+		NULL,// sentinel, dttFrameOffs = void *[2] + args shadow
 	};
 	static const EXCTAB ERRcXtab = {
 		NULL, -(signed)(sizeof(REGREC_BC) + sizeof(LPVOID) * 3),
-		XB_DEST << 16 | /*outer ctx*/0, /* 'min dtor count' */0, (uintptr_t)vt,
+		XB_DEST << 16 | /* 'outer' */0, /* 'min dtor count' */0, (uintptr_t)&vt,
 	};
-
+	TSSGSubject *fake[2];
 	__asm
 	{
 		test    ecx, ecx
@@ -28,33 +28,33 @@ __declspec(naked) void __fastcall delete_TSSGSubject(TSSGSubject *this)
 
 		push    ebp
 		mov     ebp, esp
-		sub     esp, size REGREC_BC + size LPVOID * 3
+		add     esp, ERRcXtab.xtBPoffs
+		
 		mov     this, ecx
-
 		mov     eax, offset ERRcXtab
 		call    __InitExceptBlockLDTC
-
 		mov     ecx, this
+
 		mov     eax, size TSSGSubjectProperty
-		mul     dword ptr [ecx + TSSGSubject.propertyIndex]
+		mul     [ecx]TSSGSubject.propertyIndex
 		jc      NO_PROP
 
 		mov     edx, SubjectProperty
-		mov     dword ptr [edx + eax], MAXDWORD
+		mov     [edx + eax]TSSGSubjectProperty.RepeatDepth, MAXDWORD
 
 	NO_PROP:
-		mov     eax, dword ptr [ecx + TSSGSubject.VTable]
-		mov     dword ptr [ebp - size LPVOID * 3], ecx// The first entry of the array is the pointer to be deleted.
-		mov     dword ptr [ebp - size LPVOID * 2], eax// The second entry is the vtable pointer.
-		mov      word ptr [esp + REGREC_BC.ERRcCCtx], 8// offset EXCTAB.xtTable
+		mov     eax, [ecx]TSSGSubject.VTable
+		mov     fake[1 * size LPVOID], eax// The second entry is the vtable pointer.
+		mov     fake[0 * size LPVOID], ecx// The first entry of the array is the pointer to be deleted.
+		mov     [esp]REGREC_BC.ERRcCCtx, 8// offset EXCTAB.xtTable
 
 		push    DTCVF_PTRVAL | DTCVF_DELPTR
 		push    ecx
-		call    dword ptr [eax + TSSGSubjectVtbl.dtor]
+		call    [eax]SubjectVtbl.dtor
 		add     esp, 8
 
-		mov     eax, dword ptr [esp + REGREC_BC.ERRcNext]
-		mov     dword ptr fs:[0], eax// __ExitExceptBlock
+		mov     eax, [esp]REGREC_BC.ERRcNext
+		mov     fs:[0], eax// __ExitExceptBlock
 
 		mov     esp, ebp
 		pop     ebp

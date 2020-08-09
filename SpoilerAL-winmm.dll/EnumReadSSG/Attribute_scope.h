@@ -15,7 +15,7 @@ __inline TScopeAttribute *new_TScopeAttribute()
 	static const string Tag = { (LPSTR)tag, (LPSTR)tag + _countof(tag) - 1, NULL, NULL, tag, MAXDWORD };
 
 	THeapAdjustmentAttribute *const NewAElem = TSSGCtrl_MakeAdjustmentClass(&Tag);
-	assert(NewAElem && map_end(&NewAElem->heapMap)->_M_parent == NULL);
+	assert(NewAElem && map_end(&NewAElem->heapMap)->_M_parent == NULL);// required when using different node type
 	NewAElem->type = atSCOPE;
 	return (TScopeAttribute *)NewAElem;
 }
@@ -25,7 +25,11 @@ vector *__cdecl TSSGCtrl_ReadSSG_PushElement(TSSGAttributeSelector *attributeSel
 	TScopeAttribute *scope = new_TScopeAttribute();
 	scope->super.adjustVal = 0;// global scope setup
 	TSSGAttributeSelector_PushElement(attributeSelector, rootDirAttr);
-	return TSSGAttributeSelector_AddElement(attributeSelector, scope);
+	{
+		vector *const nowAttributeVec = TSSGAttributeSelector_AddElement(attributeSelector, scope);
+		nowAttributeVec->allocator_type[0] = NULL;
+		return nowAttributeVec;
+	}
 }
 
 __inline void Attribute_scope_open(TSSGCtrl *this, string *code)
@@ -47,7 +51,7 @@ __inline void Attribute_scope_open(TSSGCtrl *this, string *code)
 	string_dtor(&label);
 
 	TSSGAttributeSelector_AddElement(&this->attributeSelector, scope);
-	scope = *(TScopeAttribute **)list_end(this->attributeSelector.nowAttributeList)->_M_prev->_M_data;
+	scope = *(TScopeAttribute **)list_back(this->attributeSelector.nowAttributeList);
 
 	string_ctor_assign_char(&Token, ',');
 	TStringDivision_List(&this->strD, code, Token, &tmpV, etTRIM);
@@ -60,15 +64,15 @@ __inline void Attribute_scope_open(TSSGCtrl *this, string *code)
 			string *var = assign ? &label : tmpS;
 			LPSTR key[] = { &string_at(var, string_at(var, 0) == SCOPE_PREFIX), string_end(var) };
 			ScopeVariant sv = { SubjectStringTable_insert((string *)&key), 0, 0 };
-			map_iterator it = map_lower_bound(&scope->heapMap, &sv.Identity);
-			if (it == map_end(&scope->heapMap) || ((ScopeVariant *)pair_first(it))->Identity != sv.Identity)
+			map_iterator it = map_lower_bound(&scope->heapMap, &sv.Identifier);
+			if (it == map_end(&scope->heapMap) || ((ScopeVariant *)pair_first(it))->Identifier != sv.Identifier)
 				map_dword_dw_dw_insert(&it, &scope->heapMap, it, &sv);
 			if (assign)
 			{
 				char       *endptr;
 
 				errno = 0;
-				*(uint64_t *)pair_second(it, sv.Identity) = _strtoui64(string_c_str(tmpS), &endptr, 0);
+				*(uint64_t *)pair_second(it, sv.Identifier) = _strtoui64(string_c_str(tmpS), &endptr, 0);
 				do	/* do { ... } while (0); */
 				{
 					if (errno != ERANGE)
@@ -82,9 +86,11 @@ __inline void Attribute_scope_open(TSSGCtrl *this, string *code)
 						case '#':
 						case '/':
 						case ';':
+							if (((ScopeVariant *)pair_first(it))->Quad < 0 && ((ScopeVariant *)pair_first(it))->Quad >= LONG_MIN)
+								((ScopeVariant *)pair_first(it))->High = 0;
 							continue;
 						}
-					*(double *)pair_second(it, sv.Identity) = strtod(string_c_str(tmpS), NULL);
+					*(double *)pair_second(it, sv.Identifier) = strtod(string_c_str(tmpS), NULL);
 				} while (0);
 			}
 		}

@@ -26,6 +26,8 @@ typedef bcb6_std_list           list;
 typedef pbcb6_std_list          plist;
 #define list_begin              bcb6_std_list_begin
 #define list_end                bcb6_std_list_end
+#define list_front              bcb6_std_list_front
+#define list_back               bcb6_std_list_back
 #define list_iterator_increment bcb6_std_list_iterator_increment
 #define list_iterator_decrement bcb6_std_list_iterator_decrement
 #define list_erase              bcb6_std_list_erase
@@ -33,6 +35,9 @@ typedef pbcb6_std_list          plist;
 
 #define bcb6_std_list_begin(list) (list)->_M_node->_M_next
 #define bcb6_std_list_end(list)   (list)->_M_node
+
+#define bcb6_std_list_front(list) ((void *)bcb6_std_list_begin(list)->_M_data)
+#define bcb6_std_list_back(list)  ((void *)bcb6_std_list_end(list)->_M_prev->_M_data)
 
 #define bcb6_std_list_iterator_increment(it) ((it) = (it)->_M_next)
 #define bcb6_std_list_iterator_decrement(it) ((it) = (it)->_M_prev)

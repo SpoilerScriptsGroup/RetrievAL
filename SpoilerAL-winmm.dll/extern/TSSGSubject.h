@@ -4,10 +4,10 @@
 #include <windows.h>
 #include "bcb6_std_vector.h"
 #include "bcb6_std_string.h"
-#include "TSSGCtrl.h"
 #include "SubjectStringTable.h"
 
-typedef enum {
+typedef enum Result
+{
 	reNO_ERROR      = 0,
 	reACCESS_ERROR     ,
 	rePOINTER_ERROR    ,
@@ -15,9 +15,10 @@ typedef enum {
 	reINDEX_ERROR      ,
 	reNOT_ENABLED      ,
 	reOPEN_ERROR       ,
-} re;
+} ResErr;
 
-typedef enum {
+typedef enum Subject
+{
 	stNONE         = 0,
 	stDIR             ,
 	stCALC            ,
@@ -35,33 +36,21 @@ typedef enum {
 	stFLOAT_CALC      ,
 	stB_FLOAT_CALC    ,
 	stSPLIT           ,
-	stREPEAT          ,
-} st;
+} SubType;
 
-#define ssOPEN        0x00000001
-#define ssLOCK        0x00000002
-#define ssCAN_UNKNOWN 0x00000004
-
-typedef struct _TSSGSubjectVtbl
+typedef enum Status
 {
-	void(__cdecl *const dtor)(void *this, enum flagsClean);
-	void(__cdecl *const Setting)(void *this, struct _TSSGCtrl *SSGC);
-	unsigned long(__cdecl *const Read)(void *this, struct _TSSGCtrl *SSGC, void *Arg);
-	unsigned long(__cdecl *const Write)(void *this, struct _TSSGCtrl *SSGC, void *Arg);
-	bcb6_std_string *(__cdecl *const ToString)(bcb6_std_string *, void *this, struct _TSSGCtrl *SSGC);
-	bcb6_std_string *(__cdecl *const ToByteCode)(bcb6_std_string *, void *this, struct _TSSGCtrl *SSGC, void *Val);
-	bcb6_std_string *(__cdecl *const GetLockName)(bcb6_std_string *, void *this);
-	unsigned long(__cdecl *const GetSize)(void *this);
-	bcb6_std_string *(__cdecl *const GetAddressStr)(bcb6_std_string *, void *this);
-	unsigned long(__cdecl *const GetArgType)(void *this);
-	bool(__cdecl *const IsSameSubject)(void *this, void *SSGS);
-	bcb6_std_string *(__cdecl *const GetIndexFileName)(bcb6_std_string *, void *this);
-} TSSGSubjectVtbl;
+	ssOPEN        = 1,
+	ssLOCK        = 2,
+	ssCAN_UNKNOWN = 4,
+} SubState;
+
+typedef struct TSSGSubjectVtbl SubjectVtbl;
 
 #pragma pack(push, 1)
 typedef struct _TSSGSubject
 {
-	TSSGSubjectVtbl *VTable;
+	SubjectVtbl     *VTable;
 	union {
 		struct {
 			bool    isSeted;
@@ -70,21 +59,28 @@ typedef struct _TSSGSubject
 		};
 		struct {
 			unsigned      : 8;
-			st      _type : 8;
+			SubType stype : 8;
 		};// for debugger
 	};
 	bcb6_std_vector *attribute;
-	union {
-		BYTE        status;
-		struct {
+	union
+	{
+		struct
+		{
+			BYTE    status;
+			bool    evaluateAtRead;
+			WORD    stable;
+		};
+		SubState    states : 8;
+		struct
+		{
 			bool    isOpen       : 1;
 			bool    isLocked     : 1;
 			bool    isCanUnknown : 1;
+			bool    isRepeatable : 1;
 			bool    withFEP      : 1;
 		};
 	};
-	bool            evaluateAtRead;
-	WORD            stable;
 	LPCVOID         lastAddr;
 	bcb6_std_string name;
 	bcb6_std_string code;
@@ -96,12 +92,30 @@ typedef struct _TSSGSubject
 #define typename PTSSGSubject
 #define type     TSSGSubject *
 #include "bcb6_std_vector_template.h"
+#include "TSSGCtrl.h"
+
+struct TSSGSubjectVtbl
+{
+	void(__cdecl *const dtor)(void *this, enum flagsClean);
+	void(__cdecl *const Setting)(void *this, TSSGCtrl *SSGC);
+	unsigned long(__cdecl *const Read)(void *this, TSSGCtrl *SSGC, void *Arg);
+	unsigned long(__cdecl *const Write)(void *this, TSSGCtrl *SSGC, void *Arg);
+	bcb6_std_string *(__cdecl *const ToString)(bcb6_std_string *, void *this, TSSGCtrl *SSGC);
+	bcb6_std_string *(__cdecl *const ToByteCode)(bcb6_std_string *, void *this, TSSGCtrl *SSGC, void *Val);
+	bcb6_std_string *(__cdecl *const GetLockName)(bcb6_std_string *, void *this);
+	unsigned long(__cdecl *const GetSize)(void *this);
+	bcb6_std_string *(__cdecl *const GetAddressStr)(bcb6_std_string *, void *this);
+	unsigned long(__cdecl *const GetArgType)(void *this);
+	bool(__cdecl *const IsSameSubject)(void *this, void *SSGS);
+
+	bcb6_std_string *(__cdecl *const GetIndexFileName)(bcb6_std_string *, void *this);
+};
 
 EXTERN_C void __fastcall delete_TSSGSubject(TSSGSubject *SSGS);
 
-EXTERN_C long __stdcall TSSGSubject_GetSubjectNameTextWidth(TSSGSubject *this, HDC hDC, struct _TSSGCtrl *SSGCtrl);
+EXTERN_C long __stdcall TSSGSubject_GetSubjectNameTextWidth(TSSGSubject *this, HDC hDC, TSSGCtrl *SSGCtrl);
 
-EXTERN_C void(__cdecl * const TSSGSubject_GetSubjectName)(bcb6_std_string *Result, TSSGSubject *this, struct _TSSGCtrl *SSGC);
+EXTERN_C void(__cdecl * const TSSGSubject_GetSubjectName)(bcb6_std_string *Result, TSSGSubject *this, TSSGCtrl *SSGC);
 
 __inline void TSSGSubject_SetCode_stdstr(TSSGSubject *this, const bcb6_std_string *Val)
 {
@@ -173,8 +187,8 @@ __inline void TSSGSubject_SetCanUnknown(TSSGSubject *this, bool CanUnknown)
 
 #define TSSGSubject_GetAttribute(/*IN TSSGSubject * */this) \
 	((this)->attribute)
-#define TSSGSubject_SetAttribute(/*IN TSSGSubject * */this, /*const bcb6_std_vector * */Val) \
-	((this)->attribute = Val)
+#define TSSGSubject_SetAttribute(/*IN TSSGSubject * */this, /* bcb6_std_vector * */Val) \
+	((Val) && ((Val)->allocator_type[0] = NULL), (this)->attribute = Val)
 // virtual
 #define TSSGSubject_Setting(this, SSGC) \
 	(this)->VTable->Setting(this, SSGC)

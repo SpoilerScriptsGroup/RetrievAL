@@ -796,17 +796,6 @@ __forceinline unsigned char _subborrow_u64(unsigned char b_in, uint64_t a, uint6
 }
 #endif
 
-#if defined(_MSC_VER) && defined(_M_X64)
-#pragma intrinsic(__ull_rshift)
-#else
-__forceinline unsigned __int64 __shiftright128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)
-{
-	return Shift <= 64 ?
-		((LowPart >> Shift) | (HighPart << (64 - Shift))) :
-		(HighPart >> (Shift - 64));
-}
-#endif
-
 #ifndef _WIN64
 #define _add_uintptr       _add_u32
 #define _addcarry_uintptr  _addcarry_u32
@@ -1151,6 +1140,28 @@ __forceinline unsigned char _BitScanReverse64(unsigned long *Index, uint64_t Mas
 #pragma intrinsic(__ull_rshift)
 #else
 #define __ull_rshift(Mask, nBit) ((unsigned __int64)(Mask) >> ((nBit) & (sizeof(void *) * 8) - 1))
+#endif
+
+#if defined(_MSC_VER) && defined(_M_X64)
+#pragma intrinsic(__shiftleft128)
+#else
+__forceinline unsigned __int64 __shiftleft128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)
+{
+	return Shift <= 64 ?
+		((HighPart << Shift) | (LowPart >> (64 - Shift))) :
+		(LowPart << (Shift - 64));
+}
+#endif
+
+#if defined(_MSC_VER) && defined(_M_X64)
+#pragma intrinsic(__shiftright128)
+#else
+__forceinline unsigned __int64 __shiftright128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)
+{
+	return Shift <= 64 ?
+		((LowPart >> Shift) | (HighPart << (64 - Shift))) :
+		(HighPart >> (Shift - 64));
+}
 #endif
 
 #ifdef __cplusplus

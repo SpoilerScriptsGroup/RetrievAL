@@ -18,13 +18,13 @@ void __cdecl TSSGAttributeSelector_EraseElement(TSSGAttributeSelector *attribute
 		 deque_iterator_decrement(&it, void *), !deque_iterator_less_than(&it, &deque_begin(second));
 		 )
 	{
-		if (!TSSGAttributeElement_IsEqual(*(TSSGAttributeElement **)it._M_cur, AElem))
+		if (!TSSGAttributeElement_IsEqual(AElem, *(TSSGAttributeElement **)it._M_cur))
 			continue;
 		for (list_iterator SIt = list_end(attributeSelector->nowAttributeList);
 			 list_iterator_decrement(SIt) != list_end(attributeSelector->nowAttributeList);
 			 )
 		{
-			if (!TSSGAttributeElement_IsEqual(*(TSSGAttributeElement **)SIt->_M_data, AElem))
+			if (!TSSGAttributeElement_IsEqual(AElem, *(TSSGAttributeElement **)SIt->_M_data))
 				continue;
 			list_erase(SIt);
 			deque_dword_erase(second, &it);

@@ -16,7 +16,7 @@ void __cdecl SubjectStringTable_StringCtor(string *s)
 	*s = (const string) { NULL };
 }
 
-const string * __fastcall SubjectStringTable_GetString(string *s)
+const string * __fastcall SubjectStringTable_GetString(const string *s)
 {
 	return &vector_at(&array, s->sstIndex);
 }

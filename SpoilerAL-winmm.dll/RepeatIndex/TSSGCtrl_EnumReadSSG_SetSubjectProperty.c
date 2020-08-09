@@ -1,10 +1,19 @@
 #include <windows.h>
 #include "TSSGSubject.h"
-#include "SubjectProperty\SSGSubjectProperty.h"
+#include "SSGSubjectProperty.h"
 
 extern DWORD RepeatDepth;
 
-void __fastcall SetSubjectProperty(TSSGSubject *SSGS, DWORD RepeatIndex, DWORD OuterRepeat);
+static void __fastcall SetSubjectProperty(TSSGSubject *SSGS, DWORD RepeatIndex, DWORD OuterRepeat)
+{
+	TSSGSubjectProperty *prop;
+	if (RepeatDepth && (prop = GetSubjectProperty(SSGS)))
+	{
+		prop->OuterRepeat  = OuterRepeat;
+		prop->RepeatDepth  = RepeatDepth;
+		prop->RepeatIndex  = RepeatIndex;
+	}
+}
 
 __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_SetSubjectProperty1()
 {
@@ -45,16 +54,5 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSG_SetSubjectProperty2()
 		#undef SSGS
 		#undef RepeatIndex
 		#undef OuterRepeat
-	}
-}
-
-static void __fastcall SetSubjectProperty(TSSGSubject *SSGS, DWORD RepeatIndex, DWORD OuterRepeat)
-{
-	TSSGSubjectProperty *prop = GetSubjectProperty(SSGS);
-	if (prop)
-	{
-		prop->RepeatDepth  = RepeatDepth;
-		prop->RepeatIndex  = RepeatIndex;
-		prop->OuterRepeat  = OuterRepeat;
 	}
 }

@@ -98,34 +98,34 @@ __declspec(naked) static size_t __cdecl wcscspn(const wchar_t *string, const wch
 		#define string  (esp + 4)
 		#define control (esp + 8)
 
-		push    ebx                                         // preserve ebx
 		push    esi                                         // preserve esi
 		push    edi                                         // preserve edi
-		mov     eax, -1
-		mov     esi, dword ptr [string + 12]
-		mov     edi, dword ptr [control + 12]
-		add     esi, 2
+		mov     eax, dword ptr [string + 8]
+		mov     edi, dword ptr [control + 8]
 
 		align   16
 	outer_loop:
-		mov     bx, word ptr [esi + eax * 2]
-		inc     eax
-		test    bx, bx
+		mov     dx, word ptr [eax]
+		add     eax, 2
+		test    dx, dx
 		jz      epilog
-		mov     edx, edi
+		mov     esi, edi
 
 		align   16
 	inner_loop:
-		mov     cx, word ptr [edx]
-		add     edx, 2
+		mov     cx, word ptr [esi]
+		add     esi, 2
 		test    cx, cx
 		jz      outer_loop
-		cmp     cx, bx
+		cmp     cx, dx
 		jne     inner_loop
 	epilog:
+		sub     eax, 2
+		mov     ecx, dword ptr [string + 8]
+		sub     eax, ecx
 		pop     edi                                         // restore edi
+		shr     eax, 1
 		pop     esi                                         // restore esi
-		pop     ebx                                         // restore ebx
 		ret                                                 // __cdecl return
 
 		#undef string

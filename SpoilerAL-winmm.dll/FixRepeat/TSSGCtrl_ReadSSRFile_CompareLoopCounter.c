@@ -1,36 +1,33 @@
 
-__declspec(naked) void __cdecl TSSGCtrl_ReadSSRFile_CompareLoopCounter()
+__declspec(naked) void __fastcall TSSGCtrl_ReadSSRFile_CompareLoopCounter(int unsign)
 {
 	__asm
-	{
-		#define signedLoop esp
-		#define Step       (ebp - 0F8H)
-		#define _End       (ebp - 0F4H)
+	{// loop if ecx is 0
+		#define Step      (ebp - 0xF8)
+		#define End       (ebp - 0xF4)
 		#define i          esi
 
-		mov     eax, 0x004FF3A4// break
-		mov     ecx, i
-		mov     edx, dword ptr [_End]
-		cmp     dword ptr [Step], 0
-		bt      dword ptr [signedLoop], 0
-		jc      SIGNED
-		cmp     ecx, edx
-		mov     ecx, 0x004FF2F1
-		cmovb   eax, ecx
-		jmp     eax
+		jecxz   SIGNED
+
+		cmp     i  , dword ptr [End]
+		setae   cl
+		movzx   ecx, cl
+		ret
 
 		align   16
 	SIGNED:
-		cmovs   ecx, edx
+		mov     eax, i
+		mov     edx, dword ptr [End]
+		cmp     dword ptr [Step], 0
+		cmovs   eax, edx
 		cmovs   edx, i
-		cmp     ecx, edx
-		mov     ecx, 0x004FF2F1
-		cmovl   eax, ecx
-		jmp     eax
-
-		#undef signedLoop
-		#undef Step
-		#undef _End
+		cmp     eax, edx
+		setge   cl
+		movzx   ecx, cl
+		ret
+			
 		#undef i
+		#undef End
+		#undef Step
 	}
 }

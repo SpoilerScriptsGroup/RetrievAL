@@ -30,11 +30,11 @@ TSSGSubjectProperty * __fastcall GrowSubjectProperty(DWORD *lpdwIndex)
 		{
 			if (TSSGCtrl_GetSSGActionListner(&MainForm->ssgCtrl))
 				for (DWORD i = 0; i < SubjectPropertyCount; i++)
-					if (SubjectProperty[i].Breadth == MAXDWORD)
+					if (SubjectProperty[i].RepeatDepth == MAXDWORD)
 					{
 						 prop = &SubjectProperty[index = i];
-						*prop = (const TSSGSubjectProperty) { 0 };
-						goto RECYCLE;
+						*prop = (const TSSGSubjectProperty) { MAXDWORD };
+						goto RESOLVED;
 					}
 			if (SubjectPropertyCount & 0x0F)
 				prop = SubjectProperty;
@@ -54,9 +54,9 @@ TSSGSubjectProperty * __fastcall GrowSubjectProperty(DWORD *lpdwIndex)
 			SubjectProperty = prop;
 		}
 		prop += index = SubjectPropertyCount++;
-	RECYCLE:
 		prop->OuterRepeat = MAXDWORD;
 	} while (0);
+RESOLVED:
 	*lpdwIndex = prop == NULL ? MAXDWORD : index;
 	return prop;
 }

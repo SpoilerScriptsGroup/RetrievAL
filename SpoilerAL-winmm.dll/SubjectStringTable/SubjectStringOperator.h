@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 void __cdecl SubjectStringTable_StringCtor(bcb6_std_string *s);
-const bcb6_std_string * __fastcall SubjectStringTable_GetString(bcb6_std_string *s);
+const bcb6_std_string * __fastcall SubjectStringTable_GetString(const bcb6_std_string *s);
 void __fastcall SubjectStringTable_SetString(bcb6_std_string *dest, bcb6_std_string *src);
 
 #ifdef __cplusplus

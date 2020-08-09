@@ -5,7 +5,8 @@
 #include "bcb6_std_string.h"
 #include "bcb6_std_vector.h"
 
-typedef enum {
+typedef enum Argument
+{
 	atUNKNOWN,
 	atLONG,
 	atLONG_INDEX,
@@ -16,7 +17,7 @@ typedef enum {
 	atNONE,
 	atDIR,
 	atSPLIT
-} ssgCtrl;
+} ArgType;
 
 typedef struct _TSSArgVTbl
 {
@@ -29,7 +30,7 @@ typedef struct _TSSArgVTbl
 typedef struct _TSSArg
 {
 	TSSArgVTbl   *VTable;
-	unsigned long type;
+	ArgType       type;
 } TSSArg;
 #pragma pack(pop)
 
@@ -37,7 +38,7 @@ typedef struct _TSSArg
 typedef struct _TSSArgLong
 {
 	TSSArgVTbl   *VTable;
-	unsigned long type;
+	ArgType       type;
 	long          value;
 } TSSArgLong, TSSArgLongIndex;
 #pragma pack(pop)
@@ -46,7 +47,7 @@ typedef struct _TSSArgLong
 typedef struct _TSSArgBool
 {
 	TSSArgVTbl   *VTable;
-	unsigned long type;
+	ArgType       type;
 	bool          value;
 } TSSArgBool;
 #pragma pack(pop)
@@ -55,7 +56,7 @@ typedef struct _TSSArgBool
 typedef struct _TSSArgString
 {
 	TSSArgVTbl     *VTable;
-	unsigned long   type;
+	ArgType         type;
 	bcb6_std_string value;
 } TSSArgString;
 #pragma pack(pop)
@@ -63,7 +64,7 @@ typedef struct _TSSArgString
 #pragma pack(push, 1)
 typedef struct _TSSArgBoolVector{
 	TSSArgVTbl      *VTable;
-	unsigned long    type;
+	ArgType          type;
 	bcb6_std_bvector value;
 } TSSArgBoolVector;
 #pragma pack(pop)
@@ -72,7 +73,7 @@ typedef struct _TSSArgBoolVector{
 typedef struct _TSSArgDouble
 {
 	TSSArgVTbl   *VTable;
-	unsigned long type;
+	ArgType       type;
 	double        value;
 } TSSArgDouble;
 #pragma pack(pop)

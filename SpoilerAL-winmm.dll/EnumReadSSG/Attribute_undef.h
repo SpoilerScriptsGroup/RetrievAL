@@ -34,10 +34,10 @@ __inline void Attribute_undef(TSSGCtrl *this, LPCSTR Line)
 	if (attribute = TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(this)))
 	{
 		signed rel;
-		const COORD index = TSSGAttributeElement_GetViaCoord(atDEFINE, attribute).dwFontSize;
+		const COORD coord = TSSGAttributeElement_GetViaCoord(atDEFINE, attribute).dwFontSize;
 		for (TAdjustmentAttribute **cur,
-			 **base = &vector_type_at(attribute, TAdjustmentAttribute *, index.Y),
-			 **apex = base + index.X;
+			 **base = &vector_type_at(attribute, TAdjustmentAttribute *, coord.Y),
+			 **apex = base + coord.X;
 			 base < apex; )
 		{
 			cur = &base[apex - base >> 1];

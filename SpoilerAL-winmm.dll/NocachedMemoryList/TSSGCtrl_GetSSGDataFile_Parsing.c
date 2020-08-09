@@ -15,12 +15,12 @@ static uint64_t __fastcall TSSGCtrl_GetSSGDataFile_Parsing(
 	IN  TSSGCtrl      *SSGC,
 	IN  TSSGSubject   *SSGS)
 {
-	static  const char VariableName[] = "List";
+	static  const char VarName[] = "List";
 	unsigned long long StrSize;
 
-	 StrSize  = Parsing(SSGC, SSGS, &tmpV[2], sizeof(VariableName) - sizeof(VariableName[0]), VariableName, (uint64_t)Address, 0);
-	*RowSize  = Parsing(SSGC, SSGS, &tmpV[3], sizeof(VariableName) - sizeof(VariableName[0]), VariableName, (uint64_t)Address, 0);
-	*StepSize = Parsing(SSGC, SSGS, &tmpV[4], sizeof(VariableName) - sizeof(VariableName[0]), VariableName, (uint64_t)Address, 0);
+	 StrSize  = Parsing(SSGC, SSGS, &tmpV[2], sizeof(VarName) - sizeof(*VarName), VarName, (uint64_t)Address, 0);
+	*RowSize  = Parsing(SSGC, SSGS, &tmpV[3], sizeof(VarName) - sizeof(*VarName), VarName, (uint64_t)Address, 0);
+	*StepSize = Parsing(SSGC, SSGS, &tmpV[4], sizeof(VarName) - sizeof(*VarName), VarName, (uint64_t)Address, 0);
 	return StrSize << 32 | Address;// can be changed by return different value
 }
 

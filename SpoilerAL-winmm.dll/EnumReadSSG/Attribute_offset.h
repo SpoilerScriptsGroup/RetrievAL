@@ -1,33 +1,21 @@
 #include <windows.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_stack.h"
-#include "bcb6_std_string.h"
 #include "TSSGCtrl.h"
-#include "TSSGSubject.h"
-#include "TSSGAttributeElement.h"
 
 extern void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, string *line);
 
-static char const stFileNameCH[] = "<lexical>";
-bcb6_std_string const stFileName = {
-	(LPSTR)stFileNameCH,
-	(LPSTR)stFileNameCH + _countof(stFileNameCH) - 1,
-	NULL,
-	NULL,
-	stFileNameCH,
-	MAXDWORD,
-};
-
-__inline void Attribute_offset_open(TSSGCtrl *this, string *code, TSSDir *ctx)
+__inline void Attribute_offset_open(TSSGCtrl *this, string *code)
 {
 	TReplaceAttribute *replace = new_TReplaceAttribute();
 	ReplaceDefine(&this->attributeSelector, code);
 	TReplaceAttribute_Setting(replace, &this->strD, string_c_str(code));
-	if (string_equals(&replace->fileName, &stFileName))
+	if (replace->displace = string_size(&replace->fileName) >= 4 && *(LPDWORD)string_begin(&replace->fileName) == BSWAP32('*dir'))
 	{
-		replace->context = (TSSGSubject *)ctx;
-		for (list_iterator SIt = list_end(TSSGCtrl_GetAttributeSelector(this)->nowAttributeList);
-			 list_iterator_decrement(SIt) != list_end(TSSGCtrl_GetAttributeSelector(this)->nowAttributeList);)
+		replace->displace += string_size(&replace->fileName) > 6 && (*(LPDWORD)&string_at(&replace->fileName, 4) & 0x00FFFFFF) == BSWAP32('ect\0');
+		for (list_iterator SIt = list_end(this->attributeSelector.nowAttributeList);
+			 list_iterator_decrement(SIt) != list_end(this->attributeSelector.nowAttributeList);
+			 )
 			if (TSSGAttributeElement_GetType(*(TSSGAttributeElement **)SIt->_M_data) == atREPLACE)
 				SIt = list_erase(SIt);
 	}
@@ -36,9 +24,9 @@ __inline void Attribute_offset_open(TSSGCtrl *this, string *code, TSSDir *ctx)
 
 __inline void Attribute_offset_close(TSSGCtrl *this)
 {
-	static DWORD const key = atREPLACE;
-	map_iterator MIt = bcb6_std_map_find(TSSGCtrl_GetAttributeSelector(this)->stackElemMap, &key);
-	if (MIt != map_end(TSSGCtrl_GetAttributeSelector(this)->stackElemMap))
+	static const DWORD key = atREPLACE;
+	map_iterator MIt = map_find(this->attributeSelector.stackElemMap, &key);
+	if (MIt != map_end(this->attributeSelector.stackElemMap))
 	{
 		pdeque second = stack_Get_c(pair_second_aligned(MIt, key));
 		if (!deque_empty(second))
@@ -46,10 +34,10 @@ __inline void Attribute_offset_close(TSSGCtrl *this)
 			deque_iterator it = deque_end(second);
 			deque_iterator_decrement(&it, void *);
 			TReplaceAttribute *replace = *(void **)it._M_cur;
-			if (replace->context) while (deque_iterator_decrement(&it, void *), !deque_iterator_less_than(&it, &deque_begin(second)))
+			if (replace->displace) while (deque_iterator_decrement(&it, void *), !deque_iterator_less_than(&it, &deque_begin(second)))
 			{
-				list_dword_push_back(TSSGCtrl_GetAttributeSelector(this)->nowAttributeList, it._M_cur);
-				if ((*(TReplaceAttribute **)it._M_cur)->context) break;
+				list_dword_push_back(this->attributeSelector.nowAttributeList, it._M_cur);
+				if ((*(TReplaceAttribute **)it._M_cur)->displace) break;
 			}
 		}
 	}

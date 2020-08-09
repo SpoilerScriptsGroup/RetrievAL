@@ -11,13 +11,18 @@
 #define __msfastcall __fastcall
 #endif
 
-#define dtNEST      0x00000001
-#define dtESCAPE    0x00000002
-#define etTRIM_L    0x00000004
-#define etTRIM_R    0x00000008
-#define etTRIM      (etTRIM_L | etTRIM_R)
-#define etREPLACE   0x00000010
-#define etSOME_EDIT (etTRIM | etREPLACE)
+typedef enum Dealt
+{
+	dtNEST      = 0x00000001,
+	dtESCAPE    = 0x00000002,
+	etTRIM_L    = 0x00000004,
+	etTRIM_R    = 0x00000008,
+	etREPLACE   = 0x00000010,
+	etREVERSE_REPLACE = 0x20,
+} DealType;
+
+#define etTRIM      (etTRIM_L | etTRIM_R )
+#define etSOME_EDIT (etTRIM   | etREPLACE)
 
 typedef struct
 {

@@ -64,6 +64,10 @@ EXTERN_C void __cdecl TSSDoubleToggle_Write_Write3();
 EXTERN_C void __cdecl TSSBundleFloatCalc_Write_OneWrite1();
 EXTERN_C void __cdecl TSSBundleFloatCalc_Write_OneWrite2();
 EXTERN_C void __cdecl Caller_TSSGCtrl_GetAddress_SaveAddress();
+EXTERN_C void __cdecl TSSGCtrl_OneRead_with_CheckIO_FEP();
+EXTERN_C void __cdecl TSSGCtrl_OneWrite_with_CheckIO_FEP();
+
+#define IGNORE_OPEN_ERROR 0
 
 #define ADD_EAX_DWORD_PTR_EBX         (WORD )0x0303
 #define CMP_AL_IMM8                   (WORD )0x3C65
@@ -73,8 +77,8 @@ EXTERN_C void __cdecl Caller_TSSGCtrl_GetAddress_SaveAddress();
 #define LEA_EAX_EDI_MUL3              (WORD )0x048D
 #define LEA_EAX_EDI_MUL3_3RD_BYTE     (BYTE )0x7F
 #define NOP                           (BYTE )0x90
-#define NOP_X2                        (WORD )0x9090
-#define NOP_X4                        (DWORD)0x90909090
+#define NOP_X2                        (WORD )0x9066
+#define NOP_X4                        (DWORD)0x00401F0F
 #define SHL_EAX_IMM8                  (WORD )0xE0C1
 #define CALL_REL32                    (BYTE )0xE8
 #define JMP_REL32                     (BYTE )0xE9
@@ -88,8 +92,10 @@ EXTERN_C void __cdecl Attach_Parsing()
 	*(LPDWORD)(0x0041583D + 1) = (DWORD)lpSSGVersion;
 
 	// TSSBundleCalc::Read
+#if IGNORE_OPEN_ERROR
 	*(LPBYTE )0x004BD6BF = JMP_REL8;
 
+#endif
 	*(LPBYTE )0x004BDC69 = JMP_REL8;
 	*(LPBYTE )0x004BDC6A = 0x4C;
 	*(LPBYTE )0x004BDC6B = NOP;
@@ -97,8 +103,10 @@ EXTERN_C void __cdecl Attach_Parsing()
 	*(LPDWORD)(0x004BDCD4 + 1) = (DWORD)TSSBundleCalc_Read_Read - (0x004BDCD4 + 1 + sizeof(DWORD));
 
 	// TSSBundleCalc::Write
+#if IGNORE_OPEN_ERROR
 	*(LPBYTE )0x004BE004 = JMP_REL8;
 
+#endif
 	*(LPBYTE )0x004BE50D = JMP_REL8;
 	*(LPBYTE )0x004BE50E = 0x4C;
 	*(LPBYTE )0x004BE50F = NOP;
@@ -106,8 +114,10 @@ EXTERN_C void __cdecl Attach_Parsing()
 	*(LPDWORD)(0x004BE578 + 1) = (DWORD)TSSBundleCalc_Write_Write - (0x004BE578 + 1 + sizeof(DWORD));
 
 	// TSSBundleList::Read
+#if IGNORE_OPEN_ERROR
 	*(LPBYTE )0x004BF39E = JMP_REL8;
 
+#endif
 	*(LPWORD )0x004BF572 = LEA_EAX_EDI_MUL3;
 	*(LPBYTE )0x004BF574 = LEA_EAX_EDI_MUL3_3RD_BYTE;
 	*(LPWORD )0x004BF575 = SHL_EAX_IMM8;
@@ -119,8 +129,10 @@ EXTERN_C void __cdecl Attach_Parsing()
 	*(LPDWORD)(0x004BF5A8 + 1) = (DWORD)TSSBundleList_Read_OneRead - (0x004BF5A8 + 1 + sizeof(DWORD));
 
 	// TSSBundleList::Write
+#if IGNORE_OPEN_ERROR
 	*(LPBYTE )0x004BF6B5 = JMP_REL8;
 
+#endif
 	*(LPWORD )0x004BF863 = LEA_EAX_EDI_MUL3;
 	*(LPBYTE )0x004BF865 = LEA_EAX_EDI_MUL3_3RD_BYTE;
 	*(LPWORD )0x004BF866 = SHL_EAX_IMM8;
@@ -132,28 +144,38 @@ EXTERN_C void __cdecl Attach_Parsing()
 	*(LPDWORD)(0x004BF899 + 1) = (DWORD)TSSBundleList_Write_OneWrite - (0x004BF899 + 1 + sizeof(DWORD));
 
 	// TSSBundleToggle::Read
+#if IGNORE_OPEN_ERROR
 	*(LPBYTE )0x004C018A = JMP_REL8;
 
+#endif
 	*(LPDWORD)(0x004C0745 + 1) = (DWORD)TSSBundleToggle_Read_Compare - (0x004C0745 + 1 + sizeof(DWORD));
 
 	// TSSBundleToggle::Write
+#if IGNORE_OPEN_ERROR
 	*(LPBYTE )0x004C0B86 = JMP_REL8;
 
+#endif
 	*(LPDWORD)(0x004C10D3 + 1) = (DWORD)TSSBundleToggle_Write_Write - (0x004C10D3 + 1 + sizeof(DWORD));
 
 	// TSSCopy::Write
+#if IGNORE_OPEN_ERROR
 	*(LPBYTE )0x004C2AE1 = JMP_REL8;
 
+#endif
 	*(LPDWORD)(0x004C2B8C + 1) = (DWORD)TSSCopy_Write_OneRead - (0x004C2B8C + 1 + sizeof(DWORD));
+#if 0
 
 	*(LPDWORD)(0x004C2C13 + 1) = (DWORD)TSSCopy_Write_OneWrite - (0x004C2C13 + 1 + sizeof(DWORD));
 
 	*(LPDWORD)(0x004C2C63 + 1) = (DWORD)TSSCopy_Write_OneWrite - (0x004C2C63 + 1 + sizeof(DWORD));
+#endif
 
 	// TSSDoubleList::Read
+#if IGNORE_OPEN_ERROR
 	*(LPBYTE )0x004C41A3 = JMP_REL8;
 
-	*(LPDWORD)(0x004C42F5 + 1) = (DWORD)TSSDoubleList_Read_OneRead - (0x004C42F5 + 1 + sizeof(DWORD));
+#endif
+	*(LPDWORD)(0x004C42F5 + 1) = (DWORD)TSSGCtrl_OneRead_with_CheckIO_FEP - (0x004C42F5 + 1 + sizeof(DWORD));
 
 	*(LPBYTE )0x004C4617 = JMP_REL8;
 	*(LPBYTE )0x004C4618 = 0x4C;
@@ -168,9 +190,11 @@ EXTERN_C void __cdecl Attach_Parsing()
 	*(LPDWORD)(0x004C5034 + 1) = (DWORD)TSSDoubleList_Read_Compare2 - (0x004C5034 + 1 + sizeof(DWORD));
 
 	// TSSDoubleList::Write
+#if IGNORE_OPEN_ERROR
 	*(LPBYTE )0x004C52EB = JMP_REL8;
 
-	*(LPDWORD)(0x004C54FD + 1) = (DWORD)TSSDoubleList_Write_OneWrite - (0x004C54FD + 1 + sizeof(DWORD));
+#endif
+	*(LPDWORD)(0x004C54FD + 1) = (DWORD)TSSGCtrl_OneWrite_with_CheckIO_FEP - (0x004C54FD + 1 + sizeof(DWORD));
 
 	*(LPBYTE )0x004C5717 = JMP_REL8;
 	*(LPBYTE )0x004C5718 = 0x4C;
@@ -185,8 +209,10 @@ EXTERN_C void __cdecl Attach_Parsing()
 	*(LPDWORD)(0x004C60D1 + 1) = (DWORD)TSSDoubleList_Write_Write2 - (0x004C60D1 + 1 + sizeof(DWORD));
 
 	// TSSDoubleToggle::Read
+#if IGNORE_OPEN_ERROR
 	*(LPBYTE )0x004C85FB = JMP_REL8;
 
+#endif
 	*(LPBYTE )0x004C9AF3 = JMP_REL8;
 	*(LPBYTE )0x004C9AF4 = 0x56;
 	*(LPDWORD)0x004C9AF5 = NOP_X4;
@@ -196,8 +222,10 @@ EXTERN_C void __cdecl Attach_Parsing()
 	*(LPDWORD)(0x004CA540 + 1) = (DWORD)TSSDoubleToggle_Read_Compare2 - (0x004CA540 + 1 + sizeof(DWORD));
 
 	// TSSDoubleToggle::Write
+#if IGNORE_OPEN_ERROR
 	*(LPBYTE )0x004CAE89 = JMP_REL8;
 
+#endif
 	*(LPBYTE )0x004CC49C = JMP_REL8;
 	*(LPBYTE )0x004CC49D = 0x3F;
 	*(LPDWORD)0x004CC49E = NOP_X4;
@@ -430,8 +458,10 @@ EXTERN_C void __cdecl Attach_Parsing()
 	*(LPDWORD)0x005174C5 = NOP_X4;
 
 	// TSSBundleFloatCalc::Read
+#if IGNORE_OPEN_ERROR
 	*(LPBYTE )0x0052DCF3 = JMP_REL8;
 
+#endif
 	*(LPBYTE )0x0052E2A9 = JMP_REL8;
 	*(LPBYTE )0x0052E2AA = 0x4C;
 	*(LPBYTE )0x0052E2AB = NOP;
@@ -439,8 +469,10 @@ EXTERN_C void __cdecl Attach_Parsing()
 	*(LPDWORD)(0x0052E314 + 1) = (DWORD)TSSBundleFloatCalc_Read_Read - (0x0052E314 + 1 + sizeof(DWORD));
 
 	// TSSBundleFloatCalc::Write
+#if IGNORE_OPEN_ERROR
 	*(LPBYTE )0x0052E6AB = JMP_REL8;
 
+#endif
 	*(LPBYTE )0x0052E8C4 = JMP_REL8;
 	*(LPBYTE )0x0052E8C5 = 0x4C;
 	*(LPBYTE )0x0052E8C6 = NOP;

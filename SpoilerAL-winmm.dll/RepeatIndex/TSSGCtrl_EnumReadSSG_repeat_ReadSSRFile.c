@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <assert.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "TSSGCtrl.h"
 #include "SSGSubjectProperty.h"
@@ -7,7 +8,7 @@ extern DWORD RepeatDepth;
 
 void __stdcall repeat_ReadSSRFile(
 	TSSGCtrl     *this,
-	LPVOID       ParentStack,
+	stack        *ParentStack,
 	LPVOID       ADJElem,
 	const string *LineS,
 	DWORD        RepeatIndex,
@@ -21,7 +22,7 @@ void __stdcall repeat_ReadSSRFile(
 	TSSGCtrl_ReadSSRFile(&tmpV, this, LineS, &indices, SSGS);
 	if (!vector_empty(&tmpV))
 	{
-		if (!vector_empty(&indices))
+		if (vector_size(&indices) > 1)
 		{
 			DWORD               outer;
 			TSSGSubjectProperty *prop;
@@ -35,23 +36,22 @@ void __stdcall repeat_ReadSSRFile(
 				outer = SSGS->propertyIndex;
 			else if (prop = GrowSubjectProperty(&outer))
 			{
+				prop->OuterRepeat  = OuterRepeat;
 				prop->RepeatDepth  = RepeatDepth;
 				prop->RepeatIndex  = RepeatIndex;
-				prop->OuterRepeat  = OuterRepeat;
 			}
 			RepeatDepth++;
 			it = vector_begin(&tmpV);
 			repeat = vector_begin(&indices);
-			elementSize = vector_byte_size(&tmpV) / vector_size(&indices);
+			elementSize = *(repeat++);
+			assert(vector_size(&tmpV) == (vector_size(&indices) - 1) * elementSize);
 			do
 			{
-				vector_string constElem;
+				vector_string constElem = { ._M_start = it, ._M_end_of_storage = it };
 
-				vector_begin(&constElem) = it;
-				(LPBYTE)it += elementSize;
-				vector_end_of_storage(&constElem) = vector_end(&constElem) = (string *)it;
+				constElem._M_finish = it += elementSize;
 				TSSGCtrl_EnumReadSSG(this, &constElem, ParentStack, ADJElem, *(repeat++), outer);
-			} while (it != vector_end(&tmpV));
+			} while (it < vector_end(&tmpV));
 			RepeatDepth--;
 		}
 		else

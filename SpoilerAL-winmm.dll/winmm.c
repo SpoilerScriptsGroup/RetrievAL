@@ -26,8 +26,9 @@ static LPCSTR ExportNames[] = {
 	#define NAMED(name, index) #name,
 	#define UNNAMED(ordinal, index) MAKEINTRESOURCEA(ordinal),
 	#include "export.h"
+	NULL,
 };
-static FARPROC ExportAddresses[_countof(ExportNames)];
+static FARPROC ExportAddresses[_countof(ExportNames) - 1];
 
 HANDLE         hHeap  = NULL;
 HANDLE         pHeap  = NULL;
@@ -204,7 +205,7 @@ static __inline void InitializeExportFunctions()
 	i = 0;
 	do
 		ExportAddresses[i] = GetProcAddress(hWinMM, ExportNames[i]);
-	while (++i != _countof(ExportNames));
+	while (++i != _countof(ExportAddresses));
 }
 
 /***********************************************************************

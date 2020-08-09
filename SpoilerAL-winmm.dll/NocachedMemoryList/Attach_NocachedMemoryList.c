@@ -41,7 +41,7 @@ static __declspec(naked) void __cdecl TSSGCtrl_SetSSGDataFile_LowerStub(
 		align 16
 	CONTINUE:
 		jmp   TStringDivision_Lower
-			ud2
+		ud2
 	}
 }
 

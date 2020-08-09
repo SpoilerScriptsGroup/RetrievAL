@@ -1,4 +1,5 @@
 #include <windows.h>
+#include "TSSGSubject.h"
 
 static __declspec(naked) void __fastcall TSSDoubleList_SwitchStatus(unsigned long Index, void* ListFile)
 {
@@ -19,8 +20,9 @@ static __declspec(naked) void __fastcall TSSDoubleList_SwitchStatus(unsigned lon
 		cmove   edx, dword ptr [AddressTable + 0x08]
 		test    cl, cl
 		cmovz   edx, dword ptr [AddressTable + 0x0C]
-		mov     eax, 4// ssgCtrl::reINDEX_ERROR
+		mov     eax, reINDEX_ERROR
 		jmp     edx
+		ud2
 
 		#undef Index
 		#undef ListFile

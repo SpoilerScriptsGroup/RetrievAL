@@ -5,18 +5,15 @@
 #include "bcb6_std_string.h"
 #include "bcb6_std_map.h"
 #include "TStringDivision.h"
-#include "TSSGSubject.h"
 
-typedef bool(__cdecl *const LPFN_TSSGATTRIBUTEELEMENT_ISEQUAL)(LPCVOID elem1, LPCVOID elem2);
-#define TSSGAttributeElement_IsEqual(elem1, elem2) (*(LPFN_TSSGATTRIBUTEELEMENT_ISEQUAL **)(elem1))[1]((LPCVOID)(elem1), (LPCVOID)(elem2))
-
-typedef enum AttrType {
-	//atUNKNOWN,
+typedef enum Attribute
+{
+//	atUNKNOWN,
 	atDIR_LEVEL    = 1,
 	atADJUST       = 2,
 	atREPLACE      = 4,
 	atSIZE         = 8,
-	atALL          = 15,
+//	atALL          = atDIR_LEVEL | atADJUST | atREPLACE | atSIZE,
 	atFUNNEL       = 16,
 	atIO_FEP       = 32,
 	atE_WITH       = 64,
@@ -29,22 +26,55 @@ typedef enum AttrType {
 	atON_ERROR     = 0x2000,
 	atSCOPE        = 0x4000,
 	atFORMAT       = 0x8000,
-} AtType;// for debugger
+	atREPEAT       = 0x00010000,
+} AeType;// for debugger
 
-EXTERN_C CONSOLE_FONT_INFO __fastcall TSSGAttributeElement_GetViaCoord(AtType Type, const bcb6_std_vector *AttrV);
+#define atALL (atDIR_LEVEL | atADJUST | atREPLACE | atSIZE)
+
+typedef enum Adjuster
+{
+	asADJUSTED  = 1,
+	asCHECK_SUM = 2,
+	asHEAP      = 4,
+	asSEARCHING = 8,
+} AdjState;
+
+typedef enum Accuracy
+{
+	acHEAP   = 1,
+	acCRC       ,
+	acSEARCH    ,
+	acDIALOG    ,
+} AdjCheck;
+
+EXTERN_C CONSOLE_FONT_INFO __fastcall TSSGAttributeElement_GetViaCoord(AeType Type, const bcb6_std_vector *AttrV);
+
+typedef struct TSSGAttributeElementVtbl
+{
+	void(__cdecl *const dtor)(void *this, enum flagsClean);
+	bool(__cdecl *const IsEqual)(void *this, const void *X);
+	bool(__cdecl *const IsUpper)(void *this, const void *X);
+
+	void(__cdecl *const Setting)(void *this, struct _TSSGCtrl *SSGCtrl, const char *Code);
+	void(__cdecl *const SetAdjusted)(void *this, bool Flag, unsigned long Val);
+
+	unsigned long(__cdecl *const Adjustment)(void *this, struct _TSSGCtrl *SSGCtrl);
+} AeVtbl;
+
+#define TSSGAttributeElement_IsEqual(elem1, elem2) (elem1)->VTable->IsEqual(elem1, elem2)
 
 //---------------------------------------------------------------------
 //「クラス宣言」
 //---------------------------------------------------------------------
 #pragma pack(push, 1)
 typedef struct _TSSGAttributeElement {
-	LPVOID *VTable;
-	AtType type;
+	AeVtbl *VTable;
+	AeType type;
 } TSSGAttributeElement;
 #pragma pack(pop)
 
 #define _TSSGAttributeElement_VTable 0x006151C0
-#define TSSGAttributeElement_VTable  ((LPVOID *)_TSSGAttributeElement_VTable)
+#define TSSGAttributeElement_VTable  ((void *)_TSSGAttributeElement_VTable)
 __inline TSSGAttributeElement * TSSGAttributeElement_ctor(TSSGAttributeElement *this)
 {
 	this->VTable = TSSGAttributeElement_VTable;
@@ -65,26 +95,26 @@ EXTERN_C void __fastcall delete_TSSGAttributeElement(TSSGAttributeElement *this)
 typedef struct _TDirAttribute {
 	union {
 		struct {
-			LPVOID *VTable;
-			AtType type;
+			AeVtbl *VTable;
+			AeType type;
 		};
 		TSSGAttributeElement super;
 	};
 	unsigned long level;
 	size_t        identity;
-	struct _TSSGSubject *ref;
+	void          *arbitrary;
 } TDirAttribute;
 #pragma pack(pop)
 
 #define _TDirAttribute_VTable 0x006403A8
-#define TDirAttribute_VTable  ((LPVOID *)_TDirAttribute_VTable)
+#define TDirAttribute_VTable  ((void *)_TDirAttribute_VTable)
 __inline TDirAttribute * TDirAttribute_ctor(TDirAttribute *this)
 {
 	this->VTable = TDirAttribute_VTable;
 	this->type = atDIR_LEVEL;
 	this->level = 0;
 	this->identity = 0;
-	this->ref = NULL;
+	this->arbitrary = NULL;
 	return this;
 }
 __inline void TDirAttribute_dtor(TDirAttribute *this)
@@ -101,8 +131,8 @@ EXTERN_C void __fastcall delete_TDirAttribute(TDirAttribute *this);
 typedef struct _TSizeAttribute {
 	union {
 		struct {
-			LPVOID *VTable;
-			AtType type;
+			AeVtbl *VTable;
+			AeType type;
 		};
 		TSSGAttributeElement super;
 	};
@@ -111,7 +141,7 @@ typedef struct _TSizeAttribute {
 #pragma pack(pop)
 
 #define _TSizeAttribute_VTable 0x00640378
-#define TSizeAttribute_VTable  ((LPVOID *)_TSizeAttribute_VTable)
+#define TSizeAttribute_VTable  ((void *)_TSizeAttribute_VTable)
 __inline TSizeAttribute * TSizeAttribute_ctor(TSizeAttribute *this)
 {
 	this->VTable = TSizeAttribute_VTable;
@@ -133,20 +163,20 @@ EXTERN_C void __fastcall delete_TSizeAttribute(TSizeAttribute *this);
 typedef struct _TReplaceAttribute {
 	union {
 		struct {
-			LPVOID *VTable;
-			AtType type;
+			AeVtbl *VTable;
+			AeType type;
 		};
 		TSSGAttributeElement super;
 	};
 	bcb6_std_string offsetCode;
 	bcb6_std_string fileName;
 	unsigned long   offsetNum;
-	struct _TSSGSubject *context;
+	BOOL            displace;
 } TReplaceAttribute, TFormatAttribute;
 #pragma pack(pop)
 
 #define _TReplaceAttribute_VTable 0x00640390
-#define TReplaceAttribute_VTable  ((LPVOID *)_TReplaceAttribute_VTable)
+#define TReplaceAttribute_VTable  ((void *)_TReplaceAttribute_VTable)
 __inline TReplaceAttribute * TReplaceAttribute_ctor(TReplaceAttribute *this)
 {
 	this->VTable = TReplaceAttribute_VTable;
@@ -154,7 +184,7 @@ __inline TReplaceAttribute * TReplaceAttribute_ctor(TReplaceAttribute *this)
 	bcb6_std_string_ctor(&this->offsetCode);
 	bcb6_std_string_ctor(&this->fileName);
 	this->offsetNum = 0;
-	this->context = NULL;
+	this->displace = FALSE;
 	return this;
 }
 __inline void TReplaceAttribute_dtor(TReplaceAttribute *this)
@@ -172,8 +202,8 @@ EXTERN_C void(__cdecl * const TReplaceAttribute_Setting)(TReplaceAttribute *, TS
 typedef struct _TFunnelAttribute {
 	union {
 		struct {
-			LPVOID *VTable;
-			AtType type;
+			AeVtbl *VTable;
+			AeType type;
 		};
 		TSSGAttributeElement super;
 	};
@@ -182,7 +212,7 @@ typedef struct _TFunnelAttribute {
 #pragma pack(pop)
 
 #define _TFunnelAttribute_VTable 0x0064033C
-#define TFunnelAttribute_VTable  ((LPVOID *)_TFunnelAttribute_VTable)
+#define TFunnelAttribute_VTable  ((void *)_TFunnelAttribute_VTable)
 __inline TFunnelAttribute * TFunnelAttribute_ctor(TFunnelAttribute *this)
 {
 	this->VTable = TFunnelAttribute_VTable;
@@ -205,8 +235,8 @@ EXTERN_C void __fastcall delete_TFunnelAttribute(TFunnelAttribute *this);
 typedef struct _TIO_FEPAttribute {
 	union {
 		struct {
-			LPVOID *VTable;
-			AtType type;
+			AeVtbl *VTable;
+			AeType type;
 		};
 		TSSGAttributeElement super;
 	};
@@ -216,7 +246,7 @@ typedef struct _TIO_FEPAttribute {
 #pragma pack(pop)
 
 #define _TIO_FEPAttribute_VTable 0x00640324
-#define TIO_FEPAttribute_VTable  ((LPVOID *)_TIO_FEPAttribute_VTable)
+#define TIO_FEPAttribute_VTable  ((void *)_TIO_FEPAttribute_VTable)
 __inline TIO_FEPAttribute * TIO_FEPAttribute_ctor(TIO_FEPAttribute *this)
 {
 	this->VTable = TIO_FEPAttribute_VTable;
@@ -244,8 +274,8 @@ EXTERN_C void(__cdecl * const TIO_FEPAttribute_Setting)(TIO_FEPAttribute *this, 
 typedef struct _TEndWithAttribute {
 	union {
 		struct {
-			LPVOID *VTable;
-			AtType type;
+			AeVtbl *VTable;
+			AeType type;
 		};
 		TSSGAttributeElement super;
 	};
@@ -254,7 +284,7 @@ typedef struct _TEndWithAttribute {
 #pragma pack(pop)
 
 #define _TEndWithAttribute_VTable 0x0064030C
-#define TEndWithAttribute_VTable  ((LPVOID *)_TEndWithAttribute_VTable)
+#define TEndWithAttribute_VTable  ((void *)_TEndWithAttribute_VTable)
 __inline TEndWithAttribute * TEndWithAttribute_ctor(TEndWithAttribute *this)
 {
 	this->VTable = TEndWithAttribute_VTable;
@@ -281,8 +311,8 @@ EXTERN_C void __fastcall delete_TEndWithAttribute(TEndWithAttribute *this);
 typedef struct _TEnabledAttribute {
 	union {
 		struct {
-			LPVOID *VTable;
-			AtType type;
+			AeVtbl *VTable;
+			AeType type;
 		};
 		TSSGAttributeElement super;
 	};
@@ -291,7 +321,7 @@ typedef struct _TEnabledAttribute {
 #pragma pack(pop)
 
 #define _TEnabledAttribute_VTable 0x006402F4
-#define TEnabledAttribute_VTable  ((LPVOID *)_TEnabledAttribute_VTable)
+#define TEnabledAttribute_VTable  ((void *)_TEnabledAttribute_VTable)
 __inline TEnabledAttribute * TEnabledAttribute_ctor(TEnabledAttribute *this)
 {
 	this->VTable = TEnabledAttribute_VTable;
@@ -314,23 +344,29 @@ EXTERN_C void __fastcall delete_TEnabledAttribute(TEnabledAttribute *this);
 typedef struct _TChildRWAttribute {
 	union {
 		struct {
-			LPVOID *VTable;
-			AtType type;
+			AeVtbl *VTable;
+			AeType type;
 		};
 		TSSGAttributeElement super;
 	};
 	unsigned char prohibit;
-	BYTE          padding[3];
+	bool          spAccept;
+	bool          spIgnore;
+	BYTE          reserved;
 } TChildRWAttribute, TOnErrorAttribute;
 #pragma pack(pop)
 
 #define _TChildRWAttribute_VTable 0x006402C4
-#define TChildRWAttribute_VTable  ((LPVOID *)_TChildRWAttribute_VTable)
+#define TChildRWAttribute_VTable  ((void *)_TChildRWAttribute_VTable)
 __inline TChildRWAttribute * TChildRWAttribute_ctor(TChildRWAttribute *this)
 {
+	extern BOOL ExtensionTSSDir;
+
 	this->VTable = TChildRWAttribute_VTable;
 	this->type = atCHILD_RW;
-	this->prohibit = 0;
+	*(BOOL *)&this->prohibit = FALSE;
+	this->spAccept = ExtensionTSSDir;
+	this->spIgnore = TRUE;
 	return this;
 }
 __inline void TChildRWAttribute_dtor(TChildRWAttribute *this)
@@ -338,7 +374,7 @@ __inline void TChildRWAttribute_dtor(TChildRWAttribute *this)
 }
 EXTERN_C TChildRWAttribute * __cdecl new_TChildRWAttribute();
 EXTERN_C void __fastcall delete_TChildRWAttribute(TChildRWAttribute *this);
-EXTERN_C void __cdecl TChildRWAttribute_Setting(TChildRWAttribute *this, LPVOID Reserved, const char *Code);
+EXTERN_C void __cdecl TChildRWAttribute_Setting(TChildRWAttribute *this, void *StrD, const char *Code);
 //----------------------------------------------------------------------------
 //「注意事項指定属性クラス」
 //----------------------------------------------------------------------------
@@ -346,8 +382,8 @@ EXTERN_C void __cdecl TChildRWAttribute_Setting(TChildRWAttribute *this, LPVOID 
 typedef struct _TCautionAttribute {
 	union {
 		struct {
-			LPVOID *VTable;
-			AtType type;
+			AeVtbl *VTable;
+			AeType type;
 		};
 		TSSGAttributeElement super;
 	};
@@ -356,7 +392,7 @@ typedef struct _TCautionAttribute {
 #pragma pack(pop)
 
 #define _TCautionAttribute_VTable 0x006402AC
-#define TCautionAttribute_VTable  ((LPVOID *)_TCautionAttribute_VTable)
+#define TCautionAttribute_VTable  ((void *)_TCautionAttribute_VTable)
 __inline TCautionAttribute * TCautionAttribute_ctor(TCautionAttribute *this)
 {
 	this->VTable = TCautionAttribute_VTable;
@@ -379,8 +415,8 @@ EXTERN_C void __fastcall delete_TCautionAttribute(TCautionAttribute *this);
 typedef struct _TAdjustCheckAttribute {
 	union {
 		struct {
-			LPVOID *VTable;
-			AtType type;
+			AeVtbl *VTable;
+			AeType type;
 		};
 		TSSGAttributeElement super;
 	};
@@ -391,7 +427,7 @@ typedef struct _TAdjustCheckAttribute {
 #pragma pack(pop)
 
 #define _TAdjustCheckAttribute_VTable 0x006402DC
-#define TAdjustCheckAttribute_VTable  ((LPVOID *)_TAdjustCheckAttribute_VTable)
+#define TAdjustCheckAttribute_VTable  ((void *)_TAdjustCheckAttribute_VTable)
 __inline TAdjustCheckAttribute * TAdjustCheckAttribute_ctor(TAdjustCheckAttribute *this)
 {
 	this->VTable = TAdjustCheckAttribute_VTable;
@@ -413,24 +449,35 @@ EXTERN_C void(__cdecl * const TAdjustCheckAttribute_Setting)(TAdjustCheckAttribu
 typedef struct _TAdjustmentAttribute {
 	union {
 		struct {
-			LPVOID *VTable;
-			AtType type;
+			AeVtbl *VTable;
+			AeType type;
 		};
 		TSSGAttributeElement super;
 	};
 	union
 	{
-		ULONG     status;
+		AdjState  status;
 		LPCSTR    c_str;
 	};
-	unsigned long checkType;
+	AdjCheck      checkType;
 	unsigned long adjustVal;
 	unsigned      seqElement;// define here for convenience' sake.
 } TAdjustmentAttribute, TSimpleAdjustmentAttribute;
 #pragma pack(pop)
 
+#define _TAdjustmentAttribute_VTable 0x006151D8
+#define TAdjustmentAttribute_VTable  ((void *)_TAdjustmentAttribute_VTable)
+__inline TAdjustmentAttribute *TRepeatAttribute_ctor(TAdjustmentAttribute *this)
+{
+	this->VTable = TAdjustmentAttribute_VTable;
+	this->type = atADJUST;
+	this->status = 0;
+	this->checkType = 0;
+	return this;
+}
 #define TAdjustmentAttribute_Setting(Attr, SSGC, Code) \
-	((void(__cdecl *)(void *, void *, const char *))(Attr)->VTable[3])(Attr, SSGC, Code)
+	(Attr)->VTable->Setting(Attr, SSGC, Code)
+
 //----------------------------------------------------------------------------
 //「ヒープ補正属性クラス」
 //----------------------------------------------------------------------------
@@ -438,8 +485,8 @@ typedef struct _TAdjustmentAttribute {
 typedef struct _THeapAdjustmentAttribute {
 	union {
 		struct {
-			LPVOID *VTable;
-			AtType type;
+			AeVtbl *VTable;
+			AeType type;
 		};
 		TAdjustmentAttribute super;
 	};
@@ -449,16 +496,16 @@ typedef struct _THeapAdjustmentAttribute {
 //----------------------------------------------------------------------------
 typedef struct value_type
 {
-	const    long unsigned Identity;
+	const   unsigned long Identifier;
 #pragma pack(push, 4)
 	union
 	{
 		struct
 		{
-			 long unsigned Low;
-			 long unsigned High;
+			unsigned long Low;
+			unsigned long High;
 		};
-		long long unsigned Quad;
+		signed  long long Quad;
 	};
 #pragma pack(pop)
 } ScopeVariant;
@@ -469,8 +516,8 @@ typedef struct value_type
 typedef struct _TCRCAdjustmentAttribute {
 	union {
 		struct {
-			LPVOID *VTable;
-			AtType type;
+			AeVtbl *VTable;
+			AeType type;
 		};
 		TSimpleAdjustmentAttribute super;
 	};
@@ -484,8 +531,8 @@ typedef struct _TCRCAdjustmentAttribute {
 typedef struct _TSearchAdjustmentAttribute {
 	union {
 		struct {
-			LPVOID *VTable;
-			AtType type;
+			AeVtbl *VTable;
+			AeType type;
 		};
 		TSimpleAdjustmentAttribute super;
 	};
@@ -505,8 +552,8 @@ typedef struct _TSearchAdjustmentAttribute {
 typedef struct _TDialogAdjustmentAttribute {
 	union {
 		struct {
-			LPVOID          *VTable;
-			AtType          type;
+			AeVtbl *VTable;
+			AeType type;
 		};
 		TSearchAdjustmentAttribute super;
 	};

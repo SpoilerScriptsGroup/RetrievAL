@@ -97,7 +97,7 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 									NCount++;
 									continue;
 								}
-								if (SrcIt[0] == string_at(&this->nestEndTag, 0) && (NestStartTagLength <= 1 || SrcIt[1] == string_at(&this->nestEndTag, 1)))
+								if (SrcIt[0] == string_at(&this->nestEndTag, 0) && (NestEndTagLength <= 1 || SrcIt[1] == string_at(&this->nestEndTag, 1)))
 								{
 									// ネスト(一段)解除
 									SrcIt += NestEndTagLength;
@@ -154,7 +154,7 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 							NCount++;
 							continue;
 						}
-						if (SrcIt[0] == string_at(&this->nestEndTag, 0) && (NestStartTagLength <= 1 || SrcIt[1] == string_at(&this->nestEndTag, 1)))
+						if (SrcIt[0] == string_at(&this->nestEndTag, 0) && (NestEndTagLength <= 1 || SrcIt[1] == string_at(&this->nestEndTag, 1)))
 						{
 							// ネスト(一段)解除
 							SrcIt += NestEndTagLength;

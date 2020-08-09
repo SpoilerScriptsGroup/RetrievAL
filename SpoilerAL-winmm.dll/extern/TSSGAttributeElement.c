@@ -110,21 +110,21 @@ void __fastcall delete_TChildRWAttribute(TChildRWAttribute *this)
 	operator_delete(this);
 }
 
-void __cdecl TChildRWAttribute_Setting(TChildRWAttribute *this, LPVOID Reserved, const char *Code)
+void __cdecl TChildRWAttribute_Setting(TChildRWAttribute *this, TStringDivision *StrD, const char *Code)
 {
-	char c;
-
-	this->prohibit = 0;
-	while ((c = *(Code++)) == ' ' || c == '\t');
-	if (c         != 'f' ||
-	    *(Code++) != 'a' ||
-	    *(Code++) != 'l' ||
-	    *(Code++) != 's' ||
-	    *(Code++) != 'e')
-		return;
-	while ((c = *(Code++)) == ' ' || c == '\t');
-	if (!c)
-		this->prohibit = 1;
+	string Token, Src = { (LPSTR)Code, (LPSTR)Code + strlen(Code), NULL, NULL, Code, MAXDWORD };
+	vector_string tmpV = { NULL };
+	string_ctor_assign_char(&Token, ',');
+	{
+		const size_t argc = TStringDivision_List(StrD, &Src, Token, &tmpV, etTRIM);
+		if (argc > 0)
+			this->prohibit = !strncmp(string_c_str(&vector_at(&tmpV, 0)), "false", 6);
+		if (argc > 1)
+			this->spAccept = !strncmp(string_c_str(&vector_at(&tmpV, 1)), "true", 5);
+		if (argc > 2)
+			this->spIgnore = !strncmp(string_c_str(&vector_at(&tmpV, 2)), "true", 5);
+		vector_string_dtor(&tmpV);
+	}
 }
 
 TCautionAttribute * __cdecl new_TCautionAttribute()

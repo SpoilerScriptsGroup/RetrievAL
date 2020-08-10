@@ -716,6 +716,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 				TReplaceAttribute *NewAElem;
 				vector_string     *tmpL;
 				string            FName, DefaultExt;
+				LPSTR             end;
 
 				string_ctor_assign_cstr_with_length(&LineS, p, string_end(it) - p);
 				ReplaceDefine(&this->attributeSelector, &LineS);
@@ -732,12 +733,16 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 					break;
 				}
 				// [replace]属性を追加
-				TSSGAttributeSelector_AddElement(&this->attributeSelector, NewAElem);
+				if (NewAElem->offsetNum || (strtoul(string_c_str(&NewAElem->offsetCode), &end, 0), end) != string_end(&NewAElem->offsetCode))
+					TSSGAttributeSelector_AddElement(&this->attributeSelector, NewAElem);
+				else
+					delete_TReplaceAttribute(NewAElem), NewAElem = NULL;
 
 				// 再帰
 				TSSGCtrl_EnumReadSSG(this, tmpL, ParentStack, ADJElem, RepeatIndex, OuterRepeat);
 				// 帰ってきたので、[replace]属性を外す
-				TSSGAttributeSelector_EraseElementByType(&this->attributeSelector, atREPLACE);
+				if (NewAElem)
+					TSSGAttributeSelector_EraseElementByType(&this->attributeSelector, atREPLACE);
 			}
 			break;
 

@@ -411,3 +411,59 @@ __declspec(naked) unsigned char __fastcall _subborrow_u64(unsigned char b_in, ui
 	}
 }
 #endif
+
+#ifndef _M_X64
+unsigned __int64 __msreturn __stdcall _udiv128(unsigned __int64 highDividend, unsigned __int64 lowDividend, unsigned __int64 divisor, unsigned __int64 *remainder)
+{
+	uint64_t quatient;
+
+	quatient = 0;
+	if (highDividend && (highDividend %= divisor))
+	{
+		unsigned long shift, index;
+		uint64_t lowSubtrahend, highSubtrahend;
+		uint64_t partial;
+
+		_BitScanReverse64(&shift, (uint32_t)divisor);
+		_BitScanReverse64(&index, (uint32_t)highDividend);
+		partial = UINT64_C(1) << 63;
+		if (shift -= index)
+			partial >>= shift - 1;
+		else
+			shift++;
+		highSubtrahend = divisor >> shift;
+		lowSubtrahend = divisor << (64 - shift);
+		for (; ; partial >>= 1, lowSubtrahend = __shiftright128(lowSubtrahend, highSubtrahend, 1), highSubtrahend >>= 1)
+		{
+			if (_subborrow_u64(
+					_subborrow_u64(
+						0,
+						lowDividend,
+						lowSubtrahend,
+						&lowDividend),
+					highDividend,
+					highSubtrahend,
+					&highDividend))
+			{
+				_addcarry_u64(
+					_addcarry_u64(
+						0,
+						lowDividend,
+						lowSubtrahend,
+						&lowDividend),
+					highDividend,
+					highSubtrahend,
+					&highDividend);
+			}
+			else
+			{
+				quatient |= partial;
+				if (!highDividend)
+					break;
+			}
+		}
+	}
+	*remainder = lowDividend % divisor;
+	return quatient + lowDividend / divisor;
+}
+#endif

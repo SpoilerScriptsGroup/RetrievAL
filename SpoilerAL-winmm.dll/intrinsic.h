@@ -820,7 +820,6 @@ __forceinline unsigned char _subborrow_u64(unsigned char b_in, uint64_t a, uint6
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310
 #pragma intrinsic(__emul)
-#pragma intrinsic(__emulu)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
 __forceinline __int64 __emul(int a, int b)
 {
@@ -831,6 +830,15 @@ __forceinline __int64 __emul(int a, int b)
 		imul    edx
 	}
 }
+#elif defined(__BORLANDC__)
+__int64 __msreturn __fastcall __emul(int a, int b);
+#else
+#define __emul(a, b) ((int64_t)(int)(a) * (int)(b))
+#endif
+
+#if defined(_MSC_VER) && _MSC_VER >= 1310
+#pragma intrinsic(__emulu)
+#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
 __forceinline unsigned __int64 __emulu(unsigned int a, unsigned int b)
 {
 	__asm
@@ -841,10 +849,8 @@ __forceinline unsigned __int64 __emulu(unsigned int a, unsigned int b)
 	}
 }
 #elif defined(__BORLANDC__)
-__int64 __msreturn __fastcall __emul(int a, int b);
 unsigned __int64 __msreturn __fastcall __emulu(unsigned int a, unsigned int b);
 #else
-#define __emul(a, b) ((int64_t)(int)(a) * (int)(b))
 #define __emulu(a, b) ((uint64_t)(unsigned int)(a) * (unsigned int)(b))
 #endif
 
@@ -893,40 +899,69 @@ __forceinline unsigned __int64 _umul128(unsigned __int64 Multiplicand, unsigned 
 	*HighProduct += __emulu(Multiplicand >> 32, Multiplier >> 32);
 	return LowProduct;
 }
+#if defined(_M_IX86)
 __forceinline __int64 _mul128(__int64 Multiplicand, __int64 Multiplier, __int64 *HighProduct)
 {
-	uint32_t a, b, sign;
+	uint32_t Sign, MultiplierSign;
 	uint64_t LowProduct;
 
-	a = (int32_t)((uint64_t)Multiplicand >> 32) >> 31;
-	Multiplicand ^= ((uint64_t)a << 32) | a;
-	Multiplicand -= ((uint64_t)a << 32) | a;
-	b = (int32_t)((uint64_t)Multiplier >> 32) >> 31;
-	Multiplier ^= ((uint64_t)b << 32) | b;
-	Multiplier -= ((uint64_t)b << 32) | b;
-	sign = a ^ b;
+	Sign = (int32_t)((uint64_t)Multiplicand >> 32) >> 31;
+	Multiplicand ^= ((uint64_t)Sign << 32) | Sign;
+	Multiplicand -= ((uint64_t)Sign << 32) | Sign;
+	MultiplierSign = (int32_t)((uint64_t)Multiplier >> 32) >> 31;
+	Multiplier ^= ((uint64_t)MultiplierSign << 32) | MultiplierSign;
+	Multiplier -= ((uint64_t)MultiplierSign << 32) | MultiplierSign;
+	Sign ^= MultiplierSign;
 	LowProduct = _umul128(Multiplicand, Multiplier, HighProduct);
-	LowProduct ^= ((uint64_t)sign << 32) | sign;
-	*HighProduct ^= ((uint64_t)sign << 32) | sign;
+	LowProduct ^= ((uint64_t)Sign << 32) | Sign;
+	*HighProduct ^= ((uint64_t)Sign << 32) | Sign;
 	_subborrow_u32(
 		_subborrow_u32(
 			_subborrow_u32(
 				_subborrow_u32(
 					0,
 					*(uint32_t *)&LowProduct,
-					sign,
+					Sign,
 					(uint32_t *)&LowProduct),
 				*((uint32_t *)&LowProduct + 1),
-				sign,
+				Sign,
 				(uint32_t *)&LowProduct + 1),
 			*(uint32_t *)HighProduct,
-			sign,
+			Sign,
 			(uint32_t *)HighProduct),
 		*((uint32_t *)HighProduct + 1),
-		sign,
+		Sign,
 		(uint32_t *)HighProduct + 1);
 	return LowProduct;
 }
+#else
+__forceinline __int64 _mul128(__int64 Multiplicand, __int64 Multiplier, __int64 *HighProduct)
+{
+	uint64_t Sign, MultiplierSign;
+	uint64_t LowProduct;
+
+	Sign = Multiplicand >> 63;
+	Multiplicand ^= Sign;
+	Multiplicand -= Sign;
+	MultiplierSign = Multiplier >> 63;
+	Multiplier ^= MultiplierSign;
+	Multiplier -= MultiplierSign;
+	Sign ^= MultiplierSign;
+	LowProduct = _umul128(Multiplicand, Multiplier, HighProduct);
+	LowProduct ^= Sign;
+	*HighProduct ^= Sign;
+	_subborrow_u64(
+		_subborrow_u64(
+			0,
+			LowProduct,
+			Sign,
+			&LowProduct),
+		*HighProduct,
+		Sign,
+		HighProduct);
+	return LowProduct;
+}
+#endif
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1920

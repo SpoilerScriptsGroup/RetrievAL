@@ -92,34 +92,10 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 #ifdef _UNICODE
 		test    eax, eax                                    // is not string empty?
 		lea     edi, [edi + eax * size TCHAR]               // edi points to last null char - 4
-		mov     eax, esi                                    // return value: string addr
-		jnz     entry
-		pop     ecx
-		jmp     done
-
-		align   16
-	lupe:
-		mov     ecx, dword ptr [esi]                        // get front chars...
-		mov     edx, dword ptr [edi]                        //   and end chars
-		rol     ecx, 16                                     // swap front chars...
-		add     esi, 4                                      //   and moves down
-		rol     edx, 16                                     // swap end chars...
-		sub     edi, 4                                      //   and moves up
-		mov     dword ptr [esi - 4], edx                    // put front chars in end...
-		mov     dword ptr [edi + 4], ecx                    //   and end chars at front
-	entry:
-		cmp     esi, edi                                    // see if pointers have crossed yet
-		jb      lupe                                        // exit when pointers meet (or cross)
-
-		pop     ecx
-		jne     done
-		mov     t(c), tchar ptr [esi]                       // get front char...
-		mov     t(d), tchar ptr [edi + 4 - size TCHAR]      //   and end char
-		mov     tchar ptr [esi], t(d)                       // put front char in end...
-		mov     tchar ptr [edi + 4 - size TCHAR], t(c)      //   and end char at front
 #else
 		add     edi, eax                                    // edi points to last null char - 4
 		test    eax, eax                                    // is not string empty?
+#endif
 		mov     eax, esi                                    // return value: string addr
 		jnz     entry
 		pop     ecx
@@ -129,16 +105,29 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 	lupe:
 		mov     ecx, dword ptr [esi]                        // get front chars...
 		mov     edx, dword ptr [edi]                        //   and end chars
+#ifdef _UNICODE
+		rol     ecx, 16                                     // swap front chars...
+		rol     edx, 16                                     //   and end chars
+#else
 		bswap   ecx                                         // swap front chars...
 		bswap   edx                                         //   and end chars
-		mov     dword ptr [edi], ecx                        // put end chars in front...
+#endif
+		mov     dword ptr [edi], ecx                        // put front chars in end...
 		sub     edi, 4                                      //   and moves down
-		mov     dword ptr [esi], edx                        // put front chars in end...
+		mov     dword ptr [esi], edx                        // put end chars in front...
 		add     esi, 4                                      //   and moves up
 	entry:
 		cmp     esi, edi                                    // see if pointers have crossed yet
 		jb      lupe                                        // exit when pointers meet (or cross)
 
+#ifdef _UNICODE
+		pop     ecx
+		jne     done
+		mov     t(c), tchar ptr [esi]                       // get front char...
+		mov     t(d), tchar ptr [edi + 4 - size TCHAR]      //   and end char
+		mov     tchar ptr [esi], t(d)                       // put end char in front...
+		mov     tchar ptr [edi + 4 - size TCHAR], t(c)      //   and front char at end
+#else
 		pop     ecx
 		jne     less_than_dword
 		mov     ecx, dword ptr [esi]                        // get chars
@@ -153,20 +142,20 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		jbe     done
 		mov     t(c), tchar ptr [esi]                       // get front char...
 		mov     t(d), tchar ptr [esi + edi]                 //   and end char
-		mov     tchar ptr [esi], t(d)                       // put front char in end...
-		mov     tchar ptr [esi + edi], t(c)                 //   and end char at front
+		mov     tchar ptr [esi], t(d)                       // put end char in front...
+		mov     tchar ptr [esi + edi], t(c)                 //   and front char at end
 		dec_tchar(edi)
 		jz      done
 		mov     t(c), tchar ptr [esi + size TCHAR]          // get front char...
 		mov     t(d), tchar ptr [esi + edi]                 //   and end char
-		mov     tchar ptr [esi + size TCHAR], t(d)          // put front char in end...
-		mov     tchar ptr [esi + edi], t(c)                 //   and end char at front
+		mov     tchar ptr [esi + size TCHAR], t(d)          // put end char in front...
+		mov     tchar ptr [esi + edi], t(c)                 //   and front char at end
 		dec_tchar(edi)
 		jz      done
 		mov     t(c), tchar ptr [esi + (size TCHAR * 2)]    // get front char...
 		mov     t(d), tchar ptr [esi + edi]                 //   and end char
-		mov     tchar ptr [esi + (size TCHAR * 2)], t(d)    // put front char in end...
-		mov     tchar ptr [esi + edi], t(c)                 //   and end char at front
+		mov     tchar ptr [esi + (size TCHAR * 2)], t(d)    // put end char in front...
+		mov     tchar ptr [esi + edi], t(c)                 //   and front char at end
 #endif
 
 	done:

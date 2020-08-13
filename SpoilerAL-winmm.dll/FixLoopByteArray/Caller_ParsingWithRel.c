@@ -9,7 +9,7 @@ extern const DWORD bcb6_std_string_substr;
 
 uint64_t __cdecl InternalParsing(TSSGCtrl* SSGCtrl, TSSGSubject* SSGS, const string* Src, BOOL IsInteger, va_list ArgPtr);
 
-static uint64_t __fastcall OffsetRel(
+static unsigned long __fastcall OffsetRel(
 	list*                      const CodeList,
 	unsigned long           register Rel,
 	TProcessAccessElementBase* const NowAE)
@@ -28,7 +28,7 @@ static uint64_t __fastcall OffsetRel(
 		Rel += TProcessAccessElement_GetSize(NowAE, TRUE);
 	else
 		Rel  = 0;
-	return (uint64_t)Rel << 32;
+	return Rel;
 }
 
 static TProcessAccessElementMaskData* __fastcall TSSGCtrl_StrToProcessAccessElementVec_switch_CodeSize(
@@ -77,7 +77,7 @@ __declspec(naked) void __cdecl Caller_ParsingWithRel()
 {
 	extern BOOL FixTheProcedure;
 
-	static const char lpszRel[] = "Rel";
+	static const char  lpszRel[] = "Rel";
 	static const DWORD X0050B4D9 = 0x0050B4D9;
 	static const DWORD X0050BC21 = 0x0050BC21;
 
@@ -100,16 +100,17 @@ __declspec(naked) void __cdecl Caller_ParsingWithRel()
 #pragma region ArgPtr
 		push    0// sentinel
 		push    0// high dword
-		mov     edx, dword ptr [Rel]
+		mov     eax, dword ptr [Rel]
 		cmp     FixTheProcedure, 0
 		je      L2
 		push    dword ptr [NowAE]
+		mov     edx, eax
 		lea     ecx, [CodeList]
 		call    OffsetRel
 	L2:
-		push    edx
+		push    eax
 		push    offset lpszRel
-		push    length lpszRel - 1
+		push    size lpszRel - type lpszRel[0]
 #pragma endregion
 		mov     edx, esp
 #pragma region Src

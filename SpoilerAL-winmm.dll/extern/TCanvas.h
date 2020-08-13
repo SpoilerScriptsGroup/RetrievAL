@@ -1,12 +1,30 @@
 #pragma once
 
 #include <windows.h>
+#include <stdbool.h>
+
+enum TFontStyle
+{
+	fsBold      = 0x01,
+	fsItalic    = 0x02,
+	fsUnderline = 0x04,
+	fsStrikeOut = 0x08,
+};
+
+typedef struct TFontStylesBase
+{
+	bool fsBold      : 1;
+	bool fsItalic    : 1;
+	bool fsUnderline : 1;
+	bool fsStrikeOut : 1;
+} TFSB;
 
 typedef struct _TCanvas
 {
 	LPVOID *vftable;
-	int    FLockCount;
-	int    FStartCount;
+	HDC    FHandle;
+	BYTE   State;
+	BYTE   padding1[3];
 	struct TFont {
 		LPVOID *vftable;
 		DWORD  FOnChange[3];
@@ -20,7 +38,7 @@ typedef struct _TCanvas
 					HFONT Handle;
 					int   Height;
 					BYTE  TFontPitch;
-					BYTE  Style;
+					TFSB  Style;
 				} Font;
 			};
 		} *FResource;

@@ -8,11 +8,12 @@ map_iterator(__cdecl * const map_find)(map *, const DWORD *) = (LPVOID)0x004D400
 map_iterator(__cdecl * const map_lower_bound)(map *, const DWORD *) = (LPVOID)0x004D0A44;// string-double 0x0051A770;
 void(__cdecl * const map_dword_dw_dw_insert)(map_iterator *, map *, map_iterator, const void *) = (LPVOID)0x004D0ABC;// string-double = 0x0051AF0C;
 map_iterator(__cdecl * const map_string_find)(map *, const string *) = (LPVOID)0x004F0758;
-map_iterator(__cdecl * const map_iterator_increment)(map_iterator it) = (LPVOID)0x005F532C;
-map_iterator(__cdecl * const map_iterator_sub_one)(map_iterator it) = (LPVOID)0x005F5360;
+map_iterator(__cdecl * const _Rb_global_M_increment)(map_iterator it) = (LPVOID)0x005F532C;
+map_iterator(__cdecl * const _Rb_global_M_decrement)(map_iterator it) = (LPVOID)0x005F5360;
+void(__cdecl *const _Rb_global_Rebalance)(map_iterator, map_iterator *) = (LPVOID)0x005F4F9C;
+map_iterator(__cdecl *const _Rb_global_Rebalance_for_erase)(map_iterator, map_iterator *, map_iterator *, map_iterator *) = (LPVOID)0x005F5078;
 
 extern const DWORD __InitExceptBlockLDTC;
-extern const DWORD F005F5078;
 extern const DWORD F004D3BAC;
 
 __declspec(naked) void __stdcall map_erase(map *map, map_iterator it)
@@ -52,7 +53,7 @@ __declspec(naked) void __stdcall map_erase(map *map, map_iterator it)
 		push    eax
 		mov     dword ptr [ebp - 2CH], edx
 		push    edx
-		call    dword ptr [F005F5078]
+		call    _Rb_global_Rebalance_for_erase
 		add     esp, 16
 		lea     edx, [eax + 10H]
 		test    edx, edx

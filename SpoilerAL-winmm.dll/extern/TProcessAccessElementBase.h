@@ -1,8 +1,9 @@
 #pragma once
 
+#include "rtl.h"
 #include "bcb6_std_vector.h"
 
-typedef enum ProcessAccessElementType {
+typedef enum AccessElement {
 //	atUNKNOWN           =  0,
 	atSKIP              =  1,
 	atJUMP              =  2,
@@ -18,17 +19,17 @@ typedef enum ProcessAccessElementType {
 	atFLOAT_NUM_DATA    = 12,
 	atNUM_DATA          = 13,
 	atBIT_DATA          = 14,
-} PAEtype;
+} AccType;
 
 typedef struct _TProcessAccessElementBase {
 	LPVOID *VTable;
-	PAEtype type;
+	AccType type;
 } TProcessAccessElementBase;
 
 #define TProcessAccessElement_dtor(PAEB, bfDel)\
 	((void (__cdecl *)(void*, BYTE))(PAEB)->VTable[0])(PAEB, bfDel)
 
-#define delete_TProcessAccessElement(PAEB) TProcessAccessElement_dtor(PAEB, 0x03)
+#define delete_TProcessAccessElement(PAEB) TProcessAccessElement_dtor(PAEB, DTCVF_PTRVAL | DTCVF_DELPTR)
 
 #define TProcessAccessElement_GetType(PAEB) (PAEB)->type
 
@@ -40,7 +41,7 @@ typedef struct _TProcessAccessElementBase {
 
 typedef struct _TProcessAccessElementLoop {
 	LPVOID               *VTable;
-	PAEtype               type;
+	AccType               type;
 	bcb6_std_vector_dword loopVec;
 	bcb6_std_vector_dword surplusVec;
 	unsigned long         loopCount;

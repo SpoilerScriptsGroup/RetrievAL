@@ -3,7 +3,8 @@
 #include "bcb6_std_stack.h"
 #include "TSSGCtrl.h"
 
-extern void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, string *line);
+extern void __stdcall  ReplaceDefine(TSSGAttributeSelector *attributeSelector, string *line);
+extern void __fastcall TSSGAttributeSelector_AESet_erase(TSSGAttributeSelector *this, void *AElem);
 
 __inline void Attribute_offset_open(TSSGCtrl *this, string *code)
 {
@@ -16,8 +17,14 @@ __inline void Attribute_offset_open(TSSGCtrl *this, string *code)
 		for (list_iterator SIt = list_end(this->attributeSelector.nowAttributeList);
 			 list_iterator_decrement(SIt) != list_end(this->attributeSelector.nowAttributeList);
 			 )
-			if (TSSGAttributeElement_GetType(*(TSSGAttributeElement **)SIt->_M_data) == atREPLACE)
+		{
+			TSSGAttributeElement* const AElem = *(void **)SIt->_M_data;
+			if (TSSGAttributeElement_GetType(AElem) == atREPLACE)
+			{
+				TSSGAttributeSelector_AESet_erase(&this->attributeSelector, AElem);
 				SIt = list_erase(SIt);
+			}
+		}
 	}
 	TSSGAttributeSelector_AddElement(&this->attributeSelector, replace);
 }

@@ -910,7 +910,7 @@ __forceinline __int64 _mul128(__int64 Multiplicand, __int64 Multiplier, __int64 
 	sign ^= (x = (UINT_PTR)(Multiplier >> 63));
 	Multiplier ^= _MUL128_MAKEQWORD(x);
 	Multiplier -= _MUL128_MAKEQWORD(x);
-	LowProduct = _umul128(Multiplicand, Multiplier, HighProduct);
+	LowProduct = _umul128(Multiplicand, Multiplier, (uint64_t *)HighProduct);
 	LowProduct ^= _MUL128_MAKEQWORD(sign);
 	*HighProduct ^= _MUL128_MAKEQWORD(sign);
 	_subborrow_u64(
@@ -920,7 +920,7 @@ __forceinline __int64 _mul128(__int64 Multiplicand, __int64 Multiplier, __int64 
 			&LowProduct),
 		*HighProduct,
 		_MUL128_MAKEQWORD(sign),
-		HighProduct);
+		(uint64_t *)HighProduct);
 	return LowProduct;
 
 	#undef _MUL128_MAKEQWORD

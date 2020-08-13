@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <windows.h>
+#include <dhcpsapi.h>
 #include "intrinsic.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "TProcessAccessElementBase.h"
@@ -10,21 +11,20 @@ EXTERN_C void __cdecl Caller_FixLoopByteArray();
 EXTERN_C void __cdecl TSSGCtrl_StrToProcessAccessElementVec_MakeLoopSet();
 EXTERN_C void __cdecl TSSGCtrl_MakeDataCode_MakeLoopSet();
 
-static uint64_t __fastcall TProcessAccessElementLoop_dtorFix(
-	const TProcessAccessElementLoop* const Loop,
-	size_t surplusVec_allocSize)
+static DWORD_DWORD __fastcall TProcessAccessElementLoop_dtorFix(
+	const TProcessAccessElementLoop *const Loop,
+	const size_t surplusVec_capInBytes)
 {
-	for (TProcessAccessElementBase** it = (void*)vector_begin(&Loop->surplusVec);
-		 it < (TProcessAccessElementBase**)vector_end(&Loop->surplusVec);
+	for (TProcessAccessElementBase **it = (void *)vector_begin(&Loop->surplusVec);
+		 it < (TProcessAccessElementBase **)vector_end(&Loop->surplusVec);
 		 it++)
 		delete_TProcessAccessElement(*it);
-	for (TProcessAccessElementBase** it = (void*)vector_begin(&Loop->loopVec);
-		 it < (TProcessAccessElementBase**)vector_end(&Loop->loopVec);
+	for (TProcessAccessElementBase **it = (void *)vector_begin(&Loop->loopVec);
+		 it < (TProcessAccessElementBase **)vector_end(&Loop->loopVec);
 		 it++)
 		delete_TProcessAccessElement(*it);
-	if ((ptrdiff_t)surplusVec_allocSize < 0)
-		surplusVec_allocSize += 3;
-	return (uint64_t)surplusVec_allocSize << 32 | (uint32_t)vector_begin(&Loop->surplusVec);
+	return (DWORD_DWORD) { (DWORD)vector_begin(&Loop->surplusVec),
+		(ptrdiff_t)surplusVec_capInBytes < 0 ? surplusVec_capInBytes + 3 : surplusVec_capInBytes };
 }
 
 #define PUSH_IMM8 (BYTE )0x6A

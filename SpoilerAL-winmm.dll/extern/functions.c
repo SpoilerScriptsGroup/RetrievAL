@@ -58,4 +58,3 @@ const DWORD __InitExceptBlockLDTC         = 0x005D54CC;
 const DWORD _TFont_SetName                = 0x0055D578;
 const DWORD F005E0D50                     = 0x005E0D50;
 const DWORD F005E0EA8                     = 0x005E0EA8;
-const DWORD F005F5078                     = 0x005F5078;

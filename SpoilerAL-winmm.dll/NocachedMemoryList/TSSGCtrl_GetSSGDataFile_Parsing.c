@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <dhcpsapi.h>
 #include "intrinsic.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_vector_string.h"
@@ -7,7 +8,7 @@
 
 extern unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 
-static uint64_t __fastcall TSSGCtrl_GetSSGDataFile_Parsing(
+static DWORD_DWORD __fastcall TSSGCtrl_GetSSGDataFile_Parsing(
 	OUT unsigned long *RowSize,
 	OUT unsigned long *StepSize,
 	IN  unsigned long  Address,
@@ -15,13 +16,13 @@ static uint64_t __fastcall TSSGCtrl_GetSSGDataFile_Parsing(
 	IN  TSSGCtrl      *SSGC,
 	IN  TSSGSubject   *SSGS)
 {
-	static  const char VarName[] = "List";
-	unsigned long long StrSize;
+	static const char VarName[] = "List";
+	unsigned     long StrSize;
 
 	 StrSize  = Parsing(SSGC, SSGS, &tmpV[2], sizeof(VarName) - sizeof(*VarName), VarName, (uint64_t)Address, 0);
 	*RowSize  = Parsing(SSGC, SSGS, &tmpV[3], sizeof(VarName) - sizeof(*VarName), VarName, (uint64_t)Address, 0);
 	*StepSize = Parsing(SSGC, SSGS, &tmpV[4], sizeof(VarName) - sizeof(*VarName), VarName, (uint64_t)Address, 0);
-	return StrSize << 32 | Address;// can be changed by return different value
+	return (DWORD_DWORD) { Address, StrSize };// can be changed by return different value
 }
 
 __declspec(naked) uint64_t __cdecl Caller_TSSGCtrl_GetSSGDataFile_Parsing()

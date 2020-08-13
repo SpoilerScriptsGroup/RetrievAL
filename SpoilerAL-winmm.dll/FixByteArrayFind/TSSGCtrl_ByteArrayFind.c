@@ -35,7 +35,7 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 	p = string_c_str(Src) + FromIndex;
 	end = string_c_str(Src) + ToIndex;
 	if (end < string_c_str(Src))
-		end = (LPCSTR)SIZE_MAX;
+		end = string_end(Src);
 	end -= TokenLength - 1;
 	nest = 0;
 	do

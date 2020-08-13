@@ -182,7 +182,7 @@ static void __cdecl TSSGCtrl_SetSSGDataFile_insert(
 	map_iterator const begin,
 	map_iterator const end)
 {
-	for (map_iterator it = begin; it != end; it = map_iterator_increment(it)) {
+	for (map_iterator it = begin; it != end; map_iterator_increment(it)) {
 		map_iterator lb = map_string_lower_bound(second, pair_first(it));
 		if (lb != map_end(second) && string_equals(pair_first(lb), pair_first(it))) {
 			vector_string* src = pair_second_aligned(it, string);

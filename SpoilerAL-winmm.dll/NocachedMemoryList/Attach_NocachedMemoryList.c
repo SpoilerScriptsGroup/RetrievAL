@@ -30,7 +30,7 @@ static __declspec(naked) void __cdecl TSSGCtrl_SetSSGDataFile_LowerStub(
 {
 	__asm {// ecx is Path already
 		mov   edx, eax// FileName
-		mov   eax, dword ptr [edx]
+		mov   eax, [edx]string._M_start
 		cmp   byte ptr [eax], '_'
 		jne   CONTINUE
 
@@ -47,7 +47,7 @@ static __declspec(naked) void __cdecl TSSGCtrl_SetSSGDataFile_LowerStub(
 
 static __declspec(naked) map_iterator __cdecl TSSGCtrl_SetSSGDataFile_findStub(map* dataFileMap, string* Path) {
 	__asm {// compatible with __msfastcall
-		mov   eax, [edx]
+		mov   eax, [edx]string._M_start
 		cmp   byte ptr [eax], '_'
 		je    EXTRACT
 		jmp   map_string_find

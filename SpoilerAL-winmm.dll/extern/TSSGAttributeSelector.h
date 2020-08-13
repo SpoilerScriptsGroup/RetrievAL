@@ -3,12 +3,21 @@
 #include <windows.h>
 #include "bcb6_std_list.h"
 #include "bcb6_std_vector.h"
-#include "bcb6_std_map.h"
+#include "bcb6_std_set.h"
 
 typedef struct
 {
 	bcb6_std_list   allAtteributeVecList;
-	bcb6_std_list   allAtteributeList;
+	union
+	{
+		bcb6_std_list   allAtteributeList;
+		struct
+		{
+			LPCVOID            _Node_allocator_type[2];
+			struct _List_node *_M_node;
+			bcb6_std_set      *AESet;
+		};
+	};
 	bcb6_std_map    *attributeSetMap;
 	bcb6_std_list   *nowAttributeList;
 	bcb6_std_vector *nowAttributeVec;

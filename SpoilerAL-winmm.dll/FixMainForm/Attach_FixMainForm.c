@@ -151,31 +151,27 @@ static __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueStrin
 }
 #endif
 
-static uint64_t __fastcall TMainForm_DrawTreeCell_shadowMode(TMainForm* this, TSSGSubject* SSGS) {
-	return (uint64_t)(SSGS && SSGS->type == stDIR && SSGS->isOpen) << 34 | this->shadowMode;
+static enum TFontStyle __fastcall TMainForm_DrawTreeCell_LetStyle(const TSSGSubject *const SSGS, enum TFontStyle Style)
+{
+	return Style & ~fsUnderline | (SSGS && SSGS->type == stDIR && SSGS->isOpen) << 2;
 }
 
 static __declspec(naked) long __cdecl TMainForm_DrawTreeCell_shadowModeStub() {
 	__asm {
-		mov  eax, esi// BSCanvas
-		mov  eax, [eax + 0x0C]
-		mov  ecx, 0x055D610
-		call ecx// GetStyle
-		push eax
+		mov   eax, [esi]TCanvas.FFont
+		mov   ecx, 0x055D610
+		call  ecx// GetStyle
 
-		mov  edx, edi
-		mov  ecx, ebx
-		call TMainForm_DrawTreeCell_shadowMode
-		xchg eax, [esp]
+		movzx edx, al
+		mov   ecx, edi
+		call  TMainForm_DrawTreeCell_LetStyle
 
-		and  eax, ~(1 << 2)
-		or   edx, eax
-		mov  eax, esi// BSCanvas
-		mov  eax, [eax + 0x0C]
-		mov  ecx, 0x055D61C
-		call ecx// SetStyle
+		movzx edx, al
+		mov   eax, [esi]TCanvas.FFont
+		mov   ecx, 0x055D61C
+		call  ecx// SetStyle
 
-		pop  eax
+		mov   eax, [ebx]TMainForm.shadowMode
 		ret
 	}
 }

@@ -98,7 +98,7 @@ static void __fastcall TSSGCtrl_MakeLoopSet(
 				break;// unexpected syntax
 			else if (LastE)
 			{// since second loop
-				PAEtype type;
+				AccType type;
 				if ((type = TProcessAccessElement_GetType(LastE)) == TProcessAccessElement_GetType(NowAE = *iter)) switch (type)
 				{// vectorized ligature
 					vector_byte *src, *dst;

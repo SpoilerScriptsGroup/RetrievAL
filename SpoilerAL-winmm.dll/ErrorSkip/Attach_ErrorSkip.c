@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <dhcpsapi.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "TMainForm.h"
 
@@ -22,9 +23,9 @@ static __declspec(naked) void TSSBundleCalc_Read_AE_reset()
 	}
 }
 
-static uint64_t __fastcall TSSGSubject_ErrorOverride(TSSGSubject *this, unsigned long error)
+static DWORD_DWORD __fastcall TSSGSubject_ErrorOverride(TSSGSubject *this, unsigned long error)
 {
-	return (uint64_t)error << 32 | (error && !TSSGCtrl_GetAttribute(NULL, this, atON_ERROR));
+	return (DWORD_DWORD) { error && !TSSGCtrl_GetAttribute(NULL, this, atON_ERROR), error };
 }
 
 static __declspec(naked) ResErr TSSGCtrl_ErrorOverride()

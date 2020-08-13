@@ -3,7 +3,7 @@
 
 EXTERN_C void __fastcall TApplication_ActivateHint(LPVOID *this, LPPOINT CursorPos);
 
-EXTERN_C void __cdecl Attach_FixHintWindow()
+EXTERN_C void __cdecl Attach_HintWindow()
 {
 	// TApplication::ActivateHint
 	/*

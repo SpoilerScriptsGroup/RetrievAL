@@ -1,6 +1,7 @@
-#include <windows.h>
-#include <stdint.h>
 #include <errno.h>
+#include <stdint.h>
+#include <windows.h>
+#include <dhcpsapi.h>
 #include "intrinsic.h"
 #include "HashBytes.h"
 #define USING_NAMESPACE_BCB6_STD
@@ -20,16 +21,17 @@ __inline TScopeAttribute *new_TScopeAttribute()
 	return (TScopeAttribute *)NewAElem;
 }
 
-vector *__cdecl TSSGCtrl_ReadSSG_PushElement(TSSGAttributeSelector *attributeSelector, TDirAttribute *rootDirAttr)
+DWORD_DWORD __fastcall TSSGCtrl_ReadSSG_rootSubject_SetAttribute(
+	TSSGCtrl const *const  this,
+	vector                *nowAttributeVec,
+	TSSGAttributeSelector *attributeSelector,
+	TDirAttribute   const *NewAElem)
 {
 	TScopeAttribute *scope = new_TScopeAttribute();
 	scope->super.adjustVal = 0;// global scope setup
-	TSSGAttributeSelector_PushElement(attributeSelector, rootDirAttr);
-	{
-		vector *const nowAttributeVec = TSSGAttributeSelector_AddElement(attributeSelector, scope);
-		nowAttributeVec->allocator_type[0] = NULL;
-		return nowAttributeVec;
-	}
+	nowAttributeVec = TSSGAttributeSelector_AddElement(attributeSelector, scope);
+	nowAttributeVec->allocator_type[0] = NULL;
+	return (DWORD_DWORD) { (DWORD)nowAttributeVec, (DWORD)this->rootSubject };
 }
 
 __inline void Attribute_scope_open(TSSGCtrl *this, string *code)

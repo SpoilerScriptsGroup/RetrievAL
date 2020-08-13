@@ -6,6 +6,7 @@ extern HANDLE hHeap;
 
 TSSGSubjectProperty *SubjectProperty = NULL;
 DWORD               SubjectPropertyCount = 0;
+DWORD static        Allocation;
 DWORD               TitleWidth = 0;
 
 void __cdecl ClearSubjectProperty()
@@ -29,18 +30,18 @@ TSSGSubjectProperty * __fastcall GrowSubjectProperty(DWORD *lpdwIndex)
 		if (SubjectPropertyCount)
 		{
 			if (TSSGCtrl_GetSSGActionListner(&MainForm->ssgCtrl))
-				for (DWORD i = 0; i < SubjectPropertyCount; i++)
+				for (DWORD i = SubjectPropertyCount; --i != MAXDWORD; )
 					if (SubjectProperty[i].RepeatDepth == MAXDWORD)
 					{
 						 prop = &SubjectProperty[index = i];
 						*prop = (const TSSGSubjectProperty) { MAXDWORD };
 						goto RESOLVED;
 					}
-			if (SubjectPropertyCount & 0x0F)
+			if (SubjectPropertyCount < Allocation)
 				prop = SubjectProperty;
 			else
 			{
-				prop = (TSSGSubjectProperty *)HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, SubjectProperty, sizeof(TSSGSubjectProperty) * (SubjectPropertyCount + 0x10));
+				prop = (TSSGSubjectProperty *)HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, SubjectProperty, sizeof(TSSGSubjectProperty) * (Allocation <<= 1));
 				if (prop == NULL)
 					break;
 				SubjectProperty = prop;
@@ -48,7 +49,7 @@ TSSGSubjectProperty * __fastcall GrowSubjectProperty(DWORD *lpdwIndex)
 		}
 		else
 		{
-			prop = (TSSGSubjectProperty *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sizeof(TSSGSubjectProperty) * 0x10);
+			prop = (TSSGSubjectProperty *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sizeof(TSSGSubjectProperty) * (Allocation = 0x10));
 			if (prop == NULL)
 				break;
 			SubjectProperty = prop;

@@ -26,7 +26,6 @@ typedef enum Attribute
 	atON_ERROR     = 0x2000,
 	atSCOPE        = 0x4000,
 	atFORMAT       = 0x8000,
-	atREPEAT       = 0x00010000,
 } AeType;// for debugger
 
 #define atALL (atDIR_LEVEL | atADJUST | atREPLACE | atSIZE)

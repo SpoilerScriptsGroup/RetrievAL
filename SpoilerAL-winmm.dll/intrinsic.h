@@ -530,15 +530,15 @@ do                                            \
 #if defined(_MSC_VER) && defined(_M_X64)
 #pragma intrinsic(__stosq)
 #else
-#define __stosq(Dest, Data, Count)               \
-do                                               \
-{                                                \
-    unsigned __int64 *__restrict _Dest  = Dest;  \
-    unsigned __int64             _Data  = Data;  \
-    size_t                       _Count = Count; \
-                                                 \
-    while (_Count--)                             \
-        *(_Dest++) = _Data;                      \
+#define __stosq(Dest, Data, Count)       \
+do                                       \
+{                                        \
+    uint64_t *__restrict _Dest  = Dest;  \
+    uint64_t             _Data  = Data;  \
+    size_t               _Count = Count; \
+                                         \
+    while (_Count--)                     \
+        *(_Dest++) = _Data;              \
 } while (0)
 #endif
 
@@ -859,7 +859,7 @@ unsigned __int64 __msreturn __fastcall __emulu(unsigned int a, unsigned int b);
 #pragma intrinsic(_mul128)
 #pragma intrinsic(_umul128)
 #else
-__forceinline unsigned __int64 __umulh(unsigned __int64 a, unsigned __int64 b)
+__forceinline uint64_t __umulh(uint64_t a, uint64_t b)
 {
 	uint64_t x, y;
 
@@ -875,7 +875,7 @@ __forceinline unsigned __int64 __umulh(unsigned __int64 a, unsigned __int64 b)
 			(uint32_t *)&x);
 	return x + __emulu(a >> 32, b >> 32);
 }
-__forceinline unsigned __int64 _umul128(unsigned __int64 Multiplicand, unsigned __int64 Multiplier, unsigned __int64 *HighProduct)
+__forceinline uint64_t _umul128(uint64_t Multiplicand, uint64_t Multiplier, uint64_t *HighProduct)
 {
 	uint64_t LowProduct, x, y;
 
@@ -893,7 +893,7 @@ __forceinline unsigned __int64 _umul128(unsigned __int64 Multiplicand, unsigned 
 	*HighProduct += __emulu(Multiplicand >> 32, Multiplier >> 32);
 	return LowProduct;
 }
-__forceinline __int64 _mul128(__int64 Multiplicand, __int64 Multiplier, __int64 *HighProduct)
+__forceinline int64_t _mul128(int64_t Multiplicand, int64_t Multiplier, int64_t *HighProduct)
 {
 #ifndef _WIN64
 	#define _MUL128_MAKEQWORD(x) (uint64_t)((uint32_t)(x) | ((uint64_t)(uint32_t)(x) << 32))
@@ -951,7 +951,7 @@ unsigned int __fastcall __fastcall_udiv64(uint32_t low, uint32_t high, unsigned 
 unsigned int __fastcall __fastcall__udiv64(uint32_t low, uint32_t high, unsigned int divisor);
 #define _udiv64(dividend, divisor, remainder) __fastcall_udiv64((uint32_t)(dividend), (uint32_t)((uint64_t)(dividend) >> 32), divisor, remainder)
 #else
-__forceinline unsigned int _udiv64(unsigned __int64 dividend, unsigned int divisor, unsigned int *remainder)
+__forceinline unsigned int _udiv64(uint64_t dividend, unsigned int divisor, unsigned int *remainder)
 {
 	*remainder = dividend % divisor;
 	return (unsigned int)(dividend / divisor);
@@ -961,7 +961,7 @@ __forceinline unsigned int _udiv64(unsigned __int64 dividend, unsigned int divis
 #if defined(_MSC_VER) && defined(_M_X64)
 #pragma intrinsic(_udiv128)
 #else
-unsigned __int64 __msreturn __stdcall _udiv128(unsigned __int64 highDividend, unsigned __int64 lowDividend, unsigned __int64 divisor, unsigned __int64 *remainder);
+uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, uint64_t lowDividend, uint64_t divisor, uint64_t *remainder);
 #endif
 
 // for constant value
@@ -1212,31 +1212,31 @@ __forceinline unsigned char _BitScanReverse64(unsigned long *Index, uint64_t Mas
 #if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
 #pragma intrinsic(__ll_lshift)
 #else
-#define __ll_lshift(Mask, nBit) ((unsigned __int64)(Mask) << ((nBit) & (sizeof(void *) * 8) - 1))
+#define __ll_lshift(Mask, nBit) ((uint64_t)(Mask) << ((nBit) & 31))
 #endif
 
 #if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
 #pragma intrinsic(__ll_rshift)
 #else
-#define __ll_rshift(Mask, nBit) ((__int64)(Mask) >> ((nBit) & (sizeof(void *) * 8) - 1))
+#define __ll_rshift(Mask, nBit) ((int64_t)(Mask) >> ((nBit) & 31))
 #endif
 
 #if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
 #pragma intrinsic(__ull_rshift)
 #else
-#define __ull_rshift(Mask, nBit) ((unsigned __int64)(Mask) >> ((nBit) & (sizeof(void *) * 8) - 1))
+#define __ull_rshift(Mask, nBit) ((uint64_t)(Mask) >> ((nBit) & 31))
 #endif
 
 #if defined(_MSC_VER) && defined(_M_X64)
 #pragma intrinsic(__shiftleft128)
 #else
-#define __shiftleft128(LowPart, HighPart, Shift) (((unsigned __int64)(HighPart) << ((Shift) & 63)) | ((unsigned __int64)(LowPart) >> (64 - ((Shift) & 63))))
+#define __shiftleft128(LowPart, HighPart, Shift) (((uint64_t)(HighPart) << ((Shift) & 63)) | ((uint64_t)(LowPart) >> (64 - ((Shift) & 63))))
 #endif
 
 #if defined(_MSC_VER) && defined(_M_X64)
 #pragma intrinsic(__shiftright128)
 #else
-#define __shiftright128(LowPart, HighPart, Shift) (((unsigned __int64)(LowPart) >> ((Shift) & 63)) | ((unsigned __int64)(HighPart) << (64 - ((Shift) & 63))))
+#define __shiftright128(LowPart, HighPart, Shift) (((uint64_t)(LowPart) >> ((Shift) & 63)) | ((uint64_t)(HighPart) << (64 - ((Shift) & 63))))
 #endif
 
 #ifdef __cplusplus

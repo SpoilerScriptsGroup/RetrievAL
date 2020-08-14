@@ -422,7 +422,7 @@ __declspec(naked) unsigned char __fastcall _subborrow_u64(unsigned char b_in, ui
 #endif
 
 #if !defined(_MSC_VER) || !defined(_M_X64)
-unsigned __int64 __msreturn __stdcall _udiv128(unsigned __int64 highDividend, unsigned __int64 lowDividend, unsigned __int64 divisor, unsigned __int64 *remainder)
+uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, uint64_t lowDividend, uint64_t divisor, uint64_t *remainder)
 {
 	uint64_t quatient;
 

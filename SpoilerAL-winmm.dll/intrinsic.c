@@ -422,55 +422,35 @@ __declspec(naked) unsigned char __fastcall _subborrow_u64(unsigned char b_in, ui
 #endif
 
 #if !defined(_MSC_VER) || !defined(_M_X64)
+uint64_t __msreturn __stdcall __umulh(uint64_t a, uint64_t b)
+{
+	uint64_t HighProduct;
+
+	__UMULH(&HighProduct, a, b);
+	return HighProduct;
+}
+
+uint64_t __msreturn __stdcall _umul128(uint64_t Multiplicand, uint64_t Multiplier, uint64_t *HighProduct)
+{
+	uint64_t LowProduct;
+
+	_UMUL128(&LowProduct, Multiplicand, Multiplier, HighProduct);
+	return LowProduct;
+}
+
+int64_t __msreturn __stdcall _mul128(int64_t Multiplicand, int64_t Multiplier, int64_t *HighProduct)
+{
+	int64_t LowProduct;
+
+	_MUL128(&LowProduct, Multiplicand, Multiplier, HighProduct);
+	return LowProduct;
+}
+
 uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, uint64_t lowDividend, uint64_t divisor, uint64_t *remainder)
 {
 	uint64_t quatient;
 
-	quatient = 0;
-	if (highDividend && (highDividend %= divisor))
-	{
-		unsigned long shift, index;
-		uint64_t lowSubtrahend, highSubtrahend;
-		uint64_t partial;
-
-		_BitScanReverse64(&shift, divisor);
-		_BitScanReverse64(&index, highDividend);
-		partial = UINT64_C(1) << 63;
-		if (shift -= index)
-			partial >>= shift - 1;
-		else
-			shift++;
-		highSubtrahend = divisor >> shift;
-		lowSubtrahend = divisor << (64 - shift);
-		for (; ; partial >>= 1, lowSubtrahend = __shiftright128(lowSubtrahend, highSubtrahend, 1), highSubtrahend >>= 1)
-		{
-			if (_subborrow_u64(
-					_sub_u64(
-						lowDividend,
-						lowSubtrahend,
-						&lowDividend),
-					highDividend,
-					highSubtrahend,
-					&highDividend))
-			{
-				_addcarry_u64(
-					_add_u64(
-						lowDividend,
-						lowSubtrahend,
-						&lowDividend),
-					highDividend,
-					highSubtrahend,
-					&highDividend);
-			}
-			else
-			{
-				quatient |= partial;
-				if (!highDividend)
-					break;
-			}
-		}
-	}
-	*remainder = lowDividend % divisor;
-	return quatient + lowDividend / divisor;
+	_UDIV128(&quatient, highDividend, lowDividend, divisor, remainder);
+	return quatient;
 }
 #endif

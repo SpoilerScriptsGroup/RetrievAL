@@ -576,7 +576,7 @@ __forceinline unsigned __int64 __ui64return_add_u32(unsigned int a, unsigned int
 __forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsigned int *_out)
 {
 	unsigned __int64 x = __ui64return_add_u32(a, b);
-	*_out = x >> 32;
+	*_out = (unsigned int)(x >> 32);
 	return (unsigned char)x;
 }
 __forceinline unsigned __int64 __ui64return_addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b)
@@ -594,7 +594,7 @@ __forceinline unsigned __int64 __ui64return_addcarry_u32(unsigned char c_in, uns
 __forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *_out)
 {
 	unsigned __int64 x = __ui64return_addcarry_u32(c_in, a, b);
-	*_out = x >> 32;
+	*_out = (unsigned int)(x >> 32);
 	return (unsigned char)x;
 }
 #elif defined(__BORLANDC__)
@@ -628,7 +628,7 @@ __forceinline unsigned __int64 __ui64return_sub_u32(unsigned int a, unsigned int
 __forceinline unsigned char _sub_u32(unsigned int a, unsigned int b, unsigned int *_out)
 {
 	unsigned __int64 x = __ui64return_sub_u32(a, b);
-	*_out = x >> 32;
+	*_out = (unsigned int)(x >> 32);
 	return (unsigned char)x;
 }
 __forceinline unsigned __int64 __ui64return_subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b)
@@ -646,7 +646,7 @@ __forceinline unsigned __int64 __ui64return_subborrow_u32(unsigned char b_in, un
 __forceinline unsigned char _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *_out)
 {
 	unsigned __int64 x = __ui64return_subborrow_u32(b_in, a, b);
-	*_out = x >> 32;
+	*_out = (unsigned int)(x >> 32);
 	return (unsigned char)x;
 }
 #elif defined(__BORLANDC__)
@@ -882,104 +882,104 @@ unsigned __int64 __msreturn __fastcall __emulu(unsigned int a, unsigned int b);
 uint64_t __msreturn __stdcall __umulh(uint64_t a, uint64_t b);
 uint64_t __msreturn __stdcall _umul128(uint64_t Multiplicand, uint64_t Multiplier, uint64_t *HighProduct);
 int64_t __msreturn __stdcall _mul128(int64_t Multiplicand, int64_t Multiplier, int64_t *HighProduct);
-#define __UMULH(a, b, HighProduct)                    \
-do                                                    \
-{                                                     \
-    uint64_t _a = a;                                  \
-    uint64_t _b = b;                                  \
-    uint64_t x, y;                                    \
-                                                      \
-    x = (__emulu((uint32_t)_a, (uint32_t)_b) >> 32) + \
-        __emulu(_a >> 32, (uint32_t)_b);              \
-    y = __emulu((uint32_t)_a, _b >> 32);              \
-    *((uint32_t *)&x + 1) = _addcarry_u32(            \
-            _add_u32(                                 \
-                (uint32_t)x,                          \
-                (uint32_t)y,                          \
-                (uint32_t *)&y),                      \
-            x >> 32,                                  \
-            y >> 32,                                  \
-            (uint32_t *)&x);                          \
-    *(HighProduct) = x + __emulu(_a >> 32, _b >> 32); \
+#define __UMULH(a, b, HighProduct)                                            \
+do                                                                            \
+{                                                                             \
+    uint64_t _a = a;                                                          \
+    uint64_t _b = b;                                                          \
+    uint64_t x, y;                                                            \
+                                                                              \
+    x = (__emulu((uint32_t)_a, (uint32_t)_b) >> 32) +                         \
+        __emulu((uint32_t)(_a >> 32), (uint32_t)_b);                          \
+    y = __emulu((uint32_t)_a, (uint32_t)(_b >> 32));                          \
+    *((uint32_t *)&x + 1) = _addcarry_u32(                                    \
+            _add_u32(                                                         \
+                (uint32_t)x,                                                  \
+                (uint32_t)y,                                                  \
+                (uint32_t *)&y),                                              \
+            (uint32_t)(x >> 32),                                              \
+            (uint32_t)(y >> 32),                                              \
+            (uint32_t *)&x);                                                  \
+    *(HighProduct) = x + __emulu((uint32_t)(_a >> 32), (uint32_t)(_b >> 32)); \
 } while (0)
-#define _UMUL128(Multiplicand, Multiplier, LowProduct, HighProduct)      \
-do                                                                       \
-{                                                                        \
-    uint64_t _Multiplicand = Multiplicand;                               \
-    uint64_t _Multiplier   = Multiplier;                                 \
-    uint64_t *_LowProduct  = LowProduct;                                 \
-    uint64_t *_HighProduct = HighProduct;                                \
-    uint64_t x, y;                                                       \
-                                                                         \
-    x = __emulu((uint32_t)_Multiplicand, (uint32_t)_Multiplier);         \
-    *(uint32_t *)_LowProduct = (uint32_t)x;                              \
-    x = (x >> 32) + __emulu(_Multiplicand >> 32, (uint32_t)_Multiplier); \
-    y = __emulu((uint32_t)_Multiplicand, _Multiplier >> 32);             \
-    *((uint32_t *)_HighProduct + 1) = _addcarry_u32(                     \
-            _add_u32(                                                    \
-                (uint32_t)x,                                             \
-                (uint32_t)y,                                             \
-                (uint32_t *)_LowProduct + 1),                            \
-            x >> 32,                                                     \
-            y >> 32,                                                     \
-            (uint32_t *)_HighProduct);                                   \
-    *_HighProduct += __emulu(_Multiplicand >> 32, _Multiplier >> 32);    \
+#define _UMUL128(Multiplicand, Multiplier, LowProduct, HighProduct)                           \
+do                                                                                            \
+{                                                                                             \
+    uint64_t _Multiplicand = Multiplicand;                                                    \
+    uint64_t _Multiplier   = Multiplier;                                                      \
+    uint64_t *_LowProduct  = LowProduct;                                                      \
+    uint64_t *_HighProduct = HighProduct;                                                     \
+    uint64_t x, y;                                                                            \
+                                                                                              \
+    x = __emulu((uint32_t)_Multiplicand, (uint32_t)_Multiplier);                              \
+    *(uint32_t *)_LowProduct = (uint32_t)x;                                                   \
+    x = (x >> 32) + __emulu((uint32_t)(_Multiplicand >> 32), (uint32_t)_Multiplier);          \
+    y = __emulu((uint32_t)_Multiplicand, (uint32_t)(_Multiplier >> 32));                      \
+    *((uint32_t *)_HighProduct + 1) = _addcarry_u32(                                          \
+            _add_u32(                                                                         \
+                (uint32_t)x,                                                                  \
+                (uint32_t)y,                                                                  \
+                (uint32_t *)_LowProduct + 1),                                                 \
+            (uint32_t)(x >> 32),                                                              \
+            (uint32_t)(y >> 32),                                                              \
+            (uint32_t *)_HighProduct);                                                        \
+    *_HighProduct += __emulu((uint32_t)(_Multiplicand >> 32), (uint32_t)(_Multiplier >> 32)); \
 } while (0)
 #ifndef _WIN64
-#define _MUL128(Multiplicand, Multiplier, LowProduct, HighProduct)   \
-do                                                                   \
-{                                                                    \
-    int64_t _Multiplicand = Multiplicand;                            \
-    int64_t _Multiplier   = Multiplier;                              \
-    int64_t *_LowProduct  = LowProduct;                              \
-    int64_t *_HighProduct = HighProduct;                             \
-    uint32_t sign, x;                                                \
-                                                                     \
-    sign = (uint32_t)(_Multiplicand >> 63);                          \
-    _Multiplicand ^= sign | ((uint64_t)sign << 32);                  \
-    _Multiplicand -= sign | ((uint64_t)sign << 32);                  \
-    sign ^= x = (uint32_t)(_Multiplier >> 63);                       \
-    _Multiplier ^= x | ((uint64_t)x << 32);                          \
-    _Multiplier -= x | ((uint64_t)x << 32);                          \
-    _UMUL128(_Multiplicand, _Multiplier, _LowProduct, _HighProduct); \
-    *_LowProduct ^= sign | ((uint64_t)sign << 32);                   \
-    *_HighProduct ^= sign | ((uint64_t)sign << 32);                  \
-    _subborrow_u64(                                                  \
-        _sub_u64(                                                    \
-            *_LowProduct,                                            \
-            sign | ((uint64_t)sign << 32),                           \
-            (uint64_t *)_LowProduct),                                \
-        *_HighProduct,                                               \
-        sign | ((uint64_t)sign << 32),                               \
-        (uint64_t *)_HighProduct);                                   \
+#define _MUL128(Multiplicand, Multiplier, LowProduct, HighProduct)       \
+do                                                                       \
+{                                                                        \
+    int64_t __Multiplicand = Multiplicand;                               \
+    int64_t __Multiplier   = Multiplier;                                 \
+    int64_t *__LowProduct  = LowProduct;                                 \
+    int64_t *__HighProduct = HighProduct;                                \
+    uint32_t sign, x;                                                    \
+                                                                         \
+    sign = (uint32_t)(__Multiplicand >> 63);                             \
+    __Multiplicand ^= sign | ((uint64_t)sign << 32);                     \
+    __Multiplicand -= sign | ((uint64_t)sign << 32);                     \
+    sign ^= x = (uint32_t)(__Multiplier >> 63);                          \
+    __Multiplier ^= x | ((uint64_t)x << 32);                             \
+    __Multiplier -= x | ((uint64_t)x << 32);                             \
+    _UMUL128(__Multiplicand, __Multiplier, __LowProduct, __HighProduct); \
+    *__LowProduct ^= sign | ((uint64_t)sign << 32);                      \
+    *__HighProduct ^= sign | ((uint64_t)sign << 32);                     \
+    _subborrow_u64(                                                      \
+        _sub_u64(                                                        \
+            *__LowProduct,                                               \
+            sign | ((uint64_t)sign << 32),                               \
+            (uint64_t *)__LowProduct),                                   \
+        *__HighProduct,                                                  \
+        sign | ((uint64_t)sign << 32),                                   \
+        (uint64_t *)__HighProduct);                                      \
 } while (0)
 #else
-#define _MUL128(Multiplicand, Multiplier, LowProduct, HighProduct)   \
-do                                                                   \
-{                                                                    \
-    int64_t _Multiplicand = Multiplicand;                            \
-    int64_t _Multiplier   = Multiplier;                              \
-    int64_t *_LowProduct  = LowProduct;                              \
-    int64_t *_HighProduct = HighProduct;                             \
-    uint64_t sign, x;                                                \
-                                                                     \
-    sign = _Multiplicand >> 63;                                      \
-    _Multiplicand ^= sign;                                           \
-    _Multiplicand -= sign;                                           \
-    sign ^= x = _Multiplier >> 63;                                   \
-    _Multiplier ^= x;                                                \
-    _Multiplier -= x;                                                \
-    _UMUL128(_Multiplicand, _Multiplier, _LowProduct, _HighProduct); \
-    *_LowProduct ^= sign;                                            \
-    *_HighProduct ^= sign;                                           \
-    _subborrow_u64(                                                  \
-        _sub_u64(                                                    \
-            *_LowProduct,                                            \
-            sign,                                                    \
-            (uint64_t *)_LowProduct),                                \
-        *_HighProduct,                                               \
-        sign,                                                        \
-        (uint64_t *)_HighProduct);                                   \
+#define __MUL128(Multiplicand, Multiplier, LowProduct, HighProduct)      \
+do                                                                       \
+{                                                                        \
+    int64_t __Multiplicand = Multiplicand;                               \
+    int64_t __Multiplier   = Multiplier;                                 \
+    int64_t *__LowProduct  = LowProduct;                                 \
+    int64_t *__HighProduct = HighProduct;                                \
+    uint64_t sign, x;                                                    \
+                                                                         \
+    sign = __Multiplicand >> 63;                                         \
+    __Multiplicand ^= sign;                                              \
+    __Multiplicand -= sign;                                              \
+    sign ^= x = __Multiplier >> 63;                                      \
+    __Multiplier ^= x;                                                   \
+    __Multiplier -= x;                                                   \
+    _UMUL128(__Multiplicand, __Multiplier, __LowProduct, __HighProduct); \
+    *__LowProduct ^= sign;                                               \
+    *__HighProduct ^= sign;                                              \
+    _subborrow_u64(                                                      \
+        _sub_u64(                                                        \
+            *__LowProduct,                                               \
+            sign,                                                        \
+            (uint64_t *)__LowProduct),                                   \
+        *__HighProduct,                                                  \
+        sign,                                                            \
+        (uint64_t *)__HighProduct);                                      \
 } while (0)
 #endif
 #endif
@@ -1000,7 +1000,7 @@ __forceinline unsigned int __ui64return_udiv64(unsigned __int64 dividend, unsign
 __forceinline unsigned int _udiv64(unsigned __int64 dividend, unsigned int divisor, unsigned int *remainder)
 {
 	unsigned __int64 x = __ui64return_udiv64(dividend, divisor);
-	*remainder = x >> 32;
+	*remainder = (unsigned int)(x >> 32);
 	return (unsigned int)x;
 }
 #elif defined(__BORLANDC__)
@@ -1037,7 +1037,7 @@ do                                                                             \
                                                                                \
         _BitScanReverse64(&shift, _divisor);                                   \
         _BitScanReverse64(&index, _highDividend);                              \
-        partial = UINT64_C(1) << 63;                                           \
+        partial = 0x8000000000000000;                                          \
         if (shift -= index)                                                    \
             partial >>= shift - 1;                                             \
         else                                                                   \
@@ -1204,7 +1204,7 @@ __forceinline unsigned __int64 __ui64return_BitScanForward(unsigned long Mask)
 __forceinline unsigned char _BitScanForward(unsigned long *Index, unsigned long Mask)
 {
 	unsigned __int64 x = __ui64return_BitScanForward(Mask);
-	*Index = x >> 32;
+	*Index = (unsigned long)(x >> 32);
 	return (unsigned char)x;
 }
 __forceinline unsigned __int64 __ui64return_BitScanReverse(unsigned long Mask)
@@ -1218,7 +1218,7 @@ __forceinline unsigned __int64 __ui64return_BitScanReverse(unsigned long Mask)
 __forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
 {
 	unsigned __int64 x = __ui64return_BitScanReverse(Mask);
-	*Index = x >> 32;
+	*Index = (unsigned long)(x >> 32);
 	return (unsigned char)x;
 }
 #elif defined(__BORLANDC__)
@@ -1278,7 +1278,7 @@ __forceinline unsigned __int64 __ui64return_BitScanForward64(unsigned __int64 Ma
 __forceinline unsigned char _BitScanForward64(unsigned long *Index, unsigned __int64 Mask)
 {
 	unsigned __int64 x = __ui64return_BitScanForward64(Mask);
-	*Index = x >> 32;
+	*Index = (unsigned long)(x >> 32);
 	return (unsigned char)x;
 }
 __forceinline unsigned __int64 __ui64return_BitScanReverse64(unsigned __int64 Mask)
@@ -1296,7 +1296,7 @@ __forceinline unsigned __int64 __ui64return_BitScanReverse64(unsigned __int64 Ma
 __forceinline unsigned char _BitScanReverse64(unsigned long *Index, unsigned __int64 Mask)
 {
 	unsigned __int64 x = __ui64return_BitScanReverse64(Mask);
-	*Index = x >> 32;
+	*Index = (unsigned long)(x >> 32);
 	return (unsigned char)x;
 }
 #elif defined(__BORLANDC__)

@@ -448,9 +448,9 @@ int64_t __msreturn __stdcall _mul128(int64_t Multiplicand, int64_t Multiplier, i
 
 uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, uint64_t lowDividend, uint64_t divisor, uint64_t *remainder)
 {
-	uint64_t quatient;
+	uint64_t quotient;
 
-	_UDIV128(highDividend, lowDividend, divisor, &quatient, remainder);
-	return quatient;
+	_UDIV128(highDividend, lowDividend, divisor, &quotient, remainder);
+	return quotient;
 }
 #endif

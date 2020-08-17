@@ -422,11 +422,11 @@ __declspec(naked) unsigned char __fastcall _subborrow_u64(unsigned char b_in, ui
 #endif
 
 #if !defined(_MSC_VER) || !defined(_M_X64)
-uint64_t __msreturn __stdcall __umulh(uint64_t a, uint64_t b)
+uint64_t __msreturn __stdcall __umulh(uint64_t Multiplicand, uint64_t Multiplier)
 {
 	uint64_t HighProduct;
 
-	UMULH(a, b, &HighProduct);
+	UMULH(Multiplicand, Multiplier, &HighProduct);
 	return HighProduct;
 }
 

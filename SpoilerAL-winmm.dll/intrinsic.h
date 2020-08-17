@@ -563,7 +563,7 @@ do                                       \
 #pragma intrinsic(_addcarry_u32)
 #define _add_u32(a, b, out) _addcarry_u32(0, a, b, out)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__forceinline unsigned __int64 __ui64return_add_u32(unsigned int a, unsigned int b)
+__forceinline unsigned __int64 __reg64return_add_u32(unsigned int a, unsigned int b)
 {
 	__asm
 	{
@@ -575,11 +575,11 @@ __forceinline unsigned __int64 __ui64return_add_u32(unsigned int a, unsigned int
 }
 __forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsigned int *_out)
 {
-	unsigned __int64 x = __ui64return_add_u32(a, b);
+	unsigned __int64 x = __reg64return_add_u32(a, b);
 	*_out = (unsigned int)(x >> 32);
 	return (unsigned char)x;
 }
-__forceinline unsigned __int64 __ui64return_addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b)
+__forceinline unsigned __int64 __reg64return_addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b)
 {
 	__asm
 	{
@@ -593,7 +593,7 @@ __forceinline unsigned __int64 __ui64return_addcarry_u32(unsigned char c_in, uns
 }
 __forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *_out)
 {
-	unsigned __int64 x = __ui64return_addcarry_u32(c_in, a, b);
+	unsigned __int64 x = __reg64return_addcarry_u32(c_in, a, b);
 	*_out = (unsigned int)(x >> 32);
 	return (unsigned char)x;
 }
@@ -615,7 +615,7 @@ __forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, un
 #pragma intrinsic(_subborrow_u32)
 #define _sub_u32(a, b, out) _subborrow_u32(0, a, b, out)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__forceinline unsigned __int64 __ui64return_sub_u32(unsigned int a, unsigned int b)
+__forceinline unsigned __int64 __reg64return_sub_u32(unsigned int a, unsigned int b)
 {
 	__asm
 	{
@@ -627,11 +627,11 @@ __forceinline unsigned __int64 __ui64return_sub_u32(unsigned int a, unsigned int
 }
 __forceinline unsigned char _sub_u32(unsigned int a, unsigned int b, unsigned int *_out)
 {
-	unsigned __int64 x = __ui64return_sub_u32(a, b);
+	unsigned __int64 x = __reg64return_sub_u32(a, b);
 	*_out = (unsigned int)(x >> 32);
 	return (unsigned char)x;
 }
-__forceinline unsigned __int64 __ui64return_subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b)
+__forceinline unsigned __int64 __reg64return_subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b)
 {
 	__asm
 	{
@@ -645,7 +645,7 @@ __forceinline unsigned __int64 __ui64return_subborrow_u32(unsigned char b_in, un
 }
 __forceinline unsigned char _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *_out)
 {
-	unsigned __int64 x = __ui64return_subborrow_u32(b_in, a, b);
+	unsigned __int64 x = __reg64return_subborrow_u32(b_in, a, b);
 	*_out = (unsigned int)(x >> 32);
 	return (unsigned char)x;
 }
@@ -990,7 +990,7 @@ do                                                                      \
 #if defined(_MSC_VER) && _MSC_VER >= 1920
 #pragma intrinsic(_udiv64)
 #elif defined(_MSC_VER) && _MSC_VER < 1920 && defined(_M_IX86)
-__forceinline unsigned int __ui64return_udiv64(unsigned __int64 dividend, unsigned int divisor)
+__forceinline unsigned int __reg64return_udiv64(unsigned __int64 dividend, unsigned int divisor)
 {
 	__asm
 	{
@@ -1002,7 +1002,7 @@ __forceinline unsigned int __ui64return_udiv64(unsigned __int64 dividend, unsign
 }
 __forceinline unsigned int _udiv64(unsigned __int64 dividend, unsigned int divisor, unsigned int *remainder)
 {
-	unsigned __int64 x = __ui64return_udiv64(dividend, divisor);
+	unsigned __int64 x = __reg64return_udiv64(dividend, divisor);
 	*remainder = (unsigned int)(x >> 32);
 	return (unsigned int)x;
 }
@@ -1188,7 +1188,7 @@ do                                                                         \
 #pragma intrinsic(_BitScanForward)
 #pragma intrinsic(_BitScanReverse)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__forceinline unsigned __int64 __ui64return_BitScanForward(unsigned long Mask)
+__forceinline unsigned __int64 __reg64return_BitScanForward(unsigned long Mask)
 {
 	__asm
 	{
@@ -1198,11 +1198,11 @@ __forceinline unsigned __int64 __ui64return_BitScanForward(unsigned long Mask)
 }
 __forceinline unsigned char _BitScanForward(unsigned long *Index, unsigned long Mask)
 {
-	unsigned __int64 x = __ui64return_BitScanForward(Mask);
+	unsigned __int64 x = __reg64return_BitScanForward(Mask);
 	*Index = (unsigned long)(x >> 32);
 	return (unsigned char)x;
 }
-__forceinline unsigned __int64 __ui64return_BitScanReverse(unsigned long Mask)
+__forceinline unsigned __int64 __reg64return_BitScanReverse(unsigned long Mask)
 {
 	__asm
 	{
@@ -1212,7 +1212,7 @@ __forceinline unsigned __int64 __ui64return_BitScanReverse(unsigned long Mask)
 }
 __forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
 {
-	unsigned __int64 x = __ui64return_BitScanReverse(Mask);
+	unsigned __int64 x = __reg64return_BitScanReverse(Mask);
 	*Index = (unsigned long)(x >> 32);
 	return (unsigned char)x;
 }
@@ -1258,7 +1258,7 @@ __forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long 
 #pragma intrinsic(_BitScanForward64)
 #pragma intrinsic(_BitScanReverse64)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__forceinline unsigned __int64 __ui64return_BitScanForward64(unsigned __int64 Mask)
+__forceinline unsigned __int64 __reg64return_BitScanForward64(unsigned __int64 Mask)
 {
 	__asm
 	{
@@ -1272,11 +1272,11 @@ __forceinline unsigned __int64 __ui64return_BitScanForward64(unsigned __int64 Ma
 }
 __forceinline unsigned char _BitScanForward64(unsigned long *Index, unsigned __int64 Mask)
 {
-	unsigned __int64 x = __ui64return_BitScanForward64(Mask);
+	unsigned __int64 x = __reg64return_BitScanForward64(Mask);
 	*Index = (unsigned long)(x >> 32);
 	return (unsigned char)x;
 }
-__forceinline unsigned __int64 __ui64return_BitScanReverse64(unsigned __int64 Mask)
+__forceinline unsigned __int64 __reg64return_BitScanReverse64(unsigned __int64 Mask)
 {
 	__asm
 	{
@@ -1290,7 +1290,7 @@ __forceinline unsigned __int64 __ui64return_BitScanReverse64(unsigned __int64 Ma
 }
 __forceinline unsigned char _BitScanReverse64(unsigned long *Index, unsigned __int64 Mask)
 {
-	unsigned __int64 x = __ui64return_BitScanReverse64(Mask);
+	unsigned __int64 x = __reg64return_BitScanReverse64(Mask);
 	*Index = (unsigned long)(x >> 32);
 	return (unsigned char)x;
 }

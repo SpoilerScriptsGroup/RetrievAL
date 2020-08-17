@@ -1157,7 +1157,7 @@ static __forceinline size_t TrimMarkupString(char **pfirst, const char *last)
 {
 	unsigned __int64 result;
 
-	result = __ui64return_TrimSpace(*pfirst, last);
+	result = __reg64return_TrimSpace(*pfirst, last);
 	return (const char *)result - (*pfirst = (char *)(result >> 32));
 }
 //---------------------------------------------------------------------
@@ -12268,7 +12268,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					string_ctor_assign_cstr_with_length(&FName, lpMarkup->String, lpMarkup->Length);
 					string_ctor_assign_cstr_with_length(&DefaultExt, ".CHN", 4);
 					File = TSSGCtrl_GetSSGDataFile(this, SSGS, FName, DefaultExt, NULL);
-					if (!File || vector_empty(File))	
+					if (!File || vector_empty(File))
 						goto PARSING_ERROR;
 					Source = vector_begin(File);
 					Finish = vector_end(File);
@@ -12434,7 +12434,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpNext = lpPostfix + 1 < lpEndOfPostfix ? lpPostfix[1] : NULL;
 				if (!element && length && (
 #if SCOPE_SUPPORT
-					p[0] == SCOPE_PREFIX || 
+					p[0] == SCOPE_PREFIX ||
 #endif
 					lpNext && (lpNext->Tag == TAG_INC ||
 							   lpNext->Tag == TAG_DEC ||

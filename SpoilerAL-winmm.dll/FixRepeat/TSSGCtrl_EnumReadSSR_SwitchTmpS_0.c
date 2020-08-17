@@ -187,7 +187,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		call    string_dtor
 		mov     ecx, dword ptr [esi]
 		mov     edx, dword ptr [esi + 4H]
-		call    __ui64return_TrimSpace
+		call    __reg64return_TrimSpace
 		mov     ecx, eax
 		mov     eax, dword ptr [esi]
 		cmp     ecx, dword ptr [esi + 4H]

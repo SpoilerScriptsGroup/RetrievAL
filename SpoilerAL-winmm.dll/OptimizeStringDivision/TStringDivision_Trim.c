@@ -437,7 +437,7 @@ __declspec(naked) char * __msfastcall TrimRightSpace(const char *first, const ch
 #endif
 
 #ifndef _M_IX86
-unsigned __int64 __msreturn __msfastcall __ui64return_TrimSpace(const char *first, const char *last)
+unsigned __int64 __msreturn __msfastcall __reg64return_TrimSpace(const char *first, const char *last)
 {
 	if (first >= last)
 	{
@@ -458,7 +458,7 @@ TRIMED:
 	return (unsigned __int32)last | ((unsigned __int64)first << 32);
 }
 #else
-__declspec(naked) unsigned __int64 __msreturn __msfastcall __ui64return_TrimSpace(const char *first, const char *last)
+__declspec(naked) unsigned __int64 __msreturn __msfastcall __reg64return_TrimSpace(const char *first, const char *last)
 {
 	__asm
 	{
@@ -593,7 +593,7 @@ __declspec(naked) char * __msfastcall TrimRightBlank(const char *first, const ch
 #endif
 
 #ifndef _M_IX86
-unsigned __int64 __msreturn __msfastcall __ui64return_TrimBlank(const char *first, const char *last)
+unsigned __int64 __msreturn __msfastcall __reg64return_TrimBlank(const char *first, const char *last)
 {
 	if (first >= last)
 	{
@@ -614,7 +614,7 @@ TRIMED:
 	return (unsigned __int32)last | ((unsigned __int64)first << 32);
 }
 #else
-__declspec(naked) unsigned __int64 __msreturn __msfastcall __ui64return_TrimBlank(const char *first, const char *last)
+__declspec(naked) unsigned __int64 __msreturn __msfastcall __reg64return_TrimBlank(const char *first, const char *last)
 {
 	__asm
 	{

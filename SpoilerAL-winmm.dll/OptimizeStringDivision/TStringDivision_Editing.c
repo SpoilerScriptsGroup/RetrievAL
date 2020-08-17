@@ -76,7 +76,7 @@ __declspec(naked) string * __cdecl TStringDivision_Editing(
 		jz      L1
 		mov     ecx, dword ptr [edx]
 		mov     edx, dword ptr [edx + 4]
-		call    __ui64return_TrimBlank
+		call    __reg64return_TrimBlank
 		push    eax
 		push    edx
 		mov     ecx, dword ptr [this + 8]

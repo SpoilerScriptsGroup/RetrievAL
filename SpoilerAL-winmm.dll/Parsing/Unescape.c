@@ -8,7 +8,7 @@ char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate)
 
 	if ((p = first) < (last = *plast))
 #else
-unsigned __int64 __fastcall __ui64return_UnescapeA(char *first, char *last, BOOL breakSingleQuate)
+unsigned __int64 __fastcall __reg64return_UnescapeA(char *first, char *last, BOOL breakSingleQuate)
 {
 	unsigned char *p;
 
@@ -134,7 +134,7 @@ wchar_t * __fastcall UnescapeW(wchar_t *first, wchar_t **plast, BOOL breakSingle
 
 	if ((p = first) < (last = *plast))
 #else
-unsigned __int64 __fastcall __ui64return_UnescapeW(wchar_t *first, wchar_t *last, BOOL breakSingleQuate)
+unsigned __int64 __fastcall __reg64return_UnescapeW(wchar_t *first, wchar_t *last, BOOL breakSingleQuate)
 {
 	wchar_t *p;
 
@@ -235,7 +235,7 @@ unsigned char * __fastcall UnescapeU(unsigned char *first, unsigned char **plast
 
 	if ((p = first) < (last = *plast))
 #else
-unsigned __int64 __fastcall __ui64return_UnescapeU(unsigned char *first, unsigned char *last, BOOL breakSingleQuate)
+unsigned __int64 __fastcall __reg64return_UnescapeU(unsigned char *first, unsigned char *last, BOOL breakSingleQuate)
 {
 	unsigned char *p;
 

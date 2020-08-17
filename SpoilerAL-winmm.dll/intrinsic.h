@@ -1024,64 +1024,55 @@ __forceinline unsigned int _udiv64(uint64_t dividend, unsigned int divisor, unsi
 	do { *(quotient) = _udiv128(highDividend, lowDividend, divisor, remainder); } while (0)
 #else
 uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, uint64_t lowDividend, uint64_t divisor, uint64_t *remainder);
-#define UDIV128(highDividend, lowDividend, divisor, quotient, remainder)       \
-do                                                                             \
-{                                                                              \
-    uint64_t _highDividend = highDividend;                                     \
-    uint64_t _lowDividend  = lowDividend;                                      \
-    uint64_t _divisor      = divisor;                                          \
-    uint64_t *_quotient    = quotient;                                         \
-    uint64_t *_remainder   = remainder;                                        \
-                                                                               \
-    *_quotient = 0;                                                            \
-    if (_highDividend && (_highDividend %= _divisor))                          \
-    {                                                                          \
-        unsigned long shift, index;                                            \
-        uint64_t lowSubtrahend, highSubtrahend;                                \
-        uint64_t partial;                                                      \
-                                                                               \
-        _BitScanReverse64(&shift, _divisor);                                   \
-        _BitScanReverse64(&index, _highDividend);                              \
-        partial = 0x8000000000000000;                                          \
-        if (shift -= index)                                                    \
-            partial >>= shift - 1;                                             \
-        else                                                                   \
-            shift++;                                                           \
-        highSubtrahend = _divisor >> shift;                                    \
-        lowSubtrahend = _divisor << (64 - shift);                              \
-        for (; ;                                                               \
-            partial >>= 1,                                                     \
-            lowSubtrahend = __shiftright128(lowSubtrahend, highSubtrahend, 1), \
-            highSubtrahend >>= 1)                                              \
-        {                                                                      \
-            if (_subborrow_u64(                                                \
-                    _sub_u64(                                                  \
-                        _lowDividend,                                          \
-                        lowSubtrahend,                                         \
-                        &_lowDividend),                                        \
-                    _highDividend,                                             \
-                    highSubtrahend,                                            \
-                    &_highDividend))                                           \
-            {                                                                  \
-                _addcarry_u64(                                                 \
-                    _add_u64(                                                  \
-                        _lowDividend,                                          \
-                        lowSubtrahend,                                         \
-                        &_lowDividend),                                        \
-                    _highDividend,                                             \
-                    highSubtrahend,                                            \
-                    &_highDividend);                                           \
-            }                                                                  \
-            else                                                               \
-            {                                                                  \
-                *_quotient |= partial;                                         \
-                if (!_highDividend)                                            \
-                    break;                                                     \
-            }                                                                  \
-        }                                                                      \
-    }                                                                          \
-    *_remainder = _lowDividend % _divisor;                                     \
-    *_quotient += _lowDividend / _divisor;                                     \
+#define UDIV128(highDividend, lowDividend, divisor, quotient, remainder)   \
+do                                                                         \
+{                                                                          \
+    uint64_t _highDividend = highDividend;                                 \
+    uint64_t _lowDividend  = lowDividend;                                  \
+    uint64_t _divisor      = divisor;                                      \
+    uint64_t *_quotient    = quotient;                                     \
+    uint64_t *_remainder   = remainder;                                    \
+                                                                           \
+    *_quotient = 0;                                                        \
+    if (_highDividend && (_highDividend %= _divisor))                      \
+    {                                                                      \
+        unsigned long shift, index;                                        \
+        uint64_t lowSubtrahend, highSubtrahend, low, high;                 \
+        uint64_t partial;                                                  \
+                                                                           \
+        _BitScanReverse64(&shift, _divisor);                               \
+        _BitScanReverse64(&index, _highDividend);                          \
+        partial = 0x8000000000000000;                                      \
+        if (shift -= index)                                                \
+            partial >>= shift - 1;                                         \
+        else                                                               \
+            shift++;                                                       \
+        highSubtrahend = _divisor >> shift;                                \
+        lowSubtrahend = _divisor << (64 - shift);                          \
+        for (; ;                                                           \
+            partial >>= 1,                                                 \
+            lowSubtrahend = (lowSubtrahend >> 1) | (highSubtrahend << 63), \
+            highSubtrahend >>= 1)                                          \
+        {                                                                  \
+            if (!_subborrow_u64(                                           \
+                    _sub_u64(                                              \
+                        _lowDividend,                                      \
+                        lowSubtrahend,                                     \
+                        &low),                                             \
+                    _highDividend,                                         \
+                    highSubtrahend,                                        \
+                    &high))                                                \
+            {                                                              \
+                _lowDividend = low;                                        \
+                _highDividend = high;                                      \
+                *_quotient |= partial;                                     \
+                if (!_highDividend)                                        \
+                    break;                                                 \
+            }                                                              \
+        }                                                                  \
+    }                                                                      \
+    *_remainder = _lowDividend % _divisor;                                 \
+    *_quotient += _lowDividend / _divisor;                                 \
 } while (0)
 #endif
 

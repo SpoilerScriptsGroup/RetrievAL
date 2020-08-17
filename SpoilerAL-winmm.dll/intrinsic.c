@@ -426,7 +426,7 @@ uint64_t __msreturn __stdcall __umulh(uint64_t a, uint64_t b)
 {
 	uint64_t HighProduct;
 
-	__UMULH(a, b, &HighProduct);
+	UMULH(a, b, &HighProduct);
 	return HighProduct;
 }
 
@@ -434,7 +434,7 @@ uint64_t __msreturn __stdcall _umul128(uint64_t Multiplicand, uint64_t Multiplie
 {
 	uint64_t LowProduct;
 
-	_UMUL128(Multiplicand, Multiplier, &LowProduct, HighProduct);
+	UMUL128(Multiplicand, Multiplier, &LowProduct, HighProduct);
 	return LowProduct;
 }
 
@@ -442,7 +442,7 @@ int64_t __msreturn __stdcall _mul128(int64_t Multiplicand, int64_t Multiplier, i
 {
 	int64_t LowProduct;
 
-	_MUL128(Multiplicand, Multiplier, &LowProduct, HighProduct);
+	MUL128(Multiplicand, Multiplier, &LowProduct, HighProduct);
 	return LowProduct;
 }
 
@@ -450,7 +450,7 @@ uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, uint64_t lowDivide
 {
 	uint64_t quotient;
 
-	_UDIV128(highDividend, lowDividend, divisor, &quotient, remainder);
+	UDIV128(highDividend, lowDividend, divisor, &quotient, remainder);
 	return quotient;
 }
 #endif

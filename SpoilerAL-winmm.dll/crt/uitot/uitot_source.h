@@ -2580,15 +2580,17 @@ size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buffer, BOOL upper, un
 	while (value >> 32)
 	{
 		uint32_t remainder, carry;
+		uint64_t high;
 
 		remainder = (uint32_t)value;
+		UMULH(value, reciprocal64[radix], &high)
 		carry = _add_u64(
-			__umulh(value, reciprocal64[radix]),
+			high,
 			value & (((uint64_t)mask64[radix] << 32) | mask64[radix]),
-			&value);
+			&high);
 		value =
-			(uint32_t)__ull_rshift(value, precision64[radix]) |
-			(__ull_rshift(((uint64_t)carry << 32) | (value >> 32), precision64[radix]) << 32);
+			(uint32_t)__ull_rshift(high, precision64[radix]) |
+			(__ull_rshift(((uint64_t)carry << 32) | (high >> 32), precision64[radix]) << 32);
 		remainder -= (uint32_t)value * radix;
 		*(--p) = digits[remainder];
 	}

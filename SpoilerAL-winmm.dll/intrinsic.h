@@ -1341,6 +1341,58 @@ __forceinline unsigned char _BitScanReverse64(unsigned long *Index, uint64_t Mas
 
 #if defined(_MSC_VER) && defined(_M_X64)
 #pragma intrinsic(__shiftleft128)
+#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
+__forceinline unsigned __int64 __shiftleft128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)
+{
+	__asm
+	{
+		mov     cl, dword ptr [Shift]
+		mov     eax, dword ptr [LowPart + 4]
+		and     cl, 63
+		mov     edx, dword ptr [HighPart]
+		cmp     cl, 32
+		jae     L1
+		mov     edi, eax
+		mov     eax, edx
+		mov     edx, dword ptr [HighPart + 4]
+		jmp     L2
+
+	L1:
+		and     cl, 31
+		jz      L3
+		mov     edi, dword ptr [LowPart]
+	L2:
+		shld    edx, eax, cl
+		shld    eax, edi, cl
+	L3:
+	}
+}
+#elif defined(_MSC_VER) && _MSC_VER >= 1310 && defined(_M_IX86)
+#pragma intrinsic(__ll_lshift)
+__forceinline unsigned __int64 __shiftleft128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)
+{
+	uint32_t a, b, c;
+
+	a = (uint32_t)(LowPart >> 32);
+	b = (uint32_t)HighPart;
+	Shift &= 63;
+	if (Shift < 32)
+	{
+		c = a;
+		a = b;
+		b = (uint32_t)(HighPart >> 32);
+	}
+	else
+	{
+		if (!(Shift &= 31))
+			goto DONE;
+		c = (uint32_t)LowPart;
+	}
+	b = (uint32_t)(__ll_lshift(a | ((uint64_t)b << 32), Shift) >> 32);
+	a = (uint32_t)(__ll_lshift(c | ((uint64_t)a << 32), Shift) >> 32);
+DONE:
+	return a | ((uint64_t)b << 32);
+}
 #else
 __forceinline uint64_t __shiftleft128(uint64_t LowPart, uint64_t HighPart, unsigned char Shift)
 {
@@ -1351,6 +1403,58 @@ __forceinline uint64_t __shiftleft128(uint64_t LowPart, uint64_t HighPart, unsig
 
 #if defined(_MSC_VER) && defined(_M_X64)
 #pragma intrinsic(__shiftright128)
+#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
+__forceinline unsigned __int64 __shiftright128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)
+{
+	__asm
+	{
+		mov     cl, dword ptr [Shift]
+		mov     edx, dword ptr [HighPart]
+		and     cl, 63
+		mov     eax, dword ptr [LowPart + 4]
+		cmp     cl, 32
+		jae     L1
+		mov     edi, edx
+		mov     edx, eax
+		mov     eax, dword ptr [LowPart]
+		jmp     L2
+
+	L1:
+		and     cl, 31
+		jz      L3
+		mov     edi, dword ptr [HighPart + 4]
+	L2:
+		shrd    eax, edx, cl
+		shrd    edx, edi, cl
+	L3:
+	}
+}
+#elif defined(_MSC_VER) && _MSC_VER >= 1310 && defined(_M_IX86)
+#pragma intrinsic(__ull_rshift)
+__forceinline unsigned __int64 __shiftright128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)
+{
+	uint32_t a, b, c;
+
+	b = (uint32_t)HighPart;
+	a = (uint32_t)(LowPart >> 32);
+	Shift &= 63;
+	if (Shift < 32)
+	{
+		c = b;
+		b = a;
+		a = (uint32_t)LowPart;
+	}
+	else
+	{
+		if (!(Shift &= 31))
+			goto DONE;
+		c = (uint32_t)(HighPart >> 32);
+	}
+	a = (uint32_t)__ull_rshift(a | ((uint64_t)b << 32), Shift);
+	b = (uint32_t)__ull_rshift(b | ((uint64_t)c << 32), Shift);
+DONE:
+	return a | ((uint64_t)b << 32);
+}
 #else
 __forceinline uint64_t __shiftright128(uint64_t LowPart, uint64_t HighPart, unsigned char Shift)
 {

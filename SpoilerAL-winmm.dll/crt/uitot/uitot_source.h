@@ -2583,7 +2583,7 @@ size_t __fastcall internal_ui64tot(uint64_t value, TCHAR *buffer, BOOL upper, un
 		uint64_t high;
 
 		remainder = (uint32_t)value;
-		UMULH(value, reciprocal64[radix], &high)
+		UMULH(value, reciprocal64[radix], &high);
 		carry = _add_u64(
 			high,
 			value & (((uint64_t)mask64[radix] << 32) | mask64[radix]),

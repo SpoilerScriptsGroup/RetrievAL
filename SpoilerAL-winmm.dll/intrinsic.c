@@ -700,26 +700,25 @@ __declspec(naked) uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, 
 		jnz     L2
 		bsr     ecx, eax
 	L2:
-		mov     dword ptr [esp], 0
 		mov     dword ptr [esp + 4], eax
 		mov     dword ptr [esp + 8], edx
-		mov     edi, 80000000H
+		xor     eax, eax
+		mov     edx, 80000000H
 		sub     ebp, ecx
 		jz      L3
 		lea     ecx, [ebp - 1]
-		xor     eax, eax
-		mov     edx, edi
 		call    _aullshr
-		mov     dword ptr [esp], eax
 		mov     edi, edx
 		jmp     L4
 
 	L3:
+		mov     edi, edx
 		inc     ebp
 	L4:
-		mov     edx, dword ptr [HI(divisor) + 52]
+		mov     dword ptr [esp], eax
 		mov     eax, esi
 		mov     ecx, ebp
+		mov     edx, dword ptr [HI(divisor) + 52]
 		call    _aullshr
 		mov     ebx, eax
 		mov     esi, edx

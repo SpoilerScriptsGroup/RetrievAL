@@ -1351,16 +1351,16 @@ __forceinline unsigned __int64 __shiftleft128(unsigned __int64 LowPart, unsigned
 		and     cl, 63
 		mov     edx, dword ptr [HighPart]
 		cmp     cl, 32
-		jae     L1
-		mov     edi, eax
-		mov     eax, edx
-		mov     edx, dword ptr [HighPart + 4]
-		jmp     L2
-
-	L1:
+		jb      L1
 		and     cl, 31
 		jz      L3
 		mov     edi, dword ptr [LowPart]
+		jmp     L2
+
+	L1:
+		mov     edi, eax
+		mov     eax, edx
+		mov     edx, dword ptr [HighPart + 4]
 	L2:
 		shld    edx, eax, cl
 		shld    eax, edi, cl
@@ -1373,20 +1373,20 @@ __forceinline unsigned __int64 __shiftleft128(unsigned __int64 LowPart, unsigned
 {
 	uint32_t a, b, c;
 
+	Shift &= 63;
 	a = (uint32_t)(LowPart >> 32);
 	b = (uint32_t)HighPart;
-	Shift &= 63;
-	if (Shift < 32)
-	{
-		c = a;
-		a = b;
-		b = (uint32_t)(HighPart >> 32);
-	}
-	else
+	if (Shift >= 32)
 	{
 		if (!(Shift &= 31))
 			goto DONE;
 		c = (uint32_t)LowPart;
+	}
+	else
+	{
+		c = a;
+		a = b;
+		b = (uint32_t)(HighPart >> 32);
 	}
 	b = (uint32_t)(__ll_lshift(a | ((uint64_t)b << 32), Shift) >> 32);
 	a = (uint32_t)(__ll_lshift(c | ((uint64_t)a << 32), Shift) >> 32);
@@ -1413,16 +1413,16 @@ __forceinline unsigned __int64 __shiftright128(unsigned __int64 LowPart, unsigne
 		and     cl, 63
 		mov     eax, dword ptr [LowPart + 4]
 		cmp     cl, 32
-		jae     L1
-		mov     edi, edx
-		mov     edx, eax
-		mov     eax, dword ptr [LowPart]
-		jmp     L2
-
-	L1:
+		jb      L1
 		and     cl, 31
 		jz      L3
 		mov     edi, dword ptr [HighPart + 4]
+		jmp     L2
+
+	L1:
+		mov     edi, edx
+		mov     edx, eax
+		mov     eax, dword ptr [LowPart]
 	L2:
 		shrd    eax, edx, cl
 		shrd    edx, edi, cl
@@ -1435,20 +1435,20 @@ __forceinline unsigned __int64 __shiftright128(unsigned __int64 LowPart, unsigne
 {
 	uint32_t a, b, c;
 
+	Shift &= 63;
 	b = (uint32_t)HighPart;
 	a = (uint32_t)(LowPart >> 32);
-	Shift &= 63;
-	if (Shift < 32)
-	{
-		c = b;
-		b = a;
-		a = (uint32_t)LowPart;
-	}
-	else
+	if (Shift >= 32)
 	{
 		if (!(Shift &= 31))
 			goto DONE;
 		c = (uint32_t)(HighPart >> 32);
+	}
+	else
+	{
+		c = b;
+		b = a;
+		a = (uint32_t)LowPart;
 	}
 	a = (uint32_t)__ull_rshift(a | ((uint64_t)b << 32), Shift);
 	b = (uint32_t)__ull_rshift(b | ((uint64_t)c << 32), Shift);

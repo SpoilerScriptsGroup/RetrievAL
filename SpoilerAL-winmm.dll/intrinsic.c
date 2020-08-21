@@ -916,7 +916,7 @@ __declspec(naked) uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, 
 		mov     ecx, eax
 		sub     esp, 16
 		or      eax, edx
-		jz      L11
+		jz      L10
 		push    edi
 		push    esi
 		push    edx
@@ -929,7 +929,7 @@ __declspec(naked) uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, 
 		test    edx, edx
 		jnz     L1
 		test    ebx, ebx
-		jz      L11
+		jz      L10
 		test    edi, edi
 		jnz     L3
 		bsr     ebp, esi
@@ -970,34 +970,33 @@ __declspec(naked) uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, 
 	L5:
 		shr     edi, cl
 	L6:
-		mov     dword ptr [esp], eax
-		mov     ebx, esi
-		mov     esi, dword ptr [HI(divisor) + 52]
 		mov     ecx, ebp
-		xor     edx, edx
+		mov     dword ptr [esp], eax
 		xor     eax, eax
+		mov     ebx, dword ptr [HI(divisor) + 52]
+		mov     edx, esi
+		xor     esi, esi
 		and     ecx, 31
 		jz      L7
+		shrd    eax, edx, cl
 		shrd    edx, ebx, cl
-		shrd    ebx, esi, cl
-		shr     esi, cl
+		shr     ebx, cl
 		cmp     ebp, 32
-		jb      L8
+		jae     L7
+		mov     esi, ebx
+		mov     ebx, edx
+		mov     edx, eax
+		xor     eax, eax
 	L7:
-		mov     eax, edx
-		mov     edx, ebx
-		mov     ebx, esi
-		xor     esi, esi
-	L8:
 		mov     ebp, dword ptr [esp + 8]
 		mov     ecx, dword ptr [esp + 28]
 		mov     dword ptr [esp + 12], eax
 		mov     dword ptr [esp + 16], ebp
 		mov     ebp, eax
-		jmp     L10
+		jmp     L9
 
 		align   16
-	L9:
+	L8:
 		shr     edi, 1
 		mov     eax, dword ptr [esp]
 		rcr     eax, 1
@@ -1011,14 +1010,14 @@ __declspec(naked) uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, 
 		rcr     ebp, 1
 		mov     ecx, dword ptr [esp + 28]
 		mov     dword ptr [esp + 12], ebp
-	L10:
+	L9:
 		mov     eax, dword ptr [esp + 32]
 		sub     ecx, ebp
 		sbb     eax, edx
 		mov     ebp, dword ptr [esp + 4]
 		sbb     ebp, ebx
 		sbb     dword ptr [esp + 16], esi
-		jb      L9
+		jb      L8
 		mov     dword ptr [esp + 4], ebp
 		mov     dword ptr [esp + 28], ecx
 		mov     ecx, dword ptr [esp + 20]
@@ -1034,13 +1033,13 @@ __declspec(naked) uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, 
 		mov     dword ptr [esp + 16], ebp
 		mov     dword ptr [esp + 8], ecx
 		or      eax, ecx
-		jnz     L9
+		jnz     L8
 		mov     edi, dword ptr [HI(divisor) + 52]
 		mov     esi, dword ptr [LO(divisor) + 52]
 		mov     ebp, dword ptr [esp + 20]
 
 		align   16
-	L11:
+	L10:
 		mov     edx, dword ptr [esp + 32]
 		mov     eax, dword ptr [esp + 28]
 		push    edi

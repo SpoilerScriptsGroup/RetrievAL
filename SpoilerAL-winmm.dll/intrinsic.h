@@ -1124,20 +1124,19 @@ do                                                                         \
     if (_highDividend && (_highDividend %= _divisor))                      \
     {                                                                      \
         unsigned long shift, index;                                        \
-        uint64_t lowSubtrahend, highSubtrahend, low, high;                 \
-        uint64_t partial;                                                  \
+        uint64_t addend, lowSubtrahend, highSubtrahend, low, high;         \
                                                                            \
         _BitScanReverse64(&shift, _divisor);                               \
         _BitScanReverse64(&index, _highDividend);                          \
-        partial = 0x8000000000000000;                                      \
+        addend = 0x8000000000000000;                                       \
         if (shift -= index)                                                \
-            partial >>= shift - 1;                                         \
+            addend >>= shift - 1;                                          \
         else                                                               \
             shift++;                                                       \
         highSubtrahend = _divisor >> shift;                                \
         lowSubtrahend = _divisor << (64 - shift);                          \
         for (; ;                                                           \
-            partial >>= 1,                                                 \
+            addend >>= 1,                                                  \
             lowSubtrahend = (lowSubtrahend >> 1) | (highSubtrahend << 63), \
             highSubtrahend >>= 1)                                          \
         {                                                                  \
@@ -1152,7 +1151,7 @@ do                                                                         \
             {                                                              \
                 _lowDividend = low;                                        \
                 _highDividend = high;                                      \
-                *_quotient |= partial;                                     \
+                *_quotient |= addend;                                      \
                 if (!_highDividend)                                        \
                     break;                                                 \
             }                                                              \

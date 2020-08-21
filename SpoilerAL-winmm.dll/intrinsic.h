@@ -1291,7 +1291,7 @@ do                                                                             \
             addend >>= shift - 1;                                              \
         else                                                                   \
             shift++;                                                           \
-        lowSubtrahend = __shiftright128(0, _divisor, shift);                   \
+        lowSubtrahend = __shiftright128(0, _divisor, (unsigned char)shift);    \
         highSubtrahend = _divisor >> shift;                                    \
         for (; ;                                                               \
             addend >>= 1,                                                      \

@@ -872,9 +872,12 @@ unsigned __int64 __msreturn __fastcall __emulu(unsigned int a, unsigned int b);
 #endif
 
 #if defined(_MSC_VER) && defined(_M_X64)
+#pragma intrinsic(__mulh)
 #pragma intrinsic(__umulh)
 #pragma intrinsic(_mul128)
 #pragma intrinsic(_umul128)
+#define MULH(Multiplicand, Multiplier, HighProduct) \
+	do { *(HighProduct) = __mulh(Multiplicand, Multiplier); } while (0)
 #define UMULH(Multiplicand, Multiplier, HighProduct) \
 	do { *(HighProduct) = __umulh(Multiplicand, Multiplier); } while (0)
 #define MUL128(Multiplicand, Multiplier, LowProduct, HighProduct) \
@@ -882,9 +885,10 @@ unsigned __int64 __msreturn __fastcall __emulu(unsigned int a, unsigned int b);
 #define UMUL128(Multiplicand, Multiplier, LowProduct, HighProduct) \
 	do { *(LowProduct) = _umul128(Multiplicand, Multiplier, HighProduct); } while (0)
 #else
+int64_t __msreturn __stdcall __mulh(int64_t Multiplicand, int64_t Multiplier);
 uint64_t __msreturn __stdcall __umulh(uint64_t Multiplicand, uint64_t Multiplier);
-uint64_t __msreturn __stdcall _umul128(uint64_t Multiplicand, uint64_t Multiplier, uint64_t *HighProduct);
 int64_t __msreturn __stdcall _mul128(int64_t Multiplicand, int64_t Multiplier, int64_t *HighProduct);
+uint64_t __msreturn __stdcall _umul128(uint64_t Multiplicand, uint64_t Multiplier, uint64_t *HighProduct);
 #define UMULH(Multiplicand, Multiplier, HighProduct)                                              \
 do                                                                                                \
 {                                                                                                 \
@@ -928,6 +932,62 @@ do                                                                              
             (uint32_t *)_HighProduct);                                                        \
     *_HighProduct += __emulu((uint32_t)(_Multiplicand >> 32), (uint32_t)(_Multiplier >> 32)); \
 } while (0)
+#ifndef _WIN64
+#define MULH(Multiplicand, Multiplier, HighProduct)                    \
+do                                                                     \
+{                                                                      \
+    int64_t __Multiplicand = Multiplicand;                             \
+    int64_t __Multiplier   = Multiplier;                               \
+    int64_t *__HighProduct = HighProduct;                              \
+    uint64_t LowProduct;                                               \
+    uint32_t sign, x;                                                  \
+                                                                       \
+    sign = (uint32_t)(__Multiplicand >> 63);                           \
+    __Multiplicand ^= sign | ((uint64_t)sign << 32);                   \
+    __Multiplicand -= sign | ((uint64_t)sign << 32);                   \
+    sign ^= x = (uint32_t)(__Multiplier >> 63);                        \
+    __Multiplier ^= x | ((uint64_t)x << 32);                           \
+    __Multiplier -= x | ((uint64_t)x << 32);                           \
+    UMUL128(__Multiplicand, __Multiplier, &LowProduct, __HighProduct); \
+    LowProduct ^= sign | ((uint64_t)sign << 32);                       \
+    *__HighProduct ^= sign | ((uint64_t)sign << 32);                   \
+    _subborrow_u64(                                                    \
+        _sub_u64(                                                      \
+            LowProduct,                                                \
+            sign | ((uint64_t)sign << 32),                             \
+            &LowProduct),                                              \
+        *__HighProduct,                                                \
+        sign | ((uint64_t)sign << 32),                                 \
+        (uint64_t *)__HighProduct);                                    \
+} while (0)
+#else
+#define MULH(Multiplicand, Multiplier, HighProduct)                    \
+do                                                                     \
+{                                                                      \
+    int64_t __Multiplicand = Multiplicand;                             \
+    int64_t __Multiplier   = Multiplier;                               \
+    int64_t *__HighProduct = HighProduct;                              \
+    uint64_t LowProduct, sign, x;                                      \
+                                                                       \
+    sign = __Multiplicand >> 63;                                       \
+    __Multiplicand ^= sign;                                            \
+    __Multiplicand -= sign;                                            \
+    sign ^= x = __Multiplier >> 63;                                    \
+    __Multiplier ^= x;                                                 \
+    __Multiplier -= x;                                                 \
+    UMUL128(__Multiplicand, __Multiplier, &LowProduct, __HighProduct); \
+    LowProduct ^= sign;                                                \
+    *__HighProduct ^= sign;                                            \
+    _subborrow_u64(                                                    \
+        _sub_u64(                                                      \
+            LowProduct,                                                \
+            sign,                                                      \
+            &LowProduct),                                              \
+        *__HighProduct,                                                \
+        sign,                                                          \
+        (uint64_t *)__HighProduct);                                    \
+} while (0)
+#endif
 #ifndef _WIN64
 #define MUL128(Multiplicand, Multiplier, LowProduct, HighProduct)       \
 do                                                                      \
@@ -988,16 +1048,31 @@ do                                                                      \
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1920
+#pragma intrinsic(_div64)
 #pragma intrinsic(_udiv64)
 #elif defined(_MSC_VER) && _MSC_VER < 1920 && defined(_M_IX86)
-__forceinline unsigned int __reg64return_udiv64(unsigned __int64 dividend, unsigned int divisor)
+__forceinline unsigned __int64 __reg64return_div64(__int64 dividend, int divisor)
 {
 	__asm
 	{
 		mov     eax, dword ptr [dividend]
 		mov     edx, dword ptr [dividend + 4]
-		mov     ecx, dword ptr [divisor]
-		div     ecx
+		idiv    dword ptr [divisor]
+	}
+}
+__forceinline int _div64(__int64 dividend, int divisor, int *remainder)
+{
+	unsigned __int64 x = __reg64return_div64(dividend, divisor);
+	*remainder = (int)(x >> 32);
+	return (int)x;
+}
+__forceinline unsigned __int64 __reg64return_udiv64(unsigned __int64 dividend, unsigned int divisor)
+{
+	__asm
+	{
+		mov     eax, dword ptr [dividend]
+		mov     edx, dword ptr [dividend + 4]
+		div     dword ptr [divisor]
 	}
 }
 __forceinline unsigned int _udiv64(unsigned __int64 dividend, unsigned int divisor, unsigned int *remainder)
@@ -1007,10 +1082,18 @@ __forceinline unsigned int _udiv64(unsigned __int64 dividend, unsigned int divis
 	return (unsigned int)x;
 }
 #elif defined(__BORLANDC__)
+int __fastcall __fastcall_div64(int32_t low, int32_t high, int divisor, int *remainder);
+int __fastcall __fastcall__div64(int32_t low, int32_t high, int divisor);
 unsigned int __fastcall __fastcall_udiv64(uint32_t low, uint32_t high, unsigned int divisor, unsigned int *remainder);
 unsigned int __fastcall __fastcall__udiv64(uint32_t low, uint32_t high, unsigned int divisor);
+#define _div64(dividend, divisor, remainder) __fastcall_div64((int32_t)(dividend), (int32_t)((uint64_t)(int64_t)(dividend) >> 32), divisor, remainder)
 #define _udiv64(dividend, divisor, remainder) __fastcall_udiv64((uint32_t)(dividend), (uint32_t)((uint64_t)(dividend) >> 32), divisor, remainder)
 #else
+__forceinline int _div64(int64_t dividend, int divisor, int *remainder)
+{
+	*remainder = dividend % divisor;
+	return (int)(dividend / divisor);
+}
 __forceinline unsigned int _udiv64(uint64_t dividend, unsigned int divisor, unsigned int *remainder)
 {
 	*remainder = dividend % divisor;
@@ -1018,11 +1101,15 @@ __forceinline unsigned int _udiv64(uint64_t dividend, unsigned int divisor, unsi
 }
 #endif
 
-#if defined(_MSC_VER) && defined(_M_X64)
+#if defined(_MSC_VER) && _MSC_VER >= 1920 && defined(_M_X64)
+#pragma intrinsic(_div128)
 #pragma intrinsic(_udiv128)
+#define DIV128(highDividend, lowDividend, divisor, quotient, remainder) \
+	do { *(quotient) = _div128(highDividend, lowDividend, divisor, remainder); } while (0)
 #define UDIV128(highDividend, lowDividend, divisor, quotient, remainder) \
 	do { *(quotient) = _udiv128(highDividend, lowDividend, divisor, remainder); } while (0)
 #else
+int64_t __msreturn __stdcall _div128(int64_t highDividend, int64_t lowDividend, int64_t divisor, int64_t *remainder);
 uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, uint64_t lowDividend, uint64_t divisor, uint64_t *remainder);
 #define UDIV128(highDividend, lowDividend, divisor, quotient, remainder)   \
 do                                                                         \
@@ -1074,6 +1161,69 @@ do                                                                         \
     *_remainder = _lowDividend % _divisor;                                 \
     *_quotient += _lowDividend / _divisor;                                 \
 } while (0)
+#ifndef _WIN64
+#define DIV128(highDividend, lowDividend, divisor, quotient, remainder)         \
+do                                                                              \
+{                                                                               \
+    int64_t __highDividend = highDividend;                                      \
+    int64_t __lowDividend  = lowDividend;                                       \
+    int64_t __divisor      = divisor;                                           \
+    int64_t *__quotient    = quotient;                                          \
+    int64_t *__remainder   = remainder;                                         \
+    uint32_t sign, x;                                                           \
+                                                                                \
+    sign = (uint32_t)(__highDividend >> 63);                                    \
+    __lowDividend ^= sign | ((uint64_t)sign << 32);                             \
+    __highDividend ^= sign | ((uint64_t)sign << 32);                            \
+    _subborrow_u64(                                                             \
+        _sub_u64(                                                               \
+            __lowDividend,                                                      \
+            sign | ((uint64_t)sign << 32),                                      \
+            (uint64_t *)&__lowDividend),                                        \
+        __highDividend,                                                         \
+        sign | ((uint64_t)sign << 32),                                          \
+        (uint64_t *)&__highDividend);                                           \
+    sign ^= x = (uint32_t)(__divisor >> 63);                                    \
+    __divisor ^= x | ((uint64_t)x << 32);                                       \
+    __divisor -= x | ((uint64_t)x << 32);                                       \
+    UDIV128(__highDividend, __lowDividend, __divisor, __quotient, __remainder); \
+    *__quotient ^= sign | ((uint64_t)sign << 32);                               \
+    *__quotient -= sign | ((uint64_t)sign << 32);                               \
+    *__remainder ^= sign | ((uint64_t)sign << 32);                              \
+    *__remainder -= sign | ((uint64_t)sign << 32);                              \
+} while (0)
+#else
+#define DIV128(highDividend, lowDividend, divisor, quotient, remainder)         \
+do                                                                              \
+{                                                                               \
+    int64_t __highDividend = highDividend;                                      \
+    int64_t __lowDividend  = lowDividend;                                       \
+    int64_t __divisor      = divisor;                                           \
+    int64_t *__quotient    = quotient;                                          \
+    int64_t *__remainder   = remainder;                                         \
+    uint64_t sign, x;                                                           \
+                                                                                \
+    sign = __highDividend >> 63;                                                \
+    __lowDividend ^= sign;                                                      \
+    __highDividend ^= sign;                                                     \
+    _subborrow_u64(                                                             \
+        _sub_u64(                                                               \
+            __lowDividend,                                                      \
+            sign,                                                               \
+            (uint64_t *)&__lowDividend),                                        \
+        __highDividend,                                                         \
+        sign,                                                                   \
+        (uint64_t *)&__highDividend);                                           \
+    sign ^= x = __divisor >> 63;                                                \
+    __divisor ^= x;                                                             \
+    __divisor -= x;                                                             \
+    UDIV128(__highDividend, __lowDividend, __divisor, __quotient, __remainder); \
+    *__quotient ^= sign;                                                        \
+    *__quotient -= sign;                                                        \
+    *__remainder ^= sign;                                                       \
+    *__remainder -= sign;                                                       \
+} while (0)
+#endif
 #endif
 
 // for constant value

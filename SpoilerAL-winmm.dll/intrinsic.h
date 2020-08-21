@@ -559,6 +559,158 @@ do                                       \
 } while (0)
 #endif
 
+#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
+#pragma intrinsic(__ll_lshift)
+#else
+#define __ll_lshift(Mask, nBit) ((uint64_t)(Mask) << ((nBit) & 31))
+#endif
+
+#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
+#pragma intrinsic(__ll_rshift)
+#else
+#define __ll_rshift(Mask, nBit) ((int64_t)(Mask) >> ((nBit) & 31))
+#endif
+
+#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
+#pragma intrinsic(__ull_rshift)
+#else
+#define __ull_rshift(Mask, nBit) ((uint64_t)(Mask) >> ((nBit) & 31))
+#endif
+
+#if defined(_MSC_VER) && defined(_M_X64)
+#pragma intrinsic(__shiftleft128)
+#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
+__forceinline unsigned __int64 __shiftleft128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)
+{
+	__asm
+	{
+		mov     cl, dword ptr [Shift]
+		mov     eax, dword ptr [LowPart + 4]
+		and     cl, 63
+		mov     edx, dword ptr [HighPart]
+		cmp     cl, 32
+		jb      L1
+		and     cl, 31
+		jz      L3
+		mov     edi, dword ptr [LowPart]
+		jmp     L2
+
+	L1:
+		mov     edi, eax
+		mov     eax, edx
+		mov     edx, dword ptr [HighPart + 4]
+	L2:
+		shld    edx, eax, cl
+		shld    eax, edi, cl
+	L3:
+	}
+}
+#elif defined(_MSC_VER) && _MSC_VER >= 1310 && defined(_M_IX86)
+#pragma intrinsic(__ll_lshift)
+__forceinline unsigned __int64 __shiftleft128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)
+{
+	uint32_t a, b, c;
+
+	Shift &= 63;
+	a = (uint32_t)(LowPart >> 32);
+	b = (uint32_t)HighPart;
+	if (Shift >= 32)
+	{
+		if (!(Shift &= 31))
+			goto DONE;
+		c = (uint32_t)LowPart;
+	}
+	else
+	{
+		c = a;
+		a = b;
+		b = (uint32_t)(HighPart >> 32);
+	}
+	b = (uint32_t)(__ll_lshift(a | ((uint64_t)b << 32), Shift) >> 32);
+	a = (uint32_t)(__ll_lshift(c | ((uint64_t)a << 32), Shift) >> 32);
+DONE:
+	return a | ((uint64_t)b << 32);
+}
+#else
+__forceinline uint64_t __shiftleft128(uint64_t LowPart, uint64_t HighPart, unsigned char Shift)
+{
+	Shift &= 63;
+	return (HighPart << Shift) | (LowPart >> (64 - Shift));
+}
+#endif
+
+#if defined(_MSC_VER) && defined(_M_X64)
+#pragma intrinsic(__shiftright128)
+#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
+__forceinline unsigned __int64 __shiftright128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)
+{
+	__asm
+	{
+		mov     cl, dword ptr [Shift]
+		mov     edx, dword ptr [HighPart]
+		and     cl, 63
+		mov     eax, dword ptr [LowPart + 4]
+		cmp     cl, 32
+		jb      L1
+		and     cl, 31
+		jz      L3
+		mov     edi, dword ptr [HighPart + 4]
+		jmp     L2
+
+	L1:
+		mov     edi, edx
+		mov     edx, eax
+		mov     eax, dword ptr [LowPart]
+	L2:
+		shrd    eax, edx, cl
+		shrd    edx, edi, cl
+	L3:
+	}
+}
+#elif defined(_MSC_VER) && _MSC_VER >= 1310 && defined(_M_IX86)
+#pragma intrinsic(__ull_rshift)
+__forceinline unsigned __int64 __shiftright128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)
+{
+	uint32_t a, b, c;
+
+	Shift &= 63;
+	b = (uint32_t)HighPart;
+	a = (uint32_t)(LowPart >> 32);
+	if (Shift >= 32)
+	{
+		if (!(Shift &= 31))
+			goto DONE;
+		c = (uint32_t)(HighPart >> 32);
+	}
+	else
+	{
+		c = b;
+		b = a;
+		a = (uint32_t)LowPart;
+	}
+	a = (uint32_t)__ull_rshift(a | ((uint64_t)b << 32), Shift);
+	b = (uint32_t)__ull_rshift(b | ((uint64_t)c << 32), Shift);
+DONE:
+	return a | ((uint64_t)b << 32);
+}
+#else
+__forceinline uint64_t __shiftright128(uint64_t LowPart, uint64_t HighPart, unsigned char Shift)
+{
+	Shift &= 63;
+	return (LowPart >> Shift) | (HighPart << (64 - Shift));
+}
+#endif
+
+__forceinline uint64_t ShiftArithmeticRight128(uint64_t LowPart, int64_t HighPart, unsigned char Shift)
+{
+	return
+		(Shift &= 127) < 64 ?
+			__shiftright128(LowPart, HighPart, Shift) :
+			!(Shift &= 63) ?
+				HighPart :
+				HighPart >> Shift;
+}
+
 #if defined(_MSC_VER) && _MSC_VER >= 1310
 #pragma intrinsic(_addcarry_u32)
 #define _add_u32(a, b, out) _addcarry_u32(0, a, b, out)
@@ -1117,54 +1269,54 @@ __forceinline unsigned int _udiv64(uint64_t dividend, unsigned int divisor, unsi
 #else
 int64_t __msreturn __stdcall _div128(int64_t highDividend, int64_t lowDividend, int64_t divisor, int64_t *remainder);
 uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, uint64_t lowDividend, uint64_t divisor, uint64_t *remainder);
-#define UDIV128(highDividend, lowDividend, divisor, quotient, remainder)   \
-do                                                                         \
-{                                                                          \
-    uint64_t             _highDividend = highDividend;                     \
-    uint64_t             _lowDividend  = lowDividend;                      \
-    uint64_t             _divisor      = divisor;                          \
-    uint64_t *__restrict _quotient     = quotient;                         \
-    uint64_t *__restrict _remainder    = remainder;                        \
-                                                                           \
-    *_quotient = 0;                                                        \
-    if (_highDividend && (_highDividend %= _divisor))                      \
-    {                                                                      \
-        unsigned long shift, index;                                        \
-        uint64_t addend, lowSubtrahend, highSubtrahend, low, high;         \
-                                                                           \
-        _BitScanReverse64(&shift, _divisor);                               \
-        _BitScanReverse64(&index, _highDividend);                          \
-        addend = 0x8000000000000000;                                       \
-        if (shift -= index)                                                \
-            addend >>= shift - 1;                                          \
-        else                                                               \
-            shift++;                                                       \
-        highSubtrahend = _divisor >> shift;                                \
-        lowSubtrahend = _divisor << (64 - shift);                          \
-        for (; ;                                                           \
-            addend >>= 1,                                                  \
-            lowSubtrahend = (lowSubtrahend >> 1) | (highSubtrahend << 63), \
-            highSubtrahend >>= 1)                                          \
-        {                                                                  \
-            if (!_subborrow_u64(                                           \
-                    _sub_u64(                                              \
-                        _lowDividend,                                      \
-                        lowSubtrahend,                                     \
-                        &low),                                             \
-                    _highDividend,                                         \
-                    highSubtrahend,                                        \
-                    &high))                                                \
-            {                                                              \
-                _lowDividend = low;                                        \
-                _highDividend = high;                                      \
-                *_quotient |= addend;                                      \
-                if (!_highDividend)                                        \
-                    break;                                                 \
-            }                                                              \
-        }                                                                  \
-    }                                                                      \
-    *_remainder = _lowDividend % _divisor;                                 \
-    *_quotient += _lowDividend / _divisor;                                 \
+#define UDIV128(highDividend, lowDividend, divisor, quotient, remainder)       \
+do                                                                             \
+{                                                                              \
+    uint64_t             _highDividend = highDividend;                         \
+    uint64_t             _lowDividend  = lowDividend;                          \
+    uint64_t             _divisor      = divisor;                              \
+    uint64_t *__restrict _quotient     = quotient;                             \
+    uint64_t *__restrict _remainder    = remainder;                            \
+                                                                               \
+    *_quotient = 0;                                                            \
+    if (_highDividend && (_highDividend %= _divisor))                          \
+    {                                                                          \
+        unsigned long shift, index;                                            \
+        uint64_t addend, lowSubtrahend, highSubtrahend, low, high;             \
+                                                                               \
+        _BitScanReverse64(&shift, _divisor);                                   \
+        _BitScanReverse64(&index, _highDividend);                              \
+        addend = 0x8000000000000000;                                           \
+        if (shift -= index)                                                    \
+            addend >>= shift - 1;                                              \
+        else                                                                   \
+            shift++;                                                           \
+        lowSubtrahend = __shiftright128(0, _divisor, shift);                   \
+        highSubtrahend = _divisor >> shift;                                    \
+        for (; ;                                                               \
+            addend >>= 1,                                                      \
+            lowSubtrahend = __shiftright128(lowSubtrahend, highSubtrahend, 1), \
+            highSubtrahend >>= 1)                                              \
+        {                                                                      \
+            if (!_subborrow_u64(                                               \
+                    _sub_u64(                                                  \
+                        _lowDividend,                                          \
+                        lowSubtrahend,                                         \
+                        &low),                                                 \
+                    _highDividend,                                             \
+                    highSubtrahend,                                            \
+                    &high))                                                    \
+            {                                                                  \
+                _lowDividend = low;                                            \
+                _highDividend = high;                                          \
+                *_quotient |= addend;                                          \
+                if (!_highDividend)                                            \
+                    break;                                                     \
+            }                                                                  \
+        }                                                                      \
+    }                                                                          \
+    *_remainder = _lowDividend % _divisor;                                     \
+    *_quotient += _lowDividend / _divisor;                                     \
 } while (0)
 #ifndef _WIN64
 #define DIV128(highDividend, lowDividend, divisor, quotient, remainder)         \
@@ -1475,148 +1627,6 @@ __forceinline unsigned char _BitScanReverse64(unsigned long *Index, uint64_t Mas
 	else
 		Result = _BitScanReverse(Index, (unsigned long)Mask);
 	return Result;
-}
-#endif
-
-#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
-#pragma intrinsic(__ll_lshift)
-#else
-#define __ll_lshift(Mask, nBit) ((uint64_t)(Mask) << ((nBit) & 31))
-#endif
-
-#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
-#pragma intrinsic(__ll_rshift)
-#else
-#define __ll_rshift(Mask, nBit) ((int64_t)(Mask) >> ((nBit) & 31))
-#endif
-
-#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
-#pragma intrinsic(__ull_rshift)
-#else
-#define __ull_rshift(Mask, nBit) ((uint64_t)(Mask) >> ((nBit) & 31))
-#endif
-
-#if defined(_MSC_VER) && defined(_M_X64)
-#pragma intrinsic(__shiftleft128)
-#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__forceinline unsigned __int64 __shiftleft128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)
-{
-	__asm
-	{
-		mov     cl, dword ptr [Shift]
-		mov     eax, dword ptr [LowPart + 4]
-		and     cl, 63
-		mov     edx, dword ptr [HighPart]
-		cmp     cl, 32
-		jb      L1
-		and     cl, 31
-		jz      L3
-		mov     edi, dword ptr [LowPart]
-		jmp     L2
-
-	L1:
-		mov     edi, eax
-		mov     eax, edx
-		mov     edx, dword ptr [HighPart + 4]
-	L2:
-		shld    edx, eax, cl
-		shld    eax, edi, cl
-	L3:
-	}
-}
-#elif defined(_MSC_VER) && _MSC_VER >= 1310 && defined(_M_IX86)
-#pragma intrinsic(__ll_lshift)
-__forceinline unsigned __int64 __shiftleft128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)
-{
-	uint32_t a, b, c;
-
-	Shift &= 63;
-	a = (uint32_t)(LowPart >> 32);
-	b = (uint32_t)HighPart;
-	if (Shift >= 32)
-	{
-		if (!(Shift &= 31))
-			goto DONE;
-		c = (uint32_t)LowPart;
-	}
-	else
-	{
-		c = a;
-		a = b;
-		b = (uint32_t)(HighPart >> 32);
-	}
-	b = (uint32_t)(__ll_lshift(a | ((uint64_t)b << 32), Shift) >> 32);
-	a = (uint32_t)(__ll_lshift(c | ((uint64_t)a << 32), Shift) >> 32);
-DONE:
-	return a | ((uint64_t)b << 32);
-}
-#else
-__forceinline uint64_t __shiftleft128(uint64_t LowPart, uint64_t HighPart, unsigned char Shift)
-{
-	Shift &= 63;
-	return (HighPart << Shift) | (LowPart >> (64 - Shift));
-}
-#endif
-
-#if defined(_MSC_VER) && defined(_M_X64)
-#pragma intrinsic(__shiftright128)
-#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__forceinline unsigned __int64 __shiftright128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)
-{
-	__asm
-	{
-		mov     cl, dword ptr [Shift]
-		mov     edx, dword ptr [HighPart]
-		and     cl, 63
-		mov     eax, dword ptr [LowPart + 4]
-		cmp     cl, 32
-		jb      L1
-		and     cl, 31
-		jz      L3
-		mov     edi, dword ptr [HighPart + 4]
-		jmp     L2
-
-	L1:
-		mov     edi, edx
-		mov     edx, eax
-		mov     eax, dword ptr [LowPart]
-	L2:
-		shrd    eax, edx, cl
-		shrd    edx, edi, cl
-	L3:
-	}
-}
-#elif defined(_MSC_VER) && _MSC_VER >= 1310 && defined(_M_IX86)
-#pragma intrinsic(__ull_rshift)
-__forceinline unsigned __int64 __shiftright128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)
-{
-	uint32_t a, b, c;
-
-	Shift &= 63;
-	b = (uint32_t)HighPart;
-	a = (uint32_t)(LowPart >> 32);
-	if (Shift >= 32)
-	{
-		if (!(Shift &= 31))
-			goto DONE;
-		c = (uint32_t)(HighPart >> 32);
-	}
-	else
-	{
-		c = b;
-		b = a;
-		a = (uint32_t)LowPart;
-	}
-	a = (uint32_t)__ull_rshift(a | ((uint64_t)b << 32), Shift);
-	b = (uint32_t)__ull_rshift(b | ((uint64_t)c << 32), Shift);
-DONE:
-	return a | ((uint64_t)b << 32);
-}
-#else
-__forceinline uint64_t __shiftright128(uint64_t LowPart, uint64_t HighPart, unsigned char Shift)
-{
-	Shift &= 63;
-	return (LowPart >> Shift) | (HighPart << (64 - Shift));
 }
 #endif
 

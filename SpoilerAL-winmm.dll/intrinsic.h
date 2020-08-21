@@ -894,6 +894,7 @@ do                                                                              
 {                                                                                                 \
     uint64_t _Multiplicand = Multiplicand;                                                        \
     uint64_t _Multiplier   = Multiplier;                                                          \
+                                                                                                  \
     uint64_t x, y;                                                                                \
                                                                                                   \
     x = (__emulu((uint32_t)_Multiplicand, (uint32_t)_Multiplier) >> 32) +                         \
@@ -912,10 +913,11 @@ do                                                                              
 #define UMUL128(Multiplicand, Multiplier, LowProduct, HighProduct)                            \
 do                                                                                            \
 {                                                                                             \
-    uint64_t _Multiplicand = Multiplicand;                                                    \
-    uint64_t _Multiplier   = Multiplier;                                                      \
-    uint64_t *_LowProduct  = LowProduct;                                                      \
-    uint64_t *_HighProduct = HighProduct;                                                     \
+    uint64_t             _Multiplicand = Multiplicand;                                        \
+    uint64_t             _Multiplier   = Multiplier;                                          \
+    uint64_t *__restrict _LowProduct   = LowProduct;                                          \
+    uint64_t *__restrict _HighProduct  = HighProduct;                                         \
+                                                                                              \
     uint64_t x, y;                                                                            \
                                                                                               \
     x = __emulu((uint32_t)_Multiplicand, (uint32_t)_Multiplier);                              \
@@ -936,9 +938,10 @@ do                                                                              
 #define MULH(Multiplicand, Multiplier, HighProduct)                    \
 do                                                                     \
 {                                                                      \
-    int64_t __Multiplicand = Multiplicand;                             \
-    int64_t __Multiplier   = Multiplier;                               \
-    int64_t *__HighProduct = HighProduct;                              \
+    int64_t             __Multiplicand = Multiplicand;                 \
+    int64_t             __Multiplier   = Multiplier;                   \
+    int64_t *__restrict __HighProduct  = HighProduct;                  \
+                                                                       \
     uint64_t LowProduct;                                               \
     uint32_t sign, x;                                                  \
                                                                        \
@@ -964,9 +967,10 @@ do                                                                     \
 #define MULH(Multiplicand, Multiplier, HighProduct)                    \
 do                                                                     \
 {                                                                      \
-    int64_t __Multiplicand = Multiplicand;                             \
-    int64_t __Multiplier   = Multiplier;                               \
-    int64_t *__HighProduct = HighProduct;                              \
+    int64_t             __Multiplicand = Multiplicand;                 \
+    int64_t             __Multiplier   = Multiplier;                   \
+    int64_t *__restrict __HighProduct  = HighProduct;                  \
+                                                                       \
     uint64_t LowProduct, sign, x;                                      \
                                                                        \
     sign = __Multiplicand >> 63;                                       \
@@ -992,10 +996,11 @@ do                                                                     \
 #define MUL128(Multiplicand, Multiplier, LowProduct, HighProduct)       \
 do                                                                      \
 {                                                                       \
-    int64_t __Multiplicand = Multiplicand;                              \
-    int64_t __Multiplier   = Multiplier;                                \
-    int64_t *__LowProduct  = LowProduct;                                \
-    int64_t *__HighProduct = HighProduct;                               \
+    int64_t             __Multiplicand = Multiplicand;                  \
+    int64_t             __Multiplier   = Multiplier;                    \
+    int64_t *__restrict __LowProduct   = LowProduct;                    \
+    int64_t *__restrict __HighProduct  = HighProduct;                   \
+                                                                        \
     uint32_t sign, x;                                                   \
                                                                         \
     sign = (uint32_t)(__Multiplicand >> 63);                            \
@@ -1020,10 +1025,11 @@ do                                                                      \
 #define MUL128(Multiplicand, Multiplier, LowProduct, HighProduct)       \
 do                                                                      \
 {                                                                       \
-    int64_t __Multiplicand = Multiplicand;                              \
-    int64_t __Multiplier   = Multiplier;                                \
-    int64_t *__LowProduct  = LowProduct;                                \
-    int64_t *__HighProduct = HighProduct;                               \
+    int64_t             __Multiplicand = Multiplicand;                  \
+    int64_t             __Multiplier   = Multiplier;                    \
+    int64_t *__restrict __LowProduct   = LowProduct;                    \
+    int64_t *__restrict __HighProduct  = HighProduct;                   \
+                                                                        \
     uint64_t sign, x;                                                   \
                                                                         \
     sign = __Multiplicand >> 63;                                        \
@@ -1114,11 +1120,11 @@ uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, uint64_t lowDivide
 #define UDIV128(highDividend, lowDividend, divisor, quotient, remainder)   \
 do                                                                         \
 {                                                                          \
-    uint64_t _highDividend = highDividend;                                 \
-    uint64_t _lowDividend  = lowDividend;                                  \
-    uint64_t _divisor      = divisor;                                      \
-    uint64_t *_quotient    = quotient;                                     \
-    uint64_t *_remainder   = remainder;                                    \
+    uint64_t             _highDividend = highDividend;                     \
+    uint64_t             _lowDividend  = lowDividend;                      \
+    uint64_t             _divisor      = divisor;                          \
+    uint64_t *__restrict _quotient     = quotient;                         \
+    uint64_t *__restrict _remainder    = remainder;                        \
                                                                            \
     *_quotient = 0;                                                        \
     if (_highDividend && (_highDividend %= _divisor))                      \
@@ -1164,11 +1170,12 @@ do                                                                         \
 #define DIV128(highDividend, lowDividend, divisor, quotient, remainder)         \
 do                                                                              \
 {                                                                               \
-    int64_t __highDividend = highDividend;                                      \
-    int64_t __lowDividend  = lowDividend;                                       \
-    int64_t __divisor      = divisor;                                           \
-    int64_t *__quotient    = quotient;                                          \
-    int64_t *__remainder   = remainder;                                         \
+    int64_t             __highDividend = highDividend;                          \
+    int64_t             __lowDividend  = lowDividend;                           \
+    int64_t             __divisor      = divisor;                               \
+    int64_t *__restrict __quotient     = quotient;                              \
+    int64_t *__restrict __remainder    = remainder;                             \
+                                                                                \
     uint32_t sign, x;                                                           \
                                                                                 \
     sign = (uint32_t)(__highDividend >> 63);                                    \
@@ -1195,11 +1202,12 @@ do                                                                              
 #define DIV128(highDividend, lowDividend, divisor, quotient, remainder)         \
 do                                                                              \
 {                                                                               \
-    int64_t __highDividend = highDividend;                                      \
-    int64_t __lowDividend  = lowDividend;                                       \
-    int64_t __divisor      = divisor;                                           \
-    int64_t *__quotient    = quotient;                                          \
-    int64_t *__remainder   = remainder;                                         \
+    int64_t             __highDividend = highDividend;                          \
+    int64_t             __lowDividend  = lowDividend;                           \
+    int64_t             __divisor      = divisor;                               \
+    int64_t *__restrict __quotient     = quotient;                              \
+    int64_t *__restrict __remainder    = remainder;                             \
+                                                                                \
     uint64_t sign, x;                                                           \
                                                                                 \
     sign = __highDividend >> 63;                                                \

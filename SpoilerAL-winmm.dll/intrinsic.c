@@ -901,18 +901,30 @@ __declspec(naked) uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, 
 		push    ebp
 		push    esi
 		push    edi
-		mov     edi, dword ptr [LO(highDividend) + 16]
+		mov     ecx, dword ptr [LO(highDividend) + 16]
 		mov     edx, dword ptr [HI(highDividend) + 16]
 		mov     eax, dword ptr [LO(lowDividend) + 16]
-		mov     ecx, dword ptr [HI(lowDividend) + 16]
+		mov     edi, dword ptr [HI(lowDividend) + 16]
 		mov     ebx, dword ptr [LO(divisor) + 16]
 		mov     ebp, dword ptr [HI(divisor) + 16]
 		sub     esp, 28
 		xor     esi, esi
-		push    ecx
+		push    edi
 		push    eax
-		mov     eax, edi
-		or      edi, edx
+
+		#define dividend1   (esp)
+		#define dividend2   (esp + 4)
+		#define dividend3   (esp + 8)
+		#define dividend4   (esp + 12)
+		#define quotient1   (esp + 16)
+		#define quotient2   (esp + 20)
+		#define addend1     (esp + 24)
+		#define addend2     (esp + 28)
+		#define subtrahend1 (esp + 32)
+
+		mov     eax, ecx
+		xor     edi, edi
+		or      ecx, edx
 		jz      L10
 		push    ebp
 		push    ebx
@@ -921,70 +933,70 @@ __declspec(naked) uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, 
 		call    _aullrem
 		mov     dword ptr [esp + 8], eax
 		mov     dword ptr [esp + 12], edx
-		mov     edi, eax
-		xor     eax, eax
 		test    edx, edx
 		jnz     L1
-		test    edi, edi
+		test    eax, eax
 		jz      L10
 		test    ebp, ebp
 		jnz     L3
-		bsr     esi, ebx
-		bsr     ecx, edi
+		bsr     ecx, ebx
+		bsr     esi, eax
 		jmp     L2
 
 		align   16
 	L1:
-		bsr     esi, ebp
-		bsr     ecx, edx
+		bsr     ecx, ebp
+		bsr     esi, edx
 	L2:
-		sub     esi, ecx
 		mov     edi, 80000000H
-		lea     ecx, [esi - 1]
-		jnz     L5
-		inc     esi
+		sub     ecx, esi
+		xor     eax, eax
+		mov     esi, ecx
+		sub     ecx, 1
+		ja      L5
+		sub     esi, ecx
 		jmp     L6
 
 		align   16
 	L3:
-		bsr     esi, ebp
-		bsr     ecx, edi
-		sub     esi, ecx
+		bsr     ecx, ebp
+		bsr     esi, eax
+		sub     ecx, esi
 		jbe     L4
 		mov     eax, 80000000H
-		lea     ecx, [esi - 1]
-		add     esi, 32
+		mov     esi, ecx
 		xor     edi, edi
+		add     esi, 32
+		dec     ecx
+		jz      L6
 		shr     eax, cl
 		jmp     L6
 
 		align   16
 	L4:
-		mov     ecx, esi
 		mov     edi, 80000000H
 		add     ecx, 31
-		add     esi, 32
+		xor     eax, eax
+		lea     esi, [ecx + 1]
 	L5:
 		shr     edi, cl
 	L6:
+		xor     edx, edx
 		mov     ecx, esi
+		mov     dword ptr [esp + 16], edx
+		mov     dword ptr [esp + 20], edx
 		mov     dword ptr [esp + 24], eax
 		xor     eax, eax
-		mov     ebp, dword ptr [HI(divisor) + 52]
-		mov     edx, ebx
-		xor     ebx, ebx
-		mov     dword ptr [esp + 16], eax
-		mov     dword ptr [esp + 20], eax
 		and     ecx, 31
 		jz      L7
-		shrd    eax, edx, cl
-		shrd    edx, ebp, cl
+		shrd    eax, ebx, cl
+		shrd    ebx, ebp, cl
 		shr     ebp, cl
 		cmp     esi, 32
 		jae     L7
-		mov     ebx, ebp
-		mov     ebp, edx
-		mov     edx, eax
+		mov     edx, ebp
+		mov     ebp, ebx
+		mov     ebx, eax
 		xor     eax, eax
 	L7:
 		mov     dword ptr [esp + 28], edi
@@ -994,27 +1006,27 @@ __declspec(naked) uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, 
 
 		align   16
 	L8:
-		shr     ebx, 1
+		shr     edx, 1
 		mov     eax, dword ptr [esp + 32]
 		rcr     ebp, 1
-		mov     ecx, dword ptr [esp + 28]
-		rcr     edx, 1
-		mov     edi, dword ptr [esp + 24]
+		mov     edi, dword ptr [esp + 28]
+		rcr     ebx, 1
+		mov     ecx, dword ptr [esp + 24]
 		rcr     eax, 1
 		mov     esi, dword ptr [esp]
-		shr     ecx, 1
+		shr     edi, 1
 		mov     dword ptr [esp + 32], eax
-		rcr     edi, 1
-		mov     dword ptr [esp + 28], ecx
-		mov     dword ptr [esp + 24], edi
+		rcr     ecx, 1
+		mov     dword ptr [esp + 28], edi
+		mov     dword ptr [esp + 24], ecx
 	L9:
 		sub     esi, eax
 		mov     edi, dword ptr [esp + 4]
-		sbb     edi, edx
+		sbb     edi, ebx
 		mov     eax, dword ptr [esp + 8]
 		sbb     eax, ebp
 		mov     ecx, dword ptr [esp + 12]
-		sbb     ecx, ebx
+		sbb     ecx, edx
 		jb      L8
 		mov     dword ptr [esp], esi
 		mov     dword ptr [esp + 4], edi
@@ -1040,6 +1052,17 @@ __declspec(naked) uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, 
 		add     esp, 20
 		mov     dword ptr [ebp], ecx
 		mov     dword ptr [ebp + 4], ebx
+
+		#undef dividend1
+		#undef dividend2
+		#undef dividend3
+		#undef dividend4
+		#undef quotient1
+		#undef quotient2
+		#undef addend1
+		#undef addend2
+		#undef subtrahend1
+
 		pop     edi
 		pop     esi
 		pop     ebp

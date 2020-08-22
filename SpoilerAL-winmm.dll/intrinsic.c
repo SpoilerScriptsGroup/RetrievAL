@@ -901,158 +901,145 @@ __declspec(naked) uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, 
 		push    ebp
 		push    esi
 		push    edi
-		mov     eax, dword ptr [LO(highDividend) + 16]
+		mov     edi, dword ptr [LO(highDividend) + 16]
 		mov     edx, dword ptr [HI(highDividend) + 16]
-		mov     ecx, dword ptr [LO(lowDividend) + 16]
-		mov     ebx, dword ptr [HI(lowDividend) + 16]
-		mov     esi, dword ptr [LO(divisor) + 16]
-		mov     edi, dword ptr [HI(divisor) + 16]
-		xor     ebp, ebp
-		push    ebx
+		mov     eax, dword ptr [LO(lowDividend) + 16]
+		mov     ecx, dword ptr [HI(lowDividend) + 16]
+		mov     ebx, dword ptr [LO(divisor) + 16]
+		mov     ebp, dword ptr [HI(divisor) + 16]
+		sub     esp, 28
+		xor     esi, esi
 		push    ecx
-		push    ebp
-		push    ebp
-		push    ebp
-		mov     ecx, eax
-		sub     esp, 16
-		or      eax, edx
+		push    eax
+		mov     eax, edi
+		or      edi, edx
 		jz      L10
-		push    edi
-		push    esi
+		push    ebp
+		push    ebx
 		push    edx
-		push    ecx
+		push    eax
 		call    _aullrem
-		mov     dword ptr [esp + 4], eax
-		mov     dword ptr [esp + 8], edx
-		mov     ebx, eax
+		mov     dword ptr [esp + 8], eax
+		mov     dword ptr [esp + 12], edx
+		mov     edi, eax
 		xor     eax, eax
 		test    edx, edx
 		jnz     L1
-		test    ebx, ebx
-		jz      L10
 		test    edi, edi
+		jz      L10
+		test    ebp, ebp
 		jnz     L3
-		bsr     ebp, esi
-		bsr     ecx, ebx
+		bsr     esi, ebx
+		bsr     ecx, edi
 		jmp     L2
 
 		align   16
 	L1:
-		bsr     ebp, edi
+		bsr     esi, ebp
 		bsr     ecx, edx
 	L2:
-		sub     ebp, ecx
+		sub     esi, ecx
 		mov     edi, 80000000H
-		lea     ecx, [ebp - 1]
+		lea     ecx, [esi - 1]
 		jnz     L5
-		inc     ebp
+		inc     esi
 		jmp     L6
 
 		align   16
 	L3:
-		bsr     ebp, edi
-		bsr     ecx, ebx
-		sub     ebp, ecx
+		bsr     esi, ebp
+		bsr     ecx, edi
+		sub     esi, ecx
 		jbe     L4
 		mov     eax, 80000000H
-		lea     ecx, [ebp - 1]
-		add     ebp, 32
+		lea     ecx, [esi - 1]
+		add     esi, 32
 		xor     edi, edi
 		shr     eax, cl
 		jmp     L6
 
 		align   16
 	L4:
-		mov     ecx, ebp
+		mov     ecx, esi
 		mov     edi, 80000000H
 		add     ecx, 31
-		add     ebp, 32
+		add     esi, 32
 	L5:
 		shr     edi, cl
 	L6:
-		mov     ecx, ebp
-		mov     dword ptr [esp], eax
+		mov     ecx, esi
+		mov     dword ptr [esp + 24], eax
 		xor     eax, eax
-		mov     ebx, dword ptr [HI(divisor) + 52]
-		mov     edx, esi
-		xor     esi, esi
+		mov     ebp, dword ptr [HI(divisor) + 52]
+		mov     edx, ebx
+		xor     ebx, ebx
+		mov     dword ptr [esp + 16], eax
+		mov     dword ptr [esp + 20], eax
 		and     ecx, 31
 		jz      L7
 		shrd    eax, edx, cl
-		shrd    edx, ebx, cl
-		shr     ebx, cl
-		cmp     ebp, 32
+		shrd    edx, ebp, cl
+		shr     ebp, cl
+		cmp     esi, 32
 		jae     L7
-		mov     esi, ebx
-		mov     ebx, edx
+		mov     ebx, ebp
+		mov     ebp, edx
 		mov     edx, eax
 		xor     eax, eax
 	L7:
-		mov     ebp, dword ptr [esp + 8]
-		mov     ecx, dword ptr [esp + 28]
-		mov     dword ptr [esp + 12], eax
-		mov     dword ptr [esp + 16], ebp
-		mov     ebp, eax
+		mov     dword ptr [esp + 28], edi
+		mov     dword ptr [esp + 32], eax
+		mov     esi, dword ptr [esp]
 		jmp     L9
 
 		align   16
 	L8:
-		shr     edi, 1
-		mov     eax, dword ptr [esp]
-		rcr     eax, 1
-		mov     ecx, dword ptr [esp + 8]
-		shr     esi, 1
-		mov     ebp, dword ptr [esp + 12]
-		rcr     ebx, 1
-		mov     dword ptr [esp], eax
-		rcr     edx, 1
-		mov     dword ptr [esp + 16], ecx
+		shr     ebx, 1
+		mov     eax, dword ptr [esp + 32]
 		rcr     ebp, 1
 		mov     ecx, dword ptr [esp + 28]
-		mov     dword ptr [esp + 12], ebp
-	L9:
-		mov     eax, dword ptr [esp + 32]
-		sub     ecx, ebp
-		sbb     eax, edx
-		mov     ebp, dword ptr [esp + 4]
-		sbb     ebp, ebx
-		sbb     dword ptr [esp + 16], esi
-		jb      L8
-		mov     dword ptr [esp + 4], ebp
-		mov     dword ptr [esp + 28], ecx
-		mov     ecx, dword ptr [esp + 20]
-		mov     ebp, dword ptr [esp]
-		or      ecx, ebp
-		mov     ebp, dword ptr [esp + 24]
-		mov     dword ptr [esp + 20], ecx
-		or      ebp, edi
+		rcr     edx, 1
+		mov     edi, dword ptr [esp + 24]
+		rcr     eax, 1
+		mov     esi, dword ptr [esp]
+		shr     ecx, 1
 		mov     dword ptr [esp + 32], eax
-		mov     dword ptr [esp + 24], ebp
-		mov     ecx, dword ptr [esp + 16]
-		mov     eax, dword ptr [esp + 4]
-		mov     dword ptr [esp + 16], ebp
-		mov     dword ptr [esp + 8], ecx
+		rcr     edi, 1
+		mov     dword ptr [esp + 28], ecx
+		mov     dword ptr [esp + 24], edi
+	L9:
+		sub     esi, eax
+		mov     edi, dword ptr [esp + 4]
+		sbb     edi, edx
+		mov     eax, dword ptr [esp + 8]
+		sbb     eax, ebp
+		mov     ecx, dword ptr [esp + 12]
+		sbb     ecx, ebx
+		jb      L8
+		mov     dword ptr [esp], esi
+		mov     dword ptr [esp + 4], edi
+		mov     dword ptr [esp + 8], eax
+		mov     dword ptr [esp + 12], ecx
+		mov     esi, dword ptr [esp + 16]
+		mov     edi, dword ptr [esp + 20]
+		or      esi, dword ptr [esp + 24]
+		or      edi, dword ptr [esp + 28]
+		mov     dword ptr [esp + 16], esi
+		mov     dword ptr [esp + 20], edi
 		or      eax, ecx
 		jnz     L8
-		mov     edi, dword ptr [HI(divisor) + 52]
-		mov     esi, dword ptr [LO(divisor) + 52]
-		mov     ebp, dword ptr [esp + 20]
-
-		align   16
+		mov     ebx, dword ptr [LO(divisor) + 52]
+		mov     ebp, dword ptr [HI(divisor) + 52]
 	L10:
-		mov     edx, dword ptr [esp + 32]
-		mov     eax, dword ptr [esp + 28]
-		push    edi
-		push    esi
-		push    edx
-		push    eax
+		mov     dword ptr [esp + 8], ebx
+		mov     dword ptr [esp + 12], ebp
 		call    _aulldvrm
-		mov     esi, dword ptr [remainder + 52]
-		add     eax, ebp
-		adc     edx, dword ptr [esp + 16]
-		add     esp, 36
-		mov     dword ptr [esi], ecx
-		mov     dword ptr [esi + 4], ebx
+		mov     ebp, dword ptr [remainder + 36]
+		add     eax, esi
+		adc     edx, edi
+		add     esp, 20
+		mov     dword ptr [ebp], ecx
+		mov     dword ptr [ebp + 4], ebx
 		pop     edi
 		pop     esi
 		pop     ebp

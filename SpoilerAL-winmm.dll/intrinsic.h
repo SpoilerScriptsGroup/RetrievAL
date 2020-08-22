@@ -701,16 +701,6 @@ __forceinline uint64_t __shiftright128(uint64_t LowPart, uint64_t HighPart, unsi
 }
 #endif
 
-__forceinline uint64_t ShiftArithmeticRight128(uint64_t LowPart, int64_t HighPart, unsigned char Shift)
-{
-	return
-		(Shift &= 127) < 64 ?
-			__shiftright128(LowPart, HighPart, Shift) :
-			!(Shift &= 63) ?
-				HighPart :
-				HighPart >> Shift;
-}
-
 #if defined(_MSC_VER) && _MSC_VER >= 1310
 #pragma intrinsic(_addcarry_u32)
 #define _add_u32(a, b, out) _addcarry_u32(0, a, b, out)

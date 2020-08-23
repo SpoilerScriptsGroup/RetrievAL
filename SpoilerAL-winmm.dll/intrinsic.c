@@ -746,53 +746,18 @@ __declspec(naked) uint64_t __msreturn __stdcall _umul128(uint64_t Multiplicand, 
 #ifndef _M_IX86
 int64_t __msreturn __stdcall _div128(int64_t highDividend, int64_t lowDividend, int64_t divisor, int64_t *remainder)
 {
+	#define PREV_UDIV128 UDIV128
+	#undef UDIV128
+	#define UDIV128 _udiv128
+
 	int64_t quotient;
-#ifndef _WIN64
-	uint32_t sign, x;
 
-	sign = (uint32_t)(highDividend >> 63);
-	lowDividend ^= sign | ((uint64_t)sign << 32);
-	highDividend ^= sign | ((uint64_t)sign << 32);
-	_subborrow_u64(
-		_sub_u64(
-			lowDividend,
-			sign | ((uint64_t)sign << 32),
-			(uint64_t *)&lowDividend),
-		highDividend,
-		sign | ((uint64_t)sign << 32),
-		(uint64_t *)&highDividend);
-	sign ^= x = (uint32_t)(divisor >> 63);
-	divisor ^= x | ((uint64_t)x << 32);
-	divisor -= x | ((uint64_t)x << 32);
-	quotient = _udiv128(highDividend, lowDividend, divisor, remainder);
-	quotient ^= sign | ((uint64_t)sign << 32);
-	quotient -= sign | ((uint64_t)sign << 32);
-	*remainder ^= sign | ((uint64_t)sign << 32);
-	*remainder -= sign | ((uint64_t)sign << 32);
-#else
-	uint64_t sign, x;
-
-	sign = highDividend >> 63;
-	lowDividend ^= sign;
-	highDividend ^= sign;
-	_subborrow_u64(
-		_sub_u64(
-			lowDividend,
-			sign,
-			(uint64_t *)&lowDividend),
-		highDividend,
-		sign,
-		(uint64_t *)&highDividend);
-	sign ^= x = divisor >> 63;
-	divisor ^= x;
-	divisor -= x;
-	quotient = _udiv128(highDividend, lowDividend, divisor, remainder);
-	quotient ^= sign;
-	quotient -= sign;
-	*remainder ^= sign;
-	*remainder -= sign;
-#endif
+	DIV128(highDividend, lowDividend, divisor, &quotient, remainder);
 	return quotient;
+
+	#undef UDIV128
+	#define UDIV128 PREV_UDIV128
+	#undef PREV_UDIV128
 }
 #else
 __declspec(naked) int64_t __msreturn __stdcall _div128(int64_t highDividend, int64_t lowDividend, int64_t divisor, int64_t *remainder)
@@ -903,14 +868,16 @@ __declspec(naked) uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, 
 		push    edi
 		mov     eax, dword ptr [LO(highDividend) + 16]
 		mov     edx, dword ptr [HI(highDividend) + 16]
-		mov     ecx, dword ptr [LO(lowDividend) + 16]
-		mov     esi, dword ptr [HI(lowDividend) + 16]
+		mov     esi, dword ptr [LO(lowDividend) + 16]
+		mov     edi, dword ptr [HI(lowDividend) + 16]
 		mov     ebx, dword ptr [LO(divisor) + 16]
 		mov     ebp, dword ptr [HI(divisor) + 16]
 		sub     esp, 28
-		xor     edi, edi
+		mov     ecx, eax
+		push    edi
 		push    esi
-		push    ecx
+		xor     edi, edi
+		xor     esi, esi
 
 		#define dividend1   (esp)
 		#define dividend2   (esp + 4)
@@ -922,8 +889,6 @@ __declspec(naked) uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, 
 		#define addend2     (esp + 28)
 		#define subtrahend1 (esp + 32)
 
-		xor     esi, esi
-		mov     ecx, eax
 		or      eax, edx
 		jz      L10
 		push    ebp
@@ -931,8 +896,8 @@ __declspec(naked) uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, 
 		push    edx
 		push    ecx
 		call    _aullrem
-		mov     dword ptr [esp + 8], eax
-		mov     dword ptr [esp + 12], edx
+		mov     dword ptr [dividend3], eax
+		mov     dword ptr [dividend4], edx
 		test    edx, edx
 		jnz     L1
 		test    eax, eax
@@ -983,9 +948,9 @@ __declspec(naked) uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, 
 	L6:
 		xor     edx, edx
 		mov     ecx, esi
-		mov     dword ptr [esp + 16], edx
-		mov     dword ptr [esp + 20], edx
-		mov     dword ptr [esp + 24], eax
+		mov     dword ptr [quotient1], edx
+		mov     dword ptr [quotient2], edx
+		mov     dword ptr [addend1], eax
 		xor     eax, eax
 		and     ecx, 31
 		jz      L7
@@ -999,45 +964,45 @@ __declspec(naked) uint64_t __msreturn __stdcall _udiv128(uint64_t highDividend, 
 		mov     ebx, eax
 		xor     eax, eax
 	L7:
-		mov     dword ptr [esp + 28], edi
-		mov     dword ptr [esp + 32], eax
-		mov     esi, dword ptr [esp]
+		mov     dword ptr [addend2], edi
+		mov     dword ptr [subtrahend1], eax
+		mov     esi, dword ptr [dividend1]
 		jmp     L9
 
 		align   16
 	L8:
 		shr     edx, 1
-		mov     eax, dword ptr [esp + 32]
+		mov     eax, dword ptr [subtrahend1]
 		rcr     ebp, 1
-		mov     edi, dword ptr [esp + 28]
+		mov     edi, dword ptr [addend2]
 		rcr     ebx, 1
-		mov     ecx, dword ptr [esp + 24]
+		mov     ecx, dword ptr [addend1]
 		rcr     eax, 1
-		mov     esi, dword ptr [esp]
+		mov     esi, dword ptr [dividend1]
 		shr     edi, 1
-		mov     dword ptr [esp + 32], eax
+		mov     dword ptr [subtrahend1], eax
 		rcr     ecx, 1
-		mov     dword ptr [esp + 28], edi
-		mov     dword ptr [esp + 24], ecx
+		mov     dword ptr [addend2], edi
+		mov     dword ptr [addend1], ecx
 	L9:
 		sub     esi, eax
-		mov     edi, dword ptr [esp + 4]
+		mov     edi, dword ptr [dividend2]
 		sbb     edi, ebx
-		mov     eax, dword ptr [esp + 8]
+		mov     eax, dword ptr [dividend3]
 		sbb     eax, ebp
-		mov     ecx, dword ptr [esp + 12]
+		mov     ecx, dword ptr [dividend4]
 		sbb     ecx, edx
 		jb      L8
-		mov     dword ptr [esp], esi
-		mov     dword ptr [esp + 4], edi
-		mov     esi, dword ptr [esp + 16]
-		mov     edi, dword ptr [esp + 20]
-		or      esi, dword ptr [esp + 24]
-		or      edi, dword ptr [esp + 28]
-		mov     dword ptr [esp + 8], eax
-		mov     dword ptr [esp + 12], ecx
-		mov     dword ptr [esp + 16], esi
-		mov     dword ptr [esp + 20], edi
+		mov     dword ptr [dividend1], esi
+		mov     dword ptr [dividend2], edi
+		mov     esi, dword ptr [quotient1]
+		mov     edi, dword ptr [quotient2]
+		or      esi, dword ptr [addend1]
+		or      edi, dword ptr [addend2]
+		mov     dword ptr [dividend3], eax
+		mov     dword ptr [dividend4], ecx
+		mov     dword ptr [quotient1], esi
+		mov     dword ptr [quotient2], edi
 		or      eax, ecx
 		jnz     L8
 		mov     ebx, dword ptr [LO(divisor) + 52]

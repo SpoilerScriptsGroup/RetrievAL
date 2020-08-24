@@ -584,58 +584,51 @@ __forceinline unsigned __int64 __shiftleft128(unsigned __int64 LowPart, unsigned
 {
 	__asm
 	{
-		mov     cl, dword ptr [Shift]
-		mov     eax, dword ptr [LowPart + 4]
+		mov     cl, byte ptr [Shift]
+		mov     eax, dword ptr [HighPart]
 		and     cl, 63
-		mov     edx, dword ptr [HighPart]
+		jz      L1
 		cmp     cl, 32
-		jb      L1
+		jb      L2
+		mov     edx, eax
+		mov     eax, dword ptr [LowPart + 4]
 		and     cl, 31
-		jz      L3
+		jz      L4
 		mov     edi, dword ptr [LowPart]
-		jmp     L2
+		jmp     L3
 
 	L1:
-		mov     edi, eax
-		mov     eax, edx
 		mov     edx, dword ptr [HighPart + 4]
+		jmp     L4
+
 	L2:
+		mov     edx, dword ptr [HighPart + 4]
+		mov     edi, dword ptr [LowPart + 4]
+	L3:
 		shld    edx, eax, cl
 		shld    eax, edi, cl
-	L3:
+	L4:
 	}
 }
 #elif defined(_MSC_VER) && _MSC_VER >= 1310 && defined(_M_IX86)
 #pragma intrinsic(__ll_lshift)
 __forceinline unsigned __int64 __shiftleft128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)
 {
-	uint32_t a, b, c;
-
-	Shift &= 63;
-	a = (uint32_t)(LowPart >> 32);
-	b = (uint32_t)HighPart;
-	if (Shift >= 32)
-	{
-		if (!(Shift &= 31))
-			goto DONE;
-		c = (uint32_t)LowPart;
-	}
-	else
-	{
-		c = a;
-		a = b;
-		b = (uint32_t)(HighPart >> 32);
-	}
-	b = (uint32_t)(__ll_lshift(a | ((uint64_t)b << 32), Shift) >> 32);
-	a = (uint32_t)(__ll_lshift(c | ((uint64_t)a << 32), Shift) >> 32);
-DONE:
-	return a | ((uint64_t)b << 32);
+	if (Shift &= 63)
+		if (Shift < 32)
+			HighPart = ((__ll_lshift(HighPart, Shift) >> 32) << 32) | (__ll_lshift((LowPart >> 32) | (HighPart << 32), Shift) >> 32);
+		else if (Shift &= 31)
+			HighPart = ((__ll_lshift((LowPart >> 32) | (HighPart << 32), Shift) >> 32) << 32) | (__ll_lshift(LowPart, Shift) >> 32);
+		else
+			HighPart = (LowPart >> 32) | (HighPart << 32);
+	return HighPart;
 }
 #else
 __forceinline uint64_t __shiftleft128(uint64_t LowPart, uint64_t HighPart, unsigned char Shift)
 {
-	Shift &= 63;
-	return (HighPart << Shift) | (LowPart >> (64 - Shift));
+	if (Shift &= 63)
+		HighPart = (HighPart << Shift) | (LowPart >> (64 - Shift));
+	return HighPart;
 }
 #endif
 
@@ -646,58 +639,51 @@ __forceinline unsigned __int64 __shiftright128(unsigned __int64 LowPart, unsigne
 {
 	__asm
 	{
-		mov     cl, dword ptr [Shift]
-		mov     edx, dword ptr [HighPart]
+		mov     cl, byte ptr [Shift]
+		mov     edx, dword ptr [LowPart + 4]
 		and     cl, 63
-		mov     eax, dword ptr [LowPart + 4]
+		jz      L1
 		cmp     cl, 32
-		jb      L1
+		jb      L2
+		mov     eax, edx
+		mov     edx, dword ptr [HighPart]
 		and     cl, 31
-		jz      L3
+		jz      L4
 		mov     edi, dword ptr [HighPart + 4]
-		jmp     L2
+		jmp     L3
 
 	L1:
-		mov     edi, edx
-		mov     edx, eax
 		mov     eax, dword ptr [LowPart]
+		jmp     L4
+
 	L2:
+		mov     eax, dword ptr [LowPart]
+		mov     edi, dword ptr [HighPart]
+	L3:
 		shrd    eax, edx, cl
 		shrd    edx, edi, cl
-	L3:
+	L4:
 	}
 }
 #elif defined(_MSC_VER) && _MSC_VER >= 1310 && defined(_M_IX86)
 #pragma intrinsic(__ull_rshift)
 __forceinline unsigned __int64 __shiftright128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)
 {
-	uint32_t a, b, c;
-
-	Shift &= 63;
-	b = (uint32_t)HighPart;
-	a = (uint32_t)(LowPart >> 32);
-	if (Shift >= 32)
-	{
-		if (!(Shift &= 31))
-			goto DONE;
-		c = (uint32_t)(HighPart >> 32);
-	}
-	else
-	{
-		c = b;
-		b = a;
-		a = (uint32_t)LowPart;
-	}
-	a = (uint32_t)__ull_rshift(a | ((uint64_t)b << 32), Shift);
-	b = (uint32_t)__ull_rshift(b | ((uint64_t)c << 32), Shift);
-DONE:
-	return a | ((uint64_t)b << 32);
+	if (Shift &= 63)
+		if (Shift < 32)
+			LowPart = (uint32_t)__ull_rshift(LowPart, Shift) | (__ull_rshift((LowPart >> 32) | (HighPart << 32), Shift) << 32);
+		else if (Shift &= 31)
+			LowPart = (uint32_t)__ull_rshift((LowPart >> 32) | (HighPart << 32), Shift) | (__ull_rshift(HighPart, Shift) << 32);
+		else
+			LowPart = (LowPart >> 32) | (HighPart << 32);
+	return LowPart;
 }
 #else
 __forceinline uint64_t __shiftright128(uint64_t LowPart, uint64_t HighPart, unsigned char Shift)
 {
-	Shift &= 63;
-	return (LowPart >> Shift) | (HighPart << (64 - Shift));
+	if (Shift &= 63)
+		LowPart = (LowPart >> Shift) | (HighPart << (64 - Shift));
+	return LowPart;
 }
 #endif
 

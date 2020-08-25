@@ -585,23 +585,24 @@ __forceinline unsigned __int64 __shiftleft128(unsigned __int64 LowPart, unsigned
 	__asm
 	{
 		mov     cl, byte ptr [Shift]
-		mov     eax, dword ptr [HighPart]
+		mov     edx, dword ptr [HighPart]
 		and     cl, 63
 		jz      L1
-		cmp     cl, 32
+		sub     cl, 32
 		jb      L2
-		mov     edx, eax
 		mov     eax, dword ptr [LowPart + 4]
-		and     cl, 31
 		jz      L4
 		mov     edi, dword ptr [LowPart]
 		jmp     L3
 
 	L1:
+		mov     eax, edx
 		mov     edx, dword ptr [HighPart + 4]
 		jmp     L4
 
 	L2:
+		add     cl, 32
+		mov     eax, edx
 		mov     edx, dword ptr [HighPart + 4]
 		mov     edi, dword ptr [LowPart + 4]
 	L3:
@@ -640,23 +641,24 @@ __forceinline unsigned __int64 __shiftright128(unsigned __int64 LowPart, unsigne
 	__asm
 	{
 		mov     cl, byte ptr [Shift]
-		mov     edx, dword ptr [LowPart + 4]
+		mov     eax, dword ptr [LowPart + 4]
 		and     cl, 63
 		jz      L1
-		cmp     cl, 32
+		sub     cl, 32
 		jb      L2
-		mov     eax, edx
 		mov     edx, dword ptr [HighPart]
-		and     cl, 31
 		jz      L4
 		mov     edi, dword ptr [HighPart + 4]
 		jmp     L3
 
 	L1:
+		mov     edx, eax
 		mov     eax, dword ptr [LowPart]
 		jmp     L4
 
 	L2:
+		add     cl, 32
+		mov     edx, eax
 		mov     eax, dword ptr [LowPart]
 		mov     edi, dword ptr [HighPart]
 	L3:

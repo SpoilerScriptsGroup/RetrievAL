@@ -578,13 +578,19 @@ uint64_t __cdecl rand64()
 {
 	uint64_t r;
 
-	idx = (idx + 1) & -2;
-	if (idx >= SFMT_N32) {
+	if (idx < SFMT_N32 - 1) {
+		r = *(uint64_t *)(sfmt32 + idx);
+		idx += 2;
+	} else if (idx != SFMT_N32 - 1) {
 		sfmt_gen_rand_all();
-		idx = 0;
+		r = *(uint64_t *)sfmt32;
+		idx = 2;
+	} else {
+		((uint32_t *)&r)[0] = sfmt32[SFMT_N32 - 1];
+		sfmt_gen_rand_all();
+		((uint32_t *)&r)[1] = sfmt32[0];
+		idx = 1;
 	}
-	r = *(uint64_t *)(sfmt32 + idx);
-	idx += 2;
 	return r;
 }
 
@@ -592,7 +598,7 @@ float __cdecl randf32()
 {
 	uint32_t r;
 
-	r = ((rand32() & 1) << 31) | ((rand32() & 0xFF) << 23) | (rand32() & 0x007FFFFF);
+	while (((r = rand32()) & 0x7F800000) >= 0x7F800000);
 	return *(float *)&r;
 }
 
@@ -600,6 +606,6 @@ double __cdecl randf64()
 {
 	uint64_t r;
 
-	r = ((uint64_t)(rand32() & 1) << 63) | ((uint64_t)(rand32() & 0x07FF) << 52) | (rand64() & 0x000FFFFFFFFFFFFF);
+	while (((r = rand64()) & 0x7FF0000000000000) >= 0x7FF0000000000000);
 	return *(double *)&r;
 }

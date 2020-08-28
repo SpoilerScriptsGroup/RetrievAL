@@ -119,17 +119,7 @@ static void sfmt_gen_rand_all_sse2();
 static void sfmt_gen_rand_all_generic();
 static void sfmt_gen_rand_all_cpu_dispatch();
 
-static void (*sfmt_gen_rand_all_dispatch)() = sfmt_gen_rand_all_cpu_dispatch;
-#endif
-
-#if defined(_M_IX86)
-__declspec(naked) static void sfmt_gen_rand_all()
-{
-	__asm
-	{
-		jmp     dword ptr [sfmt_gen_rand_all_dispatch]
-	}
-}
+static void (*sfmt_gen_rand_all)() = sfmt_gen_rand_all_cpu_dispatch;
 #endif
 
 #if defined(_M_X64)
@@ -495,11 +485,11 @@ __declspec(naked) static void sfmt_gen_rand_all_cpu_dispatch()
 	{
 		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
 		jne     L1
-		mov     dword ptr [sfmt_gen_rand_all_dispatch], offset sfmt_gen_rand_all_generic
+		mov     dword ptr [sfmt_gen_rand_all], offset sfmt_gen_rand_all_generic
 		jmp     sfmt_gen_rand_all_generic
 
 	L1:
-		mov     dword ptr [sfmt_gen_rand_all_dispatch], offset sfmt_gen_rand_all_sse2
+		mov     dword ptr [sfmt_gen_rand_all], offset sfmt_gen_rand_all_sse2
 		jmp     sfmt_gen_rand_all_sse2
 	}
 
@@ -563,6 +553,7 @@ uint16_t __cdecl rand16()
 
 /* This function generates and returns 32-bit pseudorandom number.
    srand must be called before this function. */
+#if !defined(_M_IX86)
 uint32_t __cdecl rand32()
 {
 	if (idx >= SFMT_N32) {
@@ -571,29 +562,83 @@ uint32_t __cdecl rand32()
 	}
 	return sfmt32[idx++];
 }
+#else
+__declspec(naked) uint32_t __cdecl rand32()
+{
+	__asm
+	{
+		mov     ecx, dword ptr [idx]
+		cmp     ecx, SFMT_N32
+		jb      L1
+		call    dword ptr [sfmt_gen_rand_all]
+		xor     ecx, ecx
+		jmp     L1
+
+		align   16
+	L1:
+		mov     eax, dword ptr [state + ecx * 4]
+		inc     ecx
+		mov     dword ptr [idx], ecx
+		ret
+	}
+}
+#endif
 
 /* This function generates and returns 64-bit pseudorandom number.
    srand must be called before this function. */
+#if !defined(_M_IX86)
 uint64_t __cdecl rand64()
 {
 	uint64_t r;
 
 	if (idx >= SFMT_N32 - 1) {
-		assert(idx == SFMT_N32 || idx == SFMT_N32 - 1);
-		assert(SFMT_N32 & 1 == 0);
-		if (idx &= 1) {
+		if (idx == SFMT_N32 - 1) {
 			((uint32_t *)&r)[0] = sfmt32[SFMT_N32 - 1];
 			sfmt_gen_rand_all();
 			((uint32_t *)&r)[1] = sfmt32[0];
+			idx = 1;
 			return r;
 		}
 		sfmt_gen_rand_all();
+		idx = 0;
 	}
 	r = *(uint64_t *)(sfmt32 + idx);
 	idx += 2;
 	return r;
 }
+#else
+__declspec(naked) uint64_t __cdecl rand64()
+{
+	__asm
+	{
+		mov     ecx, dword ptr [idx]
+		cmp     ecx, SFMT_N32 - 1
+		jb      L2
+		mov     eax, dword ptr [state + (SFMT_N32 - 1) * 4]
+		jne     L1
+		push    eax
+		call    dword ptr [sfmt_gen_rand_all]
+		xor     ecx, ecx
+		pop     eax
+		jmp     L3
 
+		align   16
+	L1:
+		call    dword ptr [sfmt_gen_rand_all]
+		xor     ecx, ecx
+	L2:
+		mov     eax, dword ptr [state + ecx * 4]
+		inc     ecx
+	L3:
+		mov     edx, dword ptr [state + ecx * 4]
+		inc     ecx
+		mov     dword ptr [idx], ecx
+		ret
+	}
+}
+#endif
+
+#if !defined(_M_IX86)
 float __cdecl randf32()
 {
 	uint32_t r;
@@ -601,7 +646,26 @@ float __cdecl randf32()
 	while (((r = rand32()) & 0x7F800000) >= 0x7F800000);
 	return *(float *)&r;
 }
+#else
+__declspec(naked) float __cdecl randf32()
+{
+	__asm
+	{
+	L1:
+		call    rand32
+		mov     ecx, eax
+		add     eax, eax
+		cmp     eax, 0x7F800000 * 2
+		jae     L1
+		push    ecx
+		fld     dword ptr [esp]
+		pop     eax
+		ret
+	}
+}
+#endif
 
+#if !defined(_M_IX86)
 double __cdecl randf64()
 {
 	uint64_t r;
@@ -615,3 +679,32 @@ double __cdecl randf64()
 #endif
 	return *(double *)&r;
 }
+#else
+__declspec(naked) double __cdecl randf64()
+{
+	__asm
+	{
+		call    rand64
+		push    edx
+		add     edx, edx
+		cmp     edx, 0x7FF00000 * 2
+		jb      L2
+
+		align   16
+	L1:
+		call    rand32
+		mov     edx, eax
+		pop     eax
+		push    edx
+		add     edx, edx
+		cmp     edx, 0x7FF00000 * 2
+		jae     L1
+	L2:
+		push    eax
+		fld     qword ptr [esp]
+		pop     eax
+		pop     edx
+		ret
+	}
+}
+#endif

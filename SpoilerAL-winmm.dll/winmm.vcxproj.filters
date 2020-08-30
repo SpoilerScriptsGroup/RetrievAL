@@ -765,7 +765,7 @@
     <ClCompile Include="crt\qsort.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\rand.c">
+    <ClCompile Include="crt\random.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\snprintf.c">
@@ -2067,7 +2067,7 @@
     <ClInclude Include="crt\ltot.h">
       <Filter>crt</Filter>
     </ClInclude>
-    <ClInclude Include="crt\rand.h">
+    <ClInclude Include="crt\random.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\math\fpconst.h">

@@ -639,15 +639,15 @@ __declspec(naked) uint64_t __cdecl rand64()
 #endif
 
 #if !defined(_M_IX86)
-float __cdecl randf32()
+uint32_t __cdecl internal_randf32()
 {
 	uint32_t r;
 
 	while (((r = rand32()) & 0x7F800000) >= 0x7F800000);
-	return *(float *)&r;
+	return r;
 }
 #else
-__declspec(naked) float __cdecl randf32()
+__declspec(naked) uint32_t __cdecl internal_randf32()
 {
 	__asm
 	{
@@ -657,16 +657,14 @@ __declspec(naked) float __cdecl randf32()
 		add     eax, eax
 		cmp     eax, 0x7F800000 * 2
 		jae     L1
-		push    ecx
-		fld     dword ptr [esp]
-		pop     eax
+		mov     eax, ecx
 		ret
 	}
 }
 #endif
 
 #if !defined(_M_IX86)
-double __cdecl randf64()
+uint64_t __cdecl internal_randf64()
 {
 	uint64_t r;
 
@@ -677,10 +675,10 @@ double __cdecl randf64()
 #else
 		r = (r << 32) | rand32();
 #endif
-	return *(double *)&r;
+	return r;
 }
 #else
-__declspec(naked) double __cdecl randf64()
+__declspec(naked) uint64_t __cdecl internal_randf64()
 {
 	__asm
 	{
@@ -700,9 +698,6 @@ __declspec(naked) double __cdecl randf64()
 		cmp     edx, 0x7FF00000 * 2
 		jae     L1
 	L2:
-		push    eax
-		fld     qword ptr [esp]
-		pop     eax
 		pop     edx
 		ret
 	}

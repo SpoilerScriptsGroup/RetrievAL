@@ -656,7 +656,7 @@
     <ClCompile Include="crt\qsort.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\rand.c" />
+    <ClCompile Include="crt\random.c" />
     <ClCompile Include="crt\snprintf.c" />
     <ClCompile Include="crt\snwprintf.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -1413,7 +1413,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="crt\rand.h" />
+    <ClInclude Include="crt\random.h" />
     <ClInclude Include="crt\math\fpconst.h" />
     <ClInclude Include="crt\sntprintf.h" />
     <ClInclude Include="crt\tcpcpy.h">

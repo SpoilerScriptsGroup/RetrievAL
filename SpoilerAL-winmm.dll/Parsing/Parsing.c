@@ -134,6 +134,7 @@ EXTERN_C size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attri
 #include "TStringDivision.h"
 #include "Unescape.h"
 #include "SubjectStringOperator.h"
+#include "random.h"
 
 #ifdef _MSC_VER
 EXTERN_C int __fastcall internal_vsnprintf(char *buffer, size_t count, const char *format, va_list argptr, const va_list endarg);
@@ -150,10 +151,6 @@ EXTERN_C unsigned char * __cdecl _mbsristr(const unsigned char *string1, const u
 EXTERN_C char *__fastcall internal_strtok(char *string, const char *delimiter, char **context);
 EXTERN_C wchar_t *__fastcall internal_wcstok(wchar_t *string, const wchar_t *delimiter, wchar_t **context);
 EXTERN_C unsigned char *__fastcall internal_mbstok(unsigned char *string, const unsigned char *delimiter, unsigned char **context);
-EXTERN_C uint32_t __cdecl rand32();
-EXTERN_C uint64_t __cdecl rand64();
-EXTERN_C float __cdecl randf32();
-EXTERN_C double __cdecl randf64();
 
 EXTERN_C void __msfastcall Wait(DWORD dwMilliseconds);
 EXTERN_C int __cdecl GuidePrint(const char *format, ...);

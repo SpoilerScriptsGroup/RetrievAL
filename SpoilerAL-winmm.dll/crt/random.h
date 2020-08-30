@@ -18,7 +18,8 @@ extern "C" {
 #pragma warning(push)
 #pragma warning(disable:4273)
 
-#define random rand32
+#define srandom srand
+#define random (long)rand32
 
 void __cdecl srand(unsigned int seed);
 int __cdecl rand();

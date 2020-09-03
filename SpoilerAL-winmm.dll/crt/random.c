@@ -505,14 +505,19 @@ uint32_t __cdecl rand32();
 
 /* This function initializes the internal state array with a 32-bit
    integer seed. */
+#if !defined(_M_IX86) || (SFMT_PARITY1 & 1) == 0 || SFMT_PARITY2 != 0 || SFMT_PARITY3 != 0
 void __cdecl srand(unsigned int seed)
 {
 	uint32_t x;
 	size_t i;
 
-	sfmt32[0] = x = seed;
-	for (i = 1; i < SFMT_N32; i++)
-		sfmt32[i] = x = ((x >> 30) ^ x) * 1812433253UL + (uint32_t)i;
+	x = seed;
+	i = 0;
+	do {
+		sfmt32[i++] = x;
+		x = ((x >> 30) ^ x) * 1812433253UL + (uint32_t)i;
+	} while (i < SFMT_N32 - 1);
+	sfmt32[SFMT_N32 - 1] = x;
 	idx = SFMT_N32;
 	/* certificate the period of 2^{MEXP} */
 	x =  sfmt32[0] & SFMT_PARITY1;
@@ -524,6 +529,7 @@ void __cdecl srand(unsigned int seed)
 	x ^= x >> 4;
 	x ^= x >> 2;
 	x ^= x >> 1;
+	x ^= -1;
 	x &= 1;
 #if SFMT_PARITY1
 	sfmt32[0] ^= x << BSF32(SFMT_PARITY1);
@@ -535,6 +541,61 @@ void __cdecl srand(unsigned int seed)
 	sfmt32[3] ^= x << BSF32(SFMT_PARITY4);
 #endif
 }
+#else
+__declspec(naked) void __cdecl srand(unsigned int seed)
+{
+	__asm
+	{
+		#define seed (esp + 4)
+
+		mov     eax, dword ptr [seed]
+		xor     ecx, ecx
+		mov     edx, eax
+
+		align   16
+	L1:
+		shr     eax, 30
+		mov     dword ptr [state + ecx * 4], edx
+		xor     eax, edx
+		inc     ecx
+		imul    eax, 1812433253
+		add     eax, ecx
+		cmp     ecx, SFMT_N32 - 1
+		mov     edx, eax
+		jb      L1
+		mov     eax, dword ptr [state]
+		mov     ecx, dword ptr [state + 12]
+		and     eax, SFMT_PARITY1
+		and     ecx, SFMT_PARITY4
+		xor     eax, ecx
+		mov     dword ptr [state + (SFMT_N32 - 1) * 4], edx
+		mov     ecx, eax
+		mov     dword ptr [idx], SFMT_N32
+		shr     eax, 16
+		xor     eax, ecx
+		mov     ecx, eax
+		shr     eax, 8
+		xor     eax, ecx
+		mov     ecx, eax
+		shr     eax, 4
+		xor     eax, ecx
+		mov     ecx, eax
+		shr     eax, 2
+		xor     eax, ecx
+		or      ecx, -1
+		xor     ecx, eax
+		shr     eax, 1
+		xor     eax, ecx
+		mov     ecx, dword ptr [state]
+		and     eax, 1
+		xor     eax, ecx
+		mov     dword ptr [state], eax
+		ret
+
+		#undef seed
+	}
+}
+#endif
 
 int __cdecl rand()
 {

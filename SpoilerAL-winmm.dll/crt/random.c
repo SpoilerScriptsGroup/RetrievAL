@@ -46,12 +46,19 @@
 #endif
 #include <assert.h>
 
+/*------
+  ENDIAN
+  ------*/
 #if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
-#define IS_LITTLE_ENDIAN    1
-#define IS_BIG_ENDIAN       0
+#undef __BIG_ENDIAN__
+#ifndef __LITTLE_ENDIAN__
+#define __LITTLE_ENDIAN__   1
+#endif
 #else
-#define IS_LITTLE_ENDIAN    0
-#define IS_BIG_ENDIAN       1
+#undef __LITTLE_ENDIAN__
+#ifndef __BIG_ENDIAN__
+#define __BIG_ENDIAN__      1
+#endif
 #endif
 
 /*-----------------
@@ -78,7 +85,7 @@
 #define SFMT_PARITY3    0x00000000U             //
 #define SFMT_PARITY4    0x13C9E684U             //
 
-#if IS_LITTLE_ENDIAN
+#ifdef __LITTLE_ENDIAN__
 #define SFMT_MSK(index) (      \
     (index) == 0 ? SFMT_MSK1 : \
     (index) == 1 ? SFMT_MSK2 : \
@@ -167,15 +174,16 @@ static size_t   idx;                            // index counter to the 32-bit i
     ((((x) and 0x40000000) shr 30) and (((x) and 0x3FFFFFFF) eq 0)) * 31 + \
     ((((x) and 0x80000000) shr 31) and (((x) and 0x7FFFFFFF) eq 0)) * 32)
 
-#define IDX_LO              IS_BIG_ENDIAN
-#define IDX_HI              IS_LITTLE_ENDIAN
-
-#if IS_LITTLE_ENDIAN
+#ifdef __LITTLE_ENDIAN__
+#define IDX_LO              0
+#define IDX_HI              1
 #define IDX32(index)        (index)
 #define IDX128(index)       (index)
 #define POST_INC(augend)    ((augend)++)
 #define SUM(augend, addend) ((augend) + (addend))
 #else
+#define IDX_LO              1
+#define IDX_HI              0
 #define IDX32(index)        (SFMT_N32 - 1 - (index))
 #define IDX128(index)       (SFMT_N - 1 - (index))
 #define POST_INC(augend)    ((augend)--)
@@ -730,7 +738,7 @@ uint16_t __cdecl rand16()
 #if !defined(_M_IX86)
 uint32_t __cdecl rand32()
 {
-#if IS_LITTLE_ENDIAN
+#ifdef __LITTLE_ENDIAN__
 	if (idx >= SFMT_N32) {
 #else
 	if (idx == IDX32(SFMT_N32)) {
@@ -769,10 +777,8 @@ uint64_t __cdecl rand64()
 {
 	uint64_t r;
 
-#if IS_LITTLE_ENDIAN
+#ifdef __LITTLE_ENDIAN__
 	if (idx >= SFMT_N32 - 1) {
-#else
-	if (idx == IDX32(SFMT_N32) || idx == IDX32(SFMT_N32 - 1)) {
 #endif
 		if (idx == IDX32(SFMT_N32 - 1)) {
 			((uint32_t *)&r)[IDX_LO] = sfmt32[IDX32(SFMT_N32 - 1)];
@@ -781,6 +787,9 @@ uint64_t __cdecl rand64()
 			idx = IDX32(1);
 			return r;
 		}
+#ifdef __BIG_ENDIAN__
+	if (idx == IDX32(SFMT_N32)) {
+#endif
 		sfmt_gen_rand_all();
 		idx = IDX32(0);
 	}
@@ -852,7 +861,7 @@ uint64_t __cdecl internal_randf64()
 
 	r = rand64();
 	while ((r & 0x7FF0000000000000) >= 0x7FF0000000000000)
-#if IS_LITTLE_ENDIAN
+#ifdef __LITTLE_ENDIAN__
 		r = (r >> 32) | ((uint64_t)rand32() << 32);
 #else
 		r = (r << 32) | rand32();

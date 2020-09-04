@@ -220,17 +220,10 @@ do {                                        \
 static void sfmt_gen_rand_all()
 {
 	static const w128_t mask = { {
-#if IS_LITTLE_ENDIAN
-		SFMT_MSK1 & (UINT32_MAX >> SFMT_SR1),
-		SFMT_MSK2 & (UINT32_MAX >> SFMT_SR1),
-		SFMT_MSK3 & (UINT32_MAX >> SFMT_SR1),
-		SFMT_MSK4 & (UINT32_MAX >> SFMT_SR1) } };
-#else
-		SFMT_MSK4 & (UINT32_MAX >> SFMT_SR1),
-		SFMT_MSK3 & (UINT32_MAX >> SFMT_SR1),
-		SFMT_MSK2 & (UINT32_MAX >> SFMT_SR1),
-		SFMT_MSK1 & (UINT32_MAX >> SFMT_SR1) } };
-#endif
+		SFMT_MSK(0) & (UINT32_MAX >> SFMT_SR1),
+		SFMT_MSK(1) & (UINT32_MAX >> SFMT_SR1),
+		SFMT_MSK(2) & (UINT32_MAX >> SFMT_SR1),
+		SFMT_MSK(3) & (UINT32_MAX >> SFMT_SR1) } };
 
 	__m128i r2, r3, r4;
 	ptrdiff_t offset;

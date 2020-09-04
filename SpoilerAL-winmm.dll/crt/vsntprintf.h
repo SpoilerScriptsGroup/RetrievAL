@@ -284,7 +284,7 @@ typedef union _LONGDOUBLE {
 #else
 typedef struct _LONGDOUBLE {
 #endif
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
 		uint64_t mantissa;
 		struct {
 			uint16_t exponent : LDBL_EXP_BIT;
@@ -303,7 +303,7 @@ typedef struct _LONGDOUBLE {
 } LONGDOUBLE, NEAR *PLONGDOUBLE, FAR *LPLONGDOUBLE;
 
 // floating-point binary operator macros
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
 #define FLOAT64_SIGN_WORD(x)       *(uintptr_t *)((char *)&(x) + (sizeof(uint64_t) - sizeof(uintptr_t)))
 #else
 #define FLOAT64_SIGN_WORD(x)       *(uintptr_t *)&(x)
@@ -322,7 +322,7 @@ typedef struct _LONGDOUBLE {
 #define FLOAT64_SET_EXP(x, exp)    (FLOAT64_EXP_WORD(x) = (FLOAT64_EXP_WORD(x) & ~FLOAT64_EXP_MASK) | (((uintptr_t)(exp) << (INTPTR_BIT - 12)) & FLOAT64_EXP_MASK))
 #define FLOAT64_SET_MANT(x, mant)  (FLOAT64_MANT_WORD(x) = (FLOAT64_MANT_WORD(x) & ~FLOAT64_MANT_MASK) | ((uint64_t)(mant) & FLOAT64_MANT_MASK))
 
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
 #define FLOAT80_SIGN_WORD(x)       *(uint16_t *)&((uint64_t *)&(x))[1]
 #define FLOAT80_MANT_WORD(x)       *(uint64_t *)&(x)
 #else
@@ -342,7 +342,7 @@ typedef struct _LONGDOUBLE {
 #define FLOAT80_SET_MANT(x, mant)  (FLOAT80_MANT_WORD(x) = (uint64_t)(mant))
 
 #ifdef INT128_MAX
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
 #define FLOAT128_SIGN_WORD(x)      *(uintptr_t *)((char *)&(x) + (sizeof(uint128_t) - sizeof(uintptr_t)))
 #else
 #define FLOAT128_SIGN_WORD(x)      *(uintptr_t *)&(x)
@@ -687,7 +687,7 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 	else if (count > UINT32_MAX)
 		count = UINT32_MAX;
 
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
 	#define count (*(uint32_t *)&count)
 #else
 	#define count (*(uint32_t *)((char *)&count + sizeof(size_t) - sizeof(uint32_t)))

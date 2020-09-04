@@ -145,6 +145,22 @@ static size_t   idx;                            // index counter to the 32-bit i
     ((((x) and 0x40000000) shr 30) and (((x) and 0x3FFFFFFF) eq 0)) * 31 + \
     ((((x) and 0x80000000) shr 31) and (((x) and 0x7FFFFFFF) eq 0)) * 32)
 
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
+#define IS_LITTLE_ENDIAN    1
+#define IS_BIG_ENDIAN       0
+#define IDX32(index)        (index)
+#define IDX128(index)       (index)
+#define POST_INC(augend)    ((augend)++)
+#define SUM(augend, addend) ((augend) + (addend))
+#else
+#define IS_LITTLE_ENDIAN    0
+#define IS_BIG_ENDIAN       1
+#define IDX32(index)        (SFMT_N32 - 1 - (index))
+#define IDX128(index)       (SFMT_N - 1 - (index))
+#define POST_INC(augend)    ((augend)--)
+#define SUM(augend, addend) ((augend) - (addend))
+#endif
+
 /*----------------
   STATIC FUNCTIONS
   ----------------*/
@@ -183,10 +199,17 @@ do {                                        \
 static void sfmt_gen_rand_all()
 {
 	static const w128_t mask = { {
+#if IS_LITTLE_ENDIAN
 		SFMT_MSK1 & (UINT32_MAX >> SFMT_SR1),
 		SFMT_MSK2 & (UINT32_MAX >> SFMT_SR1),
 		SFMT_MSK3 & (UINT32_MAX >> SFMT_SR1),
 		SFMT_MSK4 & (UINT32_MAX >> SFMT_SR1) } };
+#else
+		SFMT_MSK4 & (UINT32_MAX >> SFMT_SR1),
+		SFMT_MSK3 & (UINT32_MAX >> SFMT_SR1),
+		SFMT_MSK2 & (UINT32_MAX >> SFMT_SR1),
+		SFMT_MSK1 & (UINT32_MAX >> SFMT_SR1) } };
+#endif
 
 	__m128i r2, r3, r4;
 	ptrdiff_t offset;
@@ -194,21 +217,21 @@ static void sfmt_gen_rand_all()
 	assert((size_t)sfmt % 16 == 0);
 	assert((size_t)&mask % 16 == 0);
 
-	r2 = _mm_load_si128(sfmt + SFMT_N - 1);
-	r3 = _mm_load_si128(sfmt + SFMT_N - 2);
+	r2 = _mm_load_si128(sfmt + IDX128(SFMT_N - 1));
+	r3 = _mm_load_si128(sfmt + IDX128(SFMT_N - 2));
 	r4 = _mm_load_si128(&mask.si);
-	offset = -(SFMT_N - SFMT_POS1) * 16;
+	offset = -IDX128(SFMT_N - SFMT_POS1) * 16;
 	do
 		mm_recursion(r2, r3, r4,
-			(__m128i *)((char *)(sfmt + SFMT_N - SFMT_POS1) + offset),
-			SFMT_POS1);
-	while (offset += 16);
-	offset = -SFMT_POS1 * 16;
+			(__m128i *)((char *)(sfmt + IDX128(SFMT_N - SFMT_POS1)) + offset),
+			IDX128(SFMT_POS1));
+	while ((offset = SUM(offset, 16)) != IDX128(0) * 16);
+	offset = -IDX128(SFMT_POS1) * 16;
 	do
 		mm_recursion(r2, r3, r4,
-			(__m128i *)((char *)(sfmt + SFMT_N) + offset),
-			-(SFMT_N - SFMT_POS1));
-	while (offset += 16);
+			(__m128i *)((char *)(sfmt + IDX128(SFMT_N)) + offset),
+			-IDX128(SFMT_N - SFMT_POS1));
+	while ((offset = SUM(offset, 16)) != IDX128(0) * 16);
 }
 #elif defined(_M_IX86)
 /* This function fills the internal state array with pseudorandom
@@ -433,25 +456,25 @@ static void sfmt_gen_rand_all()
 {
 	w128_t *a, *b, *c, *d;
 
-	a = state;
-	b = state + SFMT_POS1;
-	c = state + SFMT_N - 2;
-	d = state + SFMT_N - 1;
+	a = state + IDX128(0);
+	b = state + IDX128(SFMT_POS1);
+	c = state + IDX128(SFMT_N - 2);
+	d = state + IDX128(SFMT_N - 1);
 	do {
 		do_recursion(a, b, c, d);
 		c = d;
 		d = a;
-		a++;
-		b++;
-	} while (a != state + SFMT_N - SFMT_POS1);
-	b = state;
+		POST_INC(a);
+		POST_INC(b);
+	} while (a != state + IDX128(SFMT_N - SFMT_POS1));
+	b = state + IDX128(0);
 	do {
 		do_recursion(a, b, c, d);
 		c = d;
 		d = a;
-		a++;
-		b++;
-	} while (a != state + SFMT_N);
+		POST_INC(a);
+		POST_INC(b);
+	} while (a != state + IDX128(SFMT_N));
 }
 #else
 __declspec(naked) static void sfmt_gen_rand_all_generic()
@@ -546,19 +569,19 @@ void __cdecl srand(unsigned int seed)
 	size_t i;
 
 	x = seed;
-	i = 0;
+	i = IDX32(0);
 	do {
-		sfmt32[i++] = x;
+		sfmt32[POST_INC(i)] = x;
 		x = ((x >> 30) ^ x) * 1812433253UL + (uint32_t)i;
-	} while (i < SFMT_N32 - 1);
-	sfmt32[SFMT_N32 - 1] = x;
-	idx = SFMT_N32;
+	} while (i != IDX32(SFMT_N32 - 1));
+	sfmt32[IDX32(SFMT_N32 - 1)] = x;
+	idx = IDX32(SFMT_N32);
 #if SFMT_PARITY1 || SFMT_PARITY2 || SFMT_PARITY3 || SFMT_PARITY4
 	/* certificate the period of 2^{MEXP} */
-	x =  sfmt32[0] & SFMT_PARITY1;
-	x ^= sfmt32[1] & SFMT_PARITY2;
-	x ^= sfmt32[2] & SFMT_PARITY3;
-	x ^= sfmt32[3] & SFMT_PARITY4;
+	x =  sfmt32[IDX32(0)] & SFMT_PARITY1;
+	x ^= sfmt32[IDX32(1)] & SFMT_PARITY2;
+	x ^= sfmt32[IDX32(2)] & SFMT_PARITY3;
+	x ^= sfmt32[IDX32(3)] & SFMT_PARITY4;
 	x ^= x << 16;
 	x ^= x << 8;
 	x ^= x << 4;
@@ -567,13 +590,13 @@ void __cdecl srand(unsigned int seed)
 	if ((int32_t)x >= 0)
 		/* check NG, and modification */
 #if SFMT_PARITY1
-		sfmt32[0] ^= 1 << BSF32(SFMT_PARITY1);
+		sfmt32[IDX32(0)] ^= 1 << BSF32(SFMT_PARITY1);
 #elif SFMT_PARITY2
-		sfmt32[1] ^= 1 << BSF32(SFMT_PARITY2);
+		sfmt32[IDX32(1)] ^= 1 << BSF32(SFMT_PARITY2);
 #elif SFMT_PARITY3
-		sfmt32[2] ^= 1 << BSF32(SFMT_PARITY3);
+		sfmt32[IDX32(2)] ^= 1 << BSF32(SFMT_PARITY3);
 #elif SFMT_PARITY4
-		sfmt32[3] ^= 1 << BSF32(SFMT_PARITY4);
+		sfmt32[IDX32(3)] ^= 1 << BSF32(SFMT_PARITY4);
 #endif
 #endif
 }
@@ -693,11 +716,15 @@ uint16_t __cdecl rand16()
 #if !defined(_M_IX86)
 uint32_t __cdecl rand32()
 {
+#if IS_LITTLE_ENDIAN
 	if (idx >= SFMT_N32) {
+#else
+	if (idx == IDX32(SFMT_N32)) {
+#endif
 		sfmt_gen_rand_all();
-		idx = 0;
+		idx = IDX32(0);
 	}
-	return sfmt32[idx++];
+	return sfmt32[POST_INC(idx)];
 }
 #else
 __declspec(naked) uint32_t __cdecl rand32()
@@ -728,19 +755,23 @@ uint64_t __cdecl rand64()
 {
 	uint64_t r;
 
+#if IS_LITTLE_ENDIAN
 	if (idx >= SFMT_N32 - 1) {
-		if (idx == SFMT_N32 - 1) {
-			((uint32_t *)&r)[0] = sfmt32[SFMT_N32 - 1];
+#else
+	if (idx == IDX32(SFMT_N32) || idx == IDX32(SFMT_N32 - 1)) {
+#endif
+		if (idx == IDX32(SFMT_N32 - 1)) {
+			((uint32_t *)&r)[IS_BIG_ENDIAN   ] = sfmt32[IDX32(SFMT_N32 - 1)];
 			sfmt_gen_rand_all();
-			((uint32_t *)&r)[1] = sfmt32[0];
-			idx = 1;
+			((uint32_t *)&r)[IS_LITTLE_ENDIAN] = sfmt32[IDX32(0)];
+			idx = IDX32(1);
 			return r;
 		}
 		sfmt_gen_rand_all();
-		idx = 0;
+		idx = IDX32(0);
 	}
-	r = *(uint64_t *)(sfmt32 + idx);
-	idx += 2;
+	r = *(uint64_t *)((sfmt32 - IS_BIG_ENDIAN) + idx);
+	idx = SUM(idx, 2);
 	return r;
 }
 #else
@@ -807,7 +838,7 @@ uint64_t __cdecl internal_randf64()
 
 	r = rand64();
 	while ((r & 0x7FF0000000000000) >= 0x7FF0000000000000)
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if IS_LITTLE_ENDIAN
 		r = (r >> 32) | ((uint64_t)rand32() << 32);
 #else
 		r = (r << 32) | rand32();

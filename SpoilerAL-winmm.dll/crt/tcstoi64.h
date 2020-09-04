@@ -190,7 +190,7 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
 
     while (CTOI(&c, 'z', base)) {       // convert c to value
 
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
         #define HI(x) ((uint32_t *)&(x))[1]
 #else
         #define HI(x) ((uint32_t *)&(x))[0]

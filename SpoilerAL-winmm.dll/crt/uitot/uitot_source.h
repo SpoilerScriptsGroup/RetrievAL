@@ -18,7 +18,7 @@ typedef uint16_t tchar2_t;
 #define digits100T ((tchar2_t *)digits100A)
 #endif
 
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
 #define T2(c) (tchar2_t)(tuchar_t)(c)
 #define LO(x) ((uint32_t *)&x)[0]
 #define HI(x) ((uint32_t *)&x)[1]
@@ -248,7 +248,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		jae     LENGTH2
 	//LENGTH1:
 		add     ecx, '0'
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
 		xor     eax, eax
 		mov     tchar2 ptr [edx], t2(c)
 		inc     eax
@@ -355,7 +355,7 @@ __declspec(naked) size_t __fastcall _ui32to10t(uint32_t value, TCHAR *buffer)
 		pop     eax
 		add     ecx, '0'
 		pop     esi
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
 		mov     tchar2 ptr [edx], t2(c)
 #else
 		mov     tchar ptr [edx], t(c)
@@ -1049,7 +1049,7 @@ __declspec(naked) size_t __fastcall _ui64to10t(uint64_t value, TCHAR *buffer)
 		pop     ebx
 		add     edx, '0'
 		pop     eax
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
 		mov     tchar2 ptr [ecx], t2(d)
 #else
 		mov     tchar ptr [ecx], t(d)
@@ -1130,7 +1130,7 @@ __declspec(naked) size_t __fastcall _ui32to2t(uint32_t value, TCHAR *buffer)
 
 		align   16
 	L3:
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
 		mov     tchar2 ptr [edx], '0'
 #else
 		mov     tchar2 ptr [edx], '0' << (8 * size TCHAR)
@@ -1247,7 +1247,7 @@ __declspec(naked) size_t __fastcall _ui64to2t(uint64_t value, TCHAR *buffer)
 
 		align   16
 	L6:
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
 		mov     tchar2 ptr [ecx], '0'
 #else
 		mov     tchar2 ptr [ecx], '0' << (8 * size TCHAR)
@@ -1330,7 +1330,7 @@ __declspec(naked) size_t __fastcall _ui32to4t(uint32_t value, TCHAR *buffer)
 
 		align   16
 	L2:
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
 		mov     tchar2 ptr [edx], '0'
 #else
 		mov     tchar2 ptr [edx], '0' << (8 * size TCHAR)
@@ -1447,7 +1447,7 @@ __declspec(naked) size_t __fastcall _ui64to4t(uint64_t value, TCHAR *buffer)
 
 		align   16
 	L4:
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
 		mov     tchar2 ptr [ecx], '0'
 #else
 		mov     tchar2 ptr [ecx], '0' << (8 * size TCHAR)
@@ -1538,7 +1538,7 @@ __declspec(naked) size_t __fastcall _ui32to8t(uint32_t value, TCHAR *buffer)
 
 		align   16
 	L2:
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
 		mov     tchar2 ptr [edx], '0'
 #else
 		mov     tchar2 ptr [edx], '0' << (8 * size TCHAR)
@@ -1666,7 +1666,7 @@ __declspec(naked) size_t __fastcall _ui64to8t(uint64_t value, TCHAR *buffer)
 
 		align   16
 	L4:
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
 		mov     tchar2 ptr [ecx], '0'
 #else
 		mov     tchar2 ptr [ecx], '0' << (8 * size TCHAR)
@@ -1761,7 +1761,7 @@ __declspec(naked) size_t __fastcall _ui32to16t(uint32_t value, TCHAR *buffer, BO
 
 		align   16
 	L2:
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
 		mov     tchar2 ptr [edx], '0'
 #else
 		mov     tchar2 ptr [edx], '0' << (8 * size TCHAR)
@@ -1893,7 +1893,7 @@ __declspec(naked) size_t __fastcall _ui64to16t(uint64_t value, TCHAR *buffer, BO
 
 		align   16
 	L4:
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
 		mov     tchar2 ptr [ecx], '0'
 #else
 		mov     tchar2 ptr [ecx], '0' << (8 * size TCHAR)
@@ -1996,7 +1996,7 @@ __declspec(naked) size_t __fastcall _ui32to32t(uint32_t value, TCHAR *buffer, BO
 
 		align   16
 	L2:
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
 		mov     tchar2 ptr [edx], '0'
 #else
 		mov     tchar2 ptr [edx], '0' << (8 * size TCHAR)
@@ -2133,7 +2133,7 @@ __declspec(naked) size_t __fastcall _ui64to32t(uint64_t value, TCHAR *buffer, BO
 
 		align   16
 	L4:
-#if __BYTE_ORDER == __LITTLE_ENDIAN
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
 		mov     tchar2 ptr [ecx], '0'
 #else
 		mov     tchar2 ptr [ecx], '0' << (8 * size TCHAR)

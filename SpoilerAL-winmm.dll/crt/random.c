@@ -46,6 +46,14 @@
 #endif
 #include <assert.h>
 
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
+#define IS_LITTLE_ENDIAN    1
+#define IS_BIG_ENDIAN       0
+#else
+#define IS_LITTLE_ENDIAN    0
+#define IS_BIG_ENDIAN       1
+#endif
+
 /*-----------------
   BASIC DEFINITIONS
   -----------------*/
@@ -69,6 +77,20 @@
 #define SFMT_PARITY2    0x00000000U             //
 #define SFMT_PARITY3    0x00000000U             //
 #define SFMT_PARITY4    0x13C9E684U             //
+
+#if IS_LITTLE_ENDIAN
+#define SFMT_MSK(index) (      \
+    (index) == 0 ? SFMT_MSK1 : \
+    (index) == 1 ? SFMT_MSK2 : \
+    (index) == 2 ? SFMT_MSK3 : \
+                   SFMT_MSK4)
+#else
+#define SFMT_MSK(index) (      \
+    (index) == 0 ? SFMT_MSK4 : \
+    (index) == 1 ? SFMT_MSK3 : \
+    (index) == 2 ? SFMT_MSK2 : \
+                   SFMT_MSK1)
+#endif
 
 /*------------------------------------------
   128-bit SIMD like data type for standard C
@@ -145,16 +167,15 @@ static size_t   idx;                            // index counter to the 32-bit i
     ((((x) and 0x40000000) shr 30) and (((x) and 0x3FFFFFFF) eq 0)) * 31 + \
     ((((x) and 0x80000000) shr 31) and (((x) and 0x7FFFFFFF) eq 0)) * 32)
 
-#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || !defined(__BIG_ENDIAN__)
-#define IS_LITTLE_ENDIAN    1
-#define IS_BIG_ENDIAN       0
+#define IDX_LO              IS_BIG_ENDIAN
+#define IDX_HI              IS_LITTLE_ENDIAN
+
+#if IS_LITTLE_ENDIAN
 #define IDX32(index)        (index)
 #define IDX128(index)       (index)
 #define POST_INC(augend)    ((augend)++)
 #define SUM(augend, addend) ((augend) + (addend))
 #else
-#define IS_LITTLE_ENDIAN    0
-#define IS_BIG_ENDIAN       1
 #define IDX32(index)        (SFMT_N32 - 1 - (index))
 #define IDX128(index)       (SFMT_N - 1 - (index))
 #define POST_INC(augend)    ((augend)--)
@@ -299,26 +320,26 @@ __declspec(naked) static void __cdecl sfmt_gen_rand_all_sse2()
 #if !defined(_M_X64)
 /* This function represents the recursion formula. */
 #if !defined(_M_IX86)
-#define do_recursion(a, b, c, d)                        \
-do {                                                    \
-    w128_t __x;                                         \
-                                                        \
-    __x.u64[1] = ((a)->u64[1] << (SFMT_SL2 * 8)) |      \
-                 ((a)->u64[0] >> (64 - SFMT_SL2 * 8));  \
-    __x.u64[0] =  (a)->u64[0] << (SFMT_SL2 * 8);        \
-    __x.u[0] ^= ((b)->u[0] >> SFMT_SR1) & SFMT_MSK1;    \
-    __x.u[1] ^= ((b)->u[1] >> SFMT_SR1) & SFMT_MSK2;    \
-    __x.u[2] ^= ((b)->u[2] >> SFMT_SR1) & SFMT_MSK3;    \
-    __x.u[3] ^= ((b)->u[3] >> SFMT_SR1) & SFMT_MSK4;    \
-    __x.u64[0] ^= ((c)->u64[0] >> (SFMT_SR2 * 8)) |     \
-                  ((c)->u64[1] << (64 - SFMT_SR2 * 8)); \
-    __x.u64[1] ^=  (c)->u64[1] >> (SFMT_SR2 * 8);       \
-    __x.u[0] ^= (d)->u[0] << SFMT_SL1;                  \
-    __x.u[1] ^= (d)->u[1] << SFMT_SL1;                  \
-    __x.u[2] ^= (d)->u[2] << SFMT_SL1;                  \
-    __x.u[3] ^= (d)->u[3] << SFMT_SL1;                  \
-    (a)->u64[0] ^= __x.u64[0];                          \
-    (a)->u64[1] ^= __x.u64[1];                          \
+#define do_recursion(a, b, c, d)                                  \
+do {                                                              \
+    w128_t __x;                                                   \
+                                                                  \
+    __x.u64[IDX_HI] = ((a)->u64[IDX_HI] << (SFMT_SL2 * 8)) |      \
+                      ((a)->u64[IDX_LO] >> (64 - SFMT_SL2 * 8));  \
+    __x.u64[IDX_LO] =  (a)->u64[IDX_LO] << (SFMT_SL2 * 8);        \
+    __x.u[0] ^= ((b)->u[0] >> SFMT_SR1) & SFMT_MSK(0);            \
+    __x.u[1] ^= ((b)->u[1] >> SFMT_SR1) & SFMT_MSK(1);            \
+    __x.u[2] ^= ((b)->u[2] >> SFMT_SR1) & SFMT_MSK(2);            \
+    __x.u[3] ^= ((b)->u[3] >> SFMT_SR1) & SFMT_MSK(3);            \
+    __x.u64[IDX_LO] ^= ((c)->u64[IDX_LO] >> (SFMT_SR2 * 8)) |     \
+                       ((c)->u64[IDX_HI] << (64 - SFMT_SR2 * 8)); \
+    __x.u64[IDX_HI] ^=  (c)->u64[IDX_HI] >> (SFMT_SR2 * 8);       \
+    __x.u[0] ^= (d)->u[0] << SFMT_SL1;                            \
+    __x.u[1] ^= (d)->u[1] << SFMT_SL1;                            \
+    __x.u[2] ^= (d)->u[2] << SFMT_SL1;                            \
+    __x.u[3] ^= (d)->u[3] << SFMT_SL1;                            \
+    (a)->u64[0] ^= __x.u64[0];                                    \
+    (a)->u64[1] ^= __x.u64[1];                                    \
 } while (0)
 #else
 __declspec(naked) static void __cdecl do_recursion(w128_t *a, w128_t *b, w128_t *c, w128_t *d)
@@ -761,16 +782,16 @@ uint64_t __cdecl rand64()
 	if (idx == IDX32(SFMT_N32) || idx == IDX32(SFMT_N32 - 1)) {
 #endif
 		if (idx == IDX32(SFMT_N32 - 1)) {
-			((uint32_t *)&r)[IS_BIG_ENDIAN   ] = sfmt32[IDX32(SFMT_N32 - 1)];
+			((uint32_t *)&r)[IDX_LO] = sfmt32[IDX32(SFMT_N32 - 1)];
 			sfmt_gen_rand_all();
-			((uint32_t *)&r)[IS_LITTLE_ENDIAN] = sfmt32[IDX32(0)];
+			((uint32_t *)&r)[IDX_HI] = sfmt32[IDX32(0)];
 			idx = IDX32(1);
 			return r;
 		}
 		sfmt_gen_rand_all();
 		idx = IDX32(0);
 	}
-	r = *(uint64_t *)((sfmt32 - IS_BIG_ENDIAN) + idx);
+	r = *(uint64_t *)((sfmt32 - IDX_LO) + idx);
 	idx = SUM(idx, 2);
 	return r;
 }

@@ -111,6 +111,40 @@ static size_t   idx;                            // index counter to the 32-bit i
 #define BSF16(x) _BSF16(x, -1)
 #define BSF32(x) _BSF32(x, -1)
 
+#define MASM_BSF32(x) (                                               -1 + \
+    (  (x) and 0x00000001                                         )      + \
+    ((((x) and 0x00000002) shr  1) and (((x) and 0x00000001) eq 0)) *  2 + \
+    ((((x) and 0x00000004) shr  2) and (((x) and 0x00000003) eq 0)) *  3 + \
+    ((((x) and 0x00000008) shr  3) and (((x) and 0x00000007) eq 0)) *  4 + \
+    ((((x) and 0x00000010) shr  4) and (((x) and 0x0000000F) eq 0)) *  5 + \
+    ((((x) and 0x00000020) shr  5) and (((x) and 0x0000001F) eq 0)) *  6 + \
+    ((((x) and 0x00000040) shr  6) and (((x) and 0x0000003F) eq 0)) *  7 + \
+    ((((x) and 0x00000080) shr  7) and (((x) and 0x0000007F) eq 0)) *  8 + \
+    ((((x) and 0x00000100) shr  8) and (((x) and 0x000000FF) eq 0)) *  9 + \
+    ((((x) and 0x00000200) shr  9) and (((x) and 0x000001FF) eq 0)) * 10 + \
+    ((((x) and 0x00000400) shr 10) and (((x) and 0x000003FF) eq 0)) * 11 + \
+    ((((x) and 0x00000800) shr 11) and (((x) and 0x000007FF) eq 0)) * 12 + \
+    ((((x) and 0x00001000) shr 12) and (((x) and 0x00000FFF) eq 0)) * 13 + \
+    ((((x) and 0x00002000) shr 13) and (((x) and 0x00001FFF) eq 0)) * 14 + \
+    ((((x) and 0x00004000) shr 14) and (((x) and 0x00003FFF) eq 0)) * 15 + \
+    ((((x) and 0x00008000) shr 15) and (((x) and 0x00007FFF) eq 0)) * 16 + \
+    ((((x) and 0x00010000) shr 16) and (((x) and 0x0000FFFF) eq 0)) * 17 + \
+    ((((x) and 0x00020000) shr 17) and (((x) and 0x0001FFFF) eq 0)) * 18 + \
+    ((((x) and 0x00040000) shr 18) and (((x) and 0x0003FFFF) eq 0)) * 19 + \
+    ((((x) and 0x00080000) shr 19) and (((x) and 0x0007FFFF) eq 0)) * 20 + \
+    ((((x) and 0x00100000) shr 20) and (((x) and 0x000FFFFF) eq 0)) * 21 + \
+    ((((x) and 0x00200000) shr 21) and (((x) and 0x001FFFFF) eq 0)) * 22 + \
+    ((((x) and 0x00400000) shr 22) and (((x) and 0x003FFFFF) eq 0)) * 23 + \
+    ((((x) and 0x00800000) shr 23) and (((x) and 0x007FFFFF) eq 0)) * 24 + \
+    ((((x) and 0x01000000) shr 24) and (((x) and 0x00FFFFFF) eq 0)) * 25 + \
+    ((((x) and 0x02000000) shr 25) and (((x) and 0x01FFFFFF) eq 0)) * 26 + \
+    ((((x) and 0x04000000) shr 26) and (((x) and 0x03FFFFFF) eq 0)) * 27 + \
+    ((((x) and 0x08000000) shr 27) and (((x) and 0x07FFFFFF) eq 0)) * 28 + \
+    ((((x) and 0x10000000) shr 28) and (((x) and 0x0FFFFFFF) eq 0)) * 29 + \
+    ((((x) and 0x20000000) shr 29) and (((x) and 0x1FFFFFFF) eq 0)) * 30 + \
+    ((((x) and 0x40000000) shr 30) and (((x) and 0x3FFFFFFF) eq 0)) * 31 + \
+    ((((x) and 0x80000000) shr 31) and (((x) and 0x7FFFFFFF) eq 0)) * 32)
+
 /*----------------
   STATIC FUNCTIONS
   ----------------*/
@@ -505,7 +539,7 @@ uint32_t __cdecl rand32();
 
 /* This function initializes the internal state array with a 32-bit
    integer seed. */
-#if !defined(_M_IX86) || (SFMT_PARITY1 & 1) == 0 || SFMT_PARITY2 != 0 || SFMT_PARITY3 != 0
+#if !defined(_M_IX86)
 void __cdecl srand(unsigned int seed)
 {
 	uint32_t x;
@@ -519,31 +553,50 @@ void __cdecl srand(unsigned int seed)
 	} while (i < SFMT_N32 - 1);
 	sfmt32[SFMT_N32 - 1] = x;
 	idx = SFMT_N32;
+#if SFMT_PARITY1 || SFMT_PARITY2 || SFMT_PARITY3 || SFMT_PARITY4
 	/* certificate the period of 2^{MEXP} */
 	x =  sfmt32[0] & SFMT_PARITY1;
 	x ^= sfmt32[1] & SFMT_PARITY2;
 	x ^= sfmt32[2] & SFMT_PARITY3;
 	x ^= sfmt32[3] & SFMT_PARITY4;
-	x ^= x >> 16;
-	x ^= x >> 8;
-	x ^= x >> 4;
-	x ^= x >> 2;
-	x ^= x >> 1;
-	x ^= -1;
-	x &= 1;
+	x ^= x << 16;
+	x ^= x << 8;
+	x ^= x << 4;
+	x ^= x << 2;
+	x ^= x << 1;
+	if ((int32_t)x >= 0)
+		/* check NG, and modification */
 #if SFMT_PARITY1
-	sfmt32[0] ^= x << BSF32(SFMT_PARITY1);
+		sfmt32[0] ^= 1 << BSF32(SFMT_PARITY1);
 #elif SFMT_PARITY2
-	sfmt32[1] ^= x << BSF32(SFMT_PARITY2);
+		sfmt32[1] ^= 1 << BSF32(SFMT_PARITY2);
 #elif SFMT_PARITY3
-	sfmt32[2] ^= x << BSF32(SFMT_PARITY3);
+		sfmt32[2] ^= 1 << BSF32(SFMT_PARITY3);
 #elif SFMT_PARITY4
-	sfmt32[3] ^= x << BSF32(SFMT_PARITY4);
+		sfmt32[3] ^= 1 << BSF32(SFMT_PARITY4);
+#endif
 #endif
 }
 #else
 __declspec(naked) void __cdecl srand(unsigned int seed)
 {
+#if SFMT_PARITY1
+	#define PARITY SFMT_PARITY1
+	#define OFFSET 0
+#elif SFMT_PARITY2
+	#define PARITY SFMT_PARITY2
+	#define OFFSET 4
+#elif SFMT_PARITY3
+	#define PARITY SFMT_PARITY3
+	#define OFFSET 8
+#elif SFMT_PARITY4
+	#define PARITY SFMT_PARITY4
+	#define OFFSET 12
+#else
+	#define PARITY 0
+	#define OFFSET -1
+#endif
+
 	__asm
 	{
 		#define seed (esp + 4)
@@ -553,7 +606,7 @@ __declspec(naked) void __cdecl srand(unsigned int seed)
 		mov     edx, eax
 
 		align   16
-	L1:
+	loop1:
 		shr     eax, 30
 		mov     dword ptr [state + ecx * 4], edx
 		xor     eax, edx
@@ -562,38 +615,61 @@ __declspec(naked) void __cdecl srand(unsigned int seed)
 		add     eax, ecx
 		cmp     ecx, SFMT_N32 - 1
 		mov     edx, eax
-		jb      L1
+		jb      loop1
+#if PARITY
+#if SFMT_PARITY1 && !SFMT_PARITY2 && !SFMT_PARITY3 && SFMT_PARITY4
 		mov     eax, dword ptr [state]
 		mov     ecx, dword ptr [state + 12]
 		and     eax, SFMT_PARITY1
 		and     ecx, SFMT_PARITY4
-		xor     eax, ecx
 		mov     dword ptr [state + (SFMT_N32 - 1) * 4], edx
-		mov     ecx, eax
+		xor     eax, ecx
 		mov     dword ptr [idx], SFMT_N32
+		mov     ecx, eax
+#else
+		mov     eax, dword ptr [state]
+		mov     ecx, dword ptr [state + 4]
+		and     eax, SFMT_PARITY1
+		and     ecx, SFMT_PARITY2
+		mov     dword ptr [state + (SFMT_N32 - 1) * 4], edx
+		xor     eax, ecx
+		mov     ecx, dword ptr [state + 8]
+		mov     edx, dword ptr [state + 12]
+		and     ecx, SFMT_PARITY3
+		and     edx, SFMT_PARITY4
+		xor     eax, ecx
+		mov     dword ptr [idx], SFMT_N32
+		xor     eax, edx
+		mov     ecx, eax
+#endif
 		shr     eax, 16
+		xor     edx, edx
 		xor     eax, ecx
-		mov     ecx, eax
-		shr     eax, 8
-		xor     eax, ecx
-		mov     ecx, eax
-		shr     eax, 4
-		xor     eax, ecx
-		mov     ecx, eax
-		shr     eax, 2
-		xor     eax, ecx
-		or      ecx, -1
+		xor     ecx, ecx
+		xor     al, ah
+		mov     dl, al
+		mov     cl, al
+		shl     edx, 4
+		xor     ecx, edx
+		lea     eax, [ecx * 4]
 		xor     ecx, eax
-		shr     eax, 1
+		mov     edx, dword ptr [state + OFFSET]
+		mov     eax, ecx
+		add     ecx, ecx
 		xor     eax, ecx
-		mov     ecx, dword ptr [state]
-		and     eax, 1
-		xor     eax, ecx
-		mov     dword ptr [state], eax
+		xor     edx, 1 shl MASM_BSF32(PARITY)
+		test    al, al
+		js      epilog
+		mov     dword ptr [state + OFFSET], edx
+	epilog:
+#endif
 		ret
 
 		#undef seed
 	}
+
+	#undef PARITY
+	#undef OFFSET
 }
 #endif
 

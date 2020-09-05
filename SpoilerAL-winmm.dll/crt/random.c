@@ -266,7 +266,7 @@ static void sfmt_gen_rand_all()
 	do
 		mm_recursion(r2, r3, r4,
 			(__m128i *)((char *)(sfmt - 1) + offset),
-			SFMT_N + SFMT_POS1);
+			SFMT_N - SFMT_POS1);
 	while (offset -= 16);
 #endif
 }

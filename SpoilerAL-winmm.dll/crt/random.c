@@ -388,26 +388,26 @@ __declspec(naked) static void __cdecl sfmt_gen_rand_all_sse2()
 #if !defined(_M_X64)
 /* This function represents the recursion formula. */
 #if !defined(_M_IX86)
-#define do_recursion(a, b, c, d)                                  \
-do {                                                              \
-    w128_t __x;                                                   \
-                                                                  \
-    __x.u64[IDX_HI] = ((a)->u64[IDX_HI] << (SFMT_SL2 * 8)) |      \
-                      ((a)->u64[IDX_LO] >> (64 - SFMT_SL2 * 8));  \
-    __x.u64[IDX_LO] =  (a)->u64[IDX_LO] << (SFMT_SL2 * 8);        \
-    __x.u[0] ^= ((b)->u[0] >> SFMT_SR1) & SFMT_MSK(0);            \
-    __x.u[1] ^= ((b)->u[1] >> SFMT_SR1) & SFMT_MSK(1);            \
-    __x.u[2] ^= ((b)->u[2] >> SFMT_SR1) & SFMT_MSK(2);            \
-    __x.u[3] ^= ((b)->u[3] >> SFMT_SR1) & SFMT_MSK(3);            \
-    __x.u64[IDX_LO] ^= ((c)->u64[IDX_LO] >> (SFMT_SR2 * 8)) |     \
-                       ((c)->u64[IDX_HI] << (64 - SFMT_SR2 * 8)); \
-    __x.u64[IDX_HI] ^=  (c)->u64[IDX_HI] >> (SFMT_SR2 * 8);       \
-    __x.u[0] ^= (d)->u[0] << SFMT_SL1;                            \
-    __x.u[1] ^= (d)->u[1] << SFMT_SL1;                            \
-    __x.u[2] ^= (d)->u[2] << SFMT_SL1;                            \
-    __x.u[3] ^= (d)->u[3] << SFMT_SL1;                            \
-    (a)->u64[0] ^= __x.u64[0];                                    \
-    (a)->u64[1] ^= __x.u64[1];                                    \
+#define do_recursion(a, b, c, d)                                                    \
+do {                                                                                \
+    w128_t __x;                                                                     \
+                                                                                    \
+    __x.u64[IDX_HI] = ((a)->u64[IDX_HI] << (SFMT_SL2 * 8)) |                        \
+                      ((a)->u64[IDX_LO] >> (64 - SFMT_SL2 * 8));                    \
+    __x.u64[IDX_LO] =  (a)->u64[IDX_LO] << (SFMT_SL2 * 8);                          \
+    __x.u[0] ^= ((b)->u[0] >> SFMT_SR1) & (SFMT_MSK(0) & (UINT32_MAX >> SFMT_SR1)); \
+    __x.u[1] ^= ((b)->u[1] >> SFMT_SR1) & (SFMT_MSK(1) & (UINT32_MAX >> SFMT_SR1)); \
+    __x.u[2] ^= ((b)->u[2] >> SFMT_SR1) & (SFMT_MSK(2) & (UINT32_MAX >> SFMT_SR1)); \
+    __x.u[3] ^= ((b)->u[3] >> SFMT_SR1) & (SFMT_MSK(3) & (UINT32_MAX >> SFMT_SR1)); \
+    __x.u64[IDX_LO] ^= ((c)->u64[IDX_LO] >> (SFMT_SR2 * 8)) |                       \
+                       ((c)->u64[IDX_HI] << (64 - SFMT_SR2 * 8));                   \
+    __x.u64[IDX_HI] ^=  (c)->u64[IDX_HI] >> (SFMT_SR2 * 8);                         \
+    __x.u[0] ^= (d)->u[0] << SFMT_SL1;                                              \
+    __x.u[1] ^= (d)->u[1] << SFMT_SL1;                                              \
+    __x.u[2] ^= (d)->u[2] << SFMT_SL1;                                              \
+    __x.u[3] ^= (d)->u[3] << SFMT_SL1;                                              \
+    (a)->u64[0] ^= __x.u64[0];                                                      \
+    (a)->u64[1] ^= __x.u64[1];                                                      \
 } while (0)
 #else
 __declspec(naked) static void __cdecl do_recursion(w128_t *a, w128_t *b, w128_t *c, w128_t *d)
@@ -460,16 +460,16 @@ __declspec(naked) static void __cdecl do_recursion(w128_t *a, w128_t *b, w128_t 
 		shl     eax, SFMT_SL2 * 8
 		or      ecx, esi
 
-		// x.u[0] ^= (b->u[0] >> SFMT_SR1) & SFMT_MSK1;
-		// x.u[1] ^= (b->u[1] >> SFMT_SR1) & SFMT_MSK2;
-		// x.u[2] ^= (b->u[2] >> SFMT_SR1) & SFMT_MSK3;
-		// x.u[3] ^= (b->u[3] >> SFMT_SR1) & SFMT_MSK4;
+		// x.u[0] ^= (b->u[0] >> SFMT_SR1) & (SFMT_MSK(0) & (UINT32_MAX >> SFMT_SR1));
+		// x.u[1] ^= (b->u[1] >> SFMT_SR1) & (SFMT_MSK(1) & (UINT32_MAX >> SFMT_SR1));
+		// x.u[2] ^= (b->u[2] >> SFMT_SR1) & (SFMT_MSK(2) & (UINT32_MAX >> SFMT_SR1));
+		// x.u[3] ^= (b->u[3] >> SFMT_SR1) & (SFMT_MSK(3) & (UINT32_MAX >> SFMT_SR1));
 		mov     esi, dword ptr [ebp + __0]
 		mov     edi, dword ptr [ebp + __4]
 		shr     esi, SFMT_SR1
 		shr     edi, SFMT_SR1
-		and     esi, SFMT_MSK1 and (INT32_MAX shr (SFMT_SR1 - 1))
-		and     edi, SFMT_MSK2 and (INT32_MAX shr (SFMT_SR1 - 1))
+		and     esi, SFMT_MSK(0) and (INT32_MAX shr (SFMT_SR1 - 1))
+		and     edi, SFMT_MSK(1) and (INT32_MAX shr (SFMT_SR1 - 1))
 		xor     eax, esi
 		mov     esi, dword ptr [ebp + __8]
 		xor     ecx, edi
@@ -477,8 +477,8 @@ __declspec(naked) static void __cdecl do_recursion(w128_t *a, w128_t *b, w128_t 
 		mov     edi, dword ptr [ebp + _12]
 		shr     edi, SFMT_SR1
 		mov     ebp, dword ptr [c   +  16]
-		and     esi, SFMT_MSK3 and (INT32_MAX shr (SFMT_SR1 - 1))
-		and     edi, SFMT_MSK4 and (INT32_MAX shr (SFMT_SR1 - 1))
+		and     esi, SFMT_MSK(2) and (INT32_MAX shr (SFMT_SR1 - 1))
+		and     edi, SFMT_MSK(3) and (INT32_MAX shr (SFMT_SR1 - 1))
 		xor     edx, esi
 		xor     ebx, edi
 
@@ -732,20 +732,20 @@ void __cdecl srand(unsigned int seed)
 __declspec(naked) void __cdecl srand(unsigned int seed)
 {
 #if SFMT_PARITY1
-	#define PARITY SFMT_PARITY1
-	#define INDEX  0
+	#define PARITY_WORD  SFMT_PARITY1
+	#define PARITY_INDEX 0
 #elif SFMT_PARITY2
-	#define PARITY SFMT_PARITY2
-	#define INDEX  1
+	#define PARITY_WORD  SFMT_PARITY2
+	#define PARITY_INDEX 1
 #elif SFMT_PARITY3
-	#define PARITY SFMT_PARITY3
-	#define INDEX  2
+	#define PARITY_WORD  SFMT_PARITY3
+	#define PARITY_INDEX 2
 #elif SFMT_PARITY4
-	#define PARITY SFMT_PARITY4
-	#define INDEX  3
+	#define PARITY_WORD  SFMT_PARITY4
+	#define PARITY_INDEX 3
 #else
-	#define PARITY 0
-	#define INDEX  -1
+	#define PARITY_WORD  0
+	#define PARITY_INDEX -1
 #endif
 
 #if defined(__LITTLE_ENDIAN__)
@@ -768,7 +768,7 @@ __declspec(naked) void __cdecl srand(unsigned int seed)
 		cmp     ecx, SFMT_N32 - 1
 		mov     edx, eax
 		jb      loop1
-#if PARITY
+#if PARITY_WORD
 #if SFMT_PARITY1 && !SFMT_PARITY2 && !SFMT_PARITY3 && SFMT_PARITY4
 		mov     eax, dword ptr [state]
 		mov     ecx, dword ptr [state + 12]
@@ -805,14 +805,14 @@ __declspec(naked) void __cdecl srand(unsigned int seed)
 		xor     ecx, edx
 		lea     eax, [ecx * 4]
 		xor     ecx, eax
-		mov     edx, dword ptr [state + IDX32(INDEX) * 4]
+		mov     edx, dword ptr [state + IDX32(PARITY_INDEX) * 4]
 		mov     eax, ecx
 		add     ecx, ecx
 		xor     eax, ecx
-		xor     edx, 1 shl MASM_BSF32(PARITY)
+		xor     edx, 1 shl MASM_BSF32(PARITY_WORD)
 		test    al, al
 		js      epilog
-		mov     dword ptr [state + IDX32(INDEX) * 4], edx
+		mov     dword ptr [state + IDX32(PARITY_INDEX) * 4], edx
 	epilog:
 #endif
 		ret
@@ -841,7 +841,7 @@ __declspec(naked) void __cdecl srand(unsigned int seed)
 		dec     ecx
 		mov     edx, eax
 		jnz     loop1
-#if PARITY
+#if PARITY_WORD
 #if SFMT_PARITY1 && !SFMT_PARITY2 && !SFMT_PARITY3 && SFMT_PARITY4
 		mov     eax, dword ptr [state + (SFMT_N32 - 1) * 4]
 		mov     ecx, dword ptr [state + (SFMT_N32 - 4) * 4]
@@ -879,14 +879,14 @@ __declspec(naked) void __cdecl srand(unsigned int seed)
 		xor     ecx, edx
 		lea     eax, [ecx * 4]
 		xor     ecx, eax
-		mov     edx, dword ptr [state + IDX32(INDEX) * 4]
+		mov     edx, dword ptr [state + IDX32(PARITY_INDEX) * 4]
 		mov     eax, ecx
 		add     ecx, ecx
 		xor     eax, ecx
-		xor     edx, 1 shl MASM_BSF32(PARITY)
+		xor     edx, 1 shl MASM_BSF32(PARITY_WORD)
 		test    al, al
 		js      epilog
-		mov     dword ptr [state + IDX32(INDEX) * 4], edx
+		mov     dword ptr [state + IDX32(PARITY_INDEX) * 4], edx
 	epilog:
 #endif
 		ret
@@ -895,8 +895,8 @@ __declspec(naked) void __cdecl srand(unsigned int seed)
 	}
 #endif
 
-	#undef PARITY
-	#undef INDEX
+	#undef PARITY_WORD
+	#undef PARITY_INDEX
 }
 #endif
 
@@ -954,7 +954,6 @@ __declspec(naked) uint32_t __cdecl rand32()
 		jne     L1
 		call    dword ptr [sfmt_gen_rand_all]
 		mov     ecx, SFMT_N32 - 1
-		jmp     L1
 
 		align   16
 	L1:

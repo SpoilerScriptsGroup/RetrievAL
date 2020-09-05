@@ -699,7 +699,7 @@ void __cdecl srand(unsigned int seed)
 	j = 0;
 	do {
 		sfmt32[i] = x;
-		x = ((x >> 30) ^ x) * 1812433253UL + (uint32_t)++j;
+		x = ((x >> 30) ^ x) * 1812433253UL + ++j;
 	} while (--i);
 #endif
 	sfmt32[IDX32(SFMT_N32 - 1)] = x;
@@ -748,11 +748,11 @@ __declspec(naked) void __cdecl srand(unsigned int seed)
 	#define PARITY_INDEX -1
 #endif
 
-#if defined(__LITTLE_ENDIAN__)
 	__asm
 	{
 		#define seed (esp + 4)
 
+#if defined(__LITTLE_ENDIAN__)
 		mov     eax, dword ptr [seed]
 		xor     ecx, ecx
 		mov     edx, eax
@@ -768,63 +768,7 @@ __declspec(naked) void __cdecl srand(unsigned int seed)
 		cmp     ecx, SFMT_N32 - 1
 		mov     edx, eax
 		jb      loop1
-
-#if PARITY_WORD
-#if SFMT_PARITY1 && !SFMT_PARITY2 && !SFMT_PARITY3 && SFMT_PARITY4
-		mov     eax, dword ptr [state]
-		mov     ecx, dword ptr [state + 12]
-		and     eax, SFMT_PARITY1
-		and     ecx, SFMT_PARITY4
-		mov     dword ptr [state + (SFMT_N32 - 1) * 4], edx
-		xor     eax, ecx
-		mov     dword ptr [idx], SFMT_N32
-		mov     ecx, eax
 #else
-		mov     eax, dword ptr [state]
-		mov     ecx, dword ptr [state + 4]
-		and     eax, SFMT_PARITY1
-		and     ecx, SFMT_PARITY2
-		mov     dword ptr [state + (SFMT_N32 - 1) * 4], edx
-		xor     eax, ecx
-		mov     ecx, dword ptr [state + 8]
-		mov     edx, dword ptr [state + 12]
-		and     ecx, SFMT_PARITY3
-		and     edx, SFMT_PARITY4
-		xor     eax, ecx
-		mov     dword ptr [idx], SFMT_N32
-		xor     eax, edx
-		mov     ecx, eax
-#endif
-		shr     eax, 16
-		xor     edx, edx
-		xor     eax, ecx
-		xor     ecx, ecx
-		xor     al, ah
-		mov     dl, al
-		mov     cl, al
-		shl     edx, 4
-		xor     ecx, edx
-		lea     eax, [ecx * 4]
-		xor     ecx, eax
-		mov     edx, dword ptr [state + IDX32(PARITY_INDEX) * 4]
-		mov     eax, ecx
-		add     ecx, ecx
-		xor     eax, ecx
-		xor     edx, 1 shl MASM_BSF32(PARITY_WORD)
-		test    al, al
-		js      epilog
-		mov     dword ptr [state + IDX32(PARITY_INDEX) * 4], edx
-	epilog:
-#endif
-		ret
-
-		#undef seed
-	}
-#else
-	__asm
-	{
-		#define seed (esp + 4)
-
 		mov     eax, dword ptr [seed]
 		mov     ecx, SFMT_N32 - 1
 		mov     edx, eax
@@ -842,30 +786,31 @@ __declspec(naked) void __cdecl srand(unsigned int seed)
 		dec     ecx
 		mov     edx, eax
 		jnz     loop1
+#endif
 
 #if PARITY_WORD
 #if SFMT_PARITY1 && !SFMT_PARITY2 && !SFMT_PARITY3 && SFMT_PARITY4
-		mov     eax, dword ptr [state + (SFMT_N32 - 1) * 4]
-		mov     ecx, dword ptr [state + (SFMT_N32 - 4) * 4]
+		mov     eax, dword ptr [state + IDX32(0) * 4]
+		mov     ecx, dword ptr [state + IDX32(3) * 4]
 		and     eax, SFMT_PARITY1
 		and     ecx, SFMT_PARITY4
-		mov     dword ptr [state], edx
+		mov     dword ptr [state + IDX32(SFMT_N32 - 1) * 4], edx
 		xor     eax, ecx
-		mov     dword ptr [idx], -1
+		mov     dword ptr [idx], IDX32(SFMT_N32)
 		mov     ecx, eax
 #else
-		mov     eax, dword ptr [state + (SFMT_N32 - 1) * 4]
-		mov     ecx, dword ptr [state + (SFMT_N32 - 2) * 4]
+		mov     eax, dword ptr [state + IDX32(0) * 4]
+		mov     ecx, dword ptr [state + IDX32(1) * 4]
 		and     eax, SFMT_PARITY1
 		and     ecx, SFMT_PARITY2
-		mov     dword ptr [state], edx
+		mov     dword ptr [state + IDX32(SFMT_N32 - 1) * 4], edx
 		xor     eax, ecx
-		mov     ecx, dword ptr [state + (SFMT_N32 - 3) * 4]
-		mov     edx, dword ptr [state + (SFMT_N32 - 4) * 4]
+		mov     ecx, dword ptr [state + IDX32(2) * 4]
+		mov     edx, dword ptr [state + IDX32(3) * 4]
 		and     ecx, SFMT_PARITY3
 		and     edx, SFMT_PARITY4
 		xor     eax, ecx
-		mov     dword ptr [idx], -1
+		mov     dword ptr [idx], IDX32(SFMT_N32)
 		xor     eax, edx
 		mov     ecx, eax
 #endif
@@ -874,7 +819,9 @@ __declspec(naked) void __cdecl srand(unsigned int seed)
 		xor     eax, ecx
 		xor     ecx, ecx
 		xor     al, ah
+#if defined(__BIG_ENDIAN__)
 		pop     esi
+#endif
 		mov     dl, al
 		mov     cl, al
 		shl     edx, 4
@@ -895,7 +842,6 @@ __declspec(naked) void __cdecl srand(unsigned int seed)
 
 		#undef seed
 	}
-#endif
 
 	#undef PARITY_WORD
 	#undef PARITY_INDEX
@@ -936,13 +882,13 @@ __declspec(naked) uint32_t __cdecl rand32()
 	{
 		mov     ecx, dword ptr [idx]
 		cmp     ecx, SFMT_N32
-		jb      L1
+		jb      get_dword
 		call    dword ptr [sfmt_gen_rand_all]
 		xor     ecx, ecx
-		jmp     L1
+		jmp     get_dword
 
 		align   16
-	L1:
+	get_dword:
 		mov     eax, dword ptr [state + ecx * 4]
 		inc     ecx
 		mov     dword ptr [idx], ecx
@@ -952,13 +898,13 @@ __declspec(naked) uint32_t __cdecl rand32()
 	__asm
 	{
 		mov     ecx, dword ptr [idx]
-		cmp     ecx, -1
-		jne     L1
+		test    ecx, ecx
+		jns     get_dword
 		call    dword ptr [sfmt_gen_rand_all]
 		mov     ecx, SFMT_N32 - 1
 
 		align   16
-	L1:
+	get_dword:
 		mov     eax, dword ptr [state + ecx * 4]
 		dec     ecx
 		mov     dword ptr [idx], ecx
@@ -979,8 +925,8 @@ uint64_t __cdecl rand64()
 	if (idx >= SFMT_N32 - 1) {
 		if (idx == SFMT_N32 - 1) {
 #else
-	if ((ptrdiff_t)--idx < 0) {
-		if (!++idx) {
+	if ((ptrdiff_t)idx <= 0) {
+		if (idx == 0) {
 #endif
 			((uint32_t *)&r)[IDX_LO] = sfmt32[IDX32(SFMT_N32 - 1)];
 			sfmt_gen_rand_all();
@@ -1003,23 +949,23 @@ __declspec(naked) uint64_t __cdecl rand64()
 	{
 		mov     ecx, dword ptr [idx]
 		cmp     ecx, SFMT_N32 - 1
-		jb      L2
+		jb      get_qword
 		mov     eax, dword ptr [state + (SFMT_N32 - 1) * 4]
-		jne     L1
+		jne     generate
 		push    eax
 		call    dword ptr [sfmt_gen_rand_all]
 		xor     ecx, ecx
 		pop     eax
-		jmp     L3
+		jmp     get_high
 
 		align   16
-	L1:
+	generate:
 		call    dword ptr [sfmt_gen_rand_all]
 		xor     ecx, ecx
-	L2:
+	get_qword:
 		mov     eax, dword ptr [state + ecx * 4]
 		inc     ecx
-	L3:
+	get_high:
 		mov     edx, dword ptr [state + ecx * 4]
 		inc     ecx
 		mov     dword ptr [idx], ecx
@@ -1029,23 +975,24 @@ __declspec(naked) uint64_t __cdecl rand64()
 	__asm
 	{
 		mov     ecx, dword ptr [idx]
-		dec     ecx
-		jns     L2
-		inc     ecx
-		jnz     L1
-		push    dword ptr [state]
+		test    ecx, ecx
+		jg      get_qword
+		mov     eax, dword ptr [state]
+		jnz     generate
+		push    eax
 		call    dword ptr [sfmt_gen_rand_all]
 		mov     ecx, SFMT_N32 - 1
 		pop     eax
-		jmp     L3
+		jmp     get_high
 
 		align   16
-	L1:
+	generate:
 		call    dword ptr [sfmt_gen_rand_all]
-		mov     ecx, SFMT_N32 - 2
-	L2:
-		mov     eax, dword ptr [state + ecx * 4 + 4]
-	L3:
+		mov     ecx, SFMT_N32 - 1
+	get_qword:
+		mov     eax, dword ptr [state + ecx * 4]
+		dec     ecx
+	get_high:
 		mov     edx, dword ptr [state + ecx * 4]
 		dec     ecx
 		mov     dword ptr [idx], ecx
@@ -1068,12 +1015,12 @@ __declspec(naked) uint32_t __cdecl internal_randf32()
 {
 	__asm
 	{
-	L1:
+	loop1:
 		call    rand32
 		mov     ecx, eax
 		add     eax, eax
 		cmp     eax, 0x7F800000 * 2
-		jae     L1
+		jae     loop1
 
 		mov     eax, ecx
 		ret
@@ -1105,19 +1052,19 @@ __declspec(naked) uint64_t __cdecl internal_randf64()
 		push    edx
 		add     edx, edx
 		cmp     edx, 0x7FF00000 * 2
-		jb      L2
+		jb      epilog
 
 		align   16
-	L1:
+	loop1:
 		call    rand32
 		mov     edx, eax
 		pop     eax
 		push    edx
 		add     edx, edx
 		cmp     edx, 0x7FF00000 * 2
-		jae     L1
+		jae     loop1
 
-	L2:
+	epilog:
 		pop     edx
 		ret
 	}
@@ -1130,19 +1077,19 @@ __declspec(naked) uint64_t __cdecl internal_randf64()
 		add     ecx, ecx
 		mov     esi, eax
 		cmp     ecx, 0x7FF00000 * 2
-		jae     L1
+		jae     loop1
 		pop     esi
 		ret
 
 		align   16
-	L1:
+	loop1:
 		call    rand32
 		mov     ecx, esi
 		mov     edx, esi
 		add     ecx, ecx
 		mov     esi, eax
 		cmp     ecx, 0x7FF00000 * 2
-		jae     L1
+		jae     loop1
 
 		pop     esi
 		ret

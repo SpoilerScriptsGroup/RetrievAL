@@ -1383,39 +1383,39 @@ do                                                                              
 #define BSF64(x) _BSF64(x, -1)
 
 // for constant value
-#define MASM_BSF32(x) (                                               -1 + \
-    (  (x) and 0x00000001                                         )      + \
-    ((((x) and 0x00000002) shr  1) and (((x) and 0x00000001) eq 0)) *  2 + \
-    ((((x) and 0x00000004) shr  2) and (((x) and 0x00000003) eq 0)) *  3 + \
-    ((((x) and 0x00000008) shr  3) and (((x) and 0x00000007) eq 0)) *  4 + \
-    ((((x) and 0x00000010) shr  4) and (((x) and 0x0000000F) eq 0)) *  5 + \
-    ((((x) and 0x00000020) shr  5) and (((x) and 0x0000001F) eq 0)) *  6 + \
-    ((((x) and 0x00000040) shr  6) and (((x) and 0x0000003F) eq 0)) *  7 + \
-    ((((x) and 0x00000080) shr  7) and (((x) and 0x0000007F) eq 0)) *  8 + \
-    ((((x) and 0x00000100) shr  8) and (((x) and 0x000000FF) eq 0)) *  9 + \
-    ((((x) and 0x00000200) shr  9) and (((x) and 0x000001FF) eq 0)) * 10 + \
-    ((((x) and 0x00000400) shr 10) and (((x) and 0x000003FF) eq 0)) * 11 + \
-    ((((x) and 0x00000800) shr 11) and (((x) and 0x000007FF) eq 0)) * 12 + \
-    ((((x) and 0x00001000) shr 12) and (((x) and 0x00000FFF) eq 0)) * 13 + \
-    ((((x) and 0x00002000) shr 13) and (((x) and 0x00001FFF) eq 0)) * 14 + \
-    ((((x) and 0x00004000) shr 14) and (((x) and 0x00003FFF) eq 0)) * 15 + \
-    ((((x) and 0x00008000) shr 15) and (((x) and 0x00007FFF) eq 0)) * 16 + \
-    ((((x) and 0x00010000) shr 16) and (((x) and 0x0000FFFF) eq 0)) * 17 + \
-    ((((x) and 0x00020000) shr 17) and (((x) and 0x0001FFFF) eq 0)) * 18 + \
-    ((((x) and 0x00040000) shr 18) and (((x) and 0x0003FFFF) eq 0)) * 19 + \
-    ((((x) and 0x00080000) shr 19) and (((x) and 0x0007FFFF) eq 0)) * 20 + \
-    ((((x) and 0x00100000) shr 20) and (((x) and 0x000FFFFF) eq 0)) * 21 + \
-    ((((x) and 0x00200000) shr 21) and (((x) and 0x001FFFFF) eq 0)) * 22 + \
-    ((((x) and 0x00400000) shr 22) and (((x) and 0x003FFFFF) eq 0)) * 23 + \
-    ((((x) and 0x00800000) shr 23) and (((x) and 0x007FFFFF) eq 0)) * 24 + \
-    ((((x) and 0x01000000) shr 24) and (((x) and 0x00FFFFFF) eq 0)) * 25 + \
-    ((((x) and 0x02000000) shr 25) and (((x) and 0x01FFFFFF) eq 0)) * 26 + \
-    ((((x) and 0x04000000) shr 26) and (((x) and 0x03FFFFFF) eq 0)) * 27 + \
-    ((((x) and 0x08000000) shr 27) and (((x) and 0x07FFFFFF) eq 0)) * 28 + \
-    ((((x) and 0x10000000) shr 28) and (((x) and 0x0FFFFFFF) eq 0)) * 29 + \
-    ((((x) and 0x20000000) shr 29) and (((x) and 0x1FFFFFFF) eq 0)) * 30 + \
-    ((((x) and 0x40000000) shr 30) and (((x) and 0x3FFFFFFF) eq 0)) * 31 + \
-    ((((x) and 0x80000000) shr 31) and (((x) and 0x7FFFFFFF) eq 0)) * 32)
+#define MASM_BSF32(x) (                                      -1 + \
+    (  (x)         and 1                                 )      + \
+    ((((x) shr  1) and 1) and (((x) and 0x00000001) eq 0)) *  2 + \
+    ((((x) shr  2) and 1) and (((x) and 0x00000003) eq 0)) *  3 + \
+    ((((x) shr  3) and 1) and (((x) and 0x00000007) eq 0)) *  4 + \
+    ((((x) shr  4) and 1) and (((x) and 0x0000000F) eq 0)) *  5 + \
+    ((((x) shr  5) and 1) and (((x) and 0x0000001F) eq 0)) *  6 + \
+    ((((x) shr  6) and 1) and (((x) and 0x0000003F) eq 0)) *  7 + \
+    ((((x) shr  7) and 1) and (((x) and 0x0000007F) eq 0)) *  8 + \
+    ((((x) shr  8) and 1) and (((x) and 0x000000FF) eq 0)) *  9 + \
+    ((((x) shr  9) and 1) and (((x) and 0x000001FF) eq 0)) * 10 + \
+    ((((x) shr 10) and 1) and (((x) and 0x000003FF) eq 0)) * 11 + \
+    ((((x) shr 11) and 1) and (((x) and 0x000007FF) eq 0)) * 12 + \
+    ((((x) shr 12) and 1) and (((x) and 0x00000FFF) eq 0)) * 13 + \
+    ((((x) shr 13) and 1) and (((x) and 0x00001FFF) eq 0)) * 14 + \
+    ((((x) shr 14) and 1) and (((x) and 0x00003FFF) eq 0)) * 15 + \
+    ((((x) shr 15) and 1) and (((x) and 0x00007FFF) eq 0)) * 16 + \
+    ((((x) shr 16) and 1) and (((x) and 0x0000FFFF) eq 0)) * 17 + \
+    ((((x) shr 17) and 1) and (((x) and 0x0001FFFF) eq 0)) * 18 + \
+    ((((x) shr 18) and 1) and (((x) and 0x0003FFFF) eq 0)) * 19 + \
+    ((((x) shr 19) and 1) and (((x) and 0x0007FFFF) eq 0)) * 20 + \
+    ((((x) shr 20) and 1) and (((x) and 0x000FFFFF) eq 0)) * 21 + \
+    ((((x) shr 21) and 1) and (((x) and 0x001FFFFF) eq 0)) * 22 + \
+    ((((x) shr 22) and 1) and (((x) and 0x003FFFFF) eq 0)) * 23 + \
+    ((((x) shr 23) and 1) and (((x) and 0x007FFFFF) eq 0)) * 24 + \
+    ((((x) shr 24) and 1) and (((x) and 0x00FFFFFF) eq 0)) * 25 + \
+    ((((x) shr 25) and 1) and (((x) and 0x01FFFFFF) eq 0)) * 26 + \
+    ((((x) shr 26) and 1) and (((x) and 0x03FFFFFF) eq 0)) * 27 + \
+    ((((x) shr 27) and 1) and (((x) and 0x07FFFFFF) eq 0)) * 28 + \
+    ((((x) shr 28) and 1) and (((x) and 0x0FFFFFFF) eq 0)) * 29 + \
+    ((((x) shr 29) and 1) and (((x) and 0x1FFFFFFF) eq 0)) * 30 + \
+    ((((x) shr 30) and 1) and (((x) and 0x3FFFFFFF) eq 0)) * 31 + \
+    ((((x) shr 31) and 1) and (((x) and 0x7FFFFFFF) eq 0)) * 32)
 
 // for constant value
 #define _BSR8(x, default) ( \
@@ -1437,39 +1437,39 @@ do                                                                              
 #define BSR64(x) _BSR64(x, -1)
 
 // for constant value
-#define MASM_BSR32(x) (                                               -1 + \
-    ((((x) and 0x80000000) shr 31) and 1                          ) * 32 + \
-    ((((x) and 0x40000000) shr 30) and (((x) and 0x80000000) eq 0)) * 31 + \
-    ((((x) and 0x20000000) shr 29) and (((x) and 0xC0000000) eq 0)) * 30 + \
-    ((((x) and 0x10000000) shr 28) and (((x) and 0xE0000000) eq 0)) * 29 + \
-    ((((x) and 0x08000000) shr 27) and (((x) and 0xF0000000) eq 0)) * 28 + \
-    ((((x) and 0x04000000) shr 26) and (((x) and 0xF8000000) eq 0)) * 27 + \
-    ((((x) and 0x02000000) shr 25) and (((x) and 0xFC000000) eq 0)) * 26 + \
-    ((((x) and 0x01000000) shr 24) and (((x) and 0xFE000000) eq 0)) * 25 + \
-    ((((x) and 0x00800000) shr 23) and (((x) and 0xFF000000) eq 0)) * 24 + \
-    ((((x) and 0x00400000) shr 22) and (((x) and 0xFF800000) eq 0)) * 23 + \
-    ((((x) and 0x00200000) shr 21) and (((x) and 0xFFC00000) eq 0)) * 22 + \
-    ((((x) and 0x00100000) shr 20) and (((x) and 0xFFE00000) eq 0)) * 21 + \
-    ((((x) and 0x00080000) shr 19) and (((x) and 0xFFF00000) eq 0)) * 20 + \
-    ((((x) and 0x00040000) shr 18) and (((x) and 0xFFF80000) eq 0)) * 19 + \
-    ((((x) and 0x00020000) shr 17) and (((x) and 0xFFFC0000) eq 0)) * 18 + \
-    ((((x) and 0x00010000) shr 16) and (((x) and 0xFFFE0000) eq 0)) * 17 + \
-    ((((x) and 0x00008000) shr 15) and (((x) and 0xFFFF0000) eq 0)) * 16 + \
-    ((((x) and 0x00004000) shr 14) and (((x) and 0xFFFF8000) eq 0)) * 15 + \
-    ((((x) and 0x00002000) shr 13) and (((x) and 0xFFFFC000) eq 0)) * 14 + \
-    ((((x) and 0x00001000) shr 12) and (((x) and 0xFFFFE000) eq 0)) * 13 + \
-    ((((x) and 0x00000800) shr 11) and (((x) and 0xFFFFF000) eq 0)) * 12 + \
-    ((((x) and 0x00000400) shr 10) and (((x) and 0xFFFFF800) eq 0)) * 11 + \
-    ((((x) and 0x00000200) shr  9) and (((x) and 0xFFFFFC00) eq 0)) * 10 + \
-    ((((x) and 0x00000100) shr  8) and (((x) and 0xFFFFFE00) eq 0)) *  9 + \
-    ((((x) and 0x00000080) shr  7) and (((x) and 0xFFFFFF00) eq 0)) *  8 + \
-    ((((x) and 0x00000040) shr  6) and (((x) and 0xFFFFFF80) eq 0)) *  7 + \
-    ((((x) and 0x00000020) shr  5) and (((x) and 0xFFFFFFC0) eq 0)) *  6 + \
-    ((((x) and 0x00000010) shr  4) and (((x) and 0xFFFFFFE0) eq 0)) *  5 + \
-    ((((x) and 0x00000008) shr  3) and (((x) and 0xFFFFFFF0) eq 0)) *  4 + \
-    ((((x) and 0x00000004) shr  2) and (((x) and 0xFFFFFFF8) eq 0)) *  3 + \
-    ((((x) and 0x00000002) shr  1) and (((x) and 0xFFFFFFFC) eq 0)) *  2 + \
-    (( (x) and 0x00000001        ) and (((x) and 0xFFFFFFFE) eq 0)))
+#define MASM_BSR32(x) (                                      -1 + \
+    ( ((x) shr 31) and 1                                 ) * 32 + \
+    ((((x) shr 30) and 1) and (((x) and 0x80000000) eq 0)) * 31 + \
+    ((((x) shr 29) and 1) and (((x) and 0xC0000000) eq 0)) * 30 + \
+    ((((x) shr 28) and 1) and (((x) and 0xE0000000) eq 0)) * 29 + \
+    ((((x) shr 27) and 1) and (((x) and 0xF0000000) eq 0)) * 28 + \
+    ((((x) shr 26) and 1) and (((x) and 0xF8000000) eq 0)) * 27 + \
+    ((((x) shr 25) and 1) and (((x) and 0xFC000000) eq 0)) * 26 + \
+    ((((x) shr 24) and 1) and (((x) and 0xFE000000) eq 0)) * 25 + \
+    ((((x) shr 23) and 1) and (((x) and 0xFF000000) eq 0)) * 24 + \
+    ((((x) shr 22) and 1) and (((x) and 0xFF800000) eq 0)) * 23 + \
+    ((((x) shr 21) and 1) and (((x) and 0xFFC00000) eq 0)) * 22 + \
+    ((((x) shr 20) and 1) and (((x) and 0xFFE00000) eq 0)) * 21 + \
+    ((((x) shr 19) and 1) and (((x) and 0xFFF00000) eq 0)) * 20 + \
+    ((((x) shr 18) and 1) and (((x) and 0xFFF80000) eq 0)) * 19 + \
+    ((((x) shr 17) and 1) and (((x) and 0xFFFC0000) eq 0)) * 18 + \
+    ((((x) shr 16) and 1) and (((x) and 0xFFFE0000) eq 0)) * 17 + \
+    ((((x) shr 15) and 1) and (((x) and 0xFFFF0000) eq 0)) * 16 + \
+    ((((x) shr 14) and 1) and (((x) and 0xFFFF8000) eq 0)) * 15 + \
+    ((((x) shr 13) and 1) and (((x) and 0xFFFFC000) eq 0)) * 14 + \
+    ((((x) shr 12) and 1) and (((x) and 0xFFFFE000) eq 0)) * 13 + \
+    ((((x) shr 11) and 1) and (((x) and 0xFFFFF000) eq 0)) * 12 + \
+    ((((x) shr 10) and 1) and (((x) and 0xFFFFF800) eq 0)) * 11 + \
+    ((((x) shr  9) and 1) and (((x) and 0xFFFFFC00) eq 0)) * 10 + \
+    ((((x) shr  8) and 1) and (((x) and 0xFFFFFE00) eq 0)) *  9 + \
+    ((((x) shr  7) and 1) and (((x) and 0xFFFFFF00) eq 0)) *  8 + \
+    ((((x) shr  6) and 1) and (((x) and 0xFFFFFF80) eq 0)) *  7 + \
+    ((((x) shr  5) and 1) and (((x) and 0xFFFFFFC0) eq 0)) *  6 + \
+    ((((x) shr  4) and 1) and (((x) and 0xFFFFFFE0) eq 0)) *  5 + \
+    ((((x) shr  3) and 1) and (((x) and 0xFFFFFFF0) eq 0)) *  4 + \
+    ((((x) shr  2) and 1) and (((x) and 0xFFFFFFF8) eq 0)) *  3 + \
+    ((((x) shr  1) and 1) and (((x) and 0xFFFFFFFC) eq 0)) *  2 + \
+    (( (x)         and 1) and (((x) and 0xFFFFFFFE) eq 0)))
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310
 #pragma intrinsic(_BitScanForward)

@@ -175,19 +175,25 @@ static size_t   idx;                            // index counter to the 32-bit i
     ((((x) shr 31) and 1) and (((x) and 0x7FFFFFFF) eq 0)) * 32)
 
 #if defined(__LITTLE_ENDIAN__)
-#define IDX_LO              0
-#define IDX_HI              1
-#define IDX32(index)        (index)
-#define IDX128(index)       (index)
-#define POST_INC(augend)    ((augend)++)
-#define SUM(augend, addend) ((augend) + (addend))
+#define IDX_LO          0
+#define IDX_HI          1
+#define IDX32(x)        (x)
+#define IDX128(x)       (x)
+#define LE_PLUS(x)      (x)
+#define LE_MINUS(x)     (-(x))
+#define LE_POST_INC(x)  ((x)++)
+#define LE_ADD          add
+#define LE_INC          inc
 #else
-#define IDX_LO              1
-#define IDX_HI              0
-#define IDX32(index)        (SFMT_N32 - 1 - (index))
-#define IDX128(index)       (SFMT_N - 1 - (index))
-#define POST_INC(augend)    ((augend)--)
-#define SUM(augend, addend) ((augend) - (addend))
+#define IDX_LO          1
+#define IDX_HI          0
+#define IDX32(x)        (SFMT_N32 - 1 - (x))
+#define IDX128(x)       (SFMT_N - 1 - (x))
+#define LE_PLUS(x)      (-(x))
+#define LE_MINUS(x)     (x)
+#define LE_POST_INC(x)  ((x)--)
+#define LE_ADD          sub
+#define LE_INC          dec
 #endif
 
 /*----------------
@@ -242,33 +248,18 @@ static void sfmt_gen_rand_all()
 	r2 = _mm_load_si128(sfmt + IDX128(SFMT_N - 1));
 	r3 = _mm_load_si128(sfmt + IDX128(SFMT_N - 2));
 	r4 = _mm_load_si128(&mask.si);
-#if defined(__LITTLE_ENDIAN__)
-	offset = -(SFMT_N - SFMT_POS1) * 16;
+	offset = LE_MINUS(SFMT_N - SFMT_POS1) * 16;
 	do
 		mm_recursion(r2, r3, r4,
-			(__m128i *)((char *)(sfmt + (SFMT_N - SFMT_POS1)) + offset),
-			SFMT_POS1);
-	while (offset += 16);
-	offset = -SFMT_POS1 * 16;
+			(__m128i *)((char *)(sfmt + IDX128(SFMT_N - SFMT_POS1)) + offset),
+			LE_PLUS(SFMT_POS1));
+	while (offset += LE_PLUS(16));
+	offset = LE_MINUS(SFMT_POS1) * 16;
 	do
 		mm_recursion(r2, r3, r4,
-			(__m128i *)((char *)(sfmt + SFMT_N) + offset),
-			-(SFMT_N - SFMT_POS1));
-	while (offset += 16);
-#else
-	offset = (SFMT_N - SFMT_POS1) * 16;
-	do
-		mm_recursion(r2, r3, r4,
-			(__m128i *)((char *)(sfmt + (SFMT_POS1 - 1)) + offset),
-			-SFMT_POS1);
-	while (offset -= 16);
-	offset = SFMT_POS1 * 16;
-	do
-		mm_recursion(r2, r3, r4,
-			(__m128i *)((char *)(sfmt - 1) + offset),
-			SFMT_N - SFMT_POS1);
-	while (offset -= 16);
-#endif
+			(__m128i *)((char *)(sfmt + IDX128(SFMT_N)) + offset),
+			LE_MINUS(SFMT_N - SFMT_POS1));
+	while (offset += LE_PLUS(16));
 }
 #elif defined(_M_IX86)
 /* This function fills the internal state array with pseudorandom
@@ -281,17 +272,16 @@ __declspec(naked) static void __cdecl sfmt_gen_rand_all_sse2()
 		SFMT_MSK(2) & (UINT32_MAX >> SFMT_SR1),
 		SFMT_MSK(3) & (UINT32_MAX >> SFMT_SR1) } };
 
-#if defined(__LITTLE_ENDIAN__)
 	__asm
 	{
-		movdqa  xmm2, xmmword ptr [state + (SFMT_N - 1) * 16]
-		movdqa  xmm3, xmmword ptr [state + (SFMT_N - 2) * 16]
+		movdqa  xmm2, xmmword ptr [state + IDX128(SFMT_N - 1) * 16]
+		movdqa  xmm3, xmmword ptr [state + IDX128(SFMT_N - 2) * 16]
 		movdqa  xmm4, xmmword ptr [mask]
-		mov     eax, -(SFMT_N - SFMT_POS1) * 16
+		mov     eax, LE_MINUS(SFMT_N - SFMT_POS1) * 16
 
 		align   16
 	loop1:
-		movdqa  xmm1, xmmword ptr [state + (SFMT_N - SFMT_POS1) * 16 + eax]
+		movdqa  xmm1, xmmword ptr [state + IDX128(SFMT_N - SFMT_POS1) * 16 + eax]
 		movdqa  xmm0, xmm2
 		psrldq  xmm3, SFMT_SR2
 		pxor    xmm3, xmm1
@@ -299,20 +289,20 @@ __declspec(naked) static void __cdecl sfmt_gen_rand_all_sse2()
 		pslldq  xmm1, SFMT_SL2
 		pxor    xmm0, xmm3
 		movdqa  xmm3, xmm2
-		movdqa  xmm2, xmmword ptr [state + SFMT_N * 16 + eax]
+		movdqa  xmm2, xmmword ptr [state + (IDX128(SFMT_N - SFMT_POS1) + LE_PLUS(SFMT_POS1)) * 16 + eax]
 		pxor    xmm1, xmm0
 		psrld   xmm2, SFMT_SR1
 		pand    xmm2, xmm4
 		pxor    xmm2, xmm1
-		movdqa  xmmword ptr [state + (SFMT_N - SFMT_POS1) * 16 + eax], xmm2
-		add     eax, 16
+		movdqa  xmmword ptr [state + IDX128(SFMT_N - SFMT_POS1) * 16 + eax], xmm2
+		LE_ADD  eax, 16
 		jnz     loop1
 
-		mov     eax, -SFMT_POS1 * 16
+		mov     eax, LE_MINUS(SFMT_POS1) * 16
 
 		align   16
 	loop2:
-		movdqa  xmm1, xmmword ptr [state + SFMT_N * 16 + eax]
+		movdqa  xmm1, xmmword ptr [state + IDX128(SFMT_N) * 16 + eax]
 		movdqa  xmm0, xmm2
 		psrldq  xmm3, SFMT_SR2
 		pxor    xmm3, xmm1
@@ -320,68 +310,17 @@ __declspec(naked) static void __cdecl sfmt_gen_rand_all_sse2()
 		pslldq  xmm1, SFMT_SL2
 		pxor    xmm0, xmm3
 		movdqa  xmm3, xmm2
-		movdqa  xmm2, xmmword ptr [state + SFMT_POS1 * 16 + eax]
+		movdqa  xmm2, xmmword ptr [state + (IDX128(SFMT_N) + LE_MINUS(SFMT_N - SFMT_POS1)) * 16 + eax]
 		pxor    xmm1, xmm0
 		psrld   xmm2, SFMT_SR1
 		pand    xmm2, xmm4
 		pxor    xmm2, xmm1
-		movdqa  xmmword ptr [state + SFMT_N * 16 + eax], xmm2
-		add     eax, 16
+		movdqa  xmmword ptr [state + IDX128(SFMT_N) * 16 + eax], xmm2
+		LE_ADD  eax, 16
 		jnz     loop2
 
 		ret
 	}
-#else
-	__asm
-	{
-		movdqa  xmm2, xmmword ptr [state]
-		movdqa  xmm3, xmmword ptr [state + 16]
-		movdqa  xmm4, xmmword ptr [mask]
-		mov     eax, (SFMT_N - SFMT_POS1) * 16
-
-		align   16
-	loop1:
-		movdqa  xmm1, xmmword ptr [state + (SFMT_POS1 - 1) * 16 + eax]
-		movdqa  xmm0, xmm2
-		psrldq  xmm3, SFMT_SR2
-		pxor    xmm3, xmm1
-		pslld   xmm0, SFMT_SL1
-		pslldq  xmm1, SFMT_SL2
-		pxor    xmm0, xmm3
-		movdqa  xmm3, xmm2
-		movdqa  xmm2, xmmword ptr [state - 16 + eax]
-		pxor    xmm1, xmm0
-		psrld   xmm2, SFMT_SR1
-		pand    xmm2, xmm4
-		pxor    xmm2, xmm1
-		movdqa  xmmword ptr [state + (SFMT_POS1 - 1) * 16 + eax], xmm2
-		sub     eax, 16
-		jnz     loop1
-
-		mov     eax, SFMT_POS1 * 16
-
-		align   16
-	loop2:
-		movdqa  xmm1, xmmword ptr [state - 16 + eax]
-		movdqa  xmm0, xmm2
-		psrldq  xmm3, SFMT_SR2
-		pxor    xmm3, xmm1
-		pslld   xmm0, SFMT_SL1
-		pslldq  xmm1, SFMT_SL2
-		pxor    xmm0, xmm3
-		movdqa  xmm3, xmm2
-		movdqa  xmm2, xmmword ptr [state + (SFMT_N - SFMT_POS1 - 1) * 16 + eax]
-		pxor    xmm1, xmm0
-		psrld   xmm2, SFMT_SR1
-		pand    xmm2, xmm4
-		pxor    xmm2, xmm1
-		movdqa  xmmword ptr [state + 16 - eax], xmm2
-		sub     eax, 16
-		jnz     loop2
-
-		ret
-	}
-#endif
 }
 #endif
 
@@ -570,16 +509,16 @@ static void sfmt_gen_rand_all()
 		do_recursion(a, b, c, d);
 		c = d;
 		d = a;
-		POST_INC(a);
-		POST_INC(b);
+		LE_POST_INC(a);
+		LE_POST_INC(b);
 	} while (a != state + IDX128(SFMT_N - SFMT_POS1));
 	b = state + IDX128(0);
 	do {
 		do_recursion(a, b, c, d);
 		c = d;
 		d = a;
-		POST_INC(a);
-		POST_INC(b);
+		LE_POST_INC(a);
+		LE_POST_INC(b);
 	} while (a != state + IDX128(SFMT_N));
 }
 #else
@@ -605,13 +544,8 @@ __declspec(naked) static void sfmt_gen_rand_all_generic()
 		call    do_recursion
 		mov     eax, edi
 		mov     edi, ebx
-#if defined(__LITTLE_ENDIAN__)
-		add     ebx, 16
-		add     esi, 16
-#else
-		sub     ebx, 16
-		sub     esi, 16
-#endif
+		LE_ADD  ebx, 16
+		LE_ADD  esi, 16
 		cmp     ebx, offset state + IDX128(SFMT_N - SFMT_POS1) * 16
 		jne     loop1
 
@@ -626,13 +560,8 @@ __declspec(naked) static void sfmt_gen_rand_all_generic()
 		call    do_recursion
 		mov     eax, edi
 		mov     edi, ebx
-#if defined(__LITTLE_ENDIAN__)
-		add     ebx, 16
-		add     esi, 16
-#else
-		sub     ebx, 16
-		sub     esi, 16
-#endif
+		LE_ADD  ebx, 16
+		LE_ADD  esi, 16
 		cmp     ebx, offset state + IDX128(SFMT_N) * 16
 		jne     loop2
 
@@ -683,19 +612,18 @@ void __cdecl srand(unsigned int seed)
 {
 	uint32_t x;
 	size_t i;
-#if defined(__LITTLE_ENDIAN__)
+#if defined(__BIG_ENDIAN__)
+	uint32_t j;
+#endif
 
 	x = seed;
-	i = 0;
+	i = IDX32(0);
+#if defined(__LITTLE_ENDIAN__)
 	do {
 		sfmt32[i++] = x;
 		x = ((x >> 30) ^ x) * 1812433253UL + (uint32_t)i;
-	} while (i != SFMT_N32 - 1);
+	} while (i < SFMT_N32 - 1);
 #else
-	uint32_t j;
-
-	x = seed;
-	i = SFMT_N32 - 1;
 	j = 0;
 	do {
 		sfmt32[i] = x;
@@ -872,45 +800,34 @@ uint32_t __cdecl rand32()
 		sfmt_gen_rand_all();
 		idx = IDX32(0);
 	}
-	return sfmt32[POST_INC(idx)];
+	return sfmt32[LE_POST_INC(idx)];
 }
 #else
 __declspec(naked) uint32_t __cdecl rand32()
 {
-#if defined(__LITTLE_ENDIAN__)
 	__asm
 	{
 		mov     ecx, dword ptr [idx]
+#if defined(__LITTLE_ENDIAN__)
 		cmp     ecx, SFMT_N32
 		jb      get_dword
 		call    dword ptr [sfmt_gen_rand_all]
 		xor     ecx, ecx
 		jmp     get_dword
-
-		align   16
-	get_dword:
-		mov     eax, dword ptr [state + ecx * 4]
-		inc     ecx
-		mov     dword ptr [idx], ecx
-		ret
-	}
 #else
-	__asm
-	{
-		mov     ecx, dword ptr [idx]
 		test    ecx, ecx
 		jns     get_dword
 		call    dword ptr [sfmt_gen_rand_all]
 		mov     ecx, SFMT_N32 - 1
+#endif
 
 		align   16
 	get_dword:
 		mov     eax, dword ptr [state + ecx * 4]
-		dec     ecx
+		LE_INC  ecx
 		mov     dword ptr [idx], ecx
 		ret
 	}
-#endif
 }
 #endif
 
@@ -938,16 +855,16 @@ uint64_t __cdecl rand64()
 		idx = IDX32(IDX_LO);
 	}
 	r = *(uint64_t *)(sfmt32 + idx);
-	idx = SUM(idx, 2 - IDX_LO);
+	idx += LE_PLUS(2 - IDX_LO);
 	return r;
 }
 #else
 __declspec(naked) uint64_t __cdecl rand64()
 {
-#if defined(__LITTLE_ENDIAN__)
 	__asm
 	{
 		mov     ecx, dword ptr [idx]
+#if defined(__LITTLE_ENDIAN__)
 		cmp     ecx, SFMT_N32 - 1
 		jb      get_qword
 		mov     eax, dword ptr [state + (SFMT_N32 - 1) * 4]
@@ -962,19 +879,7 @@ __declspec(naked) uint64_t __cdecl rand64()
 	generate:
 		call    dword ptr [sfmt_gen_rand_all]
 		xor     ecx, ecx
-	get_qword:
-		mov     eax, dword ptr [state + ecx * 4]
-		inc     ecx
-	get_high:
-		mov     edx, dword ptr [state + ecx * 4]
-		inc     ecx
-		mov     dword ptr [idx], ecx
-		ret
-	}
 #else
-	__asm
-	{
-		mov     ecx, dword ptr [idx]
 		test    ecx, ecx
 		jg      get_qword
 		mov     eax, dword ptr [state]
@@ -989,16 +894,16 @@ __declspec(naked) uint64_t __cdecl rand64()
 	generate:
 		call    dword ptr [sfmt_gen_rand_all]
 		mov     ecx, SFMT_N32 - 1
+#endif
 	get_qword:
 		mov     eax, dword ptr [state + ecx * 4]
-		dec     ecx
+		LE_INC  ecx
 	get_high:
 		mov     edx, dword ptr [state + ecx * 4]
-		dec     ecx
+		LE_INC  ecx
 		mov     dword ptr [idx], ecx
 		ret
 	}
-#endif
 }
 #endif
 

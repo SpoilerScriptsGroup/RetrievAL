@@ -852,10 +852,10 @@ uint64_t __cdecl rand64()
 			return r;
 		}
 		sfmt_gen_rand_all();
-		idx = IDX32(IDX_LO);
+		idx = IDX32(0);
 	}
-	r = *(uint64_t *)(sfmt32 + idx);
-	idx += LE_PLUS(2 - IDX_LO);
+	r = *(uint64_t *)(sfmt32 - IDX_LO + idx);
+	idx += LE_PLUS(2);
 	return r;
 }
 #else

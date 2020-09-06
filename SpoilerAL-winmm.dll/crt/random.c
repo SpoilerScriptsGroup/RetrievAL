@@ -49,7 +49,7 @@
 /*------
   ENDIAN
   ------*/
-#if defined(__BYTE_ORDER) ? __BYTE_ORDER == __LITTLE_ENDIAN : !defined(__BIG_ENDIAN__)
+#if __BYTE_ORDER == __LITTLE_ENDIAN && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && !defined(__BIG_ENDIAN__)
 #undef __BIG_ENDIAN__
 #ifndef __LITTLE_ENDIAN__
 #define __LITTLE_ENDIAN__   1

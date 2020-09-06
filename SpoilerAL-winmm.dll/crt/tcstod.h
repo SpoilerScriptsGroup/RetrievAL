@@ -33,7 +33,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 	#define MSW_MANT_MASK DBL_MANT_MASK
 	#define MSW_SIGN      DBL_SIGN
 #else
-#if defined(__BYTE_ORDER) ? __BYTE_ORDER == __LITTLE_ENDIAN : !defined(__BIG_ENDIAN__)
+#if __BYTE_ORDER == __LITTLE_ENDIAN && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && !defined(__BIG_ENDIAN__)
 	#define MSW(x)        *((uint32_t *)&(x) + 1)
 #else
 	#define MSW(x)        *((uint32_t *)&(x))

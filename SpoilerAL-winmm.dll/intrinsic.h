@@ -559,6 +559,251 @@ do                                       \
 } while (0)
 #endif
 
+// for constant value
+#define _BSF8(x, default) ( \
+    ((x) & 0x01) ?  0 :     \
+    ((x) & 0x02) ?  1 :     \
+    ((x) & 0x04) ?  2 :     \
+    ((x) & 0x08) ?  3 :     \
+    ((x) & 0x10) ?  4 :     \
+    ((x) & 0x20) ?  5 :     \
+    ((x) & 0x40) ?  6 :     \
+    ((x) & 0x80) ?  7 :     \
+    (default))
+#define _BSF16(x, default) _BSF8(x, _BSF8((x) >> 8, (default) - 8) + 8)
+#define _BSF32(x, default) _BSF16(x, _BSF16((x) >> 16, (default) - 16) + 16)
+#define _BSF64(x, default) _BSF32(x, _BSF32((x) >> 32, (default) - 32) + 32)
+#define BSF8(x) _BSF8(x, -1)
+#define BSF16(x) _BSF16(x, -1)
+#define BSF32(x) _BSF32(x, -1)
+#define BSF64(x) _BSF64(x, -1)
+
+// for constant value
+#define MASM_BSF32(x) (                                      -1 + \
+    (  (x)         and 1                                 )      + \
+    ((((x) shr  1) and 1) and (((x) and 0x00000001) eq 0)) *  2 + \
+    ((((x) shr  2) and 1) and (((x) and 0x00000003) eq 0)) *  3 + \
+    ((((x) shr  3) and 1) and (((x) and 0x00000007) eq 0)) *  4 + \
+    ((((x) shr  4) and 1) and (((x) and 0x0000000F) eq 0)) *  5 + \
+    ((((x) shr  5) and 1) and (((x) and 0x0000001F) eq 0)) *  6 + \
+    ((((x) shr  6) and 1) and (((x) and 0x0000003F) eq 0)) *  7 + \
+    ((((x) shr  7) and 1) and (((x) and 0x0000007F) eq 0)) *  8 + \
+    ((((x) shr  8) and 1) and (((x) and 0x000000FF) eq 0)) *  9 + \
+    ((((x) shr  9) and 1) and (((x) and 0x000001FF) eq 0)) * 10 + \
+    ((((x) shr 10) and 1) and (((x) and 0x000003FF) eq 0)) * 11 + \
+    ((((x) shr 11) and 1) and (((x) and 0x000007FF) eq 0)) * 12 + \
+    ((((x) shr 12) and 1) and (((x) and 0x00000FFF) eq 0)) * 13 + \
+    ((((x) shr 13) and 1) and (((x) and 0x00001FFF) eq 0)) * 14 + \
+    ((((x) shr 14) and 1) and (((x) and 0x00003FFF) eq 0)) * 15 + \
+    ((((x) shr 15) and 1) and (((x) and 0x00007FFF) eq 0)) * 16 + \
+    ((((x) shr 16) and 1) and (((x) and 0x0000FFFF) eq 0)) * 17 + \
+    ((((x) shr 17) and 1) and (((x) and 0x0001FFFF) eq 0)) * 18 + \
+    ((((x) shr 18) and 1) and (((x) and 0x0003FFFF) eq 0)) * 19 + \
+    ((((x) shr 19) and 1) and (((x) and 0x0007FFFF) eq 0)) * 20 + \
+    ((((x) shr 20) and 1) and (((x) and 0x000FFFFF) eq 0)) * 21 + \
+    ((((x) shr 21) and 1) and (((x) and 0x001FFFFF) eq 0)) * 22 + \
+    ((((x) shr 22) and 1) and (((x) and 0x003FFFFF) eq 0)) * 23 + \
+    ((((x) shr 23) and 1) and (((x) and 0x007FFFFF) eq 0)) * 24 + \
+    ((((x) shr 24) and 1) and (((x) and 0x00FFFFFF) eq 0)) * 25 + \
+    ((((x) shr 25) and 1) and (((x) and 0x01FFFFFF) eq 0)) * 26 + \
+    ((((x) shr 26) and 1) and (((x) and 0x03FFFFFF) eq 0)) * 27 + \
+    ((((x) shr 27) and 1) and (((x) and 0x07FFFFFF) eq 0)) * 28 + \
+    ((((x) shr 28) and 1) and (((x) and 0x0FFFFFFF) eq 0)) * 29 + \
+    ((((x) shr 29) and 1) and (((x) and 0x1FFFFFFF) eq 0)) * 30 + \
+    ((((x) shr 30) and 1) and (((x) and 0x3FFFFFFF) eq 0)) * 31 + \
+    ((((x) shr 31) and 1) and (((x) and 0x7FFFFFFF) eq 0)) * 32)
+
+// for constant value
+#define _BSR8(x, default) ( \
+    ((x) & 0x80) ?  7 :     \
+    ((x) & 0x40) ?  6 :     \
+    ((x) & 0x20) ?  5 :     \
+    ((x) & 0x10) ?  4 :     \
+    ((x) & 0x08) ?  3 :     \
+    ((x) & 0x04) ?  2 :     \
+    ((x) & 0x02) ?  1 :     \
+    ((x) & 0x01) ?  0 :     \
+    (default))
+#define _BSR16(x, default) (_BSR8((uint16_t)(x) >> 8, _BSR8(x, default) - 8) + 8)
+#define _BSR32(x, default) (_BSR16((uint32_t)(x) >> 16, _BSR16(x, default) - 16) + 16)
+#define _BSR64(x, default) (_BSR32((uint64_t)(x) >> 32, _BSR32(x, default) - 32) + 32)
+#define BSR8(x) _BSR8(x, -1)
+#define BSR16(x) _BSR16(x, -1)
+#define BSR32(x) _BSR32(x, -1)
+#define BSR64(x) _BSR64(x, -1)
+
+// for constant value
+#define MASM_BSR32(x) (                                      -1 + \
+    ( ((x) shr 31) and 1                                 ) * 32 + \
+    ((((x) shr 30) and 1) and (((x) and 0x80000000) eq 0)) * 31 + \
+    ((((x) shr 29) and 1) and (((x) and 0xC0000000) eq 0)) * 30 + \
+    ((((x) shr 28) and 1) and (((x) and 0xE0000000) eq 0)) * 29 + \
+    ((((x) shr 27) and 1) and (((x) and 0xF0000000) eq 0)) * 28 + \
+    ((((x) shr 26) and 1) and (((x) and 0xF8000000) eq 0)) * 27 + \
+    ((((x) shr 25) and 1) and (((x) and 0xFC000000) eq 0)) * 26 + \
+    ((((x) shr 24) and 1) and (((x) and 0xFE000000) eq 0)) * 25 + \
+    ((((x) shr 23) and 1) and (((x) and 0xFF000000) eq 0)) * 24 + \
+    ((((x) shr 22) and 1) and (((x) and 0xFF800000) eq 0)) * 23 + \
+    ((((x) shr 21) and 1) and (((x) and 0xFFC00000) eq 0)) * 22 + \
+    ((((x) shr 20) and 1) and (((x) and 0xFFE00000) eq 0)) * 21 + \
+    ((((x) shr 19) and 1) and (((x) and 0xFFF00000) eq 0)) * 20 + \
+    ((((x) shr 18) and 1) and (((x) and 0xFFF80000) eq 0)) * 19 + \
+    ((((x) shr 17) and 1) and (((x) and 0xFFFC0000) eq 0)) * 18 + \
+    ((((x) shr 16) and 1) and (((x) and 0xFFFE0000) eq 0)) * 17 + \
+    ((((x) shr 15) and 1) and (((x) and 0xFFFF0000) eq 0)) * 16 + \
+    ((((x) shr 14) and 1) and (((x) and 0xFFFF8000) eq 0)) * 15 + \
+    ((((x) shr 13) and 1) and (((x) and 0xFFFFC000) eq 0)) * 14 + \
+    ((((x) shr 12) and 1) and (((x) and 0xFFFFE000) eq 0)) * 13 + \
+    ((((x) shr 11) and 1) and (((x) and 0xFFFFF000) eq 0)) * 12 + \
+    ((((x) shr 10) and 1) and (((x) and 0xFFFFF800) eq 0)) * 11 + \
+    ((((x) shr  9) and 1) and (((x) and 0xFFFFFC00) eq 0)) * 10 + \
+    ((((x) shr  8) and 1) and (((x) and 0xFFFFFE00) eq 0)) *  9 + \
+    ((((x) shr  7) and 1) and (((x) and 0xFFFFFF00) eq 0)) *  8 + \
+    ((((x) shr  6) and 1) and (((x) and 0xFFFFFF80) eq 0)) *  7 + \
+    ((((x) shr  5) and 1) and (((x) and 0xFFFFFFC0) eq 0)) *  6 + \
+    ((((x) shr  4) and 1) and (((x) and 0xFFFFFFE0) eq 0)) *  5 + \
+    ((((x) shr  3) and 1) and (((x) and 0xFFFFFFF0) eq 0)) *  4 + \
+    ((((x) shr  2) and 1) and (((x) and 0xFFFFFFF8) eq 0)) *  3 + \
+    ((((x) shr  1) and 1) and (((x) and 0xFFFFFFFC) eq 0)) *  2 + \
+    (( (x)         and 1) and (((x) and 0xFFFFFFFE) eq 0)))
+
+#if defined(_MSC_VER) && _MSC_VER >= 1310
+#pragma intrinsic(_BitScanForward)
+#pragma intrinsic(_BitScanReverse)
+#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
+__forceinline unsigned __int64 __reg64return_BitScanForward(unsigned long Mask)
+{
+	__asm
+	{
+		bsf     edx, dword ptr [Mask]
+		setnz   al
+	}
+}
+__forceinline unsigned char _BitScanForward(unsigned long *Index, unsigned long Mask)
+{
+	unsigned __int64 x = __reg64return_BitScanForward(Mask);
+	*Index = (unsigned long)(x >> 32);
+	return (unsigned char)x;
+}
+__forceinline unsigned __int64 __reg64return_BitScanReverse(unsigned long Mask)
+{
+	__asm
+	{
+		bsr     edx, dword ptr [Mask]
+		setnz   al
+	}
+}
+__forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
+{
+	unsigned __int64 x = __reg64return_BitScanReverse(Mask);
+	*Index = (unsigned long)(x >> 32);
+	return (unsigned char)x;
+}
+#elif defined(__BORLANDC__)
+unsigned char __fastcall _BitScanForward(unsigned long *Index, unsigned long Mask);
+unsigned char __fastcall _BitScanReverse(unsigned long *Index, unsigned long Mask);
+#else
+__forceinline unsigned char _BitScanForward(unsigned long *Index, unsigned long Mask)
+{
+	if (Mask)
+	{
+		unsigned long i;
+
+		for (i = 0; !(Mask & 1); Mask >>= 1)
+			i++;
+		*Index = i;
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+__forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
+{
+	if (Mask)
+	{
+		unsigned long i;
+
+		for (i = 31; (long)Mask >= 0; Mask <<= 1)
+			i--;
+		*Index = i;
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+#endif
+
+#if defined(_MSC_VER) && defined(_M_X64)
+#pragma intrinsic(_BitScanForward64)
+#pragma intrinsic(_BitScanReverse64)
+#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
+__forceinline unsigned __int64 __reg64return_BitScanForward64(unsigned __int64 Mask)
+{
+	__asm
+	{
+		bsf     edx, dword ptr [Mask]
+		jnz     L1
+		bsf     edx, dword ptr [Mask + 4]
+		lea     edx, [edx + 32]
+	L1:
+		setnz   al
+	}
+}
+__forceinline unsigned char _BitScanForward64(unsigned long *Index, unsigned __int64 Mask)
+{
+	unsigned __int64 x = __reg64return_BitScanForward64(Mask);
+	*Index = (unsigned long)(x >> 32);
+	return (unsigned char)x;
+}
+__forceinline unsigned __int64 __reg64return_BitScanReverse64(unsigned __int64 Mask)
+{
+	__asm
+	{
+		bsr     edx, dword ptr [Mask + 4]
+		lea     edx, [edx + 32]
+		jnz     L1
+		bsr     edx, dword ptr [Mask]
+	L1:
+		setnz   al
+	}
+}
+__forceinline unsigned char _BitScanReverse64(unsigned long *Index, unsigned __int64 Mask)
+{
+	unsigned __int64 x = __reg64return_BitScanReverse64(Mask);
+	*Index = (unsigned long)(x >> 32);
+	return (unsigned char)x;
+}
+#elif defined(__BORLANDC__)
+unsigned char __fastcall __fastcall_BitScanForward64(uint32_t low, uint32_t high, unsigned long *Index);
+unsigned char __fastcall __fastcall_BitScanReverse64(uint32_t low, uint32_t high, unsigned long *Index);
+#define _BitScanForward64(Index, Mask) __fastcall_BitScanForward64((uint32_t)(Mask), (uint32_t)((uint64_t)(Mask) >> 32), Index)
+#define _BitScanReverse64(Index, Mask) __fastcall_BitScanReverse64((uint32_t)(Mask), (uint32_t)((uint64_t)(Mask) >> 32), Index)
+#else
+__forceinline unsigned char _BitScanForward64(unsigned long *Index, uint64_t Mask)
+{
+	unsigned char Result;
+
+	if (!(Result = _BitScanForward(Index, (unsigned long)Mask)))
+		if (Result = _BitScanForward(Index, (unsigned long)(Mask >> 32)))
+			*Index += 32;
+	return Result;
+}
+__forceinline unsigned char _BitScanReverse64(unsigned long *Index, uint64_t Mask)
+{
+	unsigned char Result;
+
+	if (Result = _BitScanReverse(Index, (unsigned long)(Mask >> 32)))
+		*Index += 32;
+	else
+		Result = _BitScanReverse(Index, (unsigned long)Mask);
+	return Result;
+}
+#endif
+
 #if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))
 #pragma intrinsic(__ll_lshift)
 #else
@@ -1361,251 +1606,6 @@ do                                                                              
     *__remainder -= sign;                                                       \
 } while (0)
 #endif
-#endif
-
-// for constant value
-#define _BSF8(x, default) ( \
-    ((x) & 0x01) ?  0 :     \
-    ((x) & 0x02) ?  1 :     \
-    ((x) & 0x04) ?  2 :     \
-    ((x) & 0x08) ?  3 :     \
-    ((x) & 0x10) ?  4 :     \
-    ((x) & 0x20) ?  5 :     \
-    ((x) & 0x40) ?  6 :     \
-    ((x) & 0x80) ?  7 :     \
-    (default))
-#define _BSF16(x, default) _BSF8(x, _BSF8((x) >> 8, (default) - 8) + 8)
-#define _BSF32(x, default) _BSF16(x, _BSF16((x) >> 16, (default) - 16) + 16)
-#define _BSF64(x, default) _BSF32(x, _BSF32((x) >> 32, (default) - 32) + 32)
-#define BSF8(x) _BSF8(x, -1)
-#define BSF16(x) _BSF16(x, -1)
-#define BSF32(x) _BSF32(x, -1)
-#define BSF64(x) _BSF64(x, -1)
-
-// for constant value
-#define MASM_BSF32(x) (                                      -1 + \
-    (  (x)         and 1                                 )      + \
-    ((((x) shr  1) and 1) and (((x) and 0x00000001) eq 0)) *  2 + \
-    ((((x) shr  2) and 1) and (((x) and 0x00000003) eq 0)) *  3 + \
-    ((((x) shr  3) and 1) and (((x) and 0x00000007) eq 0)) *  4 + \
-    ((((x) shr  4) and 1) and (((x) and 0x0000000F) eq 0)) *  5 + \
-    ((((x) shr  5) and 1) and (((x) and 0x0000001F) eq 0)) *  6 + \
-    ((((x) shr  6) and 1) and (((x) and 0x0000003F) eq 0)) *  7 + \
-    ((((x) shr  7) and 1) and (((x) and 0x0000007F) eq 0)) *  8 + \
-    ((((x) shr  8) and 1) and (((x) and 0x000000FF) eq 0)) *  9 + \
-    ((((x) shr  9) and 1) and (((x) and 0x000001FF) eq 0)) * 10 + \
-    ((((x) shr 10) and 1) and (((x) and 0x000003FF) eq 0)) * 11 + \
-    ((((x) shr 11) and 1) and (((x) and 0x000007FF) eq 0)) * 12 + \
-    ((((x) shr 12) and 1) and (((x) and 0x00000FFF) eq 0)) * 13 + \
-    ((((x) shr 13) and 1) and (((x) and 0x00001FFF) eq 0)) * 14 + \
-    ((((x) shr 14) and 1) and (((x) and 0x00003FFF) eq 0)) * 15 + \
-    ((((x) shr 15) and 1) and (((x) and 0x00007FFF) eq 0)) * 16 + \
-    ((((x) shr 16) and 1) and (((x) and 0x0000FFFF) eq 0)) * 17 + \
-    ((((x) shr 17) and 1) and (((x) and 0x0001FFFF) eq 0)) * 18 + \
-    ((((x) shr 18) and 1) and (((x) and 0x0003FFFF) eq 0)) * 19 + \
-    ((((x) shr 19) and 1) and (((x) and 0x0007FFFF) eq 0)) * 20 + \
-    ((((x) shr 20) and 1) and (((x) and 0x000FFFFF) eq 0)) * 21 + \
-    ((((x) shr 21) and 1) and (((x) and 0x001FFFFF) eq 0)) * 22 + \
-    ((((x) shr 22) and 1) and (((x) and 0x003FFFFF) eq 0)) * 23 + \
-    ((((x) shr 23) and 1) and (((x) and 0x007FFFFF) eq 0)) * 24 + \
-    ((((x) shr 24) and 1) and (((x) and 0x00FFFFFF) eq 0)) * 25 + \
-    ((((x) shr 25) and 1) and (((x) and 0x01FFFFFF) eq 0)) * 26 + \
-    ((((x) shr 26) and 1) and (((x) and 0x03FFFFFF) eq 0)) * 27 + \
-    ((((x) shr 27) and 1) and (((x) and 0x07FFFFFF) eq 0)) * 28 + \
-    ((((x) shr 28) and 1) and (((x) and 0x0FFFFFFF) eq 0)) * 29 + \
-    ((((x) shr 29) and 1) and (((x) and 0x1FFFFFFF) eq 0)) * 30 + \
-    ((((x) shr 30) and 1) and (((x) and 0x3FFFFFFF) eq 0)) * 31 + \
-    ((((x) shr 31) and 1) and (((x) and 0x7FFFFFFF) eq 0)) * 32)
-
-// for constant value
-#define _BSR8(x, default) ( \
-    ((x) & 0x80) ?  7 :     \
-    ((x) & 0x40) ?  6 :     \
-    ((x) & 0x20) ?  5 :     \
-    ((x) & 0x10) ?  4 :     \
-    ((x) & 0x08) ?  3 :     \
-    ((x) & 0x04) ?  2 :     \
-    ((x) & 0x02) ?  1 :     \
-    ((x) & 0x01) ?  0 :     \
-    (default))
-#define _BSR16(x, default) (_BSR8((uint16_t)(x) >> 8, _BSR8(x, default) - 8) + 8)
-#define _BSR32(x, default) (_BSR16((uint32_t)(x) >> 16, _BSR16(x, default) - 16) + 16)
-#define _BSR64(x, default) (_BSR32((uint64_t)(x) >> 32, _BSR32(x, default) - 32) + 32)
-#define BSR8(x) _BSR8(x, -1)
-#define BSR16(x) _BSR16(x, -1)
-#define BSR32(x) _BSR32(x, -1)
-#define BSR64(x) _BSR64(x, -1)
-
-// for constant value
-#define MASM_BSR32(x) (                                      -1 + \
-    ( ((x) shr 31) and 1                                 ) * 32 + \
-    ((((x) shr 30) and 1) and (((x) and 0x80000000) eq 0)) * 31 + \
-    ((((x) shr 29) and 1) and (((x) and 0xC0000000) eq 0)) * 30 + \
-    ((((x) shr 28) and 1) and (((x) and 0xE0000000) eq 0)) * 29 + \
-    ((((x) shr 27) and 1) and (((x) and 0xF0000000) eq 0)) * 28 + \
-    ((((x) shr 26) and 1) and (((x) and 0xF8000000) eq 0)) * 27 + \
-    ((((x) shr 25) and 1) and (((x) and 0xFC000000) eq 0)) * 26 + \
-    ((((x) shr 24) and 1) and (((x) and 0xFE000000) eq 0)) * 25 + \
-    ((((x) shr 23) and 1) and (((x) and 0xFF000000) eq 0)) * 24 + \
-    ((((x) shr 22) and 1) and (((x) and 0xFF800000) eq 0)) * 23 + \
-    ((((x) shr 21) and 1) and (((x) and 0xFFC00000) eq 0)) * 22 + \
-    ((((x) shr 20) and 1) and (((x) and 0xFFE00000) eq 0)) * 21 + \
-    ((((x) shr 19) and 1) and (((x) and 0xFFF00000) eq 0)) * 20 + \
-    ((((x) shr 18) and 1) and (((x) and 0xFFF80000) eq 0)) * 19 + \
-    ((((x) shr 17) and 1) and (((x) and 0xFFFC0000) eq 0)) * 18 + \
-    ((((x) shr 16) and 1) and (((x) and 0xFFFE0000) eq 0)) * 17 + \
-    ((((x) shr 15) and 1) and (((x) and 0xFFFF0000) eq 0)) * 16 + \
-    ((((x) shr 14) and 1) and (((x) and 0xFFFF8000) eq 0)) * 15 + \
-    ((((x) shr 13) and 1) and (((x) and 0xFFFFC000) eq 0)) * 14 + \
-    ((((x) shr 12) and 1) and (((x) and 0xFFFFE000) eq 0)) * 13 + \
-    ((((x) shr 11) and 1) and (((x) and 0xFFFFF000) eq 0)) * 12 + \
-    ((((x) shr 10) and 1) and (((x) and 0xFFFFF800) eq 0)) * 11 + \
-    ((((x) shr  9) and 1) and (((x) and 0xFFFFFC00) eq 0)) * 10 + \
-    ((((x) shr  8) and 1) and (((x) and 0xFFFFFE00) eq 0)) *  9 + \
-    ((((x) shr  7) and 1) and (((x) and 0xFFFFFF00) eq 0)) *  8 + \
-    ((((x) shr  6) and 1) and (((x) and 0xFFFFFF80) eq 0)) *  7 + \
-    ((((x) shr  5) and 1) and (((x) and 0xFFFFFFC0) eq 0)) *  6 + \
-    ((((x) shr  4) and 1) and (((x) and 0xFFFFFFE0) eq 0)) *  5 + \
-    ((((x) shr  3) and 1) and (((x) and 0xFFFFFFF0) eq 0)) *  4 + \
-    ((((x) shr  2) and 1) and (((x) and 0xFFFFFFF8) eq 0)) *  3 + \
-    ((((x) shr  1) and 1) and (((x) and 0xFFFFFFFC) eq 0)) *  2 + \
-    (( (x)         and 1) and (((x) and 0xFFFFFFFE) eq 0)))
-
-#if defined(_MSC_VER) && _MSC_VER >= 1310
-#pragma intrinsic(_BitScanForward)
-#pragma intrinsic(_BitScanReverse)
-#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__forceinline unsigned __int64 __reg64return_BitScanForward(unsigned long Mask)
-{
-	__asm
-	{
-		bsf     edx, dword ptr [Mask]
-		setnz   al
-	}
-}
-__forceinline unsigned char _BitScanForward(unsigned long *Index, unsigned long Mask)
-{
-	unsigned __int64 x = __reg64return_BitScanForward(Mask);
-	*Index = (unsigned long)(x >> 32);
-	return (unsigned char)x;
-}
-__forceinline unsigned __int64 __reg64return_BitScanReverse(unsigned long Mask)
-{
-	__asm
-	{
-		bsr     edx, dword ptr [Mask]
-		setnz   al
-	}
-}
-__forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
-{
-	unsigned __int64 x = __reg64return_BitScanReverse(Mask);
-	*Index = (unsigned long)(x >> 32);
-	return (unsigned char)x;
-}
-#elif defined(__BORLANDC__)
-unsigned char __fastcall _BitScanForward(unsigned long *Index, unsigned long Mask);
-unsigned char __fastcall _BitScanReverse(unsigned long *Index, unsigned long Mask);
-#else
-__forceinline unsigned char _BitScanForward(unsigned long *Index, unsigned long Mask)
-{
-	if (Mask)
-	{
-		unsigned long i;
-
-		for (i = 0; !(Mask & 1); Mask >>= 1)
-			i++;
-		*Index = i;
-		return 1;
-	}
-	else
-	{
-		return 0;
-	}
-}
-__forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
-{
-	if (Mask)
-	{
-		unsigned long i;
-
-		for (i = 31; (long)Mask >= 0; Mask <<= 1)
-			i--;
-		*Index = i;
-		return 1;
-	}
-	else
-	{
-		return 0;
-	}
-}
-#endif
-
-#if defined(_MSC_VER) && defined(_M_X64)
-#pragma intrinsic(_BitScanForward64)
-#pragma intrinsic(_BitScanReverse64)
-#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__forceinline unsigned __int64 __reg64return_BitScanForward64(unsigned __int64 Mask)
-{
-	__asm
-	{
-		bsf     edx, dword ptr [Mask]
-		jnz     L1
-		bsf     edx, dword ptr [Mask + 4]
-		lea     edx, [edx + 32]
-	L1:
-		setnz   al
-	}
-}
-__forceinline unsigned char _BitScanForward64(unsigned long *Index, unsigned __int64 Mask)
-{
-	unsigned __int64 x = __reg64return_BitScanForward64(Mask);
-	*Index = (unsigned long)(x >> 32);
-	return (unsigned char)x;
-}
-__forceinline unsigned __int64 __reg64return_BitScanReverse64(unsigned __int64 Mask)
-{
-	__asm
-	{
-		bsr     edx, dword ptr [Mask + 4]
-		lea     edx, [edx + 32]
-		jnz     L1
-		bsr     edx, dword ptr [Mask]
-	L1:
-		setnz   al
-	}
-}
-__forceinline unsigned char _BitScanReverse64(unsigned long *Index, unsigned __int64 Mask)
-{
-	unsigned __int64 x = __reg64return_BitScanReverse64(Mask);
-	*Index = (unsigned long)(x >> 32);
-	return (unsigned char)x;
-}
-#elif defined(__BORLANDC__)
-unsigned char __fastcall __fastcall_BitScanForward64(uint32_t low, uint32_t high, unsigned long *Index);
-unsigned char __fastcall __fastcall_BitScanReverse64(uint32_t low, uint32_t high, unsigned long *Index);
-#define _BitScanForward64(Index, Mask) __fastcall_BitScanForward64((uint32_t)(Mask), (uint32_t)((uint64_t)(Mask) >> 32), Index)
-#define _BitScanReverse64(Index, Mask) __fastcall_BitScanReverse64((uint32_t)(Mask), (uint32_t)((uint64_t)(Mask) >> 32), Index)
-#else
-__forceinline unsigned char _BitScanForward64(unsigned long *Index, uint64_t Mask)
-{
-	unsigned char Result;
-
-	if (!(Result = _BitScanForward(Index, (unsigned long)Mask)))
-		if (Result = _BitScanForward(Index, (unsigned long)(Mask >> 32)))
-			*Index += 32;
-	return Result;
-}
-__forceinline unsigned char _BitScanReverse64(unsigned long *Index, uint64_t Mask)
-{
-	unsigned char Result;
-
-	if (Result = _BitScanReverse(Index, (unsigned long)(Mask >> 32)))
-		*Index += 32;
-	else
-		Result = _BitScanReverse(Index, (unsigned long)Mask);
-	return Result;
-}
 #endif
 
 #ifdef __cplusplus

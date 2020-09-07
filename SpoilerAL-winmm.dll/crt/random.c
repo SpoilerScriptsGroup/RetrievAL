@@ -207,11 +207,11 @@ static void (*sfmt_gen_rand_all)() = sfmt_gen_rand_all_cpu_dispatch;
 
 #if defined(_M_X64)
 /* This function represents the recursion formula. */
-#define mm_recursion(r2, r3, r4, p, index)  \
+#define mm_recursion(r2, r3, r4, p1, p2)    \
 do {                                        \
     __m128i r0, r1;                         \
                                             \
-    r1 = _mm_load_si128(p);                 \
+    r1 = _mm_load_si128(p1);                \
     r0 = r2;                                \
     r3 = _mm_srli_si128(r3, SFMT_SR2);      \
     r3 = _mm_xor_si128(r3, r1);             \
@@ -219,12 +219,12 @@ do {                                        \
     r1 = _mm_slli_si128(r1, SFMT_SL2);      \
     r0 = _mm_xor_si128(r0, r3);             \
     r3 = r2;                                \
-    r2 = _mm_load_si128((p) + (index));     \
+    r2 = _mm_load_si128(p2);                \
     r1 = _mm_xor_si128(r1, r0);             \
     r2 = _mm_srli_epi32(r2, SFMT_SR1);      \
     r2 = _mm_and_si128(r2, r4);             \
     r2 = _mm_xor_si128(r2, r1);             \
-    _mm_store_si128(p, r2);                 \
+    _mm_store_si128(p1, r2);                \
 } while (0)
 
 /* This function fills the internal state array with pseudorandom
@@ -250,13 +250,13 @@ static void sfmt_gen_rand_all()
 	do
 		mm_recursion(r2, r3, r4,
 			(__m128i *)((char *)(sfmt + IDX128(SFMT_N - SFMT_POS1)) + offset),
-			LE_PLUS(SFMT_POS1));
+			(__m128i *)((char *)(sfmt + IDX128(SFMT_N)) + offset));
 	while (offset += LE_PLUS(16));
 	offset = LE_MINUS(SFMT_POS1) * 16;
 	do
 		mm_recursion(r2, r3, r4,
 			(__m128i *)((char *)(sfmt + IDX128(SFMT_N)) + offset),
-			LE_MINUS(SFMT_N - SFMT_POS1));
+			(__m128i *)((char *)(sfmt + IDX128(SFMT_POS1)) + offset));
 	while (offset += LE_PLUS(16));
 }
 #elif defined(_M_IX86)
@@ -287,7 +287,7 @@ __declspec(naked) static void __cdecl sfmt_gen_rand_all_sse2()
 		pslldq  xmm1, SFMT_SL2
 		pxor    xmm0, xmm3
 		movdqa  xmm3, xmm2
-		movdqa  xmm2, xmmword ptr [state + (IDX128(SFMT_N - SFMT_POS1) + LE_PLUS(SFMT_POS1)) * 16 + eax]
+		movdqa  xmm2, xmmword ptr [state + IDX128(SFMT_N) * 16 + eax]
 		pxor    xmm1, xmm0
 		psrld   xmm2, SFMT_SR1
 		pand    xmm2, xmm4
@@ -308,7 +308,7 @@ __declspec(naked) static void __cdecl sfmt_gen_rand_all_sse2()
 		pslldq  xmm1, SFMT_SL2
 		pxor    xmm0, xmm3
 		movdqa  xmm3, xmm2
-		movdqa  xmm2, xmmword ptr [state + (IDX128(SFMT_N) + LE_MINUS(SFMT_N - SFMT_POS1)) * 16 + eax]
+		movdqa  xmm2, xmmword ptr [state + IDX128(SFMT_POS1) * 16 + eax]
 		pxor    xmm1, xmm0
 		psrld   xmm2, SFMT_SR1
 		pand    xmm2, xmm4

@@ -7,22 +7,15 @@ typedef unsigned long int uint32_t;
 #include <stdint.h>
 #endif
 
-#if defined(_MSC_VER) || defined(__MINGW32__)
-#define __LITTLE_ENDIAN 1234
-#define __BIG_ENDIAN    4321
-#define __BYTE_ORDER    __LITTLE_ENDIAN
-#elif defined(__GNUC__)
-#include <sys/param.h>
-#endif
-
-#if defined(__BYTE_ORDER) && defined(__LITTLE_ENDIAN) && __BYTE_ORDER == __LITTLE_ENDIAN
-#define __is_little_endian() 1
-#elif defined(__BYTE_ORDER) && defined(__BIG_ENDIAN) && __BYTE_ORDER == __BIG_ENDIAN
-#define __is_little_endian() 0
+#if !defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)
+#if '\4\3\2\1' == 0x01020304 || defined(_MSC_VER)
+#define __LITTLE_ENDIAN__   1
+#elif '\4\3\2\1' == 0x04030201
+#define __BIG_ENDIAN__      1
 #else
-#define __is_little_endian() (*(unsigned char *)&(const int) { 1 } != 0)
+#error Current byte order is not supported.
 #endif
-#define __is_big_endian() !__is_little_endian()
+#endif
 
 #if defined(__GNUC__) || defined(__clang__)
 #define bswap32 __builtin_bswap32
@@ -215,31 +208,20 @@ uint32_t CRC32Combine(uint32_t previousCrc32, const void *data, uint32_t length)
 		{
 			uint32_t one;
 
-#if !defined(__BYTE_ORDER)
-			if (__is_little_endian())
-#endif
-#if !defined(__BYTE_ORDER) || __BYTE_ORDER == __LITTLE_ENDIAN
-			{
-				one = *(current++) ^ crc;
-				crc =
-					Crc32Lookup[0][(one >> 24) & 0xFF] ^
-					Crc32Lookup[1][(one >> 16) & 0xFF] ^
-					Crc32Lookup[2][(one >>  8) & 0xFF] ^
-					Crc32Lookup[3][ one        & 0xFF];
-			}
-#endif
-#if !defined(__BYTE_ORDER)
-			else
-#endif
-#if !defined(__BYTE_ORDER) || __BYTE_ORDER == __BIG_ENDIAN
-			{
-				one = *(current++) ^ bswap32(crc);
-				crc =
-					Crc32Lookup[0][ one        & 0xFF] ^
-					Crc32Lookup[1][(one >>  8) & 0xFF] ^
-					Crc32Lookup[2][(one >> 16) & 0xFF] ^
-					Crc32Lookup[3][(one >> 24) & 0xFF];
-			}
+#if defined(__LITTLE_ENDIAN__)
+			one = *(current++) ^ crc;
+			crc =
+				Crc32Lookup[0][(one >> 24) & 0xFF] ^
+				Crc32Lookup[1][(one >> 16) & 0xFF] ^
+				Crc32Lookup[2][(one >>  8) & 0xFF] ^
+				Crc32Lookup[3][ one        & 0xFF];
+#else
+			one = *(current++) ^ bswap32(crc);
+			crc =
+				Crc32Lookup[0][ one        & 0xFF] ^
+				Crc32Lookup[1][(one >>  8) & 0xFF] ^
+				Crc32Lookup[2][(one >> 16) & 0xFF] ^
+				Crc32Lookup[3][(one >> 24) & 0xFF];
 #endif
 		} while (--length);
 	}
@@ -255,6 +237,15 @@ uint32_t CRC32Combine(uint32_t previousCrc32, const void *data, uint32_t length)
 
 #include <windows.h>
 #include <stdio.h>
+
+typedef const BYTE *LPCBYTE;
+
+#ifndef _In_
+#define _In_
+#endif
+#ifndef _In_opt_
+#define _In_opt_
+#endif
 
 #define CRC32_FILEBUFFER_SIZE (1024 * 1024)
 

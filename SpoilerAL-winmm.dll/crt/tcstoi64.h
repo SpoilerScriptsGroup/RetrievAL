@@ -17,6 +17,16 @@ typedef int errno_t;
 #endif
 #include "atoitbl.h"
 
+#if !defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)
+#if '\4\3\2\1' == 0x01020304 || defined(_MSC_VER)
+#define __LITTLE_ENDIAN__   1
+#elif '\4\3\2\1' == 0x04030201
+#define __BIG_ENDIAN__      1
+#else
+#error Current byte order is not supported.
+#endif
+#endif
+
 #ifdef __BORLANDC__
 #define __forceinline static __inline
 #endif
@@ -190,7 +200,7 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
 
     while (CTOI(&c, 'z', base)) {       // convert c to value
 
-#if __BYTE_ORDER == __LITTLE_ENDIAN && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && !defined(__BIG_ENDIAN__)
+#if defined(__LITTLE_ENDIAN__)
         #define HI(x) ((uint32_t *)&(x))[1]
 #else
         #define HI(x) ((uint32_t *)&(x))[0]

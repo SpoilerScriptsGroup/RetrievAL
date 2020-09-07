@@ -175,7 +175,7 @@ static __inline void ReplaceExportAddressTable(HMODULE hModule)
 	DWORD                   dwFunctionIndex;
 
 #ifndef _M_IX86
-	#error "x86 architecture not defined"
+	#error x86 architecture not defined
 #endif
 
 	lpDataDirectory = NT_HEADERS(hModule)->OptionalHeader.DataDirectory + IMAGE_DIRECTORY_ENTRY_EXPORT;

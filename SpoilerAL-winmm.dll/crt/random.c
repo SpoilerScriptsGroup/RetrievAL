@@ -49,15 +49,13 @@
 /*------
   ENDIAN
   ------*/
-#if __BYTE_ORDER == __LITTLE_ENDIAN && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && !defined(__BIG_ENDIAN__)
-#undef __BIG_ENDIAN__
-#ifndef __LITTLE_ENDIAN__
+#if !defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)
+#if '\4\3\2\1' == 0x01020304 || defined(_MSC_VER)
 #define __LITTLE_ENDIAN__   1
-#endif
-#else
-#undef __LITTLE_ENDIAN__
-#ifndef __BIG_ENDIAN__
+#elif '\4\3\2\1' == 0x04030201
 #define __BIG_ENDIAN__      1
+#else
+#error Current byte order is not supported.
 #endif
 #endif
 

@@ -4,6 +4,16 @@
 #include <intrin.h>
 #pragma intrinsic(_BitScanReverse64)
 
+#if !defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)
+#if '\4\3\2\1' == 0x01020304 || defined(_MSC_VER)
+#define __LITTLE_ENDIAN__   1
+#elif '\4\3\2\1' == 0x04030201
+#define __BIG_ENDIAN__      1
+#else
+#error Current byte order is not supported.
+#endif
+#endif
+
 double __cdecl modf(double x, double *intptr)
 {
 	#define DBL_MANT_BIT  52
@@ -95,7 +105,7 @@ static __inline unsigned char _BitScanReverse64(unsigned long *Index, uint64_t M
 
 double __cdecl modf(double x, double *intptr)
 {
-#if __BYTE_ORDER == __LITTLE_ENDIAN && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && !defined(__BIG_ENDIAN__)
+#if defined(__LITTLE_ENDIAN__)
 	#define LSW(x) ((uint32_t *)&(x))[0]
 	#define MSW(x) ((uint32_t *)&(x))[1]
 #else
@@ -187,7 +197,7 @@ double __cdecl modf(double x, double *intptr)
 __declspec(naked) double __cdecl modf(double x, double *intptr)
 {
 #if PREFER_ALU
-#if __BYTE_ORDER == __LITTLE_ENDIAN && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__ && !defined(__BIG_ENDIAN__)
+#if defined(__LITTLE_ENDIAN__)
 	#define OFFSET_LSW 0
 	#define OFFSET_MSW 4
 #else

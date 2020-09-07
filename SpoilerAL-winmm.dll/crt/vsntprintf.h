@@ -152,9 +152,9 @@ typedef unsigned char bool;
 
 // byte-order definition
 #if !defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)
-#if '\4\3\2\1' == 0x01020304 || defined(_MSC_VER)
+#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || '\4\3\2\1' == 0x01020304 || defined(_MSC_VER)
 #define __LITTLE_ENDIAN__   1
-#elif '\4\3\2\1' == 0x04030201
+#elif defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN || '\4\3\2\1' == 0x04030201
 #define __BIG_ENDIAN__      1
 #else
 #error Current byte order is not supported.

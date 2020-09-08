@@ -80,13 +80,13 @@ __declspec(naked) unsigned int __cdecl _controlfp(unsigned int new, unsigned int
     RC_UP         <<  2 != 0x0800 || \
     RC_CHOP       <<  2 != 0x0C00 || \
     IC_AFFINE     >>  6 != 0x1000
-#error Unmatch FPU control word definitions.
+#error "Unmatch FPU control word definitions."
 #endif
 
 #if (PC_64 ^ MCW_PC) >> 8 != 0x0300 || \
     (PC_53 ^ MCW_PC) >> 8 != 0x0200 || \
     (PC_24 ^ MCW_PC) >> 8 != 0x0100
-#error Unmatch FPU control word definitions.
+#error "Unmatch FPU control word definitions."
 #endif
 
 #if (-_DN_SAVE                        >> 19) & 0x0040 != 0x0000 || \
@@ -97,7 +97,7 @@ __declspec(naked) unsigned int __cdecl _controlfp(unsigned int new, unsigned int
     (-_DN_FLUSH                       >>  9) & 0x8000 != 0x8000 || \
     (-_DN_FLUSH_OPERANDS_SAVE_RESULTS >>  9) & 0x8000 != 0x0000 || \
     (-_DN_SAVE_OPERANDS_FLUSH_RESULTS >>  9) & 0x8000 != 0x8000
-#error Unmatch FPU control word definitions.
+#error "Unmatch FPU control word definitions."
 #endif
 
 __declspec(naked) static unsigned int __fastcall ToControlFlag87(unsigned int ControlWord)
@@ -174,7 +174,7 @@ __declspec(naked) static unsigned int __fastcall ToControlWord87(unsigned int Co
     RC_DOWN       <<  5 != _MM_ROUND_DOWN        || \
     RC_UP         <<  5 != _MM_ROUND_UP          || \
     RC_CHOP       <<  5 != _MM_ROUND_TOWARD_ZERO
-#error Unmatch FPU control word definitions.
+#error "Unmatch FPU control word definitions."
 #endif
 
 __declspec(naked) static unsigned int __fastcall ToControlFlagSIMD(unsigned int ControlWord)

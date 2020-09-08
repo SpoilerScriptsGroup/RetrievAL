@@ -2376,6 +2376,9 @@
     <ClInclude Include="include\BuildDate.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\endianness.h">
+      <Filter>include</Filter>
+    </ClInclude>
     <ClInclude Include="include\noinline_wchar.h">
       <Filter>include</Filter>
     </ClInclude>

@@ -1575,6 +1575,7 @@
     <ClInclude Include="HintWindow\HintWindow.h" />
     <ClInclude Include="include\ApplicationMessage.h" />
     <ClInclude Include="include\BuildDate.h" />
+    <ClInclude Include="include\endianness.h" />
     <ClInclude Include="include\noinline_wchar.h" />
     <ClInclude Include="include\page.h" />
     <ClInclude Include="intrinsic.h" />

@@ -23,7 +23,7 @@ __declspec(naked) char * __cdecl strstr(const char *string1, const char *string2
 // SSE4.2 version
 __declspec(naked) static char * __cdecl strstrSSE42(const char *string1, const char *string2)
 {
-#error Contains a bug that reads invalid page. The end of string may be on a page boundary.
+#error "Contains a bug that reads invalid page. The end of string may be on a page boundary."
 	__asm
 	{
 		push    ebx

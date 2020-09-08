@@ -5004,7 +5004,7 @@ static LPVOID __fastcall AllocateHeapBuffer(LPVOID **lplpHeapBuffer, size_t *lpn
 #define EXTENDED_FLAG    0x8000000
 //---------------------------------------------------------------------
 #if UNICODE_FUNCTION != 1
-	#error Cannot adjust unicode string.
+	#error "Cannot adjust unicode string."
 #endif
 #define SIZE_OF_CHAR(flags) (((flags) & UNICODE_FUNCTION) + 1)
 #define SIZE_OF_STRING(flags, count) ((count) << ((flags) & UNICODE_FUNCTION))

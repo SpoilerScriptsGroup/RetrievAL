@@ -22,7 +22,7 @@ __declspec(naked) size_t __cdecl strcspn(const char *string, const char *control
 // SSE4.2 version
 __declspec(naked) static size_t __cdecl strcspnSSE42(const char *string, const char *control)
 {
-#error Contains a bug that reads invalid page. The end of string may be on a page boundary.
+#error "Contains a bug that reads invalid page. The end of string may be on a page boundary."
 	__asm
 	{
 		push    esi

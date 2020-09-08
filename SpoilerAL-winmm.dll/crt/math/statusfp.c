@@ -65,7 +65,7 @@ __declspec(naked) unsigned int __cdecl _clearfp()
     SW_ZERODIVIDE >>  1 != _MM_EXCEPT_DIV_ZERO  || \
     SW_INVALID    >>  4 != _MM_EXCEPT_INVALID   || \
     SW_DENORMAL   >> 18 != _MM_EXCEPT_DENORM
-#error Unmatch FPU status word definitions.
+#error "Unmatch FPU status word definitions."
 #endif
 
 __declspec(naked) static unsigned int __fastcall ToStatusFlag(unsigned int StatusWord)

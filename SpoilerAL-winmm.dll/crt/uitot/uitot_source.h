@@ -3,15 +3,10 @@
 #include "intrinsic.h"
 #include "digitstbl.h"
 #include "uitot.h"
+#include "endianness.h"
 
 #if !defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)
-#if defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN || '\4\3\2\1' == 0x01020304 || defined(_MSC_VER)
-#define __LITTLE_ENDIAN__   1
-#elif defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN || '\4\3\2\1' == 0x04030201
-#define __BIG_ENDIAN__      1
-#else
-#error Current byte order is not supported.
-#endif
+#error "Current byte order is not supported."
 #endif
 
 #if (!defined(_MSC_VER) || _MSC_VER < 1200) && !defined(__assume)

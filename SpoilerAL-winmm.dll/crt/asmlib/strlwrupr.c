@@ -75,7 +75,7 @@ __declspec(naked) static char * __cdecl struprSSE42(char *string)
 
 __declspec(naked) static char * __cdecl strlwruprSSE42(char *string)
 {
-#error Contains a bug that reads invalid page. The end of string may be on a page boundary.
+#error "Contains a bug that reads invalid page. The end of string may be on a page boundary."
 	__asm
 	{
 		// common code for strupr and strlwr

@@ -15,16 +15,16 @@ unsigned char * __cdecl _mbschr(const unsigned char *string, unsigned int c)
 					goto DONE;
 			while (c2 && (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2) || *(++string)));
 		}
-	} else if (c < 0x10000 && IsDBCSLeadByteEx(CP_THREAD_ACP, (BYTE)c)) {
+	} else if (c < 0x10000 && (c & 0xFF) && IsDBCSLeadByteEx(CP_THREAD_ACP, c >> 8)) {
 		for (string--; ; ) {
-			if ((c2 = *(++string)) != (unsigned char)c)
+			if ((c2 = *(++string)) != (unsigned char)(c >> 8)) {
 				if (!c2)
 					break;
 				else if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2))
 					continue;
 				else if (!string[1])
 					break;
-			else if ((c2 = string[1]) == (unsigned char)(c >> 8))
+			} else if ((c2 = string[1]) == (unsigned char)c)
 				goto DONE;
 			else if (!c2)
 				break;

@@ -85,7 +85,7 @@ unsigned __int64 __fastcall __reg64return_UnescapeA(char *first, char *last, BOO
 							x = *src;
 							if (!ACTOI(&x, 'f', 16))
 								break;
-							c = c * 0x10 + x;
+							c = (c << 4) + x;
 						}
 					}
 					else
@@ -98,7 +98,7 @@ unsigned __int64 __fastcall __reg64return_UnescapeA(char *first, char *last, BOO
 							x = *src;
 							if (!ACTOI(&x, 'f', 16))
 								break;
-							w = w * 0x10 + x;
+							w = (w << 4) + x;
 						}
 						p += (unsigned int)WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, p, 2, NULL, NULL);
 						goto SHRINK;
@@ -203,7 +203,7 @@ unsigned __int64 __fastcall __reg64return_UnescapeW(wchar_t *first, wchar_t *las
 						x = *src;
 						if (!WCTOI(&x, L'f', 16))
 							break;
-						c = c * 0x10 + x;
+						c = (c << 4) + x;
 					}
 				}
 				else
@@ -306,7 +306,7 @@ unsigned __int64 __fastcall __reg64return_UnescapeU(unsigned char *first, unsign
 						x = *src;
 						if (!ACTOI(&x, 'f', 16))
 							break;
-						u = u * 0x10 + x;
+						u = (u << 4) + x;
 					}
 					do
 						*(p++) = (unsigned char)u;
@@ -338,15 +338,15 @@ DONE:
 
 __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 {
-	unsigned long       n, array;
-	size_t              length, arrayLength;
+	unsigned long       n, stack;
+	size_t              length, stackSize;
 	const unsigned char *p, *src;
 	unsigned char       c;
 
 	n = 0;
-	array = 0;
+	stack = 0;
 	length = 0;
-	arrayLength = 0;
+	stackSize = 0;
 	for (p = *pfirst; (src = p) < last; )
 	{
 		unsigned char x;
@@ -370,6 +370,62 @@ __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 				break;
 			c = *(p++);
 			goto NEXT;
+		case '1': case '2': case '3': case '4': case '5': case '6': case '7':
+			c -= '0';
+			while (++p < last && (x = *p - '0') < '7' - '0' + 1)
+				c = c * 8 + x;
+			goto PUSH;
+		case 'U':
+		case 'u':
+		case 'x':
+			if (p >= last)
+				goto NEXT;
+			x = *p;
+			if (!ACTOI(&x, 'f', 16))
+				goto NEXT;
+			if (c == 'x')
+			{
+				c = x;
+				while (++p < last)
+				{
+					x = *p;
+					if (!ACTOI(&x, 'f', 16))
+						break;
+					c = (c << 4) + x;
+				}
+			}
+			else
+			{
+				unsigned char lpMultiByteStr[2], *s;
+				unsigned int  cbMultiByte;
+				wchar_t       w;
+
+				w = x;
+				while (++p < last)
+				{
+					x = *p;
+					if (!ACTOI(&x, 'f', 16))
+						break;
+					w = (w << 4) + x;
+				}
+				if (!(cbMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, lpMultiByteStr, 2, NULL, NULL)))
+					break;
+				s = lpMultiByteStr;
+				if (cbMultiByte != 1)
+				{
+					if (stackSize >= 4)
+						continue;
+					stackSize++;
+					stack = (stack << 8) + *(s++);
+				}
+				c = *s;
+			}
+		PUSH:
+			if (stackSize >= 4)
+				continue;
+			stackSize++;
+			stack = (stack << 8) + c;
+			continue;
 		case '0':
 			c = '\0';
 			goto NEXT;
@@ -394,97 +450,45 @@ __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 		case 'v':
 			c = '\v';
 		NEXT:
-			if (arrayLength)
+			if (stackSize)
 			{
-				length += arrayLength;
+				length += stackSize;
 				do
 				{
-					n = (n << 8) + (unsigned char)array;
-					array >>= 8;
-				} while (--arrayLength);
+					n = (n << 8) + (stack & 0xFF);
+					stack >>= 8;
+				} while (--stackSize);
 			}
 			n = (n << 8) + c;
 			length++;
-			continue;
-		case '1': case '2': case '3': case '4': case '5': case '6': case '7':
-			c -= '0';
-			while (++p < last && (x = *p - '0') < '7' - '0' + 1)
-				c = c * 8 + x;
-			goto ARRAY;
-		case 'U':
-		case 'u':
-		case 'x':
-			if (p >= last)
-				goto NEXT;
-			x = *p;
-			if (!ACTOI(&x, 'f', 16))
-				goto NEXT;
-			if (c == 'x')
-			{
-				c = x;
-				while (++p < last)
-				{
-					x = *p;
-					if (!ACTOI(&x, 'f', 16))
-						break;
-					c = c * 0x10 + x;
-				}
-			}
-			else
-			{
-				unsigned char lpMultiByteStr[2], *s;
-				unsigned int  cbMultiByte;
-				wchar_t       w;
-
-				w = x;
-				while (++p < last)
-				{
-					x = *p;
-					if (!ACTOI(&x, 'f', 16))
-						break;
-					w = w * 0x10 + x;
-				}
-				if (!(cbMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, lpMultiByteStr, 2, NULL, NULL)))
-					break;
-				s = lpMultiByteStr;
-				if (cbMultiByte != 1 && arrayLength < 4)
-				{
-					arrayLength++;
-					array = (array << 8) + *(s++);
-				}
-				c = *s;
-			}
-		ARRAY:
-			if (arrayLength < 4)
-			{
-				arrayLength++;
-				array = (array << 8) + c;
-			}
 			continue;
 		}
 		break;
 	}
 	*pfirst = src;
-	if (arrayLength)
+	if (stackSize)
 	{
-		length += arrayLength;
+		length += stackSize;
 		do
 		{
-			n = (n << 8) + (unsigned char)array;
-			array >>= 8;
-		} while (--arrayLength);
+			n = (n << 8) + (stack & 0xFF);
+			stack >>= 8;
+		} while (--stackSize);
 	}
 	return (length != 1 || (char)n >= 0) ? n : (~(__int64)0xFF | n);
 }
 
 unsigned long __fastcall UnescapeUnicodeCharA(const char **pfirst, const char *last)
 {
-	unsigned long       n;
+	unsigned long       n, stack;
+	size_t              stackSize;
 	const unsigned char *p, *src;
 	wchar_t             w;
 
 	n = 0;
-	for (p = *pfirst; (src = p) < last; n = (n << 16) + w)
+	stack = 0;
+	stackSize = 0;
+	for (p = *pfirst; (src = p) < last; )
 	{
 		unsigned char c, x;
 		unsigned int  cbMultiByte;
@@ -509,70 +513,94 @@ unsigned long __fastcall UnescapeUnicodeCharA(const char **pfirst, const char *l
 			if (!MultiByteToWideChar(CP_THREAD_ACP, 0, --p, cbMultiByte, &w, 1))
 				break;
 			p += cbMultiByte;
-			continue;
-		case '0':
-			w = L'\0';
-			continue;
-		case 'a':
-			w = L'\a';
-			continue;
-		case 'b':
-			w = L'\b';
-			continue;
-		case 'f':
-			w = L'\f';
-			continue;
-		case 'n':
-			w = L'\n';
-			continue;
-		case 'r':
-			w = L'\r';
-			continue;
-		case 't':
-			w = L'\t';
-			continue;
-		case 'v':
-			w = L'\v';
-			continue;
+			goto NEXT;
 		case '1': case '2': case '3': case '4': case '5': case '6': case '7':
 			w = c - '0';
 			while (++p < last && (x = *p - '0') < '7' - '0' + 1)
 				w = w * 8 + x;
-			continue;
+			goto PUSH;
 		case 'U':
 		case 'u':
 		case 'x':
 			w = c;
 			if (p >= last)
-				continue;
+				goto NEXT;
 			x = *p;
 			if (!ACTOI(&x, 'f', 16))
-				continue;
+				goto NEXT;
 			w = x;
 			while (++p < last)
 			{
 				x = *p;
 				if (!ACTOI(&x, 'f', 16))
 					break;
-				w = w * 0x10 + x;
+				w = (w << 4) + x;
 			}
+		PUSH:
+			if (stackSize >= 2)
+				continue;
+			stackSize++;
+			stack = (stack << 16) + w;
+			continue;
+		case '0':
+			w = L'\0';
+			goto NEXT;
+		case 'a':
+			w = L'\a';
+			goto NEXT;
+		case 'b':
+			w = L'\b';
+			goto NEXT;
+		case 'f':
+			w = L'\f';
+			goto NEXT;
+		case 'n':
+			w = L'\n';
+			goto NEXT;
+		case 'r':
+			w = L'\r';
+			goto NEXT;
+		case 't':
+			w = L'\t';
+			goto NEXT;
+		case 'v':
+			w = L'\v';
+		NEXT:
+			if (stackSize)
+				do
+				{
+					n = (n << 16) + (stack & 0xFFFF);
+					stack >>= 16;
+				} while (--stackSize);
+			n = (n << 16) + w;
 			continue;
 		}
 		break;
 	}
 	*pfirst = src;
+	if (stackSize)
+		do
+		{
+			n = (n << 16) + (stack & 0xFFFF);
+			stack >>= 16;
+		} while (--stackSize);
 	return n;
 }
 
 unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last)
 {
-	unsigned long       n, u, bits;
+	unsigned long       n, stack;
+	size_t              stackSize;
 	const unsigned char *p, *src;
 
 	n = 0;
-	for (p = *pfirst; (src = p) < last; n = (n << bits) + u)
+	stack = 0;
+	stackSize = 0;
+	for (p = *pfirst; (src = p) < last; )
 	{
 		unsigned char c, x;
+		size_t        length, bits;
+		unsigned long u;
 		unsigned int  cbMultiByte, cbUtf8;
 		wchar_t       w;
 
@@ -583,7 +611,7 @@ unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last
 				break;
 		if (p >= last)
 			break;
-		bits = 8;
+		length = 1;
 		switch (c = *(p++))
 		{
 		default:
@@ -598,72 +626,97 @@ unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last
 				break;
 			p += cbMultiByte;
 			cbUtf8 = WideCharToMultiByte(CP_UTF8, 0, &w, 1, (char *)&u, sizeof(u), NULL, NULL);
-			if (bits = cbUtf8 * 8)
-				continue;
+			if (length = cbUtf8)
+				goto NEXT;
 			break;
-		case '0':
-			u = '\0';
-			continue;
-		case 'a':
-			u = '\a';
-			continue;
-		case 'b':
-			u = '\b';
-			continue;
-		case 'f':
-			u = '\f';
-			continue;
-		case 'n':
-			u = '\n';
-			continue;
-		case 'r':
-			u = '\r';
-			continue;
-		case 't':
-			u = '\t';
-			continue;
-		case 'v':
-			u = '\v';
-			continue;
 		case '1': case '2': case '3': case '4': case '5': case '6': case '7':
 			u = c - '0';
 			while (++p < last && (x = *p - '0') < '7' - '0' + 1)
 				u = u * 8 + x;
+			if (stackSize >= 4)
+				continue;
+			stackSize++;
+			stack = (stack << 8) + u;
 			continue;
 		case 'U':
 		case 'u':
 		case 'x':
 			u = c;
 			if (p >= last)
-				continue;
+				goto NEXT;
 			if ((x = *p) == '0')
 			{
 				p++;
 				u = 0;
 				do
 					if (p >= last)
-						goto CONTINUE;
+						goto NEXT;
 				while ((x = *(p++)) == '0');
 				p--;
 			}
 			if (!ACTOI(&x, 'f', 16))
-				continue;
+				goto NEXT;
 			u = x;
+			bits = 4;
 			while (++p < last)
 			{
 				x = *p;
 				if (!ACTOI(&x, 'f', 16))
 					break;
-				u = u * 0x10 + x;
-				bits += 8;
+				u = (u << 4) + x;
+				bits += 4;
 			}
-			if (bits > 32)
+			if (stackSize >= 4)
+				continue;
+			if ((bits = (bits + 4) & -8) > 32)
 				bits = 32;
+			do
+				stack = (stack << 8) + ((u >> (bits -= 8)) & 0xFF);
+			while (bits && ++stackSize < 4);
+			continue;
+		case '0':
+			u = '\0';
+			goto NEXT;
+		case 'a':
+			u = '\a';
+			goto NEXT;
+		case 'b':
+			u = '\b';
+			goto NEXT;
+		case 'f':
+			u = '\f';
+			goto NEXT;
+		case 'n':
+			u = '\n';
+			goto NEXT;
+		case 'r':
+			u = '\r';
+			goto NEXT;
+		case 't':
+			u = '\t';
+			goto NEXT;
+		case 'v':
+			u = '\v';
+		NEXT:
+			if (stackSize)
+				do
+				{
+					n = (n << 8) + (stack & 0xFF);
+					stack >>= 8;
+				} while (--stackSize);
+			do
+				n = (n << 8) + (u & 0xFF);
+			while (--length);
 			continue;
 		}
 		break;
-	CONTINUE:;
 	}
 	*pfirst = src;
+	if (stackSize)
+		do
+		{
+			n = (n << 8) + (stack & 0xFF);
+			stack >>= 8;
+		} while (--stackSize);
 	return n;
 }

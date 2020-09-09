@@ -152,7 +152,7 @@ typedef unsigned char bool;
 
 // byte-order definition
 #include "endianness.h"
-#if !defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)
+#if !defined(__BYTE_ORDER__) || __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__ && __BYTE_ORDER__ != __ORDER_BIG_ENDIAN__
 #error "Current byte order is not supported."
 #endif
 

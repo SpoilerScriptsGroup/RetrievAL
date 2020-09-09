@@ -17,26 +17,18 @@
 #endif
 #endif
 
-#ifndef __ORDER_BIG_ENDIAN__
-#define __ORDER_BIG_ENDIAN__    4321
-#endif
 #ifndef __ORDER_LITTLE_ENDIAN__
 #define __ORDER_LITTLE_ENDIAN__ 1234
+#endif
+#ifndef __ORDER_BIG_ENDIAN__
+#define __ORDER_BIG_ENDIAN__    4321
 #endif
 #ifndef __ORDER_PDP_ENDIAN__
 #define __ORDER_PDP_ENDIAN__    3412
 #endif
 
 #ifndef __BYTE_ORDER__                                                          /* GCC */
-#if   defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN ||                  /* Linux header */ \
-      defined( _BYTE_ORDER) &&  _BYTE_ORDER ==  _BIG_ENDIAN || \
-      defined(  BYTE_ORDER) &&   BYTE_ORDER ==   BIG_ENDIAN ||                  /* MinGW header */ \
-      defined(__sun) && defined(__SVR4) && defined(_BIG_ENDIAN) ||              /* Solaris */ \
-      defined(__ARMEB__) || defined(__THUMBEB__) || defined(__AARCH64EB__) || \
-      defined(_MIBSEB) || defined(__MIBSEB) || defined(__MIBSEB__) || \
-      defined(_M_PPC)                                                           /* MSVC for PowerPC */
-#define __BYTE_ORDER__          __ORDER_BIG_ENDIAN__
-#elif defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN ||               /* Linux header */ \
+#if   defined(__BYTE_ORDER) && __BYTE_ORDER == __LITTLE_ENDIAN ||               /* Linux header */ \
       defined( _BYTE_ORDER) &&  _BYTE_ORDER ==  _LITTLE_ENDIAN || \
       defined(  BYTE_ORDER) &&   BYTE_ORDER ==   LITTLE_ENDIAN ||               /* MinGW header */ \
       defined(__sun) && defined(__SVR4) && defined(_LITTLE_ENDIAN) ||           /* Solaris */ \
@@ -45,27 +37,26 @@
       defined(_M_IX86) || defined(_M_X64) || defined(_M_IA64) ||                /* MSVC for Intel processors */ \
       defined(_M_ARM)                                                           /* MSVC code on ARM executes in little endian mode */
 #define __BYTE_ORDER__          __ORDER_LITTLE_ENDIAN__
+#elif defined(__BYTE_ORDER) && __BYTE_ORDER == __BIG_ENDIAN ||                  /* Linux header */ \
+      defined( _BYTE_ORDER) &&  _BYTE_ORDER ==  _BIG_ENDIAN || \
+      defined(  BYTE_ORDER) &&   BYTE_ORDER ==   BIG_ENDIAN ||                  /* MinGW header */ \
+      defined(__sun) && defined(__SVR4) && defined(_BIG_ENDIAN) ||              /* Solaris */ \
+      defined(__ARMEB__) || defined(__THUMBEB__) || defined(__AARCH64EB__) || \
+      defined(_MIBSEB) || defined(__MIBSEB) || defined(__MIBSEB__) || \
+      defined(_M_PPC)                                                           /* MSVC for PowerPC */
+#define __BYTE_ORDER__          __ORDER_BIG_ENDIAN__
 #elif defined(__BYTE_ORDER) && __BYTE_ORDER == __PDP_ENDIAN ||                  /* Linux header */ \
       defined( _BYTE_ORDER) &&  _BYTE_ORDER ==  _PDP_ENDIAN || \
       defined(  BYTE_ORDER) &&   BYTE_ORDER ==   PDP_ENDIAN                     /* MinGW header */
 #define __BYTE_ORDER__          __ORDER_PDP_ENDIAN__
-#else
-#include <limits.h>                                                             /* The other environment */
-#if CHAR_BIT == 8                                                               /* VS2019 editor has a display bug */
-#define __BYTE_ORDER__ (              \
-    ( '\4\3\2\1'        & 7)        + \
-    (('\4\3\2\1' >>  8) & 7) *   10 + \
-    (('\4\3\2\1' >> 16) & 7) *  100 + \
-    ( '\4\3\2\1' >> 24     ) * 1000)
-#endif
 #endif
 #endif
 
 #if defined(__BYTE_ORDER__) && !defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)
-#if   __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-#define __BIG_ENDIAN__          1
-#elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+#if   __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #define __LITTLE_ENDIAN__       1
+#elif __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define __BIG_ENDIAN__          1
 #endif
 #endif
 

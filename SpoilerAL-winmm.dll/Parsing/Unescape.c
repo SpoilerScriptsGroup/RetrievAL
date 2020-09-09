@@ -338,14 +338,16 @@ DONE:
 
 __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 {
-	unsigned long       n;
-	size_t              length;
+	unsigned long       n, array;
+	size_t              length, arrayLength;
 	const unsigned char *p, *src;
 	unsigned char       c;
 
 	n = 0;
+	array = 0;
 	length = 0;
-	for (p = *pfirst; (src = p) < last; n = n * 0x100 + c, length++)
+	arrayLength = 0;
+	for (p = *pfirst; (src = p) < last; )
 	{
 		unsigned char x;
 
@@ -361,50 +363,62 @@ __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 		default:
 		DEFAULT:
 			if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c))
-				continue;
-			n = n * 0x100 + c;
+				goto NEXT;
+			n = (n << 8) + c;
 			length++;
 			if ((src = p) >= last)
 				break;
 			c = *(p++);
-			continue;
+			goto NEXT;
 		case '0':
 			c = '\0';
-			continue;
+			goto NEXT;
 		case 'a':
 			c = '\a';
-			continue;
+			goto NEXT;
 		case 'b':
 			c = '\b';
-			continue;
+			goto NEXT;
 		case 'f':
 			c = '\f';
-			continue;
+			goto NEXT;
 		case 'n':
 			c = '\n';
-			continue;
+			goto NEXT;
 		case 'r':
 			c = '\r';
-			continue;
+			goto NEXT;
 		case 't':
 			c = '\t';
-			continue;
+			goto NEXT;
 		case 'v':
 			c = '\v';
+		NEXT:
+			if (arrayLength)
+			{
+				length += arrayLength;
+				do
+				{
+					n = (n << 8) + (unsigned char)array;
+					array >>= 8;
+				} while (--arrayLength);
+			}
+			n = (n << 8) + c;
+			length++;
 			continue;
 		case '1': case '2': case '3': case '4': case '5': case '6': case '7':
 			c -= '0';
 			while (++p < last && (x = *p - '0') < '7' - '0' + 1)
 				c = c * 8 + x;
-			continue;
+			goto ARRAY;
 		case 'U':
 		case 'u':
 		case 'x':
 			if (p >= last)
-				continue;
+				goto NEXT;
 			x = *p;
 			if (!ACTOI(&x, 'f', 16))
-				continue;
+				goto NEXT;
 			if (c == 'x')
 			{
 				c = x;
@@ -433,18 +447,33 @@ __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 				if (!(cbMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, lpMultiByteStr, 2, NULL, NULL)))
 					break;
 				s = lpMultiByteStr;
-				if (cbMultiByte != 1)
+				if (cbMultiByte != 1 && arrayLength < 4)
 				{
-					n = n * 0x100 + *(s++);
-					length++;
+					arrayLength++;
+					array = (array << 8) + *(s++);
 				}
 				c = *s;
+			}
+		ARRAY:
+			if (arrayLength < 4)
+			{
+				arrayLength++;
+				array = (array << 8) + c;
 			}
 			continue;
 		}
 		break;
 	}
 	*pfirst = src;
+	if (arrayLength)
+	{
+		length += arrayLength;
+		do
+		{
+			n = (n << 8) + (unsigned char)array;
+			array >>= 8;
+		} while (--arrayLength);
+	}
 	return (length != 1 || (char)n >= 0) ? n : (~(__int64)0xFF | n);
 }
 
@@ -455,7 +484,7 @@ unsigned long __fastcall UnescapeUnicodeCharA(const char **pfirst, const char *l
 	wchar_t             w;
 
 	n = 0;
-	for (p = *pfirst; (src = p) < last; n = n * 0x10000 + w)
+	for (p = *pfirst; (src = p) < last; n = (n << 16) + w)
 	{
 		unsigned char c, x;
 		unsigned int  cbMultiByte;

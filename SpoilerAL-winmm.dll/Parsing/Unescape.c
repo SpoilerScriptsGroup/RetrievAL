@@ -2,6 +2,10 @@
 #include "atoitbl.h"
 #include "intrinsic.h"
 
+#if (!defined(_MSC_VER) || _MSC_VER < 1200) && !defined(__assume)
+#define __assume(expression)
+#endif
+
 #ifdef _WIN64
 char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate)
 {
@@ -81,7 +85,7 @@ unsigned __int64 __fastcall __reg64return_UnescapeA(char *first, char *last, BOO
 					{
 						c = x;
 						while (++src < last && ACTOX(&x, *src))
-							c = (c << 4) + x;
+							c = (c << 4) | x;
 					}
 					else
 					{
@@ -89,7 +93,7 @@ unsigned __int64 __fastcall __reg64return_UnescapeA(char *first, char *last, BOO
 
 						w = x;
 						while (++src < last && ACTOX(&x, *src))
-							w = (w << 4) + x;
+							w = (w << 4) | x;
 						p += (unsigned int)WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, p, 2, NULL, NULL);
 						goto SHRINK;
 					}
@@ -187,7 +191,7 @@ unsigned __int64 __fastcall __reg64return_UnescapeW(wchar_t *first, wchar_t *las
 				if (WCTOX(&c, *src))
 				{
 					while (++src < last && WCTOX(&x, *src))
-						c = (c << 4) + x;
+						c = (c << 4) | x;
 				}
 				else
 				{
@@ -284,7 +288,7 @@ unsigned __int64 __fastcall __reg64return_UnescapeU(unsigned char *first, unsign
 
 					u = x;
 					while (++src < last && ACTOX(&x, *src))
-						u = (u << 4) + x;
+						u = (u << 4) | x;
 					do
 						*(p++) = (unsigned char)u;
 					while (u >>= 8);
@@ -316,14 +320,14 @@ DONE:
 __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 {
 	unsigned long       n, stack;
-	size_t              length, stackSize;
+	size_t              length, stackBits;
 	const unsigned char *p, *src;
 	unsigned char       c;
 
 	n = 0;
-	stack = 0;
 	length = 0;
-	stackSize = 0;
+	stack = 0;
+	stackBits = 0;
 	for (p = *pfirst; (src = p) < last; )
 	{
 		unsigned char x;
@@ -341,7 +345,7 @@ __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 		DEFAULT:
 			if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c))
 				goto NEXT;
-			n = (n << 8) + c;
+			n = (n << 8) | c;
 			length++;
 			if ((src = p) >= last)
 				break;
@@ -363,7 +367,7 @@ __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 			{
 				c = x;
 				while (++p < last && ACTOX(&x, *p))
-					c = (c << 4) + x;
+					c = (c << 4) | x;
 			}
 			else
 			{
@@ -373,24 +377,24 @@ __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 
 				w = x;
 				while (++p < last && ACTOX(&x, *p))
-					w = (w << 4) + x;
+					w = (w << 4) | x;
 				if (!(cbMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, lpMultiByteStr, 2, NULL, NULL)))
 					break;
 				s = lpMultiByteStr;
 				if (cbMultiByte != 1)
 				{
-					if (stackSize >= 4)
+					if (stackBits >= 32)
 						continue;
-					stackSize++;
-					stack = (stack << 8) + *(s++);
+					stackBits += 8;
+					stack = (unsigned long)__ll_rshift(stack | ((unsigned __int64)*(s++) << 32), 8);
 				}
 				c = *s;
 			}
 		PUSH:
-			if (stackSize >= 4)
+			if (stackBits >= 32)
 				continue;
-			stackSize++;
-			stack = (stack << 8) + c;
+			stackBits += 8;
+			stack = (unsigned long)__ll_rshift(stack | ((unsigned __int64)c << 32), 8);
 			continue;
 		case '0':
 			c = '\0';
@@ -416,30 +420,23 @@ __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 		case 'v':
 			c = '\v';
 		NEXT:
-			if (stackSize)
+			if (stackBits)
 			{
-				length += stackSize;
-				do
-				{
-					n = (n << 8) + (stack & 0xFF);
-					stack >>= 8;
-				} while (--stackSize);
+				n = stackBits < 32 ? (unsigned long)(__ll_lshift(((unsigned __int64)n << 32) | stack, stackBits) >> 32) : stack;
+				length += stackBits / 8;
+				stackBits = 0;
 			}
-			n = (n << 8) + c;
+			n = (n << 8) | c;
 			length++;
 			continue;
 		}
 		break;
 	}
 	*pfirst = src;
-	if (stackSize)
+	if (stackBits)
 	{
-		length += stackSize;
-		do
-		{
-			n = (n << 8) + (stack & 0xFF);
-			stack >>= 8;
-		} while (--stackSize);
+		n = stackBits < 32 ? (unsigned long)(__ll_lshift(((unsigned __int64)n << 32) | stack, stackBits) >> 32) : stack;
+		length += stackBits / 8;
 	}
 	return (length != 1 || (char)n >= 0) ? n : (~(__int64)0xFF | n);
 }
@@ -447,13 +444,13 @@ __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 unsigned long __fastcall UnescapeUnicodeCharA(const char **pfirst, const char *last)
 {
 	unsigned long       n, stack;
-	size_t              stackSize;
+	size_t              stackBits;
 	const unsigned char *p, *src;
 	wchar_t             w;
 
 	n = 0;
 	stack = 0;
-	stackSize = 0;
+	stackBits = 0;
 	for (p = *pfirst; (src = p) < last; )
 	{
 		unsigned char c, x;
@@ -495,12 +492,12 @@ unsigned long __fastcall UnescapeUnicodeCharA(const char **pfirst, const char *l
 				goto NEXT;
 			w = x;
 			while (++p < last && ACTOX(&x, *p))
-				w = (w << 4) + x;
+				w = (w << 4) | x;
 		PUSH:
-			if (stackSize >= 2)
+			if (stackBits >= 32)
 				continue;
-			stackSize++;
-			stack = (stack << 16) + w;
+			stackBits += 16;
+			stack = (unsigned long)__ll_rshift(stack | ((unsigned __int64)w << 32), 16);
 			continue;
 		case '0':
 			w = L'\0';
@@ -526,41 +523,36 @@ unsigned long __fastcall UnescapeUnicodeCharA(const char **pfirst, const char *l
 		case 'v':
 			w = L'\v';
 		NEXT:
-			if (stackSize)
-				do
-				{
-					n = (n << 16) + (stack & 0xFFFF);
-					stack >>= 16;
-				} while (--stackSize);
+			if (stackBits)
+			{
+				n = stackBits < 32 ? (unsigned long)(__ll_lshift(((unsigned __int64)n << 32) | stack, stackBits) >> 32) : stack;
+				stackBits = 0;
+			}
 			n = (n << 16) + w;
 			continue;
 		}
 		break;
 	}
 	*pfirst = src;
-	if (stackSize)
-		do
-		{
-			n = (n << 16) + (stack & 0xFFFF);
-			stack >>= 16;
-		} while (--stackSize);
+	if (stackBits)
+		n = stackBits < 32 ? (unsigned long)(__ll_lshift(((unsigned __int64)n << 32) | stack, stackBits) >> 32) : stack;
 	return n;
 }
 
 unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last)
 {
 	unsigned long       n, stack;
-	size_t              stackSize;
+	size_t              stackBits;
 	const unsigned char *p, *src;
 
 	n = 0;
 	stack = 0;
-	stackSize = 0;
+	stackBits = 0;
 	for (p = *pfirst; (src = p) < last; )
 	{
 		unsigned char c, x;
-		size_t        length;
 		unsigned long u;
+		size_t        bits;
 		unsigned int  cbMultiByte, cbUtf8;
 		wchar_t       w;
 
@@ -571,7 +563,6 @@ unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last
 				break;
 		if (p >= last)
 			break;
-		length = 1;
 		switch (c = *(p++))
 		{
 		default:
@@ -586,18 +577,32 @@ unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last
 				break;
 			p += cbMultiByte;
 			cbUtf8 = WideCharToMultiByte(CP_UTF8, 0, &w, 1, (char *)&u, sizeof(u), NULL, NULL);
-			if (length = cbUtf8)
-				goto NEXT;
+			if (stackBits)
+			{
+				n = stackBits < 32 ? (unsigned long)(__ll_lshift(((unsigned __int64)n << 32) | stack, stackBits) >> 32) : stack;
+				stackBits = 0;
+			}
+			switch (cbUtf8)
+			{
+			case 1:
+				n = (n << 8) | (u & 0xFF);
+				continue;
+			case 2:
+				n = (n << 16) | _byteswap_ulong(u << 16);
+				continue;
+			case 3:
+				n = (n << 24) | _byteswap_ulong(u << 8);
+				continue;
+			case 4:
+				n = _byteswap_ulong(u);
+				continue;
+			}
 			break;
 		case '1': case '2': case '3': case '4': case '5': case '6': case '7':
 			u = c - '0';
 			while (++p < last && (x = *p - '0') < '7' - '0' + 1)
 				u = u * 8 + x;
-			if (stackSize >= 4)
-				continue;
-			stackSize++;
-			stack = (stack << 8) + u;
-			continue;
+			goto PUSH;
 		case 'U':
 		case 'u':
 		case 'x':
@@ -608,13 +613,26 @@ unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last
 				goto NEXT;
 			u = x;
 			while (++p < last && ACTOX(&x, *p))
-				u = (u << 4) + x;
-			if (stackSize >= 4)
+				u = (u << 4) | x;
+		PUSH:
+			if (stackBits >= 32)
 				continue;
-			u = _byteswap_ulong(u);
-			do
-				stack = (stack << 8) + (u & 0xFF);
-			while ((u >>= 8) && ++stackSize < 4);
+			if (u < 0x00010000)
+				if (u < 0x00000100)
+					bits = 8;
+				else
+					bits = 16;
+			else
+				if (u < 0x01000000)
+					bits = 24;
+				else
+					bits = 32;
+			if ((stackBits += bits) > 32)
+			{
+				bits -= stackBits - 32;
+				stackBits = 32;
+			}
+			stack = bits < 32 ? (unsigned long)__ll_rshift(stack | ((unsigned __int64)u << 32), bits) : u;
 			continue;
 		case '0':
 			u = '\0';
@@ -640,25 +658,18 @@ unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last
 		case 'v':
 			u = '\v';
 		NEXT:
-			if (stackSize)
-				do
-				{
-					n = (n << 8) + (stack & 0xFF);
-					stack >>= 8;
-				} while (--stackSize);
-			do
-				n = (n << 8) + (u & 0xFF);
-			while (--length);
+			if (stackBits)
+			{
+				n = stackBits < 32 ? (unsigned long)(__ll_lshift(((unsigned __int64)n << 32) | stack, stackBits) >> 32) : stack;
+				stackBits = 0;
+			}
+			n = (n << 8) | u;
 			continue;
 		}
 		break;
 	}
 	*pfirst = src;
-	if (stackSize)
-		do
-		{
-			n = (n << 8) + (stack & 0xFF);
-			stack >>= 8;
-		} while (--stackSize);
+	if (stackBits)
+		n = stackBits < 32 ? (unsigned long)(__ll_lshift(((unsigned __int64)n << 32) | stack, stackBits) >> 32) : stack;
 	return n;
 }

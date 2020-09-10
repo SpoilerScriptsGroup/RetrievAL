@@ -247,13 +247,11 @@ __declspec(naked) unsigned __int64 __msreturn __msfastcall __shiftleft128(unsign
 		mov     esi, dword ptr [LO(LowPart) + 4]
 		jmp     L3
 
-		align   16
 	L1:
 		mov     eax, dword ptr [LO(HighPart)]
 		mov     edx, dword ptr [HI(HighPart)]
 		jmp     L5
 
-		align   16
 	L2:
 		push    esi
 		add     cl, 32
@@ -297,13 +295,11 @@ __declspec(naked) unsigned __int64 __msreturn __msfastcall __shiftright128(unsig
 		mov     esi, dword ptr [HI(HighPart) + 4]
 		jmp     L3
 
-		align   16
 	L1:
 		mov     eax, dword ptr [LO(LowPart)]
 		mov     edx, dword ptr [HI(LowPart)]
 		jmp     L5
 
-		align   16
 	L2:
 		push    esi
 		add     cl, 32

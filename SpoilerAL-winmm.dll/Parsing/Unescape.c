@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "atoitbl.h"
+#include "intrinsic.h"
 
 #ifdef _WIN64
 char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate)
@@ -558,7 +559,7 @@ unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last
 	for (p = *pfirst; (src = p) < last; )
 	{
 		unsigned char c, x;
-		size_t        length, bits;
+		size_t        length;
 		unsigned long u;
 		unsigned int  cbMultiByte, cbUtf8;
 		wchar_t       w;
@@ -606,19 +607,14 @@ unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last
 			if (!ACTOX(&x, *p))
 				goto NEXT;
 			u = x;
-			bits = 4;
 			while (++p < last && ACTOX(&x, *p))
-			{
 				u = (u << 4) + x;
-				bits += 4;
-			}
 			if (stackSize >= 4)
 				continue;
-			if ((bits = (bits + 4) & -8) > 32)
-				bits = 32;
+			u = _byteswap_ulong(u);
 			do
-				stack = (stack << 8) + ((u >> (bits -= 8)) & 0xFF);
-			while (bits && ++stackSize < 4);
+				stack = (stack << 8) + (u & 0xFF);
+			while ((u >>= 8) && ++stackSize < 4);
 			continue;
 		case '0':
 			u = '\0';

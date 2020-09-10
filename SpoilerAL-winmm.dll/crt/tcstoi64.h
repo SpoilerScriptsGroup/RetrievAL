@@ -175,7 +175,7 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
         c = *(p += 2);
     } while (0);
 
-    if (!CTOI(&c, 'z', base))           // convert c to value
+    if (!TCTOI(&c, c, base))            // convert c to value
         goto NONUMBER;
 
     value = c;                          // start with value
@@ -183,7 +183,7 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
     do {
         c = *(++p);                     // read next digit
 
-        if (!CTOI(&c, 'z', base))       // convert c to value
+        if (!TCTOI(&c, c, base))        // convert c to value
             goto STOPPED32;
 
     } while (!((value = __emulu((uint32_t)value, base) + c) >> 32));
@@ -193,7 +193,7 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
 
     c = *(++p);                         // read next digit
 
-    while (CTOI(&c, 'z', base)) {       // convert c to value
+    while (TCTOI(&c, c, base)) {        // convert c to value
 
 #if defined(__LITTLE_ENDIAN__)
         #define HI(x) ((uint32_t *)&(x))[1]
@@ -238,7 +238,7 @@ OVERFLOW:
         // point to end of string
         do
             c = *(++p);
-        while (CHECK_CTOI(c, 'z', base));
+        while (CHECK_TCTOI(c, base));
     value =
         !is_unsigned ?
             !is_int64 ?

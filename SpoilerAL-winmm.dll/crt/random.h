@@ -7,6 +7,10 @@
 
 #include <stdint.h>
 
+#ifndef __BORLANDC__
+#define __msreturn
+#endif
+
 #if defined(_MSC_VER) && _MSC_VER < 1200
 #define __forceinline static __inline
 #endif
@@ -26,9 +30,9 @@ int __cdecl rand();
 uint8_t __cdecl rand8();
 uint16_t __cdecl rand16();
 uint32_t __cdecl rand32();
-uint64_t __cdecl rand64();
+uint64_t __msreturn __cdecl rand64();
 uint32_t __cdecl internal_randf32();
-uint64_t __cdecl internal_randf64();
+uint64_t __msreturn __cdecl internal_randf64();
 __forceinline float randf32() { uint32_t r = internal_randf32(); return *(float *)&r; }
 __forceinline double randf64() { uint64_t r = internal_randf64(); return *(double *)&r; }
 

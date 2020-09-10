@@ -214,7 +214,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 		c = *(first = p += 2);
 		while (c == '0')
 			c = *(++p);
-		while (CTOI(&c, 'f', 16))
+		while (TCTOX(&c, c))
 		{
 			r = r * 0x10 + c;
 			if (r != HUGE_VAL)
@@ -225,7 +225,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 			{
 				do
 					c = *(++p);
-				while (CHECK_CTOI(c, 'f', 16));
+				while (CHECK_TCTOX(c));
 				break;
 			}
 		}
@@ -237,7 +237,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 
 			d = 1;
 			c = *(++p);
-			while (CTOI(&c, 'f', 16))
+			while (TCTOX(&c, c))
 			{
 				if (d *= 1.0 / 0x10)
 				{
@@ -250,7 +250,7 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 					r += d;
 					do
 						c = *(++p);
-					while (CHECK_CTOI(c, 'f', 16));
+					while (CHECK_TCTOX(c));
 					break;
 				}
 			}

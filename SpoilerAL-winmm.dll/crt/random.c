@@ -40,7 +40,7 @@
    email: m-mat @ math.sci.hiroshima-u.ac.jp (remove space)
 */
 
-#include <stdint.h>
+#include "random.h"
 #if defined(_M_IX86) || defined(_M_X64)
 #include <emmintrin.h>
 #endif
@@ -827,7 +827,7 @@ __declspec(naked) uint32_t __cdecl rand32()
 /* This function generates and returns 64-bit pseudorandom number.
    srand must be called before this function. */
 #if !defined(_M_IX86)
-uint64_t __cdecl rand64()
+uint64_t __msreturn __cdecl rand64()
 {
 	uint64_t r;
 
@@ -852,7 +852,7 @@ uint64_t __cdecl rand64()
 	return r;
 }
 #else
-__declspec(naked) uint64_t __cdecl rand64()
+__declspec(naked) uint64_t __msreturn __cdecl rand64()
 {
 	__asm
 	{
@@ -927,7 +927,7 @@ __declspec(naked) uint32_t __cdecl internal_randf32()
 #endif
 
 #if !defined(_M_IX86)
-uint64_t __cdecl internal_randf64()
+uint64_t __msreturn __cdecl internal_randf64()
 {
 	uint64_t r;
 
@@ -941,7 +941,7 @@ uint64_t __cdecl internal_randf64()
 	return r;
 }
 #else
-__declspec(naked) uint64_t __cdecl internal_randf64()
+__declspec(naked) uint64_t __msreturn __cdecl internal_randf64()
 {
 #if defined(__LITTLE_ENDIAN__)
 	__asm

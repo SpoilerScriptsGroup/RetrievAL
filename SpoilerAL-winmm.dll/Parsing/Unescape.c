@@ -74,32 +74,21 @@ unsigned __int64 __fastcall __reg64return_UnescapeA(char *first, char *last, BOO
 			case 'x':
 				if (src >= last)
 					goto DONE;
-				x = *src;
-				if (ACTOI(&x, 'f', 16))
+				if (ACTOX(&x, *src))
 				{
 					if (c == 'x')
 					{
 						c = x;
-						while (++src < last)
-						{
-							x = *src;
-							if (!ACTOI(&x, 'f', 16))
-								break;
+						while (++src < last && ACTOX(&x, *src))
 							c = (c << 4) + x;
-						}
 					}
 					else
 					{
 						wchar_t w;
 
 						w = x;
-						while (++src < last)
-						{
-							x = *src;
-							if (!ACTOI(&x, 'f', 16))
-								break;
+						while (++src < last && ACTOX(&x, *src))
 							w = (w << 4) + x;
-						}
 						p += (unsigned int)WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, p, 2, NULL, NULL);
 						goto SHRINK;
 					}
@@ -194,17 +183,10 @@ unsigned __int64 __fastcall __reg64return_UnescapeW(wchar_t *first, wchar_t *las
 			case L'x':
 				if (src >= last)
 					goto DONE;
-				x = *src;
-				if (WCTOI(&x, L'f', 16))
+				if (WCTOX(&c, *src))
 				{
-					c = x;
-					while (++src < last)
-					{
-						x = *src;
-						if (!WCTOI(&x, L'f', 16))
-							break;
+					while (++src < last && WCTOX(&x, *src))
 						c = (c << 4) + x;
-					}
 				}
 				else
 				{
@@ -295,19 +277,13 @@ unsigned __int64 __fastcall __reg64return_UnescapeU(unsigned char *first, unsign
 			case 'x':
 				if (src >= last)
 					goto DONE;
-				x = *src;
-				if (ACTOI(&x, 'f', 16))
+				if (ACTOX(&x, *src))
 				{
 					unsigned long u;
 
 					u = x;
-					while (++src < last)
-					{
-						x = *src;
-						if (!ACTOI(&x, 'f', 16))
-							break;
+					while (++src < last && ACTOX(&x, *src))
 						u = (u << 4) + x;
-					}
 					do
 						*(p++) = (unsigned char)u;
 					while (u >>= 8);
@@ -380,19 +356,13 @@ __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 		case 'x':
 			if (p >= last)
 				goto NEXT;
-			x = *p;
-			if (!ACTOI(&x, 'f', 16))
+			if (!ACTOX(&x, *p))
 				goto NEXT;
 			if (c == 'x')
 			{
 				c = x;
-				while (++p < last)
-				{
-					x = *p;
-					if (!ACTOI(&x, 'f', 16))
-						break;
+				while (++p < last && ACTOX(&x, *p))
 					c = (c << 4) + x;
-				}
 			}
 			else
 			{
@@ -401,13 +371,8 @@ __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 				wchar_t       w;
 
 				w = x;
-				while (++p < last)
-				{
-					x = *p;
-					if (!ACTOI(&x, 'f', 16))
-						break;
+				while (++p < last && ACTOX(&x, *p))
 					w = (w << 4) + x;
-				}
 				if (!(cbMultiByte = WideCharToMultiByte(CP_THREAD_ACP, 0, &w, 1, lpMultiByteStr, 2, NULL, NULL)))
 					break;
 				s = lpMultiByteStr;
@@ -525,17 +490,11 @@ unsigned long __fastcall UnescapeUnicodeCharA(const char **pfirst, const char *l
 			w = c;
 			if (p >= last)
 				goto NEXT;
-			x = *p;
-			if (!ACTOI(&x, 'f', 16))
+			if (!ACTOX(&x, *p))
 				goto NEXT;
 			w = x;
-			while (++p < last)
-			{
-				x = *p;
-				if (!ACTOI(&x, 'f', 16))
-					break;
+			while (++p < last && ACTOX(&x, *p))
 				w = (w << 4) + x;
-			}
 		PUSH:
 			if (stackSize >= 2)
 				continue;
@@ -644,25 +603,12 @@ unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last
 			u = c;
 			if (p >= last)
 				goto NEXT;
-			if ((x = *p) == '0')
-			{
-				p++;
-				u = 0;
-				do
-					if (p >= last)
-						goto NEXT;
-				while ((x = *(p++)) == '0');
-				p--;
-			}
-			if (!ACTOI(&x, 'f', 16))
+			if (!ACTOX(&x, *p))
 				goto NEXT;
 			u = x;
 			bits = 4;
-			while (++p < last)
+			while (++p < last && ACTOX(&x, *p))
 			{
-				x = *p;
-				if (!ACTOI(&x, 'f', 16))
-					break;
 				u = (u << 4) + x;
 				bits += 4;
 			}

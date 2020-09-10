@@ -2,10 +2,6 @@
 #include "atoitbl.h"
 #include "intrinsic.h"
 
-#if (!defined(_MSC_VER) || _MSC_VER < 1200) && !defined(__assume)
-#define __assume(expression)
-#endif
-
 #ifdef _WIN64
 char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate)
 {
@@ -322,7 +318,6 @@ __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 	unsigned long       n, stack;
 	size_t              length, stackBits;
 	const unsigned char *p, *src;
-	unsigned char       c;
 
 	n = 0;
 	length = 0;
@@ -330,7 +325,7 @@ __int64 __fastcall UnescapeAnsiCharA(const char **pfirst, const char *last)
 	stackBits = 0;
 	for (p = *pfirst; (src = p) < last; )
 	{
-		unsigned char x;
+		unsigned char c, x;
 
 		if ((c = *(p++)) != '\\')
 			if (c != '\'')
@@ -446,14 +441,14 @@ unsigned long __fastcall UnescapeUnicodeCharA(const char **pfirst, const char *l
 	unsigned long       n, stack;
 	size_t              stackBits;
 	const unsigned char *p, *src;
-	wchar_t             w;
 
 	n = 0;
 	stack = 0;
 	stackBits = 0;
 	for (p = *pfirst; (src = p) < last; )
 	{
-		unsigned char c, x;
+		unsigned char c;
+		wchar_t       w;
 		unsigned int  cbMultiByte;
 
 		if ((c = *(p++)) != '\\')
@@ -479,20 +474,18 @@ unsigned long __fastcall UnescapeUnicodeCharA(const char **pfirst, const char *l
 			goto NEXT;
 		case '1': case '2': case '3': case '4': case '5': case '6': case '7':
 			w = c - '0';
-			while (++p < last && (x = *p - '0') < '7' - '0' + 1)
-				w = w * 8 + x;
+			while (++p < last && (c = *p - '0') < '7' - '0' + 1)
+				w = w * 8 + c;
 			goto PUSH;
 		case 'U':
 		case 'u':
 		case 'x':
 			w = c;
-			if (p >= last)
+			if (p >= last || !ACTOX(&c, *p))
 				goto NEXT;
-			if (!ACTOX(&x, *p))
-				goto NEXT;
-			w = x;
-			while (++p < last && ACTOX(&x, *p))
-				w = (w << 4) | x;
+			w = c;
+			while (++p < last && ACTOX(&c, *p))
+				w = (w << 4) | c;
 		PUSH:
 			if (stackBits >= 32)
 				continue;
@@ -550,11 +543,11 @@ unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last
 	stackBits = 0;
 	for (p = *pfirst; (src = p) < last; )
 	{
-		unsigned char c, x;
+		unsigned char c;
 		unsigned long u;
-		size_t        bits;
 		unsigned int  cbMultiByte, cbUtf8;
 		wchar_t       w;
+		size_t        bits;
 
 		if ((c = *(p++)) != '\\')
 			if (c != '\'')
@@ -600,20 +593,18 @@ unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last
 			break;
 		case '1': case '2': case '3': case '4': case '5': case '6': case '7':
 			u = c - '0';
-			while (++p < last && (x = *p - '0') < '7' - '0' + 1)
-				u = u * 8 + x;
+			while (++p < last && (c = *p - '0') < '7' - '0' + 1)
+				u = u * 8 + c;
 			goto PUSH;
 		case 'U':
 		case 'u':
 		case 'x':
 			u = c;
-			if (p >= last)
+			if (p >= last || !ACTOX(&c, *p))
 				goto NEXT;
-			if (!ACTOX(&x, *p))
-				goto NEXT;
-			u = x;
-			while (++p < last && ACTOX(&x, *p))
-				u = (u << 4) | x;
+			u = c;
+			while (++p < last && ACTOX(&c, *p))
+				u = (u << 4) | c;
 		PUSH:
 			if (stackBits >= 32)
 				continue;

@@ -174,64 +174,6 @@ __declspec(naked) void __fastcall __fastcall_stosd(unsigned long Data, unsigned 
 	}
 }
 
-__declspec(naked) __int64 __msreturn __fastcall __emul(int a, int b)
-{
-	__asm
-	{
-		imul    edx
-		ret
-	}
-}
-
-__declspec(naked) unsigned __int64 __msreturn __fastcall __emulu(unsigned int a, unsigned int b)
-{
-	__asm
-	{
-		mul     edx
-		ret
-	}
-}
-
-__declspec(naked) int __fastcall __fastcall_div64(int32_t low, int32_t high, int divisor, int *remainder)
-{
-	__asm
-	{
-		idiv    ecx
-		mov     ecx, dword ptr [esp + 4]
-		mov     dword ptr [ecx], edx
-		ret     4
-	}
-}
-
-__declspec(naked) int __fastcall __fastcall__div64(int32_t low, int32_t high, int divisor)
-{
-	__asm
-	{
-		idiv    ecx
-		ret
-	}
-}
-
-__declspec(naked) unsigned int __fastcall __fastcall_udiv64(uint32_t low, uint32_t high, unsigned int divisor, unsigned int *remainder)
-{
-	__asm
-	{
-		div     ecx
-		mov     ecx, dword ptr [esp + 4]
-		mov     dword ptr [ecx], edx
-		ret     4
-	}
-}
-
-__declspec(naked) unsigned int __fastcall __fastcall__udiv64(uint32_t low, uint32_t high, unsigned int divisor)
-{
-	__asm
-	{
-		div     ecx
-		ret
-	}
-}
-
 __declspec(naked) unsigned char __fastcall _BitScanForward(unsigned long *Index, unsigned long Mask)
 {
 	__asm
@@ -282,6 +224,106 @@ __declspec(naked) unsigned char __fastcall __fastcall_BitScanReverse64(uint32_t 
 		setnz   al
 		ret
 	}
+}
+
+__declspec(naked) unsigned __int64 __msreturn __msfastcall __shiftleft128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)
+{
+	#define LO(x) (x)
+	#define HI(x) ((x) + 4)
+
+	__asm
+	{
+		#define LowPart  (esp + 4)
+		#define HighPart (esp + 12)
+
+		and     cl, 63
+		jz      L1
+		sub     cl, 32
+		jb      L2
+		mov     eax, dword ptr [HI(LowPart)]
+		mov     edx, dword ptr [LO(HighPart)]
+		push    esi
+		jz      L4
+		mov     esi, dword ptr [LO(LowPart) + 4]
+		jmp     L3
+
+		align   16
+	L1:
+		mov     eax, dword ptr [LO(HighPart)]
+		mov     edx, dword ptr [HI(HighPart)]
+		jmp     L5
+
+		align   16
+	L2:
+		push    esi
+		add     cl, 32
+		mov     edx, dword ptr [HI(HighPart) + 4]
+		mov     eax, dword ptr [LO(HighPart) + 4]
+		mov     esi, dword ptr [HI(LowPart) + 4]
+	L3:
+		shld    edx, eax, cl
+		shld    eax, esi, cl
+	L4:
+		pop     esi
+	L5:
+		ret     16
+
+		#undef LowPart
+		#undef HighPart
+	}
+
+	#undef LO
+	#undef HI
+}
+
+__declspec(naked) unsigned __int64 __msreturn __msfastcall __shiftright128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)
+{
+	#define LO(x) (x)
+	#define HI(x) ((x) + 4)
+
+	__asm
+	{
+		#define LowPart  (esp + 4)
+		#define HighPart (esp + 12)
+
+		and     cl, 63
+		jz      L1
+		sub     cl, 32
+		jb      L2
+		mov     eax, dword ptr [HI(LowPart)]
+		mov     edx, dword ptr [LO(HighPart)]
+		push    esi
+		jz      L4
+		mov     esi, dword ptr [HI(HighPart) + 4]
+		jmp     L3
+
+		align   16
+	L1:
+		mov     eax, dword ptr [LO(LowPart)]
+		mov     edx, dword ptr [HI(LowPart)]
+		jmp     L5
+
+		align   16
+	L2:
+		push    esi
+		add     cl, 32
+		mov     eax, dword ptr [LO(LowPart) + 4]
+		mov     edx, dword ptr [HI(LowPart) + 4]
+		mov     esi, dword ptr [LO(HighPart) + 4]
+	L3:
+		shrd    eax, edx, cl
+		shrd    edx, esi, cl
+	L4:
+		pop     esi
+	L5:
+		ret     16
+
+		#undef LowPart
+		#undef HighPart
+	}
+
+	#undef LO
+	#undef HI
 }
 
 __declspec(naked) unsigned char __fastcall _add_u32(unsigned int a, unsigned int b, unsigned int *_out)
@@ -437,6 +479,64 @@ __declspec(naked) unsigned char __fastcall _subborrow_u64(unsigned char b_in, ui
 		#undef a
 		#undef b
 		#undef out
+	}
+}
+
+__declspec(naked) __int64 __msreturn __fastcall __emul(int a, int b)
+{
+	__asm
+	{
+		imul    edx
+		ret
+	}
+}
+
+__declspec(naked) unsigned __int64 __msreturn __fastcall __emulu(unsigned int a, unsigned int b)
+{
+	__asm
+	{
+		mul     edx
+		ret
+	}
+}
+
+__declspec(naked) int __fastcall __fastcall_div64(int32_t low, int32_t high, int divisor, int *remainder)
+{
+	__asm
+	{
+		idiv    ecx
+		mov     ecx, dword ptr [esp + 4]
+		mov     dword ptr [ecx], edx
+		ret     4
+	}
+}
+
+__declspec(naked) int __fastcall __fastcall__div64(int32_t low, int32_t high, int divisor)
+{
+	__asm
+	{
+		idiv    ecx
+		ret
+	}
+}
+
+__declspec(naked) unsigned int __fastcall __fastcall_udiv64(uint32_t low, uint32_t high, unsigned int divisor, unsigned int *remainder)
+{
+	__asm
+	{
+		div     ecx
+		mov     ecx, dword ptr [esp + 4]
+		mov     dword ptr [ecx], edx
+		ret     4
+	}
+}
+
+__declspec(naked) unsigned int __fastcall __fastcall__udiv64(uint32_t low, uint32_t high, unsigned int divisor)
+{
+	__asm
+	{
+		div     ecx
+		ret
 	}
 }
 #endif

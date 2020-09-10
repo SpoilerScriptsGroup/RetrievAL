@@ -29,6 +29,7 @@ typedef unsigned __int64 uint64_t;
 
 #ifndef __BORLANDC__
 #define __msreturn
+#define __msfastcall __fastcall
 #endif
 
 #if (defined(_MSC_VER) && _MSC_VER < 1200) || defined(__BORLANDC__)
@@ -856,6 +857,8 @@ __forceinline unsigned __int64 __shiftleft128(unsigned __int64 LowPart, unsigned
 	L4:
 	}
 }
+#elif defined(__BORLANDC__)
+unsigned __int64 __msreturn __msfastcall __shiftleft128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift);
 #elif defined(_MSC_VER) && _MSC_VER >= 1310 && defined(_M_IX86)
 #pragma intrinsic(__ll_lshift)
 __forceinline unsigned __int64 __shiftleft128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)
@@ -912,6 +915,8 @@ __forceinline unsigned __int64 __shiftright128(unsigned __int64 LowPart, unsigne
 	L4:
 	}
 }
+#elif defined(__BORLANDC__)
+unsigned __int64 __msreturn __msfastcall __shiftright128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift);
 #elif defined(_MSC_VER) && _MSC_VER >= 1310 && defined(_M_IX86)
 #pragma intrinsic(__ull_rshift)
 __forceinline unsigned __int64 __shiftright128(unsigned __int64 LowPart, unsigned __int64 HighPart, unsigned char Shift)

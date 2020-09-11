@@ -2,6 +2,10 @@
 #include "atoitbl.h"
 #include "intrinsic.h"
 
+#if (!defined(_MSC_VER) || _MSC_VER < 1200) && !defined(__assume)
+#define __assume(expression)
+#endif
+
 #ifdef _WIN64
 char * __fastcall UnescapeA(char *first, char **plast, BOOL breakSingleQuate)
 {
@@ -577,6 +581,8 @@ unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last
 			}
 			switch (cbUtf8)
 			{
+			case 0:
+				break;
 			case 1:
 				n = (n << 8) | (u & 0xFF);
 				continue;
@@ -589,6 +595,8 @@ unsigned long __fastcall UnescapeUtf8CharA(const char **pfirst, const char *last
 			case 4:
 				n = _byteswap_ulong(u);
 				continue;
+			default:
+				__assume(0);
 			}
 			break;
 		case '1': case '2': case '3': case '4': case '5': case '6': case '7':

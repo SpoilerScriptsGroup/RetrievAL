@@ -20,9 +20,9 @@ unsigned char * __cdecl _mbschr(const unsigned char *string, unsigned int c)
 			if ((c2 = *(++string)) != (unsigned char)(c >> 8)) {
 				if (!c2)
 					break;
-				else if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2))
+				if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2))
 					continue;
-				else if (!string[1])
+				if (!string[1])
 					break;
 			} else if ((c2 = string[1]) == (unsigned char)c)
 				goto DONE;

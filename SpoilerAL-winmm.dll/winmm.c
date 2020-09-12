@@ -23,8 +23,8 @@
 #endif
 
 static LPCSTR ExportNames[] = {
-	#define NAMED(name, index) #name,
-	#define UNNAMED(ordinal, index) MAKEINTRESOURCEA(ordinal),
+	#define NAMED(name, suffix, ordinal, index) #name,
+	#define UNNAMED(name, suffix, ordinal, index) MAKEINTRESOURCEA(ordinal),
 	#include "export.h"
 	NULL,
 };
@@ -462,11 +462,11 @@ static __inline void Detach()
 /***********************************************************************
  *      Export functions
  */
-#define NAMED(name, index)                                     \
+#define NAMED(name, suffix, ordinal, index)                    \
 __declspec(naked) void __cdecl _exp_##name()                   \
 {                                                              \
     __asm   jmp     dword ptr [ExportAddresses + (index) * 4]  \
 }
-#define UNNAMED(ordinal, index) NAMED(ordinal##_NONAME, index)
+#define UNNAMED NAMED
 #include "export.h"
 

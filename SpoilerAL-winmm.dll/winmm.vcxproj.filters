@@ -2020,6 +2020,9 @@
     <MASM Include="crt\msvc\memset.asm">
       <Filter>crt\msvc</Filter>
     </MASM>
+    <MASM Include="export.asm">
+      <Filter>ソース ファイル</Filter>
+    </MASM>
     <MASM Include="Kernel32\GetProcessId.asm">
       <Filter>Kernel32</Filter>
     </MASM>

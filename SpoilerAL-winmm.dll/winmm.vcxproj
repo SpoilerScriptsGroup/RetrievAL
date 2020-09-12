@@ -1246,6 +1246,10 @@
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="regex\crt\x86\alloca16.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</WholeProgramOptimization>
+    </ClCompile>
     <ClCompile Include="regex\posix\regcomp.c">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">(ProjectDir)regex;$(ProjectDir)regex\include;$(ProjectDir)regex\posix</AdditionalIncludeDirectories>
@@ -1377,11 +1381,6 @@
     </MASM>
     <MASM Include="Kernel32\GetProcessId.asm" />
     <MASM Include="MsImg32\AlphaBlend.asm" />
-    <MASM Include="regex\crt\x86\alloca16.asm">
-      <IncludePaths Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)regex\x86</IncludePaths>
-      <IncludePaths Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)regex\x86</IncludePaths>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-    </MASM>
     <MASM Include="regex\crt\x86\chkstk.asm">
       <IncludePaths Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)regex\x86</IncludePaths>
       <IncludePaths Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)regex\x86</IncludePaths>

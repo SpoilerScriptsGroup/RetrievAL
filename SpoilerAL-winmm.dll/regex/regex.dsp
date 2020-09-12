@@ -88,16 +88,7 @@ LIB32=link.exe -lib
 # PROP Default_Filter ""
 # Begin Source File
 
-SOURCE=.\crt\x86\alloca16.asm
-
-!IF  "$(CFG)" == "regex - Win32 Release"
-
-!ELSEIF  "$(CFG)" == "regex - Win32 Debug"
-
-# PROP Exclude_From_Build 1
-
-!ENDIF 
-
+SOURCE=.\crt\x86\alloca16.c
 # End Source File
 # Begin Source File
 

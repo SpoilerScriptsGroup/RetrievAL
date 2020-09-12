@@ -66,6 +66,7 @@ _chkstk proc
 
 _alloca_probe    =  _chkstk
 
+if 0
         push    ecx
 
 ; Calculate new TOS.
@@ -98,6 +99,40 @@ cs20:
         sub     eax, _PAGESIZE_         ; decrease by PAGESIZE
         test    dword ptr [eax],eax     ; probe page.
         jmp     short cs10
+else
+        push    ecx
+
+; Calculate new TOS.
+
+        lea     ecx, [esp + 4]          ; TOS before entering function + size for ret value
+        sub     ecx, eax                ; new TOS
+
+; Handle allocation size that results in wraparound.
+; Wraparound will result in StackOverflow exception.
+
+        mov     eax, 0
+        adc     eax, -1                 ; ~0 if CF==0, 0 if CF==1
+        and     ecx, eax                ; set to 0 if wraparound
+
+        mov     eax, esp                ; current TOS
+        and     eax, -_PAGESIZE_        ; Round down to current page boundary
+        jmp     cs20
+
+        align   16
+; Find next lower page and probe
+cs10:
+        sub     eax, _PAGESIZE_         ; decrease by PAGESIZE
+        test    dword ptr [eax], eax    ; probe page.
+cs20:
+        cmp     ecx, eax                ; Is new TOS
+    bnd jb      short cs10              ; in probed page?
+        mov     eax, ecx                ; yes.
+        pop     ecx
+        xchg    esp, eax                ; update esp
+        mov     eax, dword ptr [eax]    ; get return address
+        mov     dword ptr [esp], eax    ; and put it at new TOS
+    bnd ret
+endif
 
 _chkstk endp
 

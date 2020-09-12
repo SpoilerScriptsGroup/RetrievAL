@@ -1851,6 +1851,9 @@
     <ClCompile Include="regex\crt\wctype.c">
       <Filter>regex\crt</Filter>
     </ClCompile>
+    <ClCompile Include="regex\crt\x86\alloca16.c">
+      <Filter>regex\crt\x86</Filter>
+    </ClCompile>
     <ClCompile Include="regex\posix\regcomp.c">
       <Filter>regex\posix</Filter>
     </ClCompile>
@@ -2028,9 +2031,6 @@
     </MASM>
     <MASM Include="MsImg32\AlphaBlend.asm">
       <Filter>MsImg32</Filter>
-    </MASM>
-    <MASM Include="regex\crt\x86\alloca16.asm">
-      <Filter>regex\crt\x86</Filter>
     </MASM>
     <MASM Include="regex\crt\x86\chkstk.asm">
       <Filter>regex\crt\x86</Filter>

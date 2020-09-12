@@ -27,6 +27,9 @@
     <ClCompile Include="crt\wctype.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\x86\alloca16.c">
+      <Filter>crt\x86</Filter>
+    </ClCompile>
     <ClCompile Include="posix\regcomp.c">
       <Filter>posix</Filter>
     </ClCompile>
@@ -80,9 +83,6 @@
     <None Include="glibc_version.h" />
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="crt\x86\alloca16.asm">
-      <Filter>crt\x86</Filter>
-    </MASM>
     <MASM Include="crt\x86\chkstk.asm">
       <Filter>crt\x86</Filter>
     </MASM>

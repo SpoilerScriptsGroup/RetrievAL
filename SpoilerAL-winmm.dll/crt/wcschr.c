@@ -52,6 +52,7 @@ __declspec(naked) wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wchar_t c)
 
 		align   16
 	char_is_not_null:
+		pxor    xmm1, xmm1
 		movd    xmm2, edx
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
@@ -71,7 +72,6 @@ __declspec(naked) wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wchar_t c)
 		or      edx, -1
 	aligned_loop_entry:
 		movdqa  xmm0, xmmword ptr [eax]
-		pxor    xmm1, xmm1
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
@@ -99,7 +99,6 @@ __declspec(naked) wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wchar_t c)
 	unaligned_loop_entry1:
 		movdqu  xmm0, xmmword ptr [eax]
 	unaligned_loop_entry2:
-		pxor    xmm1, xmm1
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1

@@ -57,6 +57,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, w
 		push    edi
 		mov     edx, eax
 		or      edi, -1
+		pxor    xmm1, xmm1
 		movd    xmm2, ecx
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
@@ -82,7 +83,6 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, w
 		or      edi, -1
 	aligned_loop_entry:
 		movdqa  xmm0, xmmword ptr [edx]
-		pxor    xmm1, xmm1
 		pcmpeqw xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqw xmm0, xmm2
@@ -116,7 +116,6 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, w
 		or      edi, -1
 		movdqu  xmm0, xmmword ptr [edx]
 	unaligned_loop_entry:
-		pxor    xmm1, xmm1
 		pcmpeqw xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqw xmm0, xmm2

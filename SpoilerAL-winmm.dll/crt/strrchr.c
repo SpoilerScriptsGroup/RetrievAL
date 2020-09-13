@@ -56,6 +56,7 @@ __declspec(naked) char * __cdecl strrchrSSE2(const char *string, int c)
 		push    esi
 		push    edi
 		xor     eax, eax
+		pxor    xmm1, xmm1
 		movd    xmm2, ecx
 		punpcklbw xmm2, xmm2
 		pshuflw xmm2, xmm2, 0
@@ -79,7 +80,6 @@ __declspec(naked) char * __cdecl strrchrSSE2(const char *string, int c)
 		or      edi, -1
 	loop_entry:
 		movdqa  xmm0, xmmword ptr [edx]
-		pxor    xmm1, xmm1
 		pcmpeqb xmm1, xmm0
 		pcmpeqb xmm0, xmm2
 		pmovmskb ecx, xmm1

@@ -52,6 +52,7 @@ __declspec(naked) char * __cdecl strchrSSE2(const char *string, int c)
 
 		align   16
 	char_is_not_null:
+		pxor    xmm1, xmm1
 		movd    xmm2, edx
 		punpcklbw xmm2, xmm2
 		pshuflw xmm2, xmm2, 0
@@ -70,7 +71,6 @@ __declspec(naked) char * __cdecl strchrSSE2(const char *string, int c)
 		or      edx, -1
 	loop_entry:
 		movdqa  xmm0, xmmword ptr [eax]
-		pxor    xmm1, xmm1
 		pcmpeqb xmm1, xmm0
 		pcmpeqb xmm0, xmm2
 		por     xmm0, xmm1

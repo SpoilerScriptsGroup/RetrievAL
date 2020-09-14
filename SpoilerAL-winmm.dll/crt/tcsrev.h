@@ -5,6 +5,13 @@
 #pragma intrinsic(_byteswap_ulong)
 #pragma intrinsic(_rotl)
 #pragma intrinsic(_rotl16)
+#ifndef _WIN64
+#pragma intrinsic(_subborrow_u32)
+#define _sub_uintptr(a, b, out) _subborrow_u32(0, a, b, out)
+#else
+#pragma intrinsic(_subborrow_u64)
+#define _sub_uintptr(a, b, out) _subborrow_u64(0, a, b, out)
+#endif
 #endif
 
 #ifdef _MBCS
@@ -35,9 +42,8 @@ TCHAR * __cdecl _tcsrev(TCHAR *string)
 	}
 	return string;
 #else
-	size_t    size;
-	BYTE      *first, *last;
-	ptrdiff_t offset;
+	size_t size, offset;
+	BYTE   *first, *last;
 
 	last = (first = (BYTE *)string) + (size = _tcslen(string) * sizeof(TCHAR)) - sizeof(DWORD) * 4;
 	if (size >= 16)
@@ -70,7 +76,7 @@ TCHAR * __cdecl _tcsrev(TCHAR *string)
 		} while (last >= first);
 	}
 	offset = last - first;
-	if ((offset += 8) >= 0)
+	if (!_sub_uintptr(offset, -8, &offset))
 	{
 		DWORD i, j;
 
@@ -89,7 +95,7 @@ TCHAR * __cdecl _tcsrev(TCHAR *string)
 		first += 4;
 	}
 #ifdef _UNICODE
-	if ((offset += 4) >= 0)
+	if (!_sub_uintptr(offset, -4, &offset))
 	{
 		WORD i, j;
 
@@ -99,7 +105,7 @@ TCHAR * __cdecl _tcsrev(TCHAR *string)
 		*(WORD *)first = j;
 	}
 #else
-	if ((offset += 4) >= 0)
+	if (!_sub_uintptr(offset, -4, &offset))
 	{
 		WORD i, j;
 
@@ -112,7 +118,7 @@ TCHAR * __cdecl _tcsrev(TCHAR *string)
 		*(WORD *)first = j;
 		first += 2;
 	}
-	if ((offset += 2) >= 0)
+	if (!_sub_uintptr(offset, -2, &offset))
 	{
 		BYTE i, j;
 

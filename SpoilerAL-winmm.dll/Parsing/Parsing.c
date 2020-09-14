@@ -238,6 +238,10 @@ extern HANDLE pHeap;
      isfinite        isinf           isnan
      BitScanForward  BitScanReverse
      bsf             bsr
+     rotl8           rotl16          rotl32          rotl64
+                                     rotl
+     rotr8           rotr16          rotr32          rotr64
+                                     rotr
      A2U             A2W
      U2A             U2W
      W2A             W2U
@@ -258,8 +262,8 @@ extern HANDLE pHeap;
      memcpy          wmemcpy
      mempcpy         wmempcpy
      memmove         wmemmove
-     memset          wmemset
      memset8         memset16        memset32        memset64
+     memset          wmemset
      memchr          wmemchr
      memichr         wmemichr
      memrchr         wmemrchr
@@ -413,6 +417,16 @@ typedef enum {
 	                        //  60 bsf             OS_PUSH | OS_MONADIC
 	TAG_BSR              ,  //  60 BitScanReverse  OS_PUSH | OS_MONADIC
 	                        //  60 bsr             OS_PUSH | OS_MONADIC
+	TAG_ROTL8            ,  //  60 rotl8           OS_PUSH | OS_MONADIC
+	TAG_ROTL16           ,  //  60 rotl16          OS_PUSH | OS_MONADIC
+	TAG_ROTL32           ,  //  60 rotl32          OS_PUSH | OS_MONADIC
+	                        //  60 rotl            OS_PUSH | OS_MONADIC
+	TAG_ROTL64           ,  //  60 rotl64          OS_PUSH | OS_MONADIC
+	TAG_ROTR8            ,  //  60 rotr8           OS_PUSH | OS_MONADIC
+	TAG_ROTR16           ,  //  60 rotr16          OS_PUSH | OS_MONADIC
+	TAG_ROTR32           ,  //  60 rotr32          OS_PUSH | OS_MONADIC
+	                        //  60 rotr            OS_PUSH | OS_MONADIC
+	TAG_ROTR64           ,  //  60 rotr64          OS_PUSH | OS_MONADIC
 	TAG_A2U              ,  //  60 A2U             OS_PUSH | OS_MONADIC
 	TAG_A2W              ,  //  60 A2W             OS_PUSH | OS_MONADIC
 	TAG_U2A              ,  //  60 U2A             OS_PUSH | OS_MONADIC
@@ -449,10 +463,10 @@ typedef enum {
 	TAG_WMEMPCPY         ,  //  60 wmempcpy        OS_PUSH | OS_MONADIC
 	TAG_MEMMOVE          ,  //  60 memmove         OS_PUSH | OS_MONADIC
 	TAG_WMEMMOVE         ,  //  60 wmemmove        OS_PUSH | OS_MONADIC
-	TAG_MEMSET           ,  //  60 memset          OS_PUSH | OS_MONADIC
-	                        //  60 memset8         OS_PUSH | OS_MONADIC
-	TAG_MEMSET16         ,  //  60 wmemset         OS_PUSH | OS_MONADIC
-	                        //  60 memset16        OS_PUSH | OS_MONADIC
+	TAG_MEMSET8          ,  //  60 memset8         OS_PUSH | OS_MONADIC
+	                        //  60 memset          OS_PUSH | OS_MONADIC
+	TAG_MEMSET16         ,  //  60 memset16        OS_PUSH | OS_MONADIC
+	                        //  60 wmemset         OS_PUSH | OS_MONADIC
 	TAG_MEMSET32         ,  //  60 memset32        OS_PUSH | OS_MONADIC
 	TAG_MEMSET64         ,  //  60 memset64        OS_PUSH | OS_MONADIC
 	TAG_MEMCHR           ,  //  60 memchr          OS_PUSH | OS_MONADIC
@@ -775,6 +789,16 @@ typedef enum {
 	                                    // bsf             OS_PUSH | OS_MONADIC
 	                                    // BitScanReverse  OS_PUSH | OS_MONADIC
 	                                    // bsr             OS_PUSH | OS_MONADIC
+	                                    // rotl8           OS_PUSH | OS_MONADIC
+	                                    // rotl16          OS_PUSH | OS_MONADIC
+	                                    // rotl32          OS_PUSH | OS_MONADIC
+	                                    // rotl            OS_PUSH | OS_MONADIC
+	                                    // rotl64          OS_PUSH | OS_MONADIC
+	                                    // rotr8           OS_PUSH | OS_MONADIC
+	                                    // rotr16          OS_PUSH | OS_MONADIC
+	                                    // rotr32          OS_PUSH | OS_MONADIC
+	                                    // rotr            OS_PUSH | OS_MONADIC
+	                                    // rotr64          OS_PUSH | OS_MONADIC
 	                                    // A2U             OS_PUSH | OS_MONADIC
 	                                    // A2W             OS_PUSH | OS_MONADIC
 	                                    // U2A             OS_PUSH | OS_MONADIC
@@ -1991,7 +2015,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				case TAG_MEMICMP:
 				case TAG_WMEMICMP:
 				case TAG_MEMMOVE:
-				case TAG_MEMSET:
+				case TAG_MEMSET8:
 				case TAG_MEMSET16:
 				case TAG_MEMSET32:
 				case TAG_MEMSET64:
@@ -2933,7 +2957,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					case BSWAP16('64'):
 						APPEND_FUNCTION_MULTI_PARAM(TAG_MEMSET64, 8);
 					default:
-						APPEND_FUNCTION_MULTI_PARAM(TAG_MEMSET, 6 + (p[6] == '8'));
+						APPEND_FUNCTION_MULTI_PARAM(TAG_MEMSET8, 6 + (p[6] == '8'));
 					}
 					break;
 				}
@@ -2997,7 +3021,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			}
 			break;
 		case 'r':
-			// "rand32", "rand64", "realloc", "return", "rol", "ror", "round"
+			// "rand32", "rand64", "realloc", "return", "rol", "ror", "rotl", "rotl8", "rotl16", "rotl32", "rotl64", "rotr", "rotr8", "rotr16", "rotr32", "rotr64", "round"
 			if (!bIsSeparatedLeft)
 				break;
 			switch (p[1])
@@ -3042,6 +3066,45 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					nLength = 3;
 					bPriority = PRIORITY_ROR;
 					goto APPEND_WORD_OPERATOR;
+				case 't':
+					switch (p[3])
+					{
+					case 'l':
+						switch (p[4])
+						{
+						case '1':
+							if (p[5] != '6')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_ROTL16, 6);
+						case '6':
+							if (p[5] != '4')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_ROTL64, 6);
+						case '8':
+							APPEND_FUNCTION_MULTI_PARAM(TAG_ROTL8, 5);
+						default:
+							APPEND_FUNCTION_MULTI_PARAM(TAG_ROTL32, *(uint16_t *)(p + 4) == BSWAP16('32') ? 6 : 4);
+						}
+						break;
+					case 'r':
+						switch (p[4])
+						{
+						case '1':
+							if (p[5] != '6')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_ROTR16, 6);
+						case '6':
+							if (p[5] != '4')
+								break;
+							APPEND_FUNCTION_MULTI_PARAM(TAG_ROTR64, 6);
+						case '8':
+							APPEND_FUNCTION_MULTI_PARAM(TAG_ROTR8, 5);
+						default:
+							APPEND_FUNCTION_MULTI_PARAM(TAG_ROTR32, *(uint16_t *)(p + 4) == BSWAP16('32') ? 6 : 4);
+						}
+						break;
+					}
+					break;
 				case 'u':
 					if (*(uint16_t *)(p + 3) != BSWAP16('nd'))
 						break;
@@ -4185,9 +4248,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case TAG_ISBADCODEPTR:    // IsBadCodePtr
 			case TAG_CAST32:          // Cast32
 			case TAG_CAST64:          // Cast64
-			case TAG_I1TOI4:          // I1toI4
-			case TAG_I2TOI4:          // I2toI4
-			case TAG_I4TOI8:          // I4toI8
+			case TAG_I1TOI4:          // I1toI4, cbd
+			case TAG_I2TOI4:          // I2toI4, cwd
+			case TAG_I4TOI8:          // I4toI8, cdq
 			case TAG_UTOF:            // utof
 			case TAG_ITOF:            // itof
 			case TAG_FTOI:            // ftoi
@@ -4196,8 +4259,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case TAG_ISFINITE:        // isfinite
 			case TAG_ISINF:           // isinf
 			case TAG_ISNAN:           // isnan
-			case TAG_BSF:             // BitScanForward
-			case TAG_BSR:             // BitScanReverse
+			case TAG_BSF:             // BitScanForward, bsf
+			case TAG_BSR:             // BitScanReverse, bsr
 			case TAG_A2U:             // A2U
 			case TAG_A2W:             // A2W
 			case TAG_U2A:             // U2A
@@ -4310,6 +4373,14 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case TAG_ISBADWRITEPTR:   // IsBadWritePtr
 			case TAG_ISBADSTRINGPTRA: // IsBadStringPtrA
 			case TAG_ISBADSTRINGPTRW: // IsBadStringPtrW
+			case TAG_ROTL8:           // rotl8
+			case TAG_ROTL16:          // rotl16
+			case TAG_ROTL32:          // rotl32, rotl
+			case TAG_ROTL64:          // rotl64
+			case TAG_ROTR8:           // rotr8
+			case TAG_ROTR16:          // rotr16
+			case TAG_ROTR32:          // rotr32, rotr
+			case TAG_ROTR64:          // rotr64
 #if ALLOCATE_SUPPORT
 			case TAG_REALLOC:         // realloc
 #endif
@@ -4384,8 +4455,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case TAG_WMEMPCPY:        // wmempcpy
 			case TAG_MEMMOVE:         // memmove
 			case TAG_WMEMMOVE:        // wmemmove
-			case TAG_MEMSET:          // memset
-			case TAG_MEMSET16:        // memset16
+			case TAG_MEMSET8:         // memset8, memset
+			case TAG_MEMSET16:        // memset16, wmemset
 			case TAG_MEMSET32:        // memset32
 			case TAG_MEMSET64:        // memset64
 			case TAG_MEMCHR:          // memchr
@@ -7419,6 +7490,46 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->IsQuad = TRUE;
 			}
 			break;
+		case TAG_ROTL8:
+			operand = OPERAND_POP();
+			lpOperandTop->Quad = _rotl8((unsigned char)lpOperandTop->Low, (unsigned char)operand.Low);
+			lpOperandTop->IsQuad = !IsInteger;
+			break;
+		case TAG_ROTL16:
+			operand = OPERAND_POP();
+			lpOperandTop->Quad = _rotl16((unsigned short)lpOperandTop->Low, (unsigned char)operand.Low);
+			lpOperandTop->IsQuad = !IsInteger;
+			break;
+		case TAG_ROTL32:
+			operand = OPERAND_POP();
+			lpOperandTop->Quad = _rotl(lpOperandTop->Low, operand.Low);
+			lpOperandTop->IsQuad = !IsInteger;
+			break;
+		case TAG_ROTL64:
+			operand = OPERAND_POP();
+			lpOperandTop->Quad = _rotl64(lpOperandTop->Quad, operand.Low);
+			lpOperandTop->IsQuad = !IsInteger;
+			break;
+		case TAG_ROTR8:
+			operand = OPERAND_POP();
+			lpOperandTop->Quad = _rotr8((unsigned char)lpOperandTop->Low, (unsigned char)operand.Low);
+			lpOperandTop->IsQuad = !IsInteger;
+			break;
+		case TAG_ROTR16:
+			operand = OPERAND_POP();
+			lpOperandTop->Quad = _rotr16((unsigned short)lpOperandTop->Low, (unsigned char)operand.Low);
+			lpOperandTop->IsQuad = !IsInteger;
+			break;
+		case TAG_ROTR32:
+			operand = OPERAND_POP();
+			lpOperandTop->Quad = _rotr(lpOperandTop->Low, operand.Low);
+			lpOperandTop->IsQuad = !IsInteger;
+			break;
+		case TAG_ROTR64:
+			operand = OPERAND_POP();
+			lpOperandTop->Quad = _rotr64(lpOperandTop->Quad, operand.Low);
+			lpOperandTop->IsQuad = !IsInteger;
+			break;
 		case TAG_A2U:
 			{
 				LPSTR  lpBuffer;
@@ -8655,7 +8766,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				goto PARSING_ERROR;
 			}
 			break;
-		case TAG_MEMSET:
+		case TAG_MEMSET8:
 		case TAG_MEMSET16:
 		case TAG_MEMSET32:
 		case TAG_MEMSET64:
@@ -8720,7 +8831,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						}
 						break;
 					}
-				case TAG_MEMSET:
+				case TAG_MEMSET8:
 					if (!FillProcessMemory(hDestProcess, lpAddress = lpDest, nCount, (BYTE)qwFill))
 						goto WRITE_ERROR;
 					break;

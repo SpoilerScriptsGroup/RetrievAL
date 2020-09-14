@@ -323,11 +323,51 @@ __forceinline uint64_t __intrinsic_bswap64(uint64_t value) { return BSWAP64 (val
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310
+#pragma intrinsic(_rotl8)
+#pragma intrinsic(_rotr8)
+#pragma intrinsic(_rotl16)
+#pragma intrinsic(_rotr16)
 #pragma intrinsic(_rotl)
 #pragma intrinsic(_rotr)
 #pragma intrinsic(_rotl64)
 #pragma intrinsic(_rotr64)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
+__forceinline unsigned char _rotl8(unsigned char value, unsigned char shift)
+{
+	__asm
+	{
+		mov     cl, byte ptr [shift]
+		mov     al, byte ptr [value]
+		rol     al, cl
+	}
+}
+__forceinline unsigned char _rotr8(unsigned char value, unsigned char shift)
+{
+	__asm
+	{
+		mov     cl, byte ptr [shift]
+		mov     al, byte ptr [value]
+		ror     al, cl
+	}
+}
+__forceinline unsigned short _rotl16(unsigned short value, unsigned char shift)
+{
+	__asm
+	{
+		mov     cl, byte ptr [shift]
+		mov     ax, word ptr [value]
+		rol     ax, cl
+	}
+}
+__forceinline unsigned short _rotr16(unsigned short value, unsigned char shift)
+{
+	__asm
+	{
+		mov     cl, byte ptr [shift]
+		mov     ax, word ptr [value]
+		ror     ax, cl
+	}
+}
 __forceinline unsigned int _rotl(unsigned int value, int shift)
 {
 	__asm
@@ -385,15 +425,43 @@ __forceinline unsigned __int64 _rotr64(unsigned __int64 value, int shift)
 	}
 }
 #elif defined(__BORLANDC__)
+unsigned char __fastcall __fastcall_rotl8(unsigned char value, unsigned char shift);
+unsigned char __fastcall __fastcall_rotr8(unsigned char value, unsigned char shift);
+unsigned short __fastcall __fastcall_rotl16(unsigned short value, unsigned char shift);
+unsigned short __fastcall __fastcall_rotr16(unsigned short value, unsigned char shift);
 unsigned int __fastcall __fastcall_rotl(unsigned int value, int shift);
 unsigned int __fastcall __fastcall_rotr(unsigned int value, int shift);
 unsigned __int64 __msreturn __fastcall __fastcall_rotl64(uint32_t low, uint32_t high, int shift);
 unsigned __int64 __msreturn __fastcall __fastcall_rotr64(uint32_t low, uint32_t high, int shift);
+#define _rotl8 __fastcall_rotl8
+#define _rotr8 __fastcall_rotr8
+#define _rotl16 __fastcall_rotl16
+#define _rotr16 __fastcall_rotr16
 #define _rotl __fastcall_rotl
 #define _rotr __fastcall_rotr
 #define _rotl64(value, shift) __fastcall_rotl64((uint32_t)(value), (uint32_t)((uint64_t)(value) >> 32), shift)
 #define _rotr64(value, shift) __fastcall_rotr64((uint32_t)(value), (uint32_t)((uint64_t)(value) >> 32), shift)
 #else
+__forceinline unsigned char _rotl8(unsigned char value, unsigned char shift)
+{
+	shift &= 7;
+	return (value << shift) | (value >> (8 - shift));
+}
+__forceinline unsigned char _rotr8(unsigned char value, unsigned char shift)
+{
+	shift &= 7;
+	return (value >> shift) | (value << (8 - shift));
+}
+__forceinline unsigned short _rotl16(unsigned short value, unsigned char shift)
+{
+	shift &= 15;
+	return (value << shift) | (value >> (16 - shift));
+}
+__forceinline unsigned short _rotr16(unsigned short value, unsigned char shift)
+{
+	shift &= 15;
+	return (value >> shift) | (value << (16 - shift));
+}
 __forceinline unsigned int _rotl(unsigned int value, int shift)
 {
 	shift &= 31;

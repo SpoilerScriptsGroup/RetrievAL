@@ -33,6 +33,46 @@ __declspec(naked) unsigned __int64 __msreturn __fastcall __fastcall_byteswap_uin
 	}
 }
 
+unsigned char __fastcall __fastcall_rotl8(unsigned char value, unsigned char shift)
+{
+	__asm
+	{
+		mov     cl, dl
+		rol     al, cl
+		ret
+	}
+}
+
+unsigned char __fastcall __fastcall_rotr8(unsigned char value, unsigned char shift)
+{
+	__asm
+	{
+		mov     cl, dl
+		ror     al, cl
+		ret
+	}
+}
+
+unsigned short __fastcall __fastcall_rotl16(unsigned short value, unsigned char shift)
+{
+	__asm
+	{
+		mov     cl, dl
+		rol     ax, cl
+		ret
+	}
+}
+
+unsigned short __fastcall __fastcall_rotr16(unsigned short value, unsigned char shift)
+{
+	__asm
+	{
+		mov     cl, dl
+		ror     ax, cl
+		ret
+	}
+}
+
 __declspec(naked) unsigned int __fastcall __fastcall_rotl(unsigned int value, int shift)
 {
 	__asm

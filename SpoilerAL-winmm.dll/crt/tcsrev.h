@@ -39,29 +39,55 @@ TCHAR * __cdecl _tcsrev(TCHAR *string)
 	BYTE      *first, *last;
 	ptrdiff_t offset;
 
-	last = (first = (BYTE *)string) + (size = _tcslen(string) * sizeof(TCHAR)) - sizeof(DWORD) * 2;
-	if (size >= 8)
+	last = (first = (BYTE *)string) + (size = _tcslen(string) * sizeof(TCHAR)) - sizeof(DWORD) * 4;
+	if (size >= 16)
 	{
 		do
 		{
-			DWORD i, j;
+			DWORD i, j, k, l;
 
 			i = *(DWORD *)first;
-			j = *(DWORD *)(last + 4);
+			j = *(DWORD *)(first + 4);
+			k = *(DWORD *)(last + 8);
+			l = *(DWORD *)(last + 12);
 #ifdef _UNICODE
 			i = _rotl(i, 16);
 			j = _rotl(j, 16);
+			k = _rotl(k, 16);
+			l = _rotl(l, 16);
 #else
 			i = _byteswap_ulong(i);
 			j = _byteswap_ulong(j);
+			k = _byteswap_ulong(k);
+			l = _byteswap_ulong(l);
 #endif
-			*(DWORD *)(last + 4) = i;
-			last -= 4;
-			*(DWORD *)first = j;
-			first += 4;
-		} while (first <= last);
+			*(DWORD *)(last + 12) = i;
+			*(DWORD *)(last + 8) = j;
+			*(DWORD *)(first + 4) = k;
+			*(DWORD *)first = l;
+			last -= 8;
+			first += 8;
+		} while (last >= first);
 	}
 	offset = last - first;
+	if ((offset += 8) >= 0)
+	{
+		DWORD i, j;
+
+		i = *(DWORD *)first;
+		j = *(DWORD *)(first + offset + 4);
+#ifdef _UNICODE
+		i = _rotl(i, 16);
+		j = _rotl(j, 16);
+#else
+		i = _byteswap_ulong(i);
+		j = _byteswap_ulong(j);
+#endif
+		*(DWORD *)(first + offset + 4) = i;
+		offset -= 8;
+		*(DWORD *)first = j;
+		first += 4;
+	}
 #ifdef _UNICODE
 	if ((offset += 4) >= 0)
 	{
@@ -152,9 +178,9 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		call    _tcslen                                     // find null
 #ifdef _UNICODE
 		cmp     eax, 8
-		lea     edi, [edi + eax * 2]                        // edi points to last null char - qword * 2
+		lea     edi, [edi + eax * 2]                        // edi points to last null char - dword * 4
 #else
-		add     edi, eax                                    // edi points to last null char - qword * 2
+		add     edi, eax                                    // edi points to last null char - dword * 4
 		cmp     eax, 16
 #endif
 		mov     eax, esi

@@ -1,5 +1,11 @@
 #include <windows.h>
 #include <tchar.h>
+#if defined(_MSC_VER) && _MSC_VER >= 1310
+#include <intrin.h>
+#pragma intrinsic(_byteswap_ulong)
+#pragma intrinsic(_rotl)
+#pragma intrinsic(_rotl16)
+#endif
 
 #ifdef _MBCS
 extern HANDLE hHeap;
@@ -9,6 +15,7 @@ extern HANDLE hHeap;
 #ifndef _MBCS
 TCHAR * __cdecl _tcsrev(TCHAR *string)
 {
+#if !defined(_MSC_VER) || _MSC_VER < 1310
 	size_t length;
 
 	if ((length = _tcslen(string)) > 1)
@@ -27,6 +34,70 @@ TCHAR * __cdecl _tcsrev(TCHAR *string)
 		} while (p1 < p2);
 	}
 	return string;
+#else
+	size_t    size;
+	BYTE      *first, *last;
+	ptrdiff_t offset;
+
+	last = (first = (BYTE *)string) + (size = _tcslen(string) * sizeof(TCHAR)) - sizeof(DWORD) * 2;
+	if (size >= 8)
+	{
+		do
+		{
+			DWORD i, j;
+
+			i = *(DWORD *)first;
+			j = *(DWORD *)(last + 4);
+#ifdef _UNICODE
+			i = _rotl(i, 16);
+			j = _rotl(j, 16);
+#else
+			i = _byteswap_ulong(i);
+			j = _byteswap_ulong(j);
+#endif
+			*(DWORD *)(last + 4) = i;
+			last -= 4;
+			*(DWORD *)first = j;
+			first += 4;
+		} while (first <= last);
+	}
+	offset = last - first;
+#ifdef _UNICODE
+	if ((offset += 4) >= 0)
+	{
+		WORD i, j;
+
+		i = *(WORD *)first;
+		j = *(WORD *)(first + offset + 2);
+		*(WORD *)(first + offset + 2) = i;
+		*(WORD *)first = j;
+	}
+#else
+	if ((offset += 4) >= 0)
+	{
+		WORD i, j;
+
+		i = *(WORD *)first;
+		j = *(WORD *)(first + offset + 2);
+		i = _rotl16(i, 8);
+		j = _rotl16(j, 8);
+		*(WORD *)(first + offset + 2) = i;
+		offset -= 4;
+		*(WORD *)first = j;
+		first += 2;
+	}
+	if ((offset += 2) >= 0)
+	{
+		BYTE i, j;
+
+		i = *first;
+		j = *(first + offset + 1);
+		*(first + offset + 1) = i;
+		*first = j;
+	}
+#endif
+	return string;
+#endif
 }
 #else	// _MBCS
 unsigned char * __cdecl _mbsrev(unsigned char *string)
@@ -66,45 +137,31 @@ unsigned char * __cdecl _mbsrev(unsigned char *string)
 #pragma function(_tcslen)
 __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 {
-#ifdef _UNICODE
-	#define scast        scasw
-	#define tchar        word
-	#define t(r)         r##x
-	#define dec_tchar(r) sub r, 2
-#else
-	#define scast        scasb
-	#define tchar        byte
-	#define t(r)         r##l
-	#define dec_tchar(r) dec r
-#endif
-
 	__asm
 	{
 		#define string (esp + 4)
 
 		push    esi
 		push    edi
-		mov     edi, -4
+		mov     edi, -8
 		mov     esi, dword ptr [string + 8]                 // esi = string; save return value
 		add     edi, esi
 		push    esi
 		call    _tcslen                                     // find null
 #ifdef _UNICODE
-		test    eax, eax                                    // is not string empty?
-		lea     edi, [edi + eax * size TCHAR]               // edi points to last null char - 4
+		cmp     eax, 4
+		lea     edi, [edi + eax * 2]                        // edi points to last null char - dword * 2
 #else
-		add     edi, eax                                    // edi points to last null char - 4
-		test    eax, eax                                    // is not string empty?
+		add     edi, eax                                    // edi points to last null char - dword * 2
+		cmp     eax, 8
 #endif
-		mov     eax, esi                                    // return value: string addr
-		jnz     entry
-		pop     ecx
-		jmp     done
+		mov     eax, esi
+		jb      lt8
 
 		align   16
 	lupe:
 		mov     ecx, dword ptr [esi]                        // get front chars...
-		mov     edx, dword ptr [edi]                        //   and end chars
+		mov     edx, dword ptr [edi + 4]                    //   and end chars
 #ifdef _UNICODE
 		rol     ecx, 16                                     // swap front chars...
 		rol     edx, 16                                     //   and end chars
@@ -112,52 +169,42 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		bswap   ecx                                         // swap front chars...
 		bswap   edx                                         //   and end chars
 #endif
-		mov     dword ptr [edi], ecx                        // put front chars in end...
-		sub     edi, 4                                      //   and moves down
+		mov     dword ptr [edi + 4], ecx                    // put front chars in end...
+		sub     edi, 4                                      //   and end moves down
 		mov     dword ptr [esi], edx                        // put end chars in front...
-		add     esi, 4                                      //   and moves up
-	entry:
+		add     esi, 4                                      //   and front moves up
 		cmp     esi, edi                                    // see if pointers have crossed yet
-		jb      lupe                                        // exit when pointers meet (or cross)
+		jbe     lupe                                        // exit when pointers meet (or cross)
 
-#ifdef _UNICODE
-		pop     ecx
-		jne     done
-		mov     t(c), tchar ptr [esi]                       // get front char...
-		mov     t(d), tchar ptr [edi + 4 - size TCHAR]      //   and end char
-		mov     tchar ptr [esi], t(d)                       // put end char in front...
-		mov     tchar ptr [edi + 4 - size TCHAR], t(c)      //   and front char at end
-#else
-		pop     ecx
-		jne     less_than_dword
-		mov     ecx, dword ptr [esi]                        // get chars
-		bswap   ecx                                         // swap chars
-		mov     dword ptr [esi], ecx                        // put chars
-		jmp     done
-
-		align   16
-	less_than_dword:
-		add     edi, 4 - size TCHAR
+	lt8:
 		sub     edi, esi
-		jbe     done
-		mov     t(c), tchar ptr [esi]                       // get front char...
-		mov     t(d), tchar ptr [esi + edi]                 //   and end char
-		mov     tchar ptr [esi], t(d)                       // put end char in front...
-		mov     tchar ptr [esi + edi], t(c)                 //   and front char at end
-		dec_tchar(edi)
-		jz      done
-		mov     t(c), tchar ptr [esi + size TCHAR]          // get front char...
-		mov     t(d), tchar ptr [esi + edi]                 //   and end char
-		mov     tchar ptr [esi + size TCHAR], t(d)          // put end char in front...
-		mov     tchar ptr [esi + edi], t(c)                 //   and front char at end
-		dec_tchar(edi)
-		jz      done
-		mov     t(c), tchar ptr [esi + (size TCHAR * 2)]    // get front char...
-		mov     t(d), tchar ptr [esi + edi]                 //   and end char
-		mov     tchar ptr [esi + (size TCHAR * 2)], t(d)    // put end char in front...
-		mov     tchar ptr [esi + edi], t(c)                 //   and front char at end
+		pop     ecx
+#ifdef _UNICODE
+		sub     edi, -4
+		jb      done
+		mov     cx, word ptr [esi]                          // get front char...
+		mov     dx, word ptr [esi + edi + 2]                //   and end char
+		mov     word ptr [esi + edi + 2], cx                // put front char in end...
+		mov     word ptr [esi], dx                          //   and end char at front
+#else
+		sub     edi, -4
+		jb      lt4
+		mov     cx, word ptr [esi]                          // get front chars...
+		mov     dx, word ptr [esi + edi + 2]                //   and end chars
+		rol     cx, 8                                       // swap front chars...
+		rol     dx, 8                                       //   and end chars
+		mov     word ptr [esi + edi + 2], cx                // put front chars in end...
+		sub     edi, 4                                      //   and end moves down
+		mov     word ptr [esi], dx                          // put end chars in front...
+		add     esi, 2                                      //   and front moves up
+	lt4:
+		sub     edi, -2
+		jb      done
+		mov     cl, byte ptr [esi]                          // get front char...
+		mov     dl, byte ptr [esi + edi + 1]                //   and end char
+		mov     byte ptr [esi + edi + 1], cl                // put front char in end...
+		mov     byte ptr [esi], dl                          //   and end char at front
 #endif
-
 	done:
 		pop     edi
 		pop     esi
@@ -165,11 +212,6 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 
 		#undef string
 	}
-
-	#undef scast
-	#undef tchar
-	#undef t
-	#undef dec_tchar
 }
 #else	// _MBCS
 __declspec(naked) unsigned char * __cdecl _mbsrev(unsigned char *string)

@@ -141,27 +141,58 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 	{
 		#define string (esp + 4)
 
+		push    ebx
+		push    ebp
 		push    esi
 		push    edi
-		mov     edi, -8
-		mov     esi, dword ptr [string + 8]                 // esi = string; save return value
+		mov     edi, -16
+		mov     esi, dword ptr [string + 16]                // esi = string; save return value
 		add     edi, esi
 		push    esi
 		call    _tcslen                                     // find null
 #ifdef _UNICODE
-		cmp     eax, 4
-		lea     edi, [edi + eax * 2]                        // edi points to last null char - dword * 2
-#else
-		add     edi, eax                                    // edi points to last null char - dword * 2
 		cmp     eax, 8
+		lea     edi, [edi + eax * 2]                        // edi points to last null char - qword * 2
+#else
+		add     edi, eax                                    // edi points to last null char - qword * 2
+		cmp     eax, 16
 #endif
 		mov     eax, esi
-		jb      lt8
+		jb      lt16
 
 		align   16
 	lupe:
 		mov     ecx, dword ptr [esi]                        // get front chars...
-		mov     edx, dword ptr [edi + 4]                    //   and end chars
+		mov     edx, dword ptr [esi + 4]
+		mov     ebx, dword ptr [edi + 8]                    //   and end chars
+		mov     ebp, dword ptr [edi + 12]
+#ifdef _UNICODE
+		rol     ecx, 16                                     // swap front chars...
+		rol     edx, 16
+		rol     ebx, 16                                     //   and end chars
+		rol     ebp, 16
+#else
+		bswap   ecx                                         // swap front chars...
+		bswap   edx
+		bswap   ebx                                         //   and end chars
+		bswap   ebp
+#endif
+		mov     dword ptr [edi + 12], ecx                   // put front chars in end...
+		mov     dword ptr [edi + 8], edx
+		mov     dword ptr [esi + 4], ebx                    //   and end chars at front
+		mov     dword ptr [esi], ebp
+		sub     edi, 8                                      // end moves down...
+		add     esi, 8                                      //   and front moves up
+		cmp     edi, esi                                    // see if pointers have crossed yet
+		jae     lupe                                        // exit when pointers meet (or cross)
+
+	lt16:
+		sub     edi, esi
+		pop     ecx
+		sub     edi, -8
+		jb      lt8
+		mov     ecx, dword ptr [esi]                        // get front chars...
+		mov     edx, dword ptr [esi + edi + 4]              //   and end chars
 #ifdef _UNICODE
 		rol     ecx, 16                                     // swap front chars...
 		rol     edx, 16                                     //   and end chars
@@ -169,16 +200,11 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		bswap   ecx                                         // swap front chars...
 		bswap   edx                                         //   and end chars
 #endif
-		mov     dword ptr [edi + 4], ecx                    // put front chars in end...
-		sub     edi, 4                                      //   and end moves down
+		mov     dword ptr [esi + edi + 4], ecx              // put front chars in end...
+		sub     edi, 8                                      //   and end moves down
 		mov     dword ptr [esi], edx                        // put end chars in front...
 		add     esi, 4                                      //   and front moves up
-		cmp     esi, edi                                    // see if pointers have crossed yet
-		jbe     lupe                                        // exit when pointers meet (or cross)
-
 	lt8:
-		sub     edi, esi
-		pop     ecx
 #ifdef _UNICODE
 		sub     edi, -4
 		jb      done
@@ -208,6 +234,8 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 	done:
 		pop     edi
 		pop     esi
+		pop     ebp
+		pop     ebx
 		ret                                                 // __cdecl return
 
 		#undef string

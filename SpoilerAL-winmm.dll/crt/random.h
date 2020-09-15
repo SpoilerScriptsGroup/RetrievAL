@@ -33,8 +33,16 @@ uint32_t __cdecl rand32();
 uint64_t __msreturn __cdecl rand64();
 uint32_t __cdecl internal_randf32();
 uint64_t __msreturn __cdecl internal_randf64();
-__forceinline float randf32() { uint32_t r = internal_randf32(); return *(float *)&r; }
-__forceinline double randf64() { uint64_t r = internal_randf64(); return *(double *)&r; }
+__forceinline float randf32() { uint32_t x = internal_randf32(); return *(float *)&x; }
+__forceinline double randf64() { uint64_t x = internal_randf64(); return *(double *)&x; }
+__forceinline float randf32ge0lt1() { uint32_t x = rand32() % 0x3F800000; return *(float *)&x; }
+__forceinline float randf32gt0le1() { uint32_t x = rand32() % 0x3F800000 + 1; return *(float *)&x; }
+__forceinline float randf32gt0lt1() { uint32_t x = rand32() % 0x3F7FFFFF + 1; return *(float *)&x; }
+__forceinline float randf32ge1lt2() { uint32_t x = rand32() % 0x00100000 + 0x3F800000; return *(float *)&x; }
+__forceinline double randf64ge0lt1() { uint64_t x = rand64() % 0x3FF0000000000000; return *(double *)&x; }
+__forceinline double randf64gt0le1() { uint64_t x = rand64() % 0x3FF0000000000000 + 1; return *(double *)&x; }
+__forceinline double randf64gt0lt1() { uint64_t x = rand64() % 0x3FEFFFFFFFFFFFFF + 1; return *(double *)&x; }
+__forceinline double randf64ge1lt2() { uint64_t x = rand64() % 0x0010000000000000 + 0x3FF0000000000000; return *(double *)&x; }
 
 #pragma warning(pop)
 

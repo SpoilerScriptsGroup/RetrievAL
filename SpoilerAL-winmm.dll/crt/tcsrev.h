@@ -27,50 +27,47 @@ TCHAR * __cdecl _tcsrev(TCHAR *string)
 
 	if ((length = _tcslen(string)) > 1)
 	{
-		TCHAR *p1, *p2, c1, c2;
+		TCHAR *p1, *p2, c;
 
 		p2 = (p1 = string) + length - 1;
 		do
 		{
-			c1 = *p1;
-			c2 = *p2;
-			*p1 = c2;
-			*p2 = c1;
-			p1++;
-			p2--;
+			c = *p1;
+			*(p1++) = *p2;
+			*(p2--) = c;
 		} while (p1 < p2);
 	}
 	return string;
 #else
-	size_t size, offset;
+	size_t length, offset;
 	BYTE   *first, *last;
 
-	last = (first = (BYTE *)string) + (size = _tcslen(string) * sizeof(TCHAR)) - sizeof(DWORD) * 4;
-	if (size >= 16)
+	last = (first = (BYTE *)string) + (length = _tcslen(string)) * sizeof(TCHAR) - sizeof(DWORD) * 4;
+	if (length >= 16 / sizeof(TCHAR))
 	{
 		do
 		{
-			DWORD i, j, k, l;
+			DWORD a, b, c, d;
 
-			i = *(DWORD *)first;
-			j = *(DWORD *)(first + 4);
-			k = *(DWORD *)(last + 8);
-			l = *(DWORD *)(last + 12);
+			a = *(DWORD *)first;
+			b = *(DWORD *)(first + 4);
+			c = *(DWORD *)(last + 8);
+			d = *(DWORD *)(last + 12);
 #ifdef _UNICODE
-			i = _rotl(i, 16);
-			j = _rotl(j, 16);
-			k = _rotl(k, 16);
-			l = _rotl(l, 16);
+			a = _rotl(a, 16);
+			b = _rotl(b, 16);
+			c = _rotl(c, 16);
+			d = _rotl(d, 16);
 #else
-			i = _byteswap_ulong(i);
-			j = _byteswap_ulong(j);
-			k = _byteswap_ulong(k);
-			l = _byteswap_ulong(l);
+			a = _byteswap_ulong(a);
+			b = _byteswap_ulong(b);
+			c = _byteswap_ulong(c);
+			d = _byteswap_ulong(d);
 #endif
-			*(DWORD *)(last + 12) = i;
-			*(DWORD *)(last + 8) = j;
-			*(DWORD *)(first + 4) = k;
-			*(DWORD *)first = l;
+			*(DWORD *)(last + 12) = a;
+			*(DWORD *)(last + 8) = b;
+			*(DWORD *)(first + 4) = c;
+			*(DWORD *)first = d;
 			last -= 8;
 			first += 8;
 		} while (last >= first);
@@ -78,54 +75,54 @@ TCHAR * __cdecl _tcsrev(TCHAR *string)
 	offset = last - first;
 	if (!_sub_uintptr(offset, -8, &offset))
 	{
-		DWORD i, j;
+		DWORD a, b;
 
-		i = *(DWORD *)first;
-		j = *(DWORD *)(first + offset + 4);
+		a = *(DWORD *)first;
+		b = *(DWORD *)(first + offset + 4);
 #ifdef _UNICODE
-		i = _rotl(i, 16);
-		j = _rotl(j, 16);
+		a = _rotl(a, 16);
+		b = _rotl(b, 16);
 #else
-		i = _byteswap_ulong(i);
-		j = _byteswap_ulong(j);
+		a = _byteswap_ulong(a);
+		b = _byteswap_ulong(b);
 #endif
-		*(DWORD *)(first + offset + 4) = i;
+		*(DWORD *)(first + offset + 4) = a;
 		offset -= 8;
-		*(DWORD *)first = j;
+		*(DWORD *)first = b;
 		first += 4;
 	}
 #ifdef _UNICODE
 	if (!_sub_uintptr(offset, -4, &offset))
 	{
-		WORD i, j;
+		WORD a, b;
 
-		i = *(WORD *)first;
-		j = *(WORD *)(first + offset + 2);
-		*(WORD *)(first + offset + 2) = i;
-		*(WORD *)first = j;
+		a = *(WORD *)first;
+		b = *(WORD *)(first + offset + 2);
+		*(WORD *)(first + offset + 2) = a;
+		*(WORD *)first = b;
 	}
 #else
 	if (!_sub_uintptr(offset, -4, &offset))
 	{
-		WORD i, j;
+		WORD a, b;
 
-		i = *(WORD *)first;
-		j = *(WORD *)(first + offset + 2);
-		i = _rotl16(i, 8);
-		j = _rotl16(j, 8);
-		*(WORD *)(first + offset + 2) = i;
+		a = *(WORD *)first;
+		b = *(WORD *)(first + offset + 2);
+		a = _rotl16(a, 8);
+		b = _rotl16(b, 8);
+		*(WORD *)(first + offset + 2) = a;
 		offset -= 4;
-		*(WORD *)first = j;
+		*(WORD *)first = b;
 		first += 2;
 	}
 	if (!_sub_uintptr(offset, -2, &offset))
 	{
-		BYTE i, j;
+		BYTE a, b;
 
-		i = *first;
-		j = *(first + offset + 1);
-		*(first + offset + 1) = i;
-		*first = j;
+		a = *first;
+		b = *(first + offset + 1);
+		*(first + offset + 1) = a;
+		*first = b;
 	}
 #endif
 	return string;

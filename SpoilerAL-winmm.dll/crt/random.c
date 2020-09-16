@@ -1110,7 +1110,7 @@ uint32_t __cdecl internal_randf32gt0lt1()
 	do
 		uint32_t x = rand32();
 	while (x >= 0x3F7FFFFF * 4);
-	x = ((int32_t)x >= 0 ? 0 : UINT32_C(0x80000000) % 0x3F7FFFFF) + ((x & INT32_MIN) >> 7);
+	x = ((int32_t)x >= 0 ? 0 : UINT32_C(0x80000000) % 0x3F7FFFFF) + (x & INT32_MIN);
 	if (x >= 0x3F7FFFFF)
 		x -=
 			x < 0x3F7FFFFF * 2 ?
@@ -1269,7 +1269,7 @@ uint64_t __msreturn __cdecl internal_randf64gt0lt1()
 	do
 		uint64_t x = rand64();
 	while (x >= 0x3FEFFFFFFFFFFFFF * 4);
-	x = ((int64_t)x >= 0 ? 0 : UINT64_C(0x8000000000000000) % 0x3FEFFFFFFFFFFFFF) + ((x & INT64_MIN) >> 7);
+	x = ((int64_t)x >= 0 ? 0 : UINT64_C(0x8000000000000000) % 0x3FEFFFFFFFFFFFFF) + (x & INT64_MIN);
 #if INTPTR_MAX > INT32_MAX
 	if (x >= 0x3FEFFFFFFFFFFFFF)
 		x -=

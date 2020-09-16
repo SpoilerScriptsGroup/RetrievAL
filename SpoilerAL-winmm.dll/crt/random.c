@@ -829,7 +829,7 @@ __declspec(naked) uint32_t __cdecl rand32()
 #if !defined(_M_IX86)
 uint64_t __msreturn __cdecl rand64()
 {
-	uint64_t r;
+	uint64_t x;
 
 #if defined(__LITTLE_ENDIAN__)
 	if (idx >= SFMT_N32 - 1) {
@@ -838,18 +838,18 @@ uint64_t __msreturn __cdecl rand64()
 	if ((ptrdiff_t)idx <= 0) {
 		if (idx == 0) {
 #endif
-			((uint32_t *)&r)[IDX_LO] = sfmt32[IDX32(SFMT_N32 - 1)];
+			((uint32_t *)&x)[IDX_LO] = sfmt32[IDX32(SFMT_N32 - 1)];
 			sfmt_gen_rand_all();
-			((uint32_t *)&r)[IDX_HI] = sfmt32[IDX32(0)];
+			((uint32_t *)&x)[IDX_HI] = sfmt32[IDX32(0)];
 			idx = IDX32(1);
-			return r;
+			return x;
 		}
 		sfmt_gen_rand_all();
 		idx = IDX32(0);
 	}
-	r = *(uint64_t *)(sfmt32 - IDX_LO + idx);
+	x = *(uint64_t *)(sfmt32 - IDX_LO + idx);
 	idx += LE_PLUS(2);
-	return r;
+	return x;
 }
 #else
 __declspec(naked) uint64_t __msreturn __cdecl rand64()
@@ -900,13 +900,17 @@ __declspec(naked) uint64_t __msreturn __cdecl rand64()
 }
 #endif
 
+/**
+ * This function generates and returns single precision pseudorandom
+ * number which distributes uniformly in the range [0, FLT_MAX).
+ */
 #if !defined(_M_IX86)
 uint32_t __cdecl internal_randf32()
 {
-	uint32_t r;
+	uint32_t x;
 
-	while (((r = rand32()) & 0x7F800000) >= 0x7F800000);
-	return r;
+	while (((x = rand32()) & 0x7F800000) >= 0x7F800000);
+	return x;
 }
 #else
 __declspec(naked) uint32_t __cdecl internal_randf32()
@@ -926,19 +930,23 @@ __declspec(naked) uint32_t __cdecl internal_randf32()
 }
 #endif
 
+/**
+ * This function generates and returns double precision pseudorandom
+ * number which distributes uniformly in the range [0, DBL_MAX).
+ */
 #if !defined(_M_IX86)
 uint64_t __msreturn __cdecl internal_randf64()
 {
-	uint64_t r;
+	uint64_t x;
 
-	r = rand64();
-	while ((r & 0x7FF0000000000000) >= 0x7FF0000000000000)
+	x = rand64();
+	while ((x & 0x7FF0000000000000) >= 0x7FF0000000000000)
 #if defined(__LITTLE_ENDIAN__)
-		r = (r >> 32) | ((uint64_t)rand32() << 32);
+		x = (x >> 32) | ((uint64_t)rand32() << 32);
 #else
-		r = (r << 32) | rand32();
+		x = (x << 32) | rand32();
 #endif
-	return r;
+	return x;
 }
 #else
 __declspec(naked) uint64_t __msreturn __cdecl internal_randf64()
@@ -993,5 +1001,325 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64()
 		ret
 	}
 #endif
+}
+#endif
+
+/**
+ * This function generates and returns single precision pseudorandom
+ * number which distributes uniformly in the range [0, 1).
+ */
+#if !defined(_M_IX86)
+uint32_t __cdecl internal_randf32ge0lt1()
+{
+	uint32_t x;
+
+	do
+		uint32_t x = rand32();
+	while (x >= 0x3F800000 * 4);
+	x = ((x & INT32_MIN) >> 7) + (x & INT32_MAX);
+	if (x >= 0x3F800000)
+		x -=
+			x < 0x3F800000 * 2 ?
+				0x3F800000 :
+				0x3F800000 * 2;
+	return x;
+}
+#else
+__declspec(naked) uint32_t __cdecl internal_randf32ge0lt1()
+{
+	__asm
+	{
+	loop1:
+		call    rand32
+		cmp     eax, 0xFE000000
+		jae     loop1
+		mov     ecx, eax
+		and     eax, 0x80000000
+		shr     eax, 7
+		and     ecx, 0x7FFFFFFF
+		add     eax, ecx
+		cmp     eax, 0x3F800000
+		jb      epilog
+		sub     eax, 0x3F800000 * 2
+		sbb     ecx, ecx
+		and     ecx, 0x3F800000
+		add     eax, ecx
+	epilog:
+		ret
+	}
+}
+#endif
+
+/**
+ * This function generates and returns single precision pseudorandom
+ * number which distributes uniformly in the range (0, 1].
+ */
+#if !defined(_M_IX86)
+uint32_t __cdecl internal_randf32gt0le1()
+{
+	uint32_t x;
+
+	do
+		uint32_t x = rand32();
+	while (x >= 0x3F800000 * 4);
+	x = ((x & INT32_MIN) >> 7) + (x & INT32_MAX);
+	if (x >= 0x3F800000)
+		x -=
+			x < 0x3F800000 * 2 ?
+				0x3F800000 :
+				0x3F800000 * 2;
+	x++;
+	return *(float *)&x;
+}
+#else
+__declspec(naked) uint32_t __cdecl internal_randf32gt0le1()
+{
+	__asm
+	{
+	loop1:
+		call    rand32
+		cmp     eax, 0xFE000000
+		jae     loop1
+		mov     ecx, eax
+		and     eax, 0x80000000
+		shr     eax, 7
+		and     ecx, 0x7FFFFFFF
+		add     eax, ecx
+		cmp     eax, 0x3F800000
+		jb      epilog
+		sub     eax, 0x3F800000 * 2
+		sbb     ecx, ecx
+		and     ecx, 0x3F800000
+		add     eax, ecx
+	epilog:
+		inc     eax
+		ret
+	}
+}
+#endif
+
+/**
+ * This function generates and returns single precision pseudorandom
+ * number which distributes uniformly in the range (0, 1).
+ */
+#if !defined(_M_IX86)
+uint32_t __cdecl internal_randf32gt0lt1()
+{
+	uint32_t x;
+
+	do
+		uint32_t x = rand32();
+	while (x >= 0x3F7FFFFF * 4);
+	x = ((int32_t)x >= 0 ? 0 : UINT32_C(0x80000000) % 0x3F7FFFFF) + ((x & INT32_MIN) >> 7);
+	if (x >= 0x3F7FFFFF)
+		x -=
+			x < 0x3F7FFFFF * 2 ?
+				0x3F7FFFFF :
+				0x3F7FFFFF * 2;
+	x++;
+	return *(float *)&x;
+}
+#else
+__declspec(naked) uint32_t __cdecl internal_randf32gt0lt1()
+{
+	__asm
+	{
+	loop1:
+		call    rand32
+		cmp     eax, 0xFDFFFFFC
+		jae     loop1
+		add     eax, eax
+		sbb     ecx, ecx
+		shr     eax, 1
+		and     ecx, 0x01000002
+		add     eax, ecx
+		cmp     eax, 0x3F7FFFFF
+		jb      epilog
+		sub     eax, 0x3F7FFFFF * 2
+		sbb     ecx, ecx
+		and     ecx, 0x3F7FFFFF
+		add     eax, ecx
+	epilog:
+		inc     eax
+		ret
+	}
+}
+#endif
+
+/**
+ * This function generates and returns double precision pseudorandom
+ * number which distributes uniformly in the range [0, 1).
+ */
+#if !defined(_M_IX86)
+uint64_t __msreturn __cdecl internal_randf64ge0lt1()
+{
+	uint64_t x;
+
+	do
+		uint64_t x = rand64();
+	while (x >= 0x3FF0000000000000 * 4);
+	x = ((x & INT64_MIN) >> 10) + (x & INT64_MAX);
+#if INTPTR_MAX > INT32_MAX
+	if (x >= 0x3FF0000000000000)
+		x -=
+			x < 0x3FF0000000000000 * 2 ?
+				0x3FF0000000000000 :
+				0x3FF0000000000000 * 2;
+#else
+	if ((uint32_t)(x >> 32) >= 0x3FF00000)
+		x -=
+			(uint32_t)(x >> 32) < 0x3FF00000 * 2 ?
+				0x3FF0000000000000 :
+				0x3FF0000000000000 * 2;
+#endif
+	return *(double *)&x;
+}
+#else
+__declspec(naked) uint64_t __msreturn __cdecl internal_randf64ge0lt1()
+{
+	__asm
+	{
+	loop1:
+		call    rand64
+		cmp     edx, 0xFFC00000
+		jae     loop1
+		mov     ecx, edx
+		and     edx, 0x80000000
+		shr     edx, 10
+		and     ecx, 0x7FFFFFFF
+		add     edx, ecx
+		cmp     edx, 0x3FF00000
+		jb      epilog
+		sub     edx, 0x3FF00000 * 2
+		sbb     ecx, ecx
+		and     ecx, 0x3FF00000
+		add     edx, ecx
+	epilog:
+		ret
+	}
+}
+#endif
+
+/**
+ * This function generates and returns double precision pseudorandom
+ * number which distributes uniformly in the range (0, 1].
+ */
+#if !defined(_M_IX86)
+uint64_t __msreturn __cdecl internal_randf64gt0le1()
+{
+	uint64_t x;
+
+	do
+		uint64_t x = rand64();
+	while (x >= 0x3FF0000000000000 * 4);
+	x = ((x & INT64_MIN) >> 10) + (x & INT64_MAX);
+#if INTPTR_MAX > INT32_MAX
+	if (x >= 0x3FF0000000000000)
+		x -=
+			x < 0x3FF0000000000000 * 2 ?
+				0x3FF0000000000000 :
+				0x3FF0000000000000 * 2;
+#else
+	if ((uint32_t)(x >> 32) >= 0x3FF00000)
+		x -=
+			(uint32_t)(x >> 32) < 0x3FF00000 * 2 ?
+				0x3FF0000000000000 :
+				0x3FF0000000000000 * 2;
+#endif
+	x++;
+	return *(double *)&x;
+}
+#else
+__declspec(naked) uint64_t __msreturn __cdecl internal_randf64gt0le1()
+{
+	__asm
+	{
+	loop1:
+		call    rand64
+		cmp     edx, 0xFFC00000
+		jae     loop1
+		mov     ecx, edx
+		and     edx, 0x80000000
+		shr     edx, 10
+		and     ecx, 0x7FFFFFFF
+		add     edx, ecx
+		cmp     edx, 0x3FF00000
+		jb      epilog
+		sub     edx, 0x3FF00000 * 2
+		sbb     ecx, ecx
+		and     ecx, 0x3FF00000
+		add     edx, ecx
+	epilog:
+		add     eax, 1
+		adc     edx, 0
+		ret
+	}
+}
+#endif
+
+/**
+ * This function generates and returns double precision pseudorandom
+ * number which distributes uniformly in the range (0, 1).
+ */
+#if !defined(_M_IX86)
+uint64_t __msreturn __cdecl internal_randf64gt0lt1()
+{
+	uint64_t x;
+
+	do
+		uint64_t x = rand64();
+	while (x >= 0x3FEFFFFFFFFFFFFF * 4);
+	x = ((int64_t)x >= 0 ? 0 : UINT64_C(0x8000000000000000) % 0x3FEFFFFFFFFFFFFF) + ((x & INT64_MIN) >> 7);
+#if INTPTR_MAX > INT32_MAX
+	if (x >= 0x3FEFFFFFFFFFFFFF)
+		x -=
+			x < 0x3FEFFFFFFFFFFFFF * 2 ?
+				0x3FEFFFFFFFFFFFFF :
+				0x3FEFFFFFFFFFFFFF * 2;
+	x++;
+#else
+	if ((uint32_t)(++x >> 32) >= 0x3FF00000)
+		x -=
+			x < 0x3FEFFFFFFFFFFFFF * 2 + 1 ?
+				0x3FEFFFFFFFFFFFFF :
+				0x3FEFFFFFFFFFFFFF * 2;
+#endif
+	return *(double *)&x;
+}
+#else
+__declspec(naked) uint64_t __msreturn __cdecl internal_randf64gt0lt1()
+{
+	__asm
+	{
+	loop1:
+		call    rand64
+		mov     ecx, edx
+		cmp     eax, 0xFFFFFFFC
+		sbb     ecx, 0xFFBFFFFF
+		jae     loop1
+		push    esi
+		add     edx, edx
+		sbb     ecx, ecx
+		shr     edx, 1
+		mov     esi, ecx
+		and     ecx, 0x00000002
+		and     esi, 0x00200000
+		add     eax, ecx
+		adc     edx, esi
+		cmp     edx, 0x3FF00000
+		jb      epilog
+		sub     eax, 0xFFFFFFFF
+		sbb     edx, 0x7FDFFFFF
+		sbb     ecx, ecx
+		add     eax, 1
+		adc     edx, 0
+		mov     esi, ecx
+		and     ecx, 0x3FEFFFFF
+		add     eax, esi
+		adc     edx, ecx
+	epilog:
+		pop     esi
+		ret
+	}
 }
 #endif

@@ -1016,7 +1016,7 @@ uint32_t __cdecl internal_randf32ge0lt1()
 	do
 		uint32_t x = rand32();
 	while (x >= 0x3F800000 * 4);
-	x = ((x & INT32_MIN) >> 7) + (x & INT32_MAX);
+	x = ((uint32_t)(x & INT32_MIN) >> 7) + (x & INT32_MAX);
 	if (x >= 0x3F800000)
 		x -=
 			x < 0x3F800000 * 2 ?
@@ -1031,20 +1031,22 @@ __declspec(naked) uint32_t __cdecl internal_randf32ge0lt1()
 	{
 	loop1:
 		call    rand32
-		cmp     eax, 0xFE000000
+		cmp     eax, 0x3F800000 * 4
 		jae     loop1
-		mov     ecx, eax
-		and     eax, 0x80000000
-		shr     eax, 7
-		and     ecx, 0x7FFFFFFF
-		add     eax, ecx
-		cmp     eax, 0x3F800000
-		jb      epilog
+
 		sub     eax, 0x3F800000 * 2
-		sbb     ecx, ecx
-		and     ecx, 0x3F800000
-		add     eax, ecx
-	epilog:
+		jae     more
+		add     eax, 0x3F800000
+		jnc     pullback
+		ret
+
+		align   16
+	more:
+		sub     eax, 0x3F800000
+		jae     done
+	pullback:
+		add     eax, 0x3F800000
+	done:
 		ret
 	}
 }
@@ -1062,7 +1064,7 @@ uint32_t __cdecl internal_randf32gt0le1()
 	do
 		uint32_t x = rand32();
 	while (x >= 0x3F800000 * 4);
-	x = ((x & INT32_MIN) >> 7) + (x & INT32_MAX);
+	x = ((uint32_t)(x & INT32_MIN) >> 7) + (x & INT32_MAX);
 	if (x >= 0x3F800000)
 		x -=
 			x < 0x3F800000 * 2 ?
@@ -1078,21 +1080,22 @@ __declspec(naked) uint32_t __cdecl internal_randf32gt0le1()
 	{
 	loop1:
 		call    rand32
-		cmp     eax, 0xFE000000
+		cmp     eax, 0x3F800000 * 4
 		jae     loop1
-		mov     ecx, eax
-		and     eax, 0x80000000
-		shr     eax, 7
-		and     ecx, 0x7FFFFFFF
-		add     eax, ecx
-		cmp     eax, 0x3F800000
-		jb      epilog
+
 		sub     eax, 0x3F800000 * 2
-		sbb     ecx, ecx
-		and     ecx, 0x3F800000
-		add     eax, ecx
-	epilog:
-		inc     eax
+		jae     more
+		sub     eax, -(0x3F800000 - 1)
+		jbe     pullback
+		ret
+
+		align   16
+	more:
+		sub     eax, 0x3F800000 - 1
+		ja      done
+	pullback:
+		add     eax, 0x3F800000
+	done:
 		ret
 	}
 }
@@ -1126,21 +1129,22 @@ __declspec(naked) uint32_t __cdecl internal_randf32gt0lt1()
 	{
 	loop1:
 		call    rand32
-		cmp     eax, 0xFDFFFFFC
+		cmp     eax, 0x3F7FFFFF * 4
 		jae     loop1
-		add     eax, eax
-		sbb     ecx, ecx
-		shr     eax, 1
-		and     ecx, 0x01000002
-		add     eax, ecx
-		cmp     eax, 0x3F7FFFFF
-		jb      epilog
+
 		sub     eax, 0x3F7FFFFF * 2
-		sbb     ecx, ecx
-		and     ecx, 0x3F7FFFFF
-		add     eax, ecx
-	epilog:
-		inc     eax
+		jae     more
+		sub     eax, -(0x3F7FFFFF - 1)
+		jbe     pullback
+		ret
+
+		align   16
+	more:
+		sub     eax, 0x3F7FFFFF - 1
+		ja      done
+	pullback:
+		add     eax, 0x3F7FFFFF
+	done:
 		ret
 	}
 }
@@ -1158,20 +1162,12 @@ uint64_t __msreturn __cdecl internal_randf64ge0lt1()
 	do
 		uint64_t x = rand64();
 	while (x >= 0x3FF0000000000000 * 4);
-	x = ((x & INT64_MIN) >> 10) + (x & INT64_MAX);
-#if INTPTR_MAX > INT32_MAX
+	x = ((uint64_t)(x & INT64_MIN) >> 10) + (x & INT64_MAX);
 	if (x >= 0x3FF0000000000000)
 		x -=
 			x < 0x3FF0000000000000 * 2 ?
 				0x3FF0000000000000 :
 				0x3FF0000000000000 * 2;
-#else
-	if ((uint32_t)(x >> 32) >= 0x3FF00000)
-		x -=
-			(uint32_t)(x >> 32) < 0x3FF00000 * 2 ?
-				0x3FF0000000000000 :
-				0x3FF0000000000000 * 2;
-#endif
 	return *(double *)&x;
 }
 #else
@@ -1181,20 +1177,22 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64ge0lt1()
 	{
 	loop1:
 		call    rand64
-		cmp     edx, 0xFFC00000
+		cmp     edx, 0x3FF00000 * 4
 		jae     loop1
-		mov     ecx, edx
-		and     edx, 0x80000000
-		shr     edx, 10
-		and     ecx, 0x7FFFFFFF
-		add     edx, ecx
-		cmp     edx, 0x3FF00000
-		jb      epilog
+
 		sub     edx, 0x3FF00000 * 2
-		sbb     ecx, ecx
-		and     ecx, 0x3FF00000
-		add     edx, ecx
-	epilog:
+		jae     more
+		add     edx, 0x3FF00000
+		jnc     pullback
+		ret
+
+		align   16
+	more:
+		sub     edx, 0x3FF00000
+		jae     done
+	pullback:
+		add     edx, 0x3FF00000
+	done:
 		ret
 	}
 }
@@ -1212,20 +1210,12 @@ uint64_t __msreturn __cdecl internal_randf64gt0le1()
 	do
 		uint64_t x = rand64();
 	while (x >= 0x3FF0000000000000 * 4);
-	x = ((x & INT64_MIN) >> 10) + (x & INT64_MAX);
-#if INTPTR_MAX > INT32_MAX
+	x = ((uint64_t)(x & INT64_MIN) >> 10) + (x & INT64_MAX);
 	if (x >= 0x3FF0000000000000)
 		x -=
 			x < 0x3FF0000000000000 * 2 ?
 				0x3FF0000000000000 :
 				0x3FF0000000000000 * 2;
-#else
-	if ((uint32_t)(x >> 32) >= 0x3FF00000)
-		x -=
-			(uint32_t)(x >> 32) < 0x3FF00000 * 2 ?
-				0x3FF0000000000000 :
-				0x3FF0000000000000 * 2;
-#endif
 	x++;
 	return *(double *)&x;
 }
@@ -1236,22 +1226,29 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64gt0le1()
 	{
 	loop1:
 		call    rand64
-		cmp     edx, 0xFFC00000
+		cmp     edx, 0x3FF00000 * 4
 		jae     loop1
-		mov     ecx, edx
-		and     edx, 0x80000000
-		shr     edx, 10
-		and     ecx, 0x7FFFFFFF
-		add     edx, ecx
-		cmp     edx, 0x3FF00000
-		jb      epilog
+
 		sub     edx, 0x3FF00000 * 2
-		sbb     ecx, ecx
-		and     ecx, 0x3FF00000
-		add     edx, ecx
-	epilog:
+		jae     more
+		add     edx, 0x3FF00000
+		jnc     pullback
 		add     eax, 1
 		adc     edx, 0
+		ret
+
+		align   16
+	more:
+		sub     edx, 0x3FF00000
+		jb      pullback
+		add     eax, 1
+		adc     edx, 0
+		ret
+
+		align   16
+	pullback:
+		add     eax, 0x00000001
+		adc     edx, 0x3FF00000
 		ret
 	}
 }
@@ -1270,20 +1267,12 @@ uint64_t __msreturn __cdecl internal_randf64gt0lt1()
 		uint64_t x = rand64();
 	while (x >= 0x3FEFFFFFFFFFFFFF * 4);
 	x = ((int64_t)x >= 0 ? 0 : UINT64_C(0x8000000000000000) % 0x3FEFFFFFFFFFFFFF) + (x & INT64_MIN);
-#if INTPTR_MAX > INT32_MAX
 	if (x >= 0x3FEFFFFFFFFFFFFF)
 		x -=
 			x < 0x3FEFFFFFFFFFFFFF * 2 ?
 				0x3FEFFFFFFFFFFFFF :
 				0x3FEFFFFFFFFFFFFF * 2;
 	x++;
-#else
-	if ((uint32_t)(++x >> 32) >= 0x3FF00000)
-		x -=
-			x < 0x3FEFFFFFFFFFFFFF * 2 + 1 ?
-				0x3FEFFFFFFFFFFFFF :
-				0x3FEFFFFFFFFFFFFF * 2;
-#endif
 	return *(double *)&x;
 }
 #else
@@ -1294,31 +1283,33 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64gt0lt1()
 	loop1:
 		call    rand64
 		mov     ecx, edx
-		cmp     eax, 0xFFFFFFFC
-		sbb     ecx, 0xFFBFFFFF
+		cmp     eax, 0xFFFFFFFC	// (0x3FEFFFFFFFFFFFFF * 4) & UINT32_MAX
+		sbb     ecx, 0xFFBFFFFF	// (0x3FEFFFFFFFFFFFFF * 4) >> 32
 		jae     loop1
-		push    esi
-		add     edx, edx
-		sbb     ecx, ecx
-		shr     edx, 1
-		mov     esi, ecx
-		and     ecx, 0x00000002
-		and     esi, 0x00200000
-		add     eax, ecx
-		adc     edx, esi
-		cmp     edx, 0x3FF00000
-		jb      epilog
-		sub     eax, 0xFFFFFFFF
-		sbb     edx, 0x7FDFFFFF
-		sbb     ecx, ecx
+
+		mov     ecx, 0x3FEFFFFF	// 0x3FEFFFFFFFFFFFFF >> 32
+		sub     eax, 0xFFFFFFFE	// (0x3FEFFFFFFFFFFFFF * 2) & UINT32_MAX
+		sbb     edx, 0x7FDFFFFF	// (0x3FEFFFFFFFFFFFFF * 2) >> 32
+		jae     more
+		add     eax, 0xFFFFFFFF	// 0x3FEFFFFFFFFFFFFF & UINT32_MAX
+		adc     edx, ecx
+		jnc     pullback
 		add     eax, 1
 		adc     edx, 0
-		mov     esi, ecx
-		and     ecx, 0x3FEFFFFF
-		add     eax, esi
-		adc     edx, ecx
-	epilog:
-		pop     esi
+		ret
+
+		align   16
+	more:
+		sub     eax, 0xFFFFFFFF	// 0x3FEFFFFFFFFFFFFF & UINT32_MAX
+		sbb     edx, ecx
+		jb      pullback
+		add     eax, 1
+		adc     edx, 0
+		ret
+
+		align   16
+	pullback:
+		add     edx, 0x3FF00000	// (0x3FEFFFFFFFFFFFFF + 1) >> 32
 		ret
 	}
 }

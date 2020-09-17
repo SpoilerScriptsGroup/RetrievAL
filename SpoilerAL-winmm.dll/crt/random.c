@@ -596,7 +596,6 @@ __declspec(naked) static void sfmt_gen_rand_all_cpu_dispatch()
 /*----------------
   PUBLIC FUNCTIONS
   ----------------*/
-uint32_t __cdecl rand32();
 
 /* This function initializes the internal state array with a 32-bit
    integer seed. */
@@ -1014,14 +1013,12 @@ uint32_t __cdecl internal_randf32ge0lt1()
 	uint32_t x;
 
 	do
-		uint32_t x = rand32();
+		x = rand32();
 	while (x >= 0x3F800000 * 4);
-	x = ((uint32_t)(x & INT32_MIN) >> 7) + (x & INT32_MAX);
+	if (x >= 0x3F800000 * 2)
+		x -= 0x3F800000 * 2;
 	if (x >= 0x3F800000)
-		x -=
-			x < 0x3F800000 * 2 ?
-				0x3F800000 :
-				0x3F800000 * 2;
+		x -= 0x3F800000;
 	return x;
 }
 #else
@@ -1062,14 +1059,12 @@ uint32_t __cdecl internal_randf32gt0le1()
 	uint32_t x;
 
 	do
-		uint32_t x = rand32();
+		x = rand32();
 	while (x >= 0x3F800000 * 4);
-	x = ((uint32_t)(x & INT32_MIN) >> 7) + (x & INT32_MAX);
+	if (x >= 0x3F800000 * 2)
+		x -= 0x3F800000 * 2;
 	if (x >= 0x3F800000)
-		x -=
-			x < 0x3F800000 * 2 ?
-				0x3F800000 :
-				0x3F800000 * 2;
+		x -= 0x3F800000;
 	x++;
 	return *(float *)&x;
 }
@@ -1111,14 +1106,12 @@ uint32_t __cdecl internal_randf32gt0lt1()
 	uint32_t x;
 
 	do
-		uint32_t x = rand32();
+		x = rand32();
 	while (x >= 0x3F7FFFFF * 4);
-	x = ((int32_t)x >= 0 ? 0 : UINT32_C(0x80000000) % 0x3F7FFFFF) + (x & INT32_MIN);
+	if (x >= 0x3F7FFFFF * 2)
+		x -= 0x3F7FFFFF * 2;
 	if (x >= 0x3F7FFFFF)
-		x -=
-			x < 0x3F7FFFFF * 2 ?
-				0x3F7FFFFF :
-				0x3F7FFFFF * 2;
+		x -= 0x3F7FFFFF;
 	x++;
 	return *(float *)&x;
 }
@@ -1160,14 +1153,12 @@ uint64_t __msreturn __cdecl internal_randf64ge0lt1()
 	uint64_t x;
 
 	do
-		uint64_t x = rand64();
+		x = rand64();
 	while (x >= 0x3FF0000000000000 * 4);
-	x = ((uint64_t)(x & INT64_MIN) >> 10) + (x & INT64_MAX);
+	if (x >= 0x3FF0000000000000 * 2)
+		x -= 0x3FF0000000000000 * 2;
 	if (x >= 0x3FF0000000000000)
-		x -=
-			x < 0x3FF0000000000000 * 2 ?
-				0x3FF0000000000000 :
-				0x3FF0000000000000 * 2;
+		x -= 0x3FF0000000000000;
 	return *(double *)&x;
 }
 #else
@@ -1208,14 +1199,12 @@ uint64_t __msreturn __cdecl internal_randf64gt0le1()
 	uint64_t x;
 
 	do
-		uint64_t x = rand64();
+		x = rand64();
 	while (x >= 0x3FF0000000000000 * 4);
-	x = ((uint64_t)(x & INT64_MIN) >> 10) + (x & INT64_MAX);
+	if (x >= 0x3FF0000000000000 * 2)
+		x -= 0x3FF0000000000000 * 2;
 	if (x >= 0x3FF0000000000000)
-		x -=
-			x < 0x3FF0000000000000 * 2 ?
-				0x3FF0000000000000 :
-				0x3FF0000000000000 * 2;
+		x -= 0x3FF0000000000000;
 	x++;
 	return *(double *)&x;
 }
@@ -1264,14 +1253,12 @@ uint64_t __msreturn __cdecl internal_randf64gt0lt1()
 	uint64_t x;
 
 	do
-		uint64_t x = rand64();
+		x = rand64();
 	while (x >= 0x3FEFFFFFFFFFFFFF * 4);
-	x = ((int64_t)x >= 0 ? 0 : UINT64_C(0x8000000000000000) % 0x3FEFFFFFFFFFFFFF) + (x & INT64_MIN);
+	if (x >= 0x3FEFFFFFFFFFFFFF * 2)
+		x -= 0x3FEFFFFFFFFFFFFF * 2;
 	if (x >= 0x3FEFFFFFFFFFFFFF)
-		x -=
-			x < 0x3FEFFFFFFFFFFFFF * 2 ?
-				0x3FEFFFFFFFFFFFFF :
-				0x3FEFFFFFFFFFFFFF * 2;
+		x -= 0x3FEFFFFFFFFFFFFF;
 	x++;
 	return *(double *)&x;
 }

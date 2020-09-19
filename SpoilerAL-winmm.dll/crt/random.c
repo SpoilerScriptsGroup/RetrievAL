@@ -596,7 +596,6 @@ __declspec(naked) static void sfmt_gen_rand_all_cpu_dispatch()
 /*----------------
   PUBLIC FUNCTIONS
   ----------------*/
-
 /* This function initializes the internal state array with a 32-bit
    integer seed. */
 #if !defined(_M_IX86)
@@ -908,7 +907,7 @@ uint32_t __cdecl internal_randf32()
 {
 	uint32_t x;
 
-	while (((x = rand32()) & 0x7F800000) >= 0x7F800000);
+	while (((x = rand32()) & 0x7FFFFFFF) >= 0x7F800000);
 	return x;
 }
 #else
@@ -939,11 +938,11 @@ uint64_t __msreturn __cdecl internal_randf64()
 	uint64_t x;
 
 	x = rand64();
-	while ((x & 0x7FF0000000000000) >= 0x7FF0000000000000)
+	while ((x & 0x7FFFFFFFFFFFFFFF) >= 0x7FF0000000000000)
 #if defined(__LITTLE_ENDIAN__)
-		x = (x >> 32) | ((uint64_t)rand32() << 32);
+		x = ((uint64_t)rand32() << 32) | (x >> 32);
 #else
-		x = (x << 32) | rand32();
+		x = rand32() | (x << 32);
 #endif
 	return x;
 }
@@ -1012,9 +1011,7 @@ uint32_t __cdecl internal_randf32ge0lt1()
 {
 	uint32_t x;
 
-	do
-		x = rand32();
-	while (x >= 0x3F800000 * 4);
+	while ((x = rand32()) >= 0x3F800000 * 4);
 	return x >> 2;
 }
 #else
@@ -1042,9 +1039,7 @@ uint32_t __cdecl internal_randf32gt0le1()
 {
 	uint32_t x;
 
-	do
-		x = rand32();
-	while (x >= 0x3F800000 * 4);
+	while ((x = rand32()) >= 0x3F800000 * 4);
 	return (x >> 2) + 1;
 }
 #else
@@ -1073,9 +1068,7 @@ uint32_t __cdecl internal_randf32gt0lt1()
 {
 	uint32_t x;
 
-	do
-		x = rand32();
-	while (x >= (0x3F800000 - 1) * 4);
+	while ((x = rand32()) >= (0x3F800000 - 1) * 4);
 	return (x >> 2) + 1;
 }
 #else
@@ -1104,14 +1097,14 @@ uint64_t __msreturn __cdecl internal_randf64ge0lt1()
 {
 	uint64_t x;
 
-	x = rand64();
-	while (x >= 0x3FF0000000000000 * 4)
+	x = rand64() & 0x3FFFFFFFFFFFFFFF;
+	while (x >= 0x3FF0000000000000)
 #if defined(__LITTLE_ENDIAN__)
-		x = (x >> 32) | ((uint64_t)rand32() << 32);
+		x = ((uint64_t)(rand32() & 0x3FFFFFFF) << 32) | (x >> 32);
 #else
-		x = (x << 32) | rand32();
+		x = rand32() | ((x & 0x3FFFFFFF) << 32);
 #endif
-	return x >> 2;
+	return x;
 }
 #else
 __declspec(naked) uint64_t __msreturn __cdecl internal_randf64ge0lt1()
@@ -1119,40 +1112,35 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64ge0lt1()
 	__asm
 	{
 		call    rand64
-		cmp     edx, 0x3FF00000 * 4
-		jb      shift
 #if defined(__LITTLE_ENDIAN__)
+		mov     ecx, edx
+#endif
+		and     edx, 0x3FFFFFFF
+		cmp     edx, 0x3FF00000
+		jb      done
 		push    esi
-		mov     esi, edx
-
-		align   16
-	loop1:
-		call    rand32
-		mov     ecx, esi
-		mov     esi, eax
-		cmp     eax, 0x3FF00000 * 4
-		jae     loop1
-
-		mov     edx, eax
-		mov     eax, ecx
-		pop     esi
+#if defined(__LITTLE_ENDIAN__)
+		mov     esi, ecx
 #else
-		push    esi
 		mov     esi, eax
+#endif
 
-		align   16
 	loop1:
 		call    rand32
+#if defined(__LITTLE_ENDIAN__)
+		mov     edx, eax
+		mov     eax, esi
+		mov     esi, edx
+#else
 		mov     edx, esi
 		mov     esi, eax
-		cmp     edx, 0x3FF00000 * 4
+#endif
+		and     edx, 0x3FFFFFFF
+		cmp     edx, 0x3FF00000
 		jae     loop1
 
 		pop     esi
-#endif
-	shift:
-		shrd    eax, edx, 2
-		shr     edx, 2
+	done:
 		ret
 	}
 }
@@ -1167,14 +1155,14 @@ uint64_t __msreturn __cdecl internal_randf64gt0le1()
 {
 	uint64_t x;
 
-	x = rand64();
-	while (x >= 0x3FF0000000000000 * 4)
+	x = rand64() & 0x3FFFFFFFFFFFFFFF;
+	while (x >= 0x3FF0000000000000)
 #if defined(__LITTLE_ENDIAN__)
-		x = (x >> 32) | ((uint64_t)rand32() << 32);
+		x = ((uint64_t)(rand32() & 0x3FFFFFFF) << 32) | (x >> 32);
 #else
-		x = (x << 32) | rand32();
+		x = rand32() | ((x & 0x3FFFFFFF) << 32);
 #endif
-	return (x >> 2) + 1;
+	return x + 1;
 }
 #else
 __declspec(naked) uint64_t __msreturn __cdecl internal_randf64gt0le1()
@@ -1182,40 +1170,35 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64gt0le1()
 	__asm
 	{
 		call    rand64
-		cmp     edx, 0x3FF00000 * 4
-		jb      shift
 #if defined(__LITTLE_ENDIAN__)
+		mov     ecx, edx
+#endif
+		and     edx, 0x3FFFFFFF
+		cmp     edx, 0x3FF00000
+		jb      done
 		push    esi
-		mov     esi, edx
-
-		align   16
-	loop1:
-		call    rand32
-		mov     ecx, esi
-		mov     esi, eax
-		cmp     eax, 0x3FF00000 * 4
-		jae     loop1
-
-		mov     edx, eax
-		mov     eax, ecx
-		pop     esi
+#if defined(__LITTLE_ENDIAN__)
+		mov     esi, ecx
 #else
-		push    esi
 		mov     esi, eax
+#endif
 
-		align   16
 	loop1:
 		call    rand32
+#if defined(__LITTLE_ENDIAN__)
+		mov     edx, eax
+		mov     eax, esi
+		mov     esi, edx
+#else
 		mov     edx, esi
 		mov     esi, eax
-		cmp     edx, 0x3FF00000 * 4
+#endif
+		and     edx, 0x3FFFFFFF
+		cmp     edx, 0x3FF00000
 		jae     loop1
 
 		pop     esi
-#endif
-	shift:
-		shrd    eax, edx, 2
-		shr     edx, 2
+	done:
 		add     eax, 1
 		adc     edx, 0
 		ret
@@ -1232,14 +1215,14 @@ uint64_t __msreturn __cdecl internal_randf64gt0lt1()
 {
 	uint64_t x;
 
-	x = rand64();
-	while (x >= (0x3FF0000000000000 - 1) * 4)
+	x = rand64() & 0x3FFFFFFFFFFFFFFF;
+	while (x >= 0x3FF0000000000000 - 1)
 #if defined(__LITTLE_ENDIAN__)
-		x = (x >> 32) | ((uint64_t)rand32() << 32);
+		x = ((uint64_t)(rand32() & 0x3FFFFFFF) << 32) | (x >> 32);
 #else
-		x = (x << 32) | rand32();
+		x = rand32() | ((x & 0x3FFFFFFF) << 32);
 #endif
-	return (x >> 2) + 1;
+	return x + 1;
 }
 #else
 __declspec(naked) uint64_t __msreturn __cdecl internal_randf64gt0lt1()
@@ -1247,37 +1230,41 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64gt0lt1()
 	__asm
 	{
 		call    rand64
-#if defined(__LITTLE_ENDIAN__)
-		mov     ecx, edx
-#else
-		mov     ecx, eax
-#endif
-		sub     eax, 0xFFFFFFFC	// ((0x3FF0000000000000 - 1) * 4) & UINT32_MAX
-		sbb     edx, 0xFFBFFFFF	// ((0x3FF0000000000000 - 1) * 4) >> 32
-		jb      shift
 		push    esi
-		mov     esi, ecx
+#if defined(__LITTLE_ENDIAN__)
+		mov     esi, edx
+#else
+		mov     esi, eax
+#endif
+		and     edx, 0x3FFFFFFF
+		sub     eax, 0xFFFFFFFF	// (0x3FF0000000000000 - 1) & UINT32_MAX
+		sbb     edx, 0x3FEFFFFF	// (0x3FF0000000000000 - 1) >> 32
+		jb      done
 
-		align   16
 	loop1:
 		call    rand32
 #if defined(__LITTLE_ENDIAN__)
-		mov     edx, eax
-		mov     eax, esi
-		mov     esi, edx
+		mov     ecx, esi
+		mov     esi, eax
+		and     eax, 0x3FFFFFFF
+		sub     ecx, 0xFFFFFFFF	// (0x3FF0000000000000 - 1) & UINT32_MAX
+		sbb     eax, 0x3FEFFFFF	// (0x3FF0000000000000 - 1) >> 32
 #else
 		mov     edx, esi
 		mov     esi, eax
+		and     edx, 0x3FFFFFFF
+		sub     eax, 0xFFFFFFFF	// (0x3FF0000000000000 - 1) & UINT32_MAX
+		sbb     edx, 0x3FEFFFFF	// (0x3FF0000000000000 - 1) >> 32
 #endif
-		sub     eax, 0xFFFFFFFC	// ((0x3FF0000000000000 - 1) * 4) & UINT32_MAX
-		sbb     edx, 0xFFBFFFFF	// ((0x3FF0000000000000 - 1) * 4) >> 32
 		jae     loop1
 
+#if defined(__LITTLE_ENDIAN__)
+		mov     edx, eax
+		mov     eax, ecx
+#endif
+	done:
+		add     edx, 0x3FF00000	// 0x3FF0000000000000 >> 32
 		pop     esi
-	shift:
-		add     edx, 0xFFC00000	// (0x3FF0000000000000 * 4) >> 32
-		shrd    eax, edx, 2
-		shr     edx, 2
 		ret
 	}
 }

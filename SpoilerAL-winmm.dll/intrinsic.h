@@ -1536,12 +1536,12 @@ __forceinline unsigned int _udiv64(unsigned __int64 dividend, unsigned int divis
 	return (unsigned int)x;
 }
 #elif defined(__BORLANDC__)
-int __fastcall __fastcall_div64(int32_t low, int32_t high, int divisor, int *remainder);
-int __fastcall __fastcall__div64(int32_t low, int32_t high, int divisor);
-unsigned int __fastcall __fastcall_udiv64(uint32_t low, uint32_t high, unsigned int divisor, unsigned int *remainder);
-unsigned int __fastcall __fastcall__udiv64(uint32_t low, uint32_t high, unsigned int divisor);
-#define _div64(dividend, divisor, remainder) __fastcall_div64((int32_t)(dividend), (int32_t)((uint64_t)(int64_t)(dividend) >> 32), divisor, remainder)
-#define _udiv64(dividend, divisor, remainder) __fastcall_udiv64((uint32_t)(dividend), (uint32_t)((uint64_t)(dividend) >> 32), divisor, remainder)
+int __fastcall __fastcall_dvrm64(int32_t low, int32_t high, int divisor, int *remainder);
+int __fastcall __fastcall_div64(int32_t low, int32_t high, int divisor);
+unsigned int __fastcall __fastcall_udvrm64(uint32_t low, uint32_t high, unsigned int divisor, unsigned int *remainder);
+unsigned int __fastcall __fastcall_udiv64(uint32_t low, uint32_t high, unsigned int divisor);
+#define _div64(dividend, divisor, remainder) __fastcall_dvrm64((int32_t)(dividend), (int32_t)((uint64_t)(int64_t)(dividend) >> 32), divisor, remainder)
+#define _udiv64(dividend, divisor, remainder) __fastcall_udvrm64((uint32_t)(dividend), (uint32_t)((uint64_t)(dividend) >> 32), divisor, remainder)
 #else
 __forceinline int _div64(int64_t dividend, int divisor, int *remainder)
 {

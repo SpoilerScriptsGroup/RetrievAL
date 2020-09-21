@@ -536,7 +536,7 @@ __declspec(naked) unsigned __int64 __msreturn __fastcall __emulu(unsigned int a,
 	}
 }
 
-__declspec(naked) int __fastcall __fastcall_div64(int32_t low, int32_t high, int divisor, int *remainder)
+__declspec(naked) int __fastcall __fastcall_dvrm64(int32_t low, int32_t high, int divisor, int *remainder)
 {
 	__asm
 	{
@@ -547,7 +547,7 @@ __declspec(naked) int __fastcall __fastcall_div64(int32_t low, int32_t high, int
 	}
 }
 
-__declspec(naked) int __fastcall __fastcall__div64(int32_t low, int32_t high, int divisor)
+__declspec(naked) int __fastcall __fastcall_div64(int32_t low, int32_t high, int divisor)
 {
 	__asm
 	{
@@ -556,7 +556,7 @@ __declspec(naked) int __fastcall __fastcall__div64(int32_t low, int32_t high, in
 	}
 }
 
-__declspec(naked) unsigned int __fastcall __fastcall_udiv64(uint32_t low, uint32_t high, unsigned int divisor, unsigned int *remainder)
+__declspec(naked) unsigned int __fastcall __fastcall_udvrm64(uint32_t low, uint32_t high, unsigned int divisor, unsigned int *remainder)
 {
 	__asm
 	{
@@ -567,7 +567,7 @@ __declspec(naked) unsigned int __fastcall __fastcall_udiv64(uint32_t low, uint32
 	}
 }
 
-__declspec(naked) unsigned int __fastcall __fastcall__udiv64(uint32_t low, uint32_t high, unsigned int divisor)
+__declspec(naked) unsigned int __fastcall __fastcall_udiv64(uint32_t low, uint32_t high, unsigned int divisor)
 {
 	__asm
 	{
@@ -743,58 +743,58 @@ __declspec(naked) int64_t __msreturn __stdcall _mul128(int64_t Multiplicand, int
 		push    esi
 		push    edi
 		mov     eax, dword ptr [LO(Multiplicand + 16)]
-		mov     ecx, dword ptr [HI(Multiplicand + 16)]
+		mov     esi, dword ptr [HI(Multiplicand + 16)]
 		mov     ebp, dword ptr [LO(Multiplier + 16)]
-		mov     esi, ecx
-		sar     ecx, 31
-		mov     ebx, dword ptr [HI(Multiplier + 16)]
-		xor     eax, ecx
-		mov     edi, ebx
-		sar     ebx, 31
-		sub     eax, ecx
-		adc     esi, ecx
-		xor     ebp, ebx
-		xor     edi, ebx
-		sub     ebp, ebx
-		sbb     edi, ebx
-		xor     ebx, ecx
-		xor     esi, ecx
-		push    ebx
-		push    esi
+		mov     ecx, esi
+		sar     esi, 31
+		mov     edi, dword ptr [HI(Multiplier + 16)]
+		xor     eax, esi
+		mov     ebx, edi
+		sar     edi, 31
+		sub     eax, esi
+		adc     ecx, esi
+		xor     ebp, edi
+		xor     ebx, edi
+		sub     ebp, edi
+		sbb     ebx, edi
+		xor     edi, esi
+		xor     ecx, esi
+		push    edi
+		push    ecx
 		push    eax
 		mul     ebp
-		mov     ecx, eax
-		mov     eax, esi
-		mov     ebx, edx
-		xor     esi, esi
+		mov     esi, eax
+		mov     eax, ecx
+		mov     edi, edx
+		xor     ecx, ecx
 		mul     ebp
-		add     ebx, eax
+		add     edi, eax
 		pop     eax
-		adc     esi, edx
-		mov     ebp, edi
-		mul     edi
-		xor     edi, edi
-		add     ebx, eax
-		adc     esi, edx
+		adc     ecx, edx
+		mov     ebp, ebx
+		mul     ebx
+		xor     ebx, ebx
+		add     edi, eax
+		adc     ecx, edx
 		pop     eax
-		adc     edi, edi
+		adc     ebx, ebx
 		mul     ebp
 		pop     ebp
-		add     esi, eax
-		adc     edi, edx
-		xor     ecx, ebp
-		xor     ebx, ebp
+		add     ecx, eax
+		adc     ebx, edx
 		xor     esi, ebp
 		xor     edi, ebp
-		sub     ecx, ebp
-		sbb     ebx, ebp
-		mov     eax, ecx
-		sbb     esi, ebp
-		mov     ecx, dword ptr [HighProduct + 16]
+		xor     ecx, ebp
+		xor     ebx, ebp
+		sub     esi, ebp
 		sbb     edi, ebp
-		mov     edx, ebx
-		mov     dword ptr [LO(ecx)], esi
-		mov     dword ptr [HI(ecx)], edi
+		mov     eax, esi
+		sbb     ecx, ebp
+		mov     esi, dword ptr [HighProduct + 16]
+		sbb     ebx, ebp
+		mov     edx, edi
+		mov     dword ptr [LO(esi)], ecx
+		mov     dword ptr [HI(esi)], ebx
 		pop     edi
 		pop     esi
 		pop     ebp
@@ -838,29 +838,29 @@ __declspec(naked) uint64_t __msreturn __stdcall _umul128(uint64_t Multiplicand, 
 		mov     eax, dword ptr [LO(Multiplicand + 16)]
 		mov     ebp, dword ptr [LO(Multiplier + 16)]
 		mul     ebp
-		mov     ecx, eax
+		mov     esi, eax
 		mov     eax, dword ptr [HI(Multiplicand + 16)]
-		mov     ebx, edx
-		xor     esi, esi
+		mov     edi, edx
+		xor     ecx, ecx
 		mul     ebp
-		add     ebx, eax
+		add     edi, eax
 		mov     eax, dword ptr [LO(Multiplicand + 16)]
-		adc     esi, edx
+		adc     ecx, edx
 		mov     ebp, dword ptr [HI(Multiplier + 16)]
 		mul     ebp
-		xor     edi, edi
-		add     ebx, eax
-		adc     esi, edx
+		xor     ebx, ebx
+		add     edi, eax
+		adc     ecx, edx
 		mov     eax, dword ptr [HI(Multiplicand + 16)]
-		adc     edi, edi
+		adc     ebx, ebx
 		mul     ebp
-		add     esi, eax
-		adc     edi, edx
+		add     ecx, eax
+		adc     ebx, edx
 		mov     ebp, dword ptr [HighProduct + 16]
-		mov     eax, ecx
-		mov     edx, ebx
-		mov     dword ptr [LO(ebp)], esi
-		mov     dword ptr [HI(ebp)], edi
+		mov     eax, esi
+		mov     edx, edi
+		mov     dword ptr [LO(ebp)], ecx
+		mov     dword ptr [HI(ebp)], ebx
 		pop     edi
 		pop     esi
 		pop     ebp

@@ -28,7 +28,11 @@ static LPCSTR ExportNames[] = {
 	#include "export.h"
 	NULL,
 };
+#if 0
+extern FARPROC ExportAddresses[_countof(ExportNames) - 1];
+#else
 static FARPROC ExportAddresses[_countof(ExportNames) - 1];
+#endif
 
 HANDLE         hHeap  = NULL;
 HANDLE         pHeap  = NULL;

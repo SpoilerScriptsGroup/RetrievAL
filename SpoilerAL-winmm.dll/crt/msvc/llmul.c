@@ -134,7 +134,7 @@ __declspec(naked) __int64 __cdecl _allmul(__int64 multiplicand, __int64 multipli
 		imul    eax, dword ptr HIWORD(B)    // ALO * BHI
 		add     ecx, eax                    // ecx = ((ALO * BHI) + (AHI * BLO))
 
-		mov     eax, LOWORD(A)
+		mov     eax, LOWORD(A)              // eax = ALO
 		mul     edx                         // so edx:eax = ALO * BLO
 		add     edx, ecx                    // now edx has all the LO * HI stuff
 

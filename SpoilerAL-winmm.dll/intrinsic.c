@@ -603,39 +603,38 @@ __declspec(naked) int64_t __msreturn __stdcall __mulh(int64_t Multiplicand, int6
 		push    edi
 		mov     eax, dword ptr [LO(Multiplicand + 16)]
 		mov     ecx, dword ptr [HI(Multiplicand + 16)]
-		mov     ebp, dword ptr [LO(Multiplier + 16)]
+		mov     edi, dword ptr [LO(Multiplier + 16)]
 		mov     esi, ecx
 		sar     ecx, 31
 		mov     ebx, dword ptr [HI(Multiplier + 16)]
 		xor     eax, ecx
-		mov     edi, ebx
+		mov     ebp, ebx
 		sar     ebx, 31
 		sub     eax, ecx
 		adc     esi, ecx
-		xor     ebp, ebx
 		xor     edi, ebx
-		sub     ebp, ebx
-		sbb     edi, ebx
+		xor     ebp, ebx
+		sub     edi, ebx
+		sbb     ebp, ebx
 		xor     ebx, ecx
 		xor     esi, ecx
 		push    ebx
 		push    esi
 		push    eax
-		mul     ebp
+		mul     edi
 		mov     ecx, eax
 		mov     eax, esi
 		mov     ebx, edx
 		xor     esi, esi
+		mul     edi
+		add     ebx, eax
+		pop     eax
+		adc     esi, edx
+		xor     edi, edi
 		mul     ebp
 		add     ebx, eax
 		pop     eax
 		adc     esi, edx
-		mov     ebp, edi
-		mul     edi
-		xor     edi, edi
-		add     ebx, eax
-		adc     esi, edx
-		pop     eax
 		adc     edi, edi
 		mul     ebp
 		pop     ebp
@@ -744,39 +743,38 @@ __declspec(naked) int64_t __msreturn __stdcall _mul128(int64_t Multiplicand, int
 		push    edi
 		mov     eax, dword ptr [LO(Multiplicand + 16)]
 		mov     esi, dword ptr [HI(Multiplicand + 16)]
-		mov     ebp, dword ptr [LO(Multiplier + 16)]
+		mov     ebx, dword ptr [LO(Multiplier + 16)]
 		mov     ecx, esi
 		sar     esi, 31
 		mov     edi, dword ptr [HI(Multiplier + 16)]
 		xor     eax, esi
-		mov     ebx, edi
+		mov     ebp, edi
 		sar     edi, 31
 		sub     eax, esi
 		adc     ecx, esi
-		xor     ebp, edi
 		xor     ebx, edi
-		sub     ebp, edi
-		sbb     ebx, edi
+		xor     ebp, edi
+		sub     ebx, edi
+		sbb     ebp, edi
 		xor     edi, esi
 		xor     ecx, esi
 		push    edi
 		push    ecx
 		push    eax
-		mul     ebp
+		mul     ebx
 		mov     esi, eax
 		mov     eax, ecx
 		mov     edi, edx
 		xor     ecx, ecx
+		mul     ebx
+		add     edi, eax
+		pop     eax
+		adc     ecx, edx
+		xor     ebx, ebx
 		mul     ebp
 		add     edi, eax
 		pop     eax
 		adc     ecx, edx
-		mov     ebp, ebx
-		mul     ebx
-		xor     ebx, ebx
-		add     edi, eax
-		adc     ecx, edx
-		pop     eax
 		adc     ebx, ebx
 		mul     ebp
 		pop     ebp

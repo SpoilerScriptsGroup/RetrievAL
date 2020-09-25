@@ -31,9 +31,9 @@ __declspec(align(4)) static data_layout dataref = {         // reference point
 	0,                                                      // level 4 data cache size
 };
 
-#define descriptortablelength 61
+#define descriptortable_length 61
 
-__declspec(align(4)) static const descriptor_record descriptortable[descriptortablelength] = {
+__declspec(align(4)) static const descriptor_record descriptortable[descriptortable_length] = {
 	{ 0x0A, 1, 1, 13 },                                     //   8 kb L1 data cache
 	{ 0x0C, 1, 1, 14 },                                     //  16 kb L1 data cache
 	{ 0x0D, 1, 1, 14 },                                     //  16 kb L1 data cache
@@ -267,7 +267,7 @@ __declspec(naked) static void __cdecl IntelOldMethod()
 		mov     al, byte ptr [esp + edx]
 
 		// find in table
-		mov     ebx, descriptortablelength - 1              // loop counter
+		mov     ebx, descriptortable_length - 1             // loop counter
 
 		// loop to search in descriptortable
 	J200:

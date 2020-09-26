@@ -1,4 +1,7 @@
 #include <windows.h>
+#if defined(_WIN32_WINNT) && _WIN32_WINNT >= _WIN32_WINNT_NT4
+#pragma comment(lib, "msimg32.lib")
+#endif
 
 extern const DWORD F0055E74C;
 extern const DWORD F00562CF0;

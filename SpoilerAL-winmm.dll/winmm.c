@@ -159,7 +159,9 @@ static BOOL __cdecl Attach()
 		if (!SetThreadLocale(MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_JAPANESE_XJIS)))
 			goto LAST_ERROR;
 		LoadComCtl32();
+#if !defined(_WIN32_WINNT) || _WIN32_WINNT < _WIN32_WINNT_NT4
 		hMsImg32 = LoadLibraryW(L"msimg32.dll");
+#endif
 		CreateHintWindow();
 #if USE_TOOLTIP
 		verbose(VRB_INFO, "_DllMainCRTStartup - begin CreateToolTip");
@@ -453,8 +455,10 @@ static __inline void Detach()
 #if USE_TOOLTIP
 			DestroyToolTip();
 #endif
+#if !defined(_WIN32_WINNT) || _WIN32_WINNT < _WIN32_WINNT_NT4
 			if (hMsImg32)
 				FreeLibrary(hMsImg32);
+#endif
 			if (hComCtl32)
 				FreeLibrary(hComCtl32);
 			HeapDestroy(pHeap);

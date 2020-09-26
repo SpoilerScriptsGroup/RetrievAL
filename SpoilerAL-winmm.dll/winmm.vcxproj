@@ -72,6 +72,7 @@
     <MASM>
       <UseSafeExceptionHandlers>true</UseSafeExceptionHandlers>
       <IncludePaths>$(ProjectDir)crt\include;$(ProjectDir)include</IncludePaths>
+      <PreprocessorDefinitions>_WIN32_WINNT=0x0500;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </MASM>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -102,6 +103,7 @@
     <MASM>
       <UseSafeExceptionHandlers>true</UseSafeExceptionHandlers>
       <IncludePaths>$(ProjectDir)crt\include;$(ProjectDir)include</IncludePaths>
+      <PreprocessorDefinitions>_WIN32_WINNT=0x0500;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </MASM>
     <PostBuildEvent>
       <Command>"$(ProjectDir)EditBinEx\Release\EditBinEx.exe" /WaitForFileUnlock /subsystem:windows,5 /OperatingSystemVersion:5.0 /TimeDateStamp:0 "$(TargetPath)"&gt;nul</Command>
@@ -1107,7 +1109,10 @@
     <ClCompile Include="MinMaxParam\TSSCalc_Setting_CheckSignedSize.c" />
     <ClCompile Include="MinMaxParam\TSSCalc_Setting_MinMax.c" />
     <ClCompile Include="MinMaxParam\TSSFloatCalc_Setting_MinMax.c" />
-    <ClCompile Include="MsImg32\AlphaBlendCompatible.c" />
+    <ClCompile Include="MsImg32\AlphaBlendCompatible.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="NocachedMemoryList\Attach_NocachedMemoryList.c" />
     <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_CheckNocacheParam.c" />
     <ClCompile Include="NocachedMemoryList\TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile.c" />
@@ -1380,7 +1385,10 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
     <MASM Include="Kernel32\GetProcessId.asm" />
-    <MASM Include="MsImg32\AlphaBlend.asm" />
+    <MASM Include="MsImg32\AlphaBlend.asm">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </MASM>
     <MASM Include="regex\crt\x86\chkstk.asm">
       <IncludePaths Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)regex\x86</IncludePaths>
       <IncludePaths Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)regex\x86</IncludePaths>

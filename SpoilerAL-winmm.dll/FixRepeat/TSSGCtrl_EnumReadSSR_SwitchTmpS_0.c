@@ -146,8 +146,8 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		call    dword ptr [bcb6_std_string_substr]
 		add     esp, 16
 		lea     ecx, [ebp - 40H]
-		lea     eax, [ebp - 58H]
 		push    ecx
+		lea     eax, [ebp - 58H]
 		push    ebx
 		push    eax
 		call    TSSGCtrl_TrimString
@@ -158,12 +158,11 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		mov     dword ptr [ebp - 0C4H], edx
 		mov     byte ptr [ebp - 78H], 32
 		call    string_ctor_assign
-		lea     eax, [LineList]
+		mov     eax, dword ptr [LineList + 8H]
 		lea     edx, [ebp - 78H]
-		mov     eax, dword ptr [eax + 8H]
 		mov     dword ptr [ebp - 0C0H], edx
-		mov     dword ptr [ebp - 0CCH], eax
 		lea     ecx, [LineList]
+		mov     dword ptr [ebp - 0CCH], eax
 		push    edx
 		push    ecx
 		call    dword ptr [F0050123C]
@@ -212,25 +211,17 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		mov     dword ptr [ebp - 0F4H], ecx
 		cmp     edx, ecx
 		jb      L4
-		mov     edx, dword ptr [esi + 4H]
+		add     edx, eax
 		add     eax, ecx
 		mov     dword ptr [ebp - 0F8H], edx
 		mov     dword ptr [ebp - 0FCH], eax
 		cmp     eax, edx
 		je      L5
+		mov     cl, byte ptr [edx]
 		mov     dword ptr [ebp - 100H], 1
-		push    1
-		push    edx
-		push    eax
-		call    memmove
-		mov     eax, dword ptr [esi + 4H]
-		mov     ecx, dword ptr [ebp - 0F8H]
-		sub     eax, ecx
-		mov     ecx, dword ptr [ebp - 0FCH]
-		add     eax, ecx
-		add     esp, 12
 		mov     dword ptr [ebp - 104H], eax
 		mov     dword ptr [esi + 4H], eax
+		mov     byte ptr [eax], cl
 		jmp     L5
 
 	L4:
@@ -241,17 +232,15 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		mov     ecx, esi
 		call    string_append_repeat_char
 	L5:
-		mov     eax, 00641AE4H
+		mov     al, byte ptr ds:[00641AE4H]
 		mov     edx, esi
-		mov     al, byte ptr [eax]
-		lea     ecx, [ebp - 90H]
 		mov     byte ptr [ebp - 98H], al
+		lea     ecx, [ebp - 90H]
 		call    string_ctor_assign
-		lea     eax, [LineList]
+		mov     eax, dword ptr [LineList + 8H]
 		lea     edx, [ebp - 98H]
-		mov     eax, dword ptr [eax + 8H]
-		lea     ecx, [LineList]
 		mov     dword ptr [ebp - 108H], edx
+		lea     ecx, [LineList]
 		mov     dword ptr [ebp - 10CH], eax
 		mov     dword ptr [ebp - 110H], eax
 		push    edx

@@ -232,9 +232,6 @@
     <Filter Include="SubjectStringTable">
       <UniqueIdentifier>{9e806e5b-6eb0-40fa-8ca6-fb2028809c50}</UniqueIdentifier>
     </Filter>
-    <Filter Include="TlHelp32Fix">
-      <UniqueIdentifier>{8fd08778-c057-497b-9e3c-6a24c286aa6c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ToolTip">
       <UniqueIdentifier>{1d37f496-16ff-4d83-a4b2-45e287af098f}</UniqueIdentifier>
     </Filter>
@@ -253,9 +250,6 @@
       <Filter>AddEntryModule</Filter>
     </ClCompile>
     <ClCompile Include="AddEntryModule\Attach_AddEntryModule.c">
-      <Filter>AddEntryModule</Filter>
-    </ClCompile>
-    <ClCompile Include="AddEntryModule\Caller_AddEntryModule.c">
       <Filter>AddEntryModule</Filter>
     </ClCompile>
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingAdditionalType.c">
@@ -2035,9 +2029,6 @@
     <MASM Include="regex\crt\x86\chkstk.asm">
       <Filter>regex\crt\x86</Filter>
     </MASM>
-    <MASM Include="TlHelp32Fix\tlhelp32fix.x86.asm">
-      <Filter>TlHelp32Fix</Filter>
-    </MASM>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="crc32\crc32.h">
@@ -2388,6 +2379,9 @@
     <ClInclude Include="include\page.h">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="include\tlhelp32fix.h">
+      <Filter>include</Filter>
+    </ClInclude>
     <ClInclude Include="intrinsic.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -2498,9 +2492,6 @@
     </ClInclude>
     <ClInclude Include="SubjectStringTable\SubjectStringTable.h">
       <Filter>SubjectStringTable</Filter>
-    </ClInclude>
-    <ClInclude Include="TlHelp32Fix\tlhelp32fix.h">
-      <Filter>TlHelp32Fix</Filter>
     </ClInclude>
     <ClInclude Include="ToolTip\commctrl.h">
       <Filter>ToolTip</Filter>

@@ -60,7 +60,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)crt\longdouble;$(ProjectDir)extern;$(ProjectDir)Verbose;$(ProjectDir)Plugin;$(ProjectDir)TranscodeMultiByte;$(ProjectDir)TlHelp32Fix;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)SubjectStringTable;$(ProjectDir)regex;$(ProjectDir)Parsing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)crt\longdouble;$(ProjectDir)extern;$(ProjectDir)Verbose;$(ProjectDir)Plugin;$(ProjectDir)TranscodeMultiByte;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)SubjectStringTable;$(ProjectDir)regex;$(ProjectDir)Parsing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OmitFramePointers>true</OmitFramePointers>
     </ClCompile>
     <Link>
@@ -87,7 +87,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)crt\longdouble;$(ProjectDir)extern;$(ProjectDir)Verbose;$(ProjectDir)Plugin;$(ProjectDir)TranscodeMultiByte;$(ProjectDir)TlHelp32Fix;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)SubjectStringTable;$(ProjectDir)regex;$(ProjectDir)Parsing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)crt\longdouble;$(ProjectDir)extern;$(ProjectDir)Verbose;$(ProjectDir)Plugin;$(ProjectDir)TranscodeMultiByte;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)SubjectStringTable;$(ProjectDir)regex;$(ProjectDir)Parsing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OmitFramePointers>true</OmitFramePointers>
       <StringPooling>true</StringPooling>
     </ClCompile>
@@ -112,7 +112,6 @@
   <ItemGroup>
     <ClCompile Include="AddEntryModule\AddEntryModule.c" />
     <ClCompile Include="AddEntryModule\Attach_AddEntryModule.c" />
-    <ClCompile Include="AddEntryModule\Caller_AddEntryModule.c" />
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingAdditionalType.c" />
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingFEPFreeList.c" />
     <ClCompile Include="AddressNamingAdditionalType\AddressNamingFEPList.c" />
@@ -1008,7 +1007,10 @@
     <ClCompile Include="FixLoadFromFile\TStringFiler_LoadFromFile.c" />
     <ClCompile Include="FixLoadFromFile\TTitleSelectForm_FindSSG_AdjustLogFooter.c" />
     <ClCompile Include="FixLoopByteArray\Attach_FixLoopByteArray.c" />
-    <ClCompile Include="FixLoopByteArray\Caller_FixLoopByteArray.c" />
+    <ClCompile Include="FixLoopByteArray\Caller_FixLoopByteArray.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="FixLoopByteArray\Caller_ParsingWithRel.c" />
     <ClCompile Include="FixLoopByteArray\Caller_StrToProcessAccessElementVecWithoutRel.c" />
     <ClCompile Include="FixLoopByteArray\FixLoopByteArray.c" />
@@ -1394,7 +1396,6 @@
       <IncludePaths Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)regex\x86</IncludePaths>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </MASM>
-    <MASM Include="TlHelp32Fix\tlhelp32fix.x86.asm" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="crc32\crc32.h" />
@@ -1589,6 +1590,7 @@
     <ClInclude Include="include\endianness.h" />
     <ClInclude Include="include\noinline_wchar.h" />
     <ClInclude Include="include\page.h" />
+    <ClInclude Include="include\tlhelp32fix.h" />
     <ClInclude Include="intrinsic.h" />
     <ClInclude Include="IsBadPtr\IsBadPtr.h" />
     <ClInclude Include="IsBadPtr\IsBadPtrSource.h" />
@@ -1629,7 +1631,6 @@
     <ClInclude Include="SubjectProperty\SSGSubjectProperty.h" />
     <ClInclude Include="SubjectStringTable\SubjectStringOperator.h" />
     <ClInclude Include="SubjectStringTable\SubjectStringTable.h" />
-    <ClInclude Include="TlHelp32Fix\tlhelp32fix.h" />
     <ClInclude Include="ToolTip\commctrl.h" />
     <ClInclude Include="ToolTip\ToolTip.h" />
     <ClInclude Include="TranscodeMultiByte\TranscodeMultiByte.h" />

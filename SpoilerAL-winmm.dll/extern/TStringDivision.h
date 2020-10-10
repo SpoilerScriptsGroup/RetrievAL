@@ -144,8 +144,8 @@ static __forceinline char *TrimSpace(char **pfirst, const char *last)
 	unsigned __int64 result;
 
 	result = __reg64return_TrimSpace(*pfirst, last);
-	*pfirst = (char *)(result >> 32);
-	return (char *)result;
+	*pfirst = (char *)result;
+	return (char *)(result >> 32);
 }
 EXTERN_C char * __msfastcall TrimLeftBlank(const char *first);
 EXTERN_C char * __msfastcall TrimRightBlank(const char *first, const char *last);
@@ -155,8 +155,8 @@ static __forceinline char *TrimBlank(char **pfirst, const char *last)
 	unsigned __int64 result;
 
 	result = __reg64return_TrimBlank(*pfirst, last);
-	*pfirst = (char *)(result >> 32);
-	return (char *)result;
+	*pfirst = (char *)result;
+	return (char *)(result >> 32);
 }
 
 EXTERN_C bcb6_std_string * __cdecl TStringDivision_ToString(

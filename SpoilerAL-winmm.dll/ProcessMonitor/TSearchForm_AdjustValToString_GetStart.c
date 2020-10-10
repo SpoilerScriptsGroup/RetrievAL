@@ -2,7 +2,7 @@
 
 void __declspec(naked) __cdecl TSearchForm_AdjustValToString_GetStart(LPVOID activeElement, LPVOID ssgCtrl)
 {
-	static const DWORD x004D1858 = 0x004D1858;
+	static const DWORD X004D1858 = 0x004D1858;
 
 	__asm
 	{
@@ -12,6 +12,6 @@ void __declspec(naked) __cdecl TSearchForm_AdjustValToString_GetStart(LPVOID act
 		ret
 
 	GetStart:
-		jmp     dword ptr [x004D1858]
+		jmp     dword ptr [X004D1858]
 	}
 }

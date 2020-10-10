@@ -6,17 +6,13 @@
 
 EXTERN_C BOOLEAN __fastcall TSSGCtrl_AddressNaming_OneRead(TSSGCtrl *SSGC, string *tmpV_0, HANDLE SHandle, DWORD Address, char *tmpC, DWORD DataSize)
 {
-	do	/* do { ... } while (0); */
-	{
-		const char *p;
+	const char *p;
 
-		p = string_c_str(tmpV_0) + 1;
-		while (__intrinsic_isspace(*p))
-			p++;
-		if (p + 3 == string_end(tmpV_0) && *(LPDWORD)p == BSWAP32('fmt\0'))
-			break;
+	p = string_c_str(tmpV_0) + 1;
+	while (__intrinsic_isspace(*p))
+		p++;
+	if (p + 3 != string_end(tmpV_0) || *(LPDWORD)p != BSWAP32('fmt\0'))
 		return Address && TProcessCtrl_OneRead(SHandle, Address, tmpC, DataSize);
-	} while (0);
 	switch (DataSize)
 	{
 	case 4:

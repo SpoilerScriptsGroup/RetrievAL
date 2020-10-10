@@ -1,4 +1,8 @@
 #include <windows.h>
+#ifdef _MSC_VER
+#define USING_NAMESPACE_BCB6_STD
+#endif
+#include "TProcessCtrl.h"
 #include "tlhelp32fix.h"
 #define PSAPI_VERSION 1
 #include <psapi.h>
@@ -13,9 +17,33 @@
 #endif
 
 #if defined(__BORLANDC__)
-void __stdcall AddEntryModule(vector<MODULEENTRY32A> *moduleList, DWORD th32ProcessID)
+static void __fastcall InternalAddEntryModule(vector<MODULEENTRY32A> *moduleList, DWORD th32ProcessID);
 #else
-void __stdcall AddEntryModule(vector_MODULEENTRY32A *moduleList, DWORD th32ProcessID)
+static void __fastcall InternalAddEntryModule(vector_MODULEENTRY32A *moduleList, DWORD th32ProcessID);
+#endif
+
+__declspec(naked) void __cdecl AddEntryModule()
+{
+	__asm
+	{
+		#define this (ebp + 8)
+
+		mov     ecx, dword ptr [this]
+		mov     eax, dword ptr [ebp - 56]
+		mov     edx, dword ptr [ecx + TProcessCtrl.entry.th32ProcessID]
+		sub     eax, 2
+		add     ecx, offset TProcessCtrl.moduleList
+		mov     dword ptr [ebp - 56], eax
+		jmp     InternalAddEntryModule
+
+		#undef this
+	}
+}
+
+#if defined(__BORLANDC__)
+static void __fastcall InternalAddEntryModule(vector<MODULEENTRY32A> *moduleList, DWORD th32ProcessID)
+#else
+static void __fastcall InternalAddEntryModule(vector_MODULEENTRY32A *moduleList, DWORD th32ProcessID)
 #endif
 {
 #if 0

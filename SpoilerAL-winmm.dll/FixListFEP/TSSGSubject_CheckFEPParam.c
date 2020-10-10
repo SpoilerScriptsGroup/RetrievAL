@@ -3,6 +3,7 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
 #include "TSSGSubject.h"
+#include "TStringDivision.h"
 
 void __fastcall TSSGSubject_CheckFEPParam(TSSGSubject *this, const string *s);
 
@@ -108,17 +109,12 @@ __declspec(naked) void __cdecl TSSList_Setting_CheckFEPParam()
 
 void __fastcall TSSGSubject_CheckFEPParam(TSSGSubject *this, const string *s)
 {
-	if (!string_empty(s))
+	char *first, *last;
+
+	if ((last = string_end(s)) - (first = string_begin(s)) >= 3)
 	{
-		const char *p = string_c_str(s);
-		while (__intrinsic_isspace(*p))
-			p++;
-		size_t length = string_end(s) - p;
-		if (length >= 3)
-		{
-			while (__intrinsic_isspace(*(p + length - 1)) && --length >= 3);
-			if (length == 3 && p[0] == 'f' && p[1] == 'e' && p[2] == 'p')
-				this->withFEP = TRUE;
-		}
+		last = TrimSpace(&first, last);
+		if (last - first == 3 && first[0] == 'f' && first[1] == 'e' && first[2] == 'p')
+			this->withFEP = TRUE;
 	}
 }

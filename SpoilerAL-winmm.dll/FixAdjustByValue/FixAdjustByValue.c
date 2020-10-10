@@ -5,10 +5,9 @@ __declspec(naked) void __cdecl FixAdjustByValue()
 	__asm
 	{
 		mov     cl, byte ptr [ebx + 78H]
-		cmp     cl, 3
-		ja      L1
+		sub     cl, 4
+		jae     L1
 		neg     cl
-		and     cl, 3
 		shl     cl, 3
 		shl     eax, cl
 	L1:

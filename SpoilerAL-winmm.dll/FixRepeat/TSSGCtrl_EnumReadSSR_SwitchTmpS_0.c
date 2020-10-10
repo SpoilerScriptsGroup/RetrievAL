@@ -88,9 +88,9 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		0x00050000, 0x00000000,
 		0x00000000,
 	};
-	static const DWORD x004FFDC5 = 0x004FFDC5;
-	static const DWORD x005009A5 = 0x005009A5;
-	static const DWORD x00500DFF = 0x00500DFF;
+	static const DWORD X004FFDC5 = 0x004FFDC5;
+	static const DWORD X005009A5 = 0x005009A5;
+	static const DWORD X00500DFF = 0x00500DFF;
 
 	__asm
 	{
@@ -98,10 +98,10 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		je      L1
 		cmp     al, 'F' - '@'
 		je      FormatPrefix
-		jmp     dword ptr [x004FFDC5]
+		jmp     dword ptr [X004FFDC5]
 
 	L1:
-		jmp     dword ptr [x005009A5]
+		jmp     dword ptr [X005009A5]
 
 	FormatPrefix:
 
@@ -187,49 +187,50 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		mov     ecx, dword ptr [esi]
 		mov     edx, dword ptr [esi + 4H]
 		call    __reg64return_TrimSpace
-		mov     ecx, eax
-		mov     eax, dword ptr [esi]
-		cmp     ecx, dword ptr [esi + 4H]
+		mov     ecx, dword ptr [esi]
+		mov     ebx, dword ptr [esi + 4H]
+		cmp     edx, ebx
 		jne     L2
-		cmp     eax, edx
+		cmp     eax, ecx
 		je      L5
 	L2:
-		sub     ecx, edx
-		cmp     eax, edx
-		mov     dword ptr [ebp - 0F0H], ecx
+		sub     edx, eax
+		cmp     eax, ecx
+		mov     dword ptr [ebp - 0F0H], edx
 		je      L3
-		push    ecx
 		push    edx
 		push    eax
+		push    ecx
 		call    memcpy
 		add     esp, 12
-		mov     ecx, dword ptr [ebp - 0F0H]
+		mov     edx, dword ptr [ebp - 0F0H]
 	L3:
-		mov     edx, dword ptr [esi + 4H]
-		mov     eax, dword ptr [esi]
-		sub     edx, eax
-		mov     dword ptr [ebp - 0F4H], ecx
-		cmp     edx, ecx
-		jb      L4
-		add     edx, eax
-		add     eax, ecx
-		mov     dword ptr [ebp - 0F8H], edx
-		mov     dword ptr [ebp - 0FCH], eax
+		mov     eax, dword ptr [esi + 4H]
+		mov     ecx, dword ptr [esi]
+		sub     eax, ecx
+		mov     dword ptr [ebp - 0F4H], edx
 		cmp     eax, edx
+		jb      L4
+		add     eax, ecx
+		add     ecx, edx
+		mov     dword ptr [ebp - 0F8H], eax
+		mov     dword ptr [ebp - 0FCH], ecx
+		cmp     ecx, eax
 		je      L5
-		mov     cl, byte ptr [edx]
+		mov     al, byte ptr [eax]
 		mov     dword ptr [ebp - 100H], 1
-		mov     dword ptr [ebp - 104H], eax
-		mov     dword ptr [esi + 4H], eax
-		mov     byte ptr [eax], cl
+		mov     dword ptr [ebp - 104H], ecx
+		mov     dword ptr [esi + 4H], ecx
+		mov     byte ptr [ecx], al
 		jmp     L5
 
 	L4:
-		mov     eax, dword ptr [esi + 4H]
-		add     edx, ecx
-		sub     edx, eax
-		push    0
+		mov     ecx, dword ptr [esi + 4H]
+		add     edx, eax
+		xor     eax, eax
+		sub     edx, ecx
 		mov     ecx, esi
+		push    eax
 		call    string_append_repeat_char
 	L5:
 		mov     al, byte ptr ds:[00641AE4H]
@@ -263,7 +264,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		pop     ebx
 		mov     esp, ebp
 		pop     ebp
-		jmp     dword ptr [x00500DFF]
+		jmp     dword ptr [X00500DFF]
 
 		#undef this
 		#undef LineList

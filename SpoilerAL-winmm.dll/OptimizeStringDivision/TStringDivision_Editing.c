@@ -25,11 +25,10 @@ string * __cdecl TStringDivision_Editing(
 			string_dtor(&s);
 			return Result;
 #else
-			#define SHRINK_SIZEOF_STRING (                                     \
-			    (&string_end((string *)NULL) > &string_begin((string *)NULL) ? \
-			        (size_t)&string_end((string *)NULL) :                      \
-			        (size_t)&string_begin((string *)NULL)) +                   \
-			    sizeof(void *))
+			#define SHRINK_SIZEOF_STRING (size_t)(                                     \
+			    &string_end((string *)NULL) + 1 >= &string_begin((string *)NULL) + 1 ? \
+			        &string_end((string *)NULL) + 1 :                                  \
+			        &string_begin((string *)NULL) + 1)
 
 			BYTE s[SHRINK_SIZEOF_STRING];
 
@@ -63,10 +62,10 @@ __declspec(naked) string * __cdecl TStringDivision_Editing(
 {
 	__asm
 	{
-		#define Result   (esp +  4)
-		#define this     (esp +  8)
-		#define Src      (esp + 12)
-		#define Option   (esp + 16)
+		#define Result (esp +  4)
+		#define this   (esp +  8)
+		#define Src    (esp + 12)
+		#define Option (esp + 16)
 
 		mov     eax, dword ptr [Option]
 		mov     edx, dword ptr [Src]
@@ -77,8 +76,8 @@ __declspec(naked) string * __cdecl TStringDivision_Editing(
 		mov     ecx, dword ptr [edx]
 		mov     edx, dword ptr [edx + 4]
 		call    __reg64return_TrimBlank
-		push    eax
 		push    edx
+		push    eax
 		mov     ecx, dword ptr [this + 8]
 		mov     eax, dword ptr [Result + 8]
 		mov     edx, esp

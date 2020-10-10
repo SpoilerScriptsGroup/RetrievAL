@@ -7,7 +7,9 @@
 
 EXTERN_C void __cdecl Caller_StrToProcessAccessElementVecWithoutRel();
 EXTERN_C void __cdecl Caller_ParsingWithRel();
+#if 0
 EXTERN_C void __cdecl Caller_FixLoopByteArray();
+#endif
 EXTERN_C void __cdecl TSSGCtrl_StrToProcessAccessElementVec_MakeLoopSet();
 EXTERN_C void __cdecl TSSGCtrl_MakeDataCode_MakeLoopSet();
 

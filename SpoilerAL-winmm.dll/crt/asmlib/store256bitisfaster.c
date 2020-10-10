@@ -53,12 +53,14 @@ __declspec(naked) int __cdecl Store256BitIsFaster()
 		// model 2 = Piledriver is terribly slow on 256 bit write
 		// assume future models 3-4 are like Bulldozer
 		cmp     edx, 4
+#if 0
 		jbe     S90
 		jmp     S91                                         // later models: don't know
 
-#if 0
 	S_VIA:
 		jmp     S91                                         // don't know
+#else
+		ja      S91                                         // later models: don't know
 #endif
 
 	S90:

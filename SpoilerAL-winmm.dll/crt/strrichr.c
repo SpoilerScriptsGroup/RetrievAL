@@ -154,46 +154,36 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 		jz      modulo1
 		dec     ecx
 		jz      modulo2
+		mov     ch, byte ptr [eax]
+		inc     eax
+		mov     dh, ch
+		or      ch, 'a' - 'A'
 		jmp     modulo3
 
 		align   16
 	modulo1:
-		mov     ecx, dword ptr [eax - 1]
-		add     eax, 3
-		mov     esi, ecx
-		or      ecx, 20202000H
-		mov     edx, ecx
-		xor     ecx, ebx
-		sub     esi, 01010100H
-		lea     edi, [ecx - 01010100H]
-		xor     edx, -1
-		xor     ecx, -1
-		and     esi, edx
-		and     ecx, edi
-		and     esi, 80808000H
-		jnz     null_is_found
-		and     ecx, 80808000H
-		jz      loop_begin
-		mov     ebp, eax
-		jmp     loop_begin
-
-		align   16
-	modulo2:
 		mov     cl, byte ptr [eax]
 		inc     eax
 		test    cl, cl
 		jz      process_stored_pointer
 		or      cl, 'a' - 'A'
+		cmp     cl, bl
+		jne     modulo2
+		lea     ebp, [eax - 1]
+	modulo2:
+		mov     cx, word ptr [eax]
+		add     eax, 2
+		test    cl, cl
+		jz      process_stored_pointer
+		mov     edx, ecx
+		or      ecx, 00002020H
 		cmp     cl, bl
 		jne     modulo3
-		lea     ebp, [eax - 1]
+		lea     ebp, [eax - 2]
 	modulo3:
-		mov     cl, byte ptr [eax]
-		inc     eax
-		test    cl, cl
+		test    dh, dh
 		jz      process_stored_pointer
-		or      cl, 'a' - 'A'
-		cmp     cl, bl
+		cmp     ch, bl
 		jne     loop_begin
 		lea     ebp, [eax - 1]
 		jmp     loop_begin

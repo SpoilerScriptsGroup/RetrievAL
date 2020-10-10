@@ -22,10 +22,10 @@ __declspec(naked) void __cdecl AddressNamingFromFloat()
 	L3:
 		fstp    qword ptr [ebp - 0420H]
 		mov     eax, dword ptr [esi]
-		mov     word ptr [ebx + 10H], 1340
-		mov     eax, dword ptr [eax + 78H]
 		mov     ecx, dword ptr [ebp - 041CH]
 		mov     edx, dword ptr [ebp - 0420H]
+		mov     eax, dword ptr [eax + 78H]
+		mov     word ptr [ebx + 10H], 1340
 		push    eax
 		push    ecx
 		lea     eax, [ebp - 0144H]

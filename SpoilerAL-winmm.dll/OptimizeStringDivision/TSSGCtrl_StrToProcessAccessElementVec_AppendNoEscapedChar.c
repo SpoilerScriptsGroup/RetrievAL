@@ -24,7 +24,7 @@ __declspec(naked) void __cdecl TSSGCtrl_StrToProcessAccessElementVec_AppendNoEsc
 		ret
 	}
 #else
-	static const DWORD x005072DC = 0x005072DC;
+	static const DWORD X005072DC = 0x005072DC;
 
 	__asm
 	{
@@ -44,7 +44,7 @@ __declspec(naked) void __cdecl TSSGCtrl_StrToProcessAccessElementVec_AppendNoEsc
 
 		align   16
 	L2:
-		jmp     dword ptr [x005072DC]
+		jmp     dword ptr [X005072DC]
 	}
 #endif
 }

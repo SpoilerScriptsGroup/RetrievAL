@@ -11,7 +11,7 @@ vector *(__cdecl * const TSSGAttributeSelector_MakeNowAttributeVec)(TSSGAttribut
 
 __declspec(naked) void __cdecl TSSGAttributeSelector_PopElementByType(TSSGAttributeSelector *this, unsigned long type)
 {
-	static const DWORD x004D3E46 = 0x004D3E46;
+	static const DWORD X004D3E46 = 0x004D3E46;
 
 	__asm
 	{
@@ -23,13 +23,13 @@ __declspec(naked) void __cdecl TSSGAttributeSelector_PopElementByType(TSSGAttrib
 		push    esi
 		push    edi
 		mov     edi, dword ptr [ebp + 8]
-		jmp     dword ptr [x004D3E46]
+		jmp     dword ptr [X004D3E46]
 	}
 }
 
 __declspec(naked) void __cdecl TSSGAttributeSelector_EraseElementByType(TSSGAttributeSelector *this, unsigned long type)
 {
-	static const DWORD x004D40B2 = 0x004D40B2;
+	static const DWORD X004D40B2 = 0x004D40B2;
 
 	__asm
 	{
@@ -41,13 +41,13 @@ __declspec(naked) void __cdecl TSSGAttributeSelector_EraseElementByType(TSSGAttr
 		push    esi
 		push    edi
 		lea     ebx, [ebp - 64]
-		jmp     dword ptr [x004D40B2]
+		jmp     dword ptr [X004D40B2]
 	}
 }
 
 __declspec(naked) void __cdecl TSSGAttributeSelector_ToRootElementByType(TSSGAttributeSelector *this, unsigned long type)
 {
-	static const DWORD x004D420E = 0x004D420E;
+	static const DWORD X004D420E = 0x004D420E;
 
 	__asm
 	{
@@ -59,6 +59,6 @@ __declspec(naked) void __cdecl TSSGAttributeSelector_ToRootElementByType(TSSGAtt
 		push    esi
 		push    edi
 		mov     esi, dword ptr [ebp + 8]
-		jmp     dword ptr [x004D420E]
+		jmp     dword ptr [X004D420E]
 	}
 }

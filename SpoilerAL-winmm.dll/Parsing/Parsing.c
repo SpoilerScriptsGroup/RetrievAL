@@ -1179,7 +1179,7 @@ static __forceinline size_t TrimMarkupString(char **pfirst, const char *last)
 	unsigned __int64 result;
 
 	result = __reg64return_TrimSpace(*pfirst, last);
-	return (const char *)result - (*pfirst = (char *)(result >> 32));
+	return (const char *)(result >> 32) - (*pfirst = (char *)result);
 }
 //---------------------------------------------------------------------
 static MARKUP * __fastcall FindParenthesisClose(const MARKUP *lpMarkup, const MARKUP *lpEndOfMarkup)

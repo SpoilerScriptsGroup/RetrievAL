@@ -86,6 +86,7 @@ unsigned long __cdecl TStringDivision_List(
 			case '[':
 				if (*(p + 1) == '!' && tokenLength == 2 && *(LPWORD)token == BSWAP16('[!'))
 					goto MATCHED;
+				/* FALLTHROUGH */
 			default:
 			DEFAULT:
 				if (nest)

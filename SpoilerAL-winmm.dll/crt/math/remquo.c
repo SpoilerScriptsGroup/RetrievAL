@@ -50,11 +50,12 @@ __declspec(naked) double __cdecl remquo(double x, double y, int *quo)
 		and     eax, 0108H
 		ror     eax, 7
 		or      ecx, eax
+		mov     edx, dword ptr [esp + 8]
 		rol     eax, 4
 		or      eax, ecx
 		mov     ecx, dword ptr [esp + 16]       ; Negate the quotient bits if x*y<0.  Avoid using an unpredictable branch.
 		and     eax, 7
-		xor     ecx, dword ptr [esp + 8]
+		xor     ecx, edx
 		sar     ecx, 32
 		xor     eax, ecx
 		and     ecx, 1

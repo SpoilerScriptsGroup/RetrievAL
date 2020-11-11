@@ -6,11 +6,13 @@ size_t __cdecl _mbslen(const unsigned char *string)
 	size_t        length;
 	unsigned char c;
 
-	length = (ptrdiff_t)-1;
-	do
-		length++;
-	while ((c = *(string++)) && (!IsDBCSLeadByteEx(CP_THREAD_ACP, c) || *(string++)));
-	return length;
+	length = 0;
+	while (c = string[length++])
+		if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c))
+			continue;
+		else if (!(string++)[length])
+			break;
+	return --length;
 }
 #else
 __declspec(naked) size_t __cdecl _mbslen(const unsigned char *string)
@@ -21,29 +23,34 @@ __declspec(naked) size_t __cdecl _mbslen(const unsigned char *string)
 
 		push    esi
 		push    edi
-		or      edi, -1
+		xor     edi, edi
 		mov     esi, dword ptr [string + 8]
+		xor     eax, eax
+		jmp     L1
 
 		align   16
 	L1:
+		mov     al, byte ptr [esi + edi]
 		inc     edi
-		xor     eax, eax
-		mov     al, byte ptr [esi]
-		inc     esi
-		test    eax, eax
+		test    al, al
 		jz      L2
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jz      L1
-		mov     al, byte ptr [esi]
+		mov     cl, byte ptr [esi + edi]
 		inc     esi
-		test    al, al
-		jnz     L1
+		test    cl, cl
+		jz      L2
+		xor     eax, eax
+		jmp     L1
+
+		align   16
 	L2:
 		mov     eax, edi
 		pop     edi
+		dec     eax
 		pop     esi
 		ret
 

@@ -51,7 +51,7 @@ double __cdecl _jn(int n, double x)
 	EXTRACT_WORDS(ix, lx, x);
 	sign = ix >> 31;
 	ix &= 0x7fffffff;
-	if ((ix | (lx | (uint32_t)-(int32_t)lx) >> 31) > 0x7ff00000) /* nan */
+	if ((ix | (lx | (uint32_t)-(int32_t)lx) >> 31) > 0x7ff00000)	/* nan */
 		return x;
 	/* J(-n,x) = (-1)^n * J(n, x), J(n, -x) = (-1)^n * J(n, x)
 	 * Thus, J(-n,x) = J(n,-x)
@@ -67,13 +67,13 @@ double __cdecl _jn(int n, double x)
 		nm1 = n - 1;
 	if (nm1 == 0)
 		return _j1(x);
-	sign &= n;  /* even n: 0, odd n: signbit(x) */
+	sign &= n;	/* even n: 0, odd n: signbit(x) */
 	x = fabs(x);
-	if ((ix | lx) == 0 || ix == 0x7ff00000)  /* if x is 0 or inf */
+	if ((ix | lx) == 0 || ix == 0x7ff00000)	/* if x is 0 or inf */
 		b = 0.0;
 	else if (nm1 < x) {
 		/* Safe to use J(n+1,x)=2n/x *J(n,x)-J(n-1,x) */
-		if (ix >= 0x52d00000) { /* x > 2**302 */
+		if (ix >= 0x52d00000) {	/* x > 2**302 */
 			/* (x >> n**2)
 			 *      Jn(x) = cos(x-(2n+1)*pi/4)*sqrt(2/x*pi)
 			 *      Yn(x) = sin(x-(2n+1)*pi/4)*sqrt(2/x*pi)
@@ -101,16 +101,16 @@ double __cdecl _jn(int n, double x)
 			for (i = 0; i < nm1; ) {
 				i++;
 				temp = b;
-				b = b * (2.0 * i / x) - a; /* avoid underflow */
+				b = b * (2.0 * i / x) - a;	/* avoid underflow */
 				a = temp;
 			}
 		}
 	} else {
-		if (ix < 0x3e100000) { /* x < 2**-29 */
+		if (ix < 0x3e100000) {	/* x < 2**-29 */
 			/* x is tiny, return the first Taylor expansion of J(n,x)
 			 * J(n,x) = 1/n!*(x/2)^n  - ...
 			 */
-			if (nm1 > 32)  /* underflow */
+			if (nm1 > 32)	/* underflow */
 				b = 0.0;
 			else {
 				temp = x * 0.5;
@@ -219,9 +219,9 @@ double __cdecl yn(int n, double x)
 	EXTRACT_WORDS(ix, lx, x);
 	sign = ix >> 31;
 	ix &= 0x7fffffff;
-	if ((ix | (lx | (uint32_t)-(int32_t)lx) >> 31) > 0x7ff00000) /* nan */
+	if ((ix | (lx | (uint32_t)-(int32_t)lx) >> 31) > 0x7ff00000)	/* nan */
 		return x;
-	if (sign && (ix | lx) != 0) /* x < 0 */
+	if (sign && (ix | lx) != 0)	/* x < 0 */
 		return /*0 / 0.0*/NAN;
 	if (ix == 0x7ff00000)
 		return 0.0;
@@ -236,7 +236,7 @@ double __cdecl yn(int n, double x)
 	}
 	if (nm1 == 0)
 		return sign ? -_y1(x) : _y1(x);
-	if (ix >= 0x52d00000) { /* x > 2**302 */
+	if (ix >= 0x52d00000) {	/* x > 2**302 */
 		/* (x >> n**2)
 		 *      Jn(x) = cos(x-(2n+1)*pi/4)*sqrt(2/x*pi)
 		 *      Yn(x) = sin(x-(2n+1)*pi/4)*sqrt(2/x*pi)

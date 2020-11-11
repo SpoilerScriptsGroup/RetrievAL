@@ -6,17 +6,15 @@
 size_t __cdecl strcspn(const char *string, const char *control)
 {
 	unsigned long map[0x100 / 32] = { 1 };
-	unsigned char c;
-	size_t        index;
+	unsigned char c, *p;
 
 	while (c = *(control++))
 		_bittestandset(map, c);
-	index = -1;
-	string++;
+	p = string++;
 	do
-		c = string[index++];
+		c = *(p++);
 	while (!_bittest(map, c));
-	return index;
+	return p - string;
 }
 #else
 

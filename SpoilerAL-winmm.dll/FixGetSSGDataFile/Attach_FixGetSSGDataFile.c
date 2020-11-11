@@ -78,6 +78,7 @@ static BOOL __fastcall FunctionableGroup(string *name, vector_string *func)
 					case_unsigned_leadbyte_cp932:
 						if (*(++src))
 							continue;
+						/* FALLTHROUGH */
 					case '\0':
 						goto TERMINATE;
 					}
@@ -92,6 +93,7 @@ static BOOL __fastcall FunctionableGroup(string *name, vector_string *func)
 		case_unsigned_leadbyte_cp932:
 			if (*(++p))
 				continue;
+			/* FALLTHROUGH */
 		case '\0':
 			break;
 		}

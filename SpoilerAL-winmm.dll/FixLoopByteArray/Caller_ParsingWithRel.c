@@ -61,6 +61,7 @@ static TProcessAccessElementMaskData* __fastcall TSSGCtrl_StrToProcessAccessElem
 			 NowAE = bcb6_operator_new(sizeof(TProcessAccessElementMaskData));
 			*NowAE = (const TProcessAccessElementMaskData) { (LPVOID)0x00627294, atDATA };
 			vector_byte_reserve(TProcessAccessElementData_GetData(NowAE), sizeof(uint64_t));
+			/* FALLTHROUGH */
 		case atDATA:
 		L_PUSH_DATA:
 			data = TProcessAccessElementData_GetData(NowAE);

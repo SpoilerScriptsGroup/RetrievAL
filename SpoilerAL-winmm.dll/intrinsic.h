@@ -306,11 +306,11 @@ __forceinline uint64_t       _byteswap_uint64(uint64_t       val) { return BSWAP
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define __intrinsic_bswap16 _byteswap_ushort
-#define __intrinsic_bswap24(value) _byteswap_ulong((uint32_t)(value) << 8)
+#define __intrinsic_bswap24(value) (_byteswap_ulong((uint32_t)(value)) >> 8)
 #define __intrinsic_bswap32 _byteswap_ulong
-#define __intrinsic_bswap40(value) _byteswap_uint64((uint64_t)(value) << 24)
-#define __intrinsic_bswap48(value) _byteswap_uint64((uint64_t)(value) << 16)
-#define __intrinsic_bswap56(value) _byteswap_uint64((uint64_t)(value) << 8)
+#define __intrinsic_bswap40(value) (_byteswap_uint64((uint64_t)(value)) >> 24)
+#define __intrinsic_bswap48(value) (_byteswap_uint64((uint64_t)(value)) >> 16)
+#define __intrinsic_bswap56(value) (_byteswap_uint64((uint64_t)(value)) >> 8)
 #define __intrinsic_bswap64 _byteswap_uint64
 #else
 __forceinline uint16_t __intrinsic_bswap16(uint16_t value) { return BSWAP16 (value); }
@@ -630,14 +630,14 @@ do                                       \
 
 // for constant value
 #define _BSF8(x, default) ( \
-    ((x) & 0x01) ?  0 :     \
-    ((x) & 0x02) ?  1 :     \
-    ((x) & 0x04) ?  2 :     \
-    ((x) & 0x08) ?  3 :     \
-    ((x) & 0x10) ?  4 :     \
-    ((x) & 0x20) ?  5 :     \
-    ((x) & 0x40) ?  6 :     \
-    ((x) & 0x80) ?  7 :     \
+    ((x) & 0x01) ? 0 :      \
+    ((x) & 0x02) ? 1 :      \
+    ((x) & 0x04) ? 2 :      \
+    ((x) & 0x08) ? 3 :      \
+    ((x) & 0x10) ? 4 :      \
+    ((x) & 0x20) ? 5 :      \
+    ((x) & 0x40) ? 6 :      \
+    ((x) & 0x80) ? 7 :      \
     (default))
 #define _BSF16(x, default) _BSF8(x, _BSF8((x) >> 8, (default) - 8) + 8)
 #define _BSF32(x, default) _BSF16(x, _BSF16((x) >> 16, (default) - 16) + 16)
@@ -684,14 +684,14 @@ do                                       \
 
 // for constant value
 #define _BSR8(x, default) ( \
-    ((x) & 0x80) ?  7 :     \
-    ((x) & 0x40) ?  6 :     \
-    ((x) & 0x20) ?  5 :     \
-    ((x) & 0x10) ?  4 :     \
-    ((x) & 0x08) ?  3 :     \
-    ((x) & 0x04) ?  2 :     \
-    ((x) & 0x02) ?  1 :     \
-    ((x) & 0x01) ?  0 :     \
+    ((x) & 0x80) ? 7 :      \
+    ((x) & 0x40) ? 6 :      \
+    ((x) & 0x20) ? 5 :      \
+    ((x) & 0x10) ? 4 :      \
+    ((x) & 0x08) ? 3 :      \
+    ((x) & 0x04) ? 2 :      \
+    ((x) & 0x02) ? 1 :      \
+    ((x) & 0x01) ? 0 :      \
     (default))
 #define _BSR16(x, default) (_BSR8((uint16_t)(x) >> 8, _BSR8(x, default) - 8) + 8)
 #define _BSR32(x, default) (_BSR16((uint32_t)(x) >> 16, _BSR16(x, default) - 16) + 16)

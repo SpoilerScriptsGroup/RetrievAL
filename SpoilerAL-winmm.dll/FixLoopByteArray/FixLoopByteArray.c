@@ -110,6 +110,7 @@ static void __fastcall TSSGCtrl_MakeLoopSet(
 					vector_byte_reserve(dst, vector_size(dst) + Size);
 					__movsb(vector_end(dst), vector_begin(src), Size);
 					vector_end(dst) += Size;
+					/* FALLTHROUGH */
 				case atDATA:
 					src = TProcessAccessElementData_GetData(NowAE);
 					if ((Rel += Size = vector_size(src)) > FullSize)
@@ -132,6 +133,7 @@ static void __fastcall TSSGCtrl_MakeLoopSet(
 					vector_byte_reserve(data, FullSize);
 				else
 					vector_end(data) = vector_begin(data) + FullSize;
+				/* FALLTHROUGH */
 			case atDATA:
 				data = TProcessAccessElementData_GetData(NowAE);
 				if ((Rel = vector_size(data)) < FullSize)
@@ -189,6 +191,7 @@ static void __fastcall TSSGCtrl_MakeLoopSet(
 					size <<= 1;
 				}
 				vector_end(data) = vector_begin(data) + FullSize;
+				/* FALLTHROUGH */
 			case atDATA:
 				data = TProcessAccessElementData_GetData(NowAE);
 				if (size = vector_size(data))

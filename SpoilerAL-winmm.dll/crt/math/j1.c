@@ -127,9 +127,9 @@ double __cdecl j1(double x)
 	ix &= 0x7fffffff;
 	if (ix >= 0x7ff00000)
 		return 1 / (x * x);
-	if (ix >= 0x40000000)  /* |x| >= 2 */
+	if (ix >= 0x40000000)	/* |x| >= 2 */
 		return common(ix, fabs(x), 0, sign);
-	if (ix >= 0x38000000) {  /* |x| >= 2**-127 */
+	if (ix >= 0x38000000) {	/* |x| >= 2**-127 */
 		z = x * x;
 		r = z * (r00 + z * (r01 + z * (r02 + z * r03)));
 		s = 1 + z * (s01 + z * (s02 + z * (s03 + z * (s04 + z * s05))));
@@ -167,9 +167,9 @@ double __cdecl y1(double x)
 		return /*0 / 0.0*/NAN;
 	if (ix >= 0x7ff00000)
 		return 1 / x;
-	if (ix >= 0x40000000)  /* x >= 2 */
+	if (ix >= 0x40000000)	/* x >= 2 */
 		return common(ix, x, 1, 0);
-	if (ix < 0x3c900000)  /* x < 2**-54 */
+	if (ix < 0x3c900000)	/* x < 2**-54 */
 		return -tpi / x;
 	z = x * x;
 	u = U0[0] + z * (U0[1] + z * (U0[2] + z * (U0[3] + z * U0[4])));
@@ -186,7 +186,7 @@ double __cdecl y1(double x)
  * and
  *      | pone(x)-1-R/S | <= 2  ** ( -60.06)
  */
-static const double pr8[6] = { /* for x in [inf, 8]=1/[0,0.125] */
+static const double pr8[6] = {	/* for x in [inf, 8]=1/[0,0.125] */
   0.00000000000000000000e+00, /* 0x00000000, 0x00000000 */
   1.17187499999988647970e-01, /* 0x3FBDFFFF, 0xFFFFFCCE */
   1.32394806593073575129e+01, /* 0x402A7A9D, 0x357F7FCE */
@@ -201,7 +201,7 @@ static const double ps8[5] = {
   9.76027935934950801311e+04, /* 0x40F7D42C, 0xB28F17BB */
   3.08042720627888811578e+04, /* 0x40DE1511, 0x697A0B2D */
 };
-static const double pr5[6] = { /* for x in [8,4.5454]=1/[0.125,0.22001] */
+static const double pr5[6] = {	/* for x in [8,4.5454]=1/[0.125,0.22001] */
   1.31990519556243522749e-11, /* 0x3DAD0667, 0xDAE1CA7D */
   1.17187493190614097638e-01, /* 0x3FBDFFFF, 0xE2C10043 */
   6.80275127868432871736e+00, /* 0x401B3604, 0x6E6315E3 */
@@ -231,7 +231,7 @@ static const double ps3[5] = {
   8.90811346398256432622e+02, /* 0x408BD67D, 0xA32E31E9 */
   1.03787932439639277504e+02, /* 0x4059F26D, 0x7C2EED53 */
 };
-static const double pr2[6] = {/* for x in [2.8570,2]=1/[0.3499,0.5] */
+static const double pr2[6] = {	/* for x in [2.8570,2]=1/[0.3499,0.5] */
   1.07710830106873743082e-07, /* 0x3E7CE9D4, 0xF65544F4 */
   1.17176219462683348094e-01, /* 0x3FBDFF42, 0xBE760D83 */
   2.36851496667608785174e+00, /* 0x4002F2B7, 0xF98FAEC0 */
@@ -273,7 +273,7 @@ static double pone(double x)
  * and
  *      | qone(x)/s -0.375-R/S | <= 2  ** ( -61.13)
  */
-static const double qr8[6] = { /* for x in [inf, 8]=1/[0,0.125] */
+static const double qr8[6] = {	/* for x in [inf, 8]=1/[0,0.125] */
   0.00000000000000000000e+00, /* 0x00000000, 0x00000000 */
  -1.02539062499992714161e-01, /* 0xBFBA3FFF, 0xFFFFFDF3 */
  -1.62717534544589987888e+01, /* 0xC0304591, 0xA26779F7 */
@@ -289,7 +289,7 @@ static const double qs8[6] = {
   6.66601232617776375264e+05, /* 0x412457D2, 0x7719AD5C */
  -2.94490264303834643215e+05, /* 0xC111F969, 0x0EA5AA18 */
 };
-static const double qr5[6] = { /* for x in [8,4.5454]=1/[0.125,0.22001] */
+static const double qr5[6] = {	/* for x in [8,4.5454]=1/[0.125,0.22001] */
  -2.08979931141764104297e-11, /* 0xBDB6FA43, 0x1AA1A098 */
  -1.02539050241375426231e-01, /* 0xBFBA3FFF, 0xCB597FEF */
  -8.05644828123936029840e+00, /* 0xC0201CE6, 0xCA03AD4B */
@@ -321,7 +321,7 @@ static const double qs3[6] = {
   1.90311919338810798763e+03, /* 0x409DBC7A, 0x0DD4DF4B */
  -1.35201191444307340817e+02, /* 0xC060E670, 0x290A311F */
 };
-static const double qr2[6] = {/* for x in [2.8570,2]=1/[0.3499,0.5] */
+static const double qr2[6] = {	/* for x in [2.8570,2]=1/[0.3499,0.5] */
  -1.78381727510958865572e-07, /* 0xBE87F126, 0x44C626D2 */
  -1.02517042607985553460e-01, /* 0xBFBA3E8E, 0x9148B010 */
  -2.75220568278187460720e+00, /* 0xC0060484, 0x69BB4EDA */

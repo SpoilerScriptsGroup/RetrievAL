@@ -42,7 +42,7 @@ uint64_t __msreturn __cdecl internal_randf64gt0lt1();
 
 /**
  * This function generates and returns single precision pseudorandom
- * number which distributes uniformly in the range [0, FLT_MAX).
+ * number which distributes uniformly in the range [-FLT_MAX, FLT_MAX].
  */
 __forceinline float randf32()
 {
@@ -52,7 +52,7 @@ __forceinline float randf32()
 
 /**
  * This function generates and returns double precision pseudorandom
- * number which distributes uniformly in the range [0, DBL_MAX).
+ * number which distributes uniformly in the range [-DBL_MAX, DBL_MAX].
  */
 __forceinline double randf64()
 {

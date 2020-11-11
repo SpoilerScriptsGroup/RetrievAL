@@ -30,12 +30,6 @@ extern int __cdecl _wmemicmp(const void *buffer1, const void *buffer2, size_t co
 
 #ifdef __BORLANDC__
 #pragma warn -8060
-#undef SIZE_MAX
-#ifdef _WIN64
-#define SIZE_MAX _UI64_MAX
-#else
-#define SIZE_MAX UINT_MAX
-#endif
 EXTERN_C DWORD __stdcall GetProcessId(IN HANDLE Process);
 #endif
 
@@ -98,7 +92,7 @@ NTSTATUS __stdcall CompareProcessMemoryT(
 	if (isSameProcess && lpAddress1 == lpAddress2)
 		goto SUCCESS;
 #ifdef _UNICODE
-	size = min(nCount, SIZE_MAX / sizeof(TCHAR)) * sizeof(TCHAR);
+	size = min(nCount, (size_t)-1 / sizeof(TCHAR)) * sizeof(TCHAR);
 #else
 	size = nCount;
 #endif

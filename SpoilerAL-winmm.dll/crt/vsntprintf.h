@@ -680,7 +680,7 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 	 */
 	if (!buffer)
 		count = 0;
-#if SIZE_MAX > UINT32_MAX
+#if UINTPTR_MAX > UINT32_MAX
 	else if (count > UINT32_MAX)
 		count = UINT32_MAX;
 
@@ -1335,7 +1335,7 @@ NESTED_BREAK:
 	}
 	return (int)length;
 
-#if SIZE_MAX > UINT32_MAX
+#if UINTPTR_MAX > UINT32_MAX
 	#undef count
 #endif
 	#undef va_sizeof
@@ -1775,27 +1775,21 @@ static uint32_t fltcvt(long_double value, uint32_t ndigits, int32_t *decpt, TCHA
 			decimal <<= i;
 		if (decimal)
 		{
+			do  /* do { ... } while (0); */
+			{
 #if !LONGDOUBLE_IS_DOUBLE || defined(_MSC_VER) && defined(_M_IX86)
-			if (decimal >= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG))
-			{
-				e++;
-				decimal = (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) / 10;
-			}
-			else if (decimal < (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) / 10)
-			{
-				decimal = (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) / 10;
-			}
+				if (decimal >= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG))
+					e++;
+				else if (decimal >= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) / 10)
+					break;
 #else
-			if (e >= 0 ? decimal >= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) : decimal >= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) - 16)
-			{
-				e++;
-				decimal = (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) / 10;
-			}
-			else if (decimal <= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) / 10 + 2)
-			{
-				decimal = (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) / 10;
-			}
+				if (e >= 0 ? decimal >= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) : decimal >= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) - 16)
+					e++;
+				else if (decimal >= (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) / 10 + 3)
+					break;
 #endif
+				decimal = (uintmax_t)CONCAT(1e, LDBL_DECIMAL_DIG) / 10;
+			} while (0);
 			if ((i = (LDBL_DECIMAL_DIG - 1) - ndigits - (!eflag ? e + 1 : 0)) >= 0 && (eflag || modfl(value, &x)))
 			{
 				if (i <= LDBL_DECIMAL_DIG - 1)

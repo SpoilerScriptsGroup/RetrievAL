@@ -49,7 +49,7 @@ unsigned long __cdecl TStringDivision_FindBack(
 	// ただのパターンマッチングならBoyer-Moore法って手もあるが、
 	// 2バイト文字やネスト、エスケープシーケンスも許可しているので1つづつ(^^;)
 
-	FindIndex = (unsigned long)SIZE_MAX;
+	FindIndex = (unsigned long)-1;
 	if (Option & dtNEST)
 	{
 		// ネストチェックあり
@@ -204,6 +204,6 @@ unsigned long __cdecl TStringDivision_FindBack(
 
 FAILED:
 	string_dtor(&Token);
-	return (unsigned long)SIZE_MAX;
+	return (unsigned long)-1;
 }
 

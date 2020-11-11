@@ -571,6 +571,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 			condition ^= 1;
 			if (tag == ELSE)
 				break;
+			/* FALLTHROUGH */
 
 		// [if]
 		case IF:

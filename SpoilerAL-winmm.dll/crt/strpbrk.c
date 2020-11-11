@@ -56,12 +56,11 @@ __declspec(naked) char * __cdecl strpbrk(const char *string, const char *control
 		jnc     dstnext                                     // did not find char, continue
 
 		// Return code
-		xor     edx, edx
-		cmp     ecx, 1
-		adc     edx, -1
 		dec     eax
+		add     ecx, -1
+		sbb     ecx, ecx
 		add     esp, 32
-		and     eax, edx
+		and     eax, ecx
 		ret                                                 // __cdecl return
 
 		#undef string

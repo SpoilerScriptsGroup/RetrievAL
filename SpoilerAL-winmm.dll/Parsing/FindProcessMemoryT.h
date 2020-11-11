@@ -25,12 +25,6 @@ extern void * __cdecl _memichr(const void *buffer, int c, size_t count);
 #pragma warn -8058
 #pragma warn -8060
 #pragma warn -8075
-#undef SIZE_MAX
-#ifdef _WIN64
-#define SIZE_MAX _UI64_MAX
-#else
-#define SIZE_MAX UINT_MAX
-#endif
 EXTERN_C DWORD __stdcall GetProcessId(IN HANDLE Process);
 #endif
 
@@ -73,7 +67,7 @@ size_t __stdcall FindProcessMemoryT(
 		size_t                     size, read;
 
 #ifdef _UNICODE
-		size = min(nMaxLength, SIZE_MAX / sizeof(wchar_t)) * sizeof(wchar_t);
+		size = min(nMaxLength, (size_t)-1 / sizeof(wchar_t)) * sizeof(wchar_t);
 #else
 		size = nMaxLength;
 #endif
@@ -131,7 +125,7 @@ size_t __stdcall FindProcessMemoryT(
 	}
 
 READ_FAILED:
-	return SIZE_MAX;
+	return -1;
 
 NOT_FOUND:
 	return nMaxLength;

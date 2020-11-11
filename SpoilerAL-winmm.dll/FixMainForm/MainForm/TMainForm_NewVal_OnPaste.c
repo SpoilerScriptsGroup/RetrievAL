@@ -50,7 +50,7 @@ __declspec(naked) void __cdecl TMainForm_FormClose_Header()
 		mov     eax, dword ptr [eax + TCalcImage.valBox]
 		push    GWLP_WNDPROC
 		mov     eax, dword ptr [eax + size TCalcValBox]
-		call    dword ptr[_TWinControl_GetHandle]
+		call    dword ptr [_TWinControl_GetHandle]
 		push    eax
 		mov     dword ptr [TMainForm_PrevNewValProc], 0
 		call    SetWindowLongPtrA
@@ -81,7 +81,7 @@ __declspec(naked) void __cdecl TMainForm_LoadCLD_Footer()
 		push    GWLP_WNDPROC
 		mov     eax, dword ptr [eax + TCalcImage.valBox]
 		mov     eax, dword ptr [eax + size TCalcValBox]
-		call    dword ptr[_TWinControl_GetHandle]
+		call    dword ptr [_TWinControl_GetHandle]
 		push    eax
 		call    SetWindowLongPtrA
 		mov     dword ptr [TMainForm_PrevNewValProc], eax
@@ -203,9 +203,11 @@ LRESULT __fastcall TMainForm_NewVal_OnPaste(TMainForm *this)
 						goto PUTCHAR;
 					case 'a': case 'b': case 'c': case 'd': case 'e': case 'f':
 						c -= 'a' - 'A';
+						/* FALLTHROUGH */
 					case 'A': case 'B': case 'C': case 'D': case 'E': case 'F':
 						if (!this->isCalcHex)
 							continue;
+						/* FALLTHROUGH */
 					case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
 					PUTCHAR:
 						*(dest++) = c;

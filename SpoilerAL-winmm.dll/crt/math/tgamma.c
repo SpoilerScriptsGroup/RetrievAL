@@ -137,7 +137,7 @@ double __cdecl tgamma(double x)
 	}
 	/* x >= 172: tgamma(x)=inf with overflow */
 	/* x =< -184: tgamma(x)=+-0 with underflow */
-	if (ix >= 0x40670000) { /* |x| >= 184 */
+	if (ix >= 0x40670000) {	/* |x| >= 184 */
 		if (sign) {
 			FORCE_EVAL((float)(0x1p-126 / x));
 			if (floor(x) * 0.5 == floor(x * 0.5))

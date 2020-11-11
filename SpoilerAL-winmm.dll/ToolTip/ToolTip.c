@@ -174,6 +174,7 @@ static LRESULT CALLBACK CBTProc(int nCode, WPARAM wParam, LPARAM lParam)
 	case HCBT_KEYSKIPPED:
 		if (wParam <= VK_MENU && wParam >= VK_SHIFT || (long)lParam < 0)
 			break;
+		/* FALLTHROUGH */
 	case HCBT_CLICKSKIPPED:
 		HideToolTip();
 		return 0;

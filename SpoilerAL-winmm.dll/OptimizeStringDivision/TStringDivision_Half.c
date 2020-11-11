@@ -82,6 +82,7 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 		case '!':
 			if (*(p + 1) == ']' && TokenLength == 2 && *(LPWORD)Token == BSWAP16('!]'))
 				goto MATCHED;
+			/* FALLTHROUGH */
 		default:
 		DEFAULT:
 			if (memcmp(p, Token, TokenLength) != 0)

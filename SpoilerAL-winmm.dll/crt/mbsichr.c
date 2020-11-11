@@ -1,59 +1,72 @@
 #include <windows.h>
 #include <mbstring.h>
+#include <intrin.h>
+
+#pragma intrinsic(_byteswap_ulong)
 
 #pragma warning(disable:4414)
+
+unsigned char * __fastcall internal_mbschr_single_byte(const unsigned char *string, unsigned int c);
+unsigned char * __fastcall internal_mbschr_multi_byte(const unsigned char *string, unsigned int c);
+unsigned char * __fastcall internal_mbsichr_single_byte(const unsigned char *string, unsigned int c);
+unsigned char * __fastcall internal_mbsichr_multi_byte(const unsigned char *string, unsigned int c);
 
 #ifndef _M_IX86
 unsigned char * __cdecl _mbsichr(const unsigned char *string, unsigned int c)
 {
-	const unsigned char *p;
-
 	if (c < 0x100)
 	{
-		unsigned char c1, c2;
-
-		c1 = (unsigned char)c | ('a' - 'A');
-		if ((unsigned char)(c1 - 'a') >= 'z' - 'a' + 1)
-			goto MBSCHR;
-		p = string - 1;
-		do
-			if (((c2 = *(++p)) | ('a' - 'A')) == c1)
-				goto DONE;
-		while (c2 && (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2) || *(++p)));
+		if ((c | ('a' - 'A')) - 'a' >= 'z' - 'a' + 1)
+			return _mbschr(string, c);
+		return internal_mbsichr_single_byte(string, c);
 	}
-	else if (c < 0x10000)
+	else
 	{
-		char lpSrcStr[2];
+		char lpCharStr[sizeof(long)];
+		WORD wCharType;
 
-		lpSrcStr[0] = (char)(c >> 8);
-		lpSrcStr[1] = (char)c;
-		if (IsDBCSLeadByteEx(CP_THREAD_ACP, c >> 8))
-		{
-			LCID          Locale;
-			WORD          wCharType;
-			unsigned char c2;
-
-			Locale = GetThreadLocale();
-			if (!GetStringTypeA(Locale, CT_CTYPE1, lpSrcStr, 2, &wCharType) || !(wCharType & (C1_UPPER | C1_LOWER)))
-				goto MBSCHR;
-			p = string - 1;
-			while (c2 = *(++p))
-				if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2))
-					continue;
-				else if (!p[1])
-					break;
-				else if (CompareStringA(Locale, NORM_IGNORECASE, p, 2, lpSrcStr, 2) == CSTR_EQUAL)
-					goto DONE;
-				else
-					p++;
-		}
+		if (c >= 0x10000 || !(unsigned char)c)
+			return NULL;
+		if (!IsDBCSLeadByteEx(CP_THREAD_ACP, (unsigned char)(*(unsigned long *)lpCharStr = _byteswap_ulong(c) >> 16)))
+			return NULL;
+		if (!GetStringTypeA(GetThreadLocale(), CT_CTYPE1, lpCharStr, 2, &wCharType) || !(wCharType & (C1_UPPER | C1_LOWER)))
+			return _mbschr(string, c);
+		return internal_mbsichr_multi_byte(string, c);
 	}
-	p = NULL;
-DONE:
-	return (unsigned char *)p;
+}
 
-MBSCHR:
-	return _mbschr(string, c);
+unsigned char * __fastcall internal_mbsichr_single_byte(const unsigned char *string, unsigned int c)
+{
+	unsigned char c1, c2;
+
+	c1 = (unsigned char)c | ('a' - 'A');
+	string--;
+	do
+		if (((c2 = *(++string)) | ('a' - 'A')) == c1)
+			return (unsigned char *)string;
+	while (c2 && (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2) || *(++string)));
+	return NULL;
+}
+
+unsigned char * __fastcall internal_mbsichr_multi_byte(const unsigned char *string, unsigned int c)
+{
+	unsigned char c2;
+	char          lpCharStr[sizeof(long)];
+	LCID          Locale;
+
+	*(unsigned long *)lpCharStr = _byteswap_ulong(c) >> 16;
+	Locale = GetThreadLocale();
+	string--;
+	while (c2 = *(++string))
+	{
+		if (!IsDBCSLeadByteEx(CP_THREAD_ACP, c2))
+			continue;
+		if (CompareStringA(Locale, NORM_IGNORECASE, string, 2, lpCharStr, 2) == CSTR_EQUAL)
+			return (unsigned char *)string;
+		if (!*(++string))
+			break;
+	}
+	return NULL;
 }
 #else
 __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, unsigned int c)
@@ -66,18 +79,81 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 		mov     eax, dword ptr [c]
 		mov     ecx, dword ptr [string]
 		cmp     eax, 100H
-		jae     L4
-		or      eax, 'a' - 'A'
-		dec     ecx
+		jae     L1
 		mov     edx, eax
+		or      eax, 'a' - 'A'
 		sub     eax, 'a'
 		cmp     eax, 'z' - 'a' + 1
-		jae     _mbschr
+		jae     internal_mbschr_single_byte
+		jmp     internal_mbsichr_single_byte
+
+		align   16
+	L1:
+		cmp     eax, 10000H
+		jae     L3
+		test    al, al
+		jz      L3
+		shr     eax, 8
+		push    eax
+		push    CP_THREAD_ACP
+		call    IsDBCSLeadByteEx
+		test    eax, eax
+		jz      L4
+		call    GetThreadLocale
+		mov     ecx, dword ptr [c]
+		shl     ecx, 16
+		push    0
+		bswap   ecx
+		mov     edx, esp
+		push    ecx
+		mov     ecx, esp
+		push    edx
+		push    2
+		push    ecx
+		push    CT_CTYPE1
+		push    eax
+		call    GetStringTypeA
+		pop     edx
+		pop     ecx
+		test    eax, eax
+		jz      L2
+		and     ecx, C1_UPPER or C1_LOWER
+		jz      L2
+		mov     ecx, dword ptr [string]
+		mov     edx, dword ptr [c]
+		jmp     internal_mbsichr_multi_byte
+
+		align   16
+	L2:
+		mov     ecx, dword ptr [string]
+		mov     edx, dword ptr [c]
+		jmp     internal_mbschr_multi_byte
+
+		align   16
+	L3:
+		xor     eax, eax
+	L4:
+		ret
+
+		#undef string
+		#undef c
+	}
+}
+
+__declspec(naked) unsigned char * __fastcall internal_mbsichr_single_byte(const unsigned char *string, unsigned int c)
+{
+	__asm
+	{
+		#define string ecx
+		#define c      edx
+
 		push    ebx
 		push    esi
+		dec     ecx
+		or      edx, 'a' - 'A'
+		mov     esi, ecx
 		xor     eax, eax
 		mov     ebx, edx
-		mov     esi, ecx
 
 		align   16
 	L1:
@@ -86,126 +162,99 @@ __declspec(naked) unsigned char * __cdecl _mbsichr(const unsigned char *string, 
 		mov     al, cl
 		or      cl, 'a' - 'A'
 		cmp     cl, bl
-		je      L2
-		test    al, al
-		jz      L3
+		je      L3
+	L2:
+		test    eax, eax
+		jz      L4
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
 		jz      L1
-		inc     esi
-		xor     eax, eax
-		cmp     byte ptr [esi], '\0'
-		jne     L1
-		jmp     L3
-
-		align   16
-	L2:
-		mov     eax, esi
-	L3:
-		pop     esi
-		pop     ebx
-		ret
-
-		align   16
-	L4:
-		cmp     eax, 10000H
-		jae     L7
-		xchg    al, ah
-		push    eax
-		and     eax, 0FFH
-		push    eax
-		push    CP_THREAD_ACP
-		call    IsDBCSLeadByteEx
-		test    eax, eax
-		jz      L11
-		call    GetThreadLocale
-		push    ebx
-		push    esi
-		push    edi
-		push    0
-
-		#define Locale      ebx
-		#define lpSrcStr    edi
-		#define lpCharType  esp
-
-		mov     esi, dword ptr [string + 20]
-		lea     lpSrcStr, [esp + 16]
-		mov     Locale, eax
-		push    lpCharType
-		push    2
-		push    lpSrcStr
-		push    CT_CTYPE1
-		push    Locale
-		call    GetStringTypeA
-		dec     esi
-		test    eax, eax
-		pop     ecx
-		jz      L8
-		test    ecx, C1_UPPER or C1_LOWER
-		jz      L8
-		xor     eax, eax
-		jmp     L6
-
-		align   16
-	L5:
-		push    eax
-		push    CP_THREAD_ACP
-		call    IsDBCSLeadByteEx
-		test    eax, eax
-		jz      L6
 		mov     cl, byte ptr [esi + 1]
 		xor     eax, eax
 		test    cl, cl
-		jz      L10
-		push    2
-		push    lpSrcStr
-		push    2
-		push    esi
-		push    NORM_IGNORECASE
-		push    Locale
-		call    CompareStringA
-		cmp     eax, CSTR_EQUAL
-		je      L9
-		inc     esi
-		xor     eax, eax
-	L6:
-		mov     al, byte ptr [esi + 1]
-		inc     esi
-		test    al, al
-		jnz     L5
-		jmp     L10
-
-		align   16
-	L7:
-		xor     eax, eax
-		ret
-
-		align   16
-	L8:
-		pop     edi
-		pop     esi
-		pop     ebx
-		pop     ecx
-		jmp     _mbschr
-
-		align   16
-	L9:
+		jz      L4
+		mov     cl, byte ptr [esi + 2]
+		add     esi, 2
+		mov     al, cl
+		or      cl, 'a' - 'A'
+		cmp     cl, bl
+		jne     L2
+	L3:
 		mov     eax, esi
-	L10:
-		pop     edi
+	L4:
 		pop     esi
 		pop     ebx
-	L11:
-		pop     ecx
 		ret
 
 		#undef string
 		#undef c
-		#undef Locale
-		#undef lpSrcStr
-		#undef lpCharType
+	}
+}
+
+__declspec(naked) unsigned char * __fastcall internal_mbsichr_multi_byte(const unsigned char *string, unsigned int c)
+{
+	__asm
+	{
+		#define string ecx
+		#define c      edx
+
+		push    ebx
+		push    esi
+		bswap   edx
+		shr     edx, 16
+		lea     esi, [ecx - 1]
+		push    edi
+		push    edx
+		call    GetThreadLocale
+		mov     ebx, eax
+		xor     eax, eax
+		mov     edi, esp
+
+		align   16
+	L1:
+		mov     al, byte ptr [esi + 1]
+		inc     esi
+		test    eax, eax
+		jz      L9
+	L2:
+		push    eax
+		push    CP_THREAD_ACP
+		call    IsDBCSLeadByteEx
+		test    eax, eax
+		jz      L1
+		push    2
+		push    edi
+		push    2
+		push    esi
+		push    NORM_IGNORECASE
+		push    ebx
+		call    CompareStringA
+		cmp     eax, CSTR_EQUAL
+		je      L8
+		mov     cl, byte ptr [esi + 1]
+		xor     eax, eax
+		test    cl, cl
+		jz      L9
+		mov     al, byte ptr [esi + 2]
+		add     esi, 2
+		test    eax, eax
+		jnz     L2
+		jmp     L9
+
+		align   16
+	L8:
+		mov     eax, esi
+	L9:
+		pop     ecx
+		pop     edi
+		pop     esi
+		pop     ebx
+		ret
+
+		#undef string
+		#undef c
 	}
 }
 #endif

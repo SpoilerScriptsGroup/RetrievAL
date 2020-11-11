@@ -43,6 +43,7 @@ void __cdecl TMainForm_CalcButtonPushFunc(TMainForm *this, long BtnNum)
 			break;
 		}
 		BtnNum += 'A' - 0x0A - '0';
+		/* FALLTHROUGH */
 	case 0:
 	case 1:
 	case 2:
@@ -124,14 +125,14 @@ void __cdecl TMainForm_CalcButtonPushFunc(TMainForm *this, long BtnNum)
 						_snprintf(buffer, sizeof(buffer), "%0*X", TSSGSubject_GetSize(TargetS) << 1, BtnNum == 20 ? SSGS->min : SSGS->max);
 					else
 						_snprintf(buffer, sizeof(buffer), SSGS->isUnsigned ? "%u" : "%d", BtnNum == 20 ? SSGS->min : SSGS->max);
-					break;
 				}
+				break;
 			case atDOUBLE:
 				{
 					TSSFloatCalc *SSGS = (TSSFloatCalc *)TargetS;
 					_snprintf(buffer, sizeof(buffer), "%f", BtnNum == 20 ? SSGS->min : SSGS->max);
-					break;
 				}
+				break;
 			default:
 				return;
 			}

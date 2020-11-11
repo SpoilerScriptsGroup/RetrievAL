@@ -110,7 +110,7 @@
 #define GET_HIGH_WORD(msw, x) (msw = ((uint32_t *)&(x))[1])
 
 static const double
-	erx  = 8.45062911510467529297e-01, /* 0x3FEB0AC1, 0x60000000 */
+	erx  =  8.45062911510467529297e-01, /* 0x3FEB0AC1, 0x60000000 */
 	/*
 	 * Coefficients for approximation to  erf on [0,0.84375]
 	 */
@@ -191,7 +191,7 @@ static double erfc2(uint32_t ix, double x)
 {
 	double_t s, R, S;
 	double z;
-	if (ix < 0x3ff40000)  /* |x| < 1.25 */
+	if (ix < 0x3ff40000)    /* |x| < 1.25 */
 		return erfc1(x);
 	x = fabs(x);
 	s = 1 / (x * x);
@@ -223,8 +223,8 @@ double __cdecl erf(double x)
 		/* erf(nan)=nan, erf(+-inf)=+-1 */
 		return 1 - 2 * sign + 1 / x;
 	}
-	if (ix < 0x3feb0000) {  /* |x| < 0.84375 */
-		if (ix < 0x3e300000) {  /* |x| < 2**-28 */
+	if (ix < 0x3feb0000) {	/* |x| < 0.84375 */
+		if (ix < 0x3e300000) {	/* |x| < 2**-28 */
 			/* avoid underflow */
 			return 0.125 * (8 * x + efx8 * x);
 		}
@@ -234,7 +234,7 @@ double __cdecl erf(double x)
 		y = r / s;
 		return x + x * y;
 	}
-	if (ix < 0x40180000)  /* 0.84375 <= |x| < 6 */
+	if (ix < 0x40180000)	/* 0.84375 <= |x| < 6 */
 		y = 1 - erfc2(ix, x);
 	else
 		y = 1 - 0x1p-1022;
@@ -253,19 +253,19 @@ double __cdecl erfc(double x)
 		/* erfc(nan)=nan, erfc(+-inf)=0,2 */
 		return 2 * sign + 1 / x;
 	}
-	if (ix < 0x3feb0000) {  /* |x| < 0.84375 */
-		if (ix < 0x3c700000)  /* |x| < 2**-56 */
+	if (ix < 0x3feb0000) {	/* |x| < 0.84375 */
+		if (ix < 0x3c700000)	/* |x| < 2**-56 */
 			return 1.0 - x;
 		z = x * x;
 		r = pp0 + z * (pp1 + z * (pp2 + z * (pp3 + z * pp4)));
 		s = 1.0 + z * (qq1 + z * (qq2 + z * (qq3 + z * (qq4 + z * qq5))));
 		y = r / s;
-		if (sign || ix < 0x3fd00000) {  /* x < 1/4 */
+		if (sign || ix < 0x3fd00000) {	/* x < 1/4 */
 			return 1.0 - (x + x * y);
 		}
 		return 0.5 - (x - 0.5 + x * y);
 	}
-	if (ix < 0x403c0000) {  /* 0.84375 <= |x| < 28 */
+	if (ix < 0x403c0000) {	/* 0.84375 <= |x| < 28 */
 		return sign ? 2 - erfc2(ix, x) : erfc2(ix, x);
 	}
 	return sign ? 2 - 0x1p-1022 : 0x1p-1022 * 0x1p-1022;

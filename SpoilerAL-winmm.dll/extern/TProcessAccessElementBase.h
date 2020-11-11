@@ -27,17 +27,17 @@ typedef struct _TProcessAccessElementBase {
 } TProcessAccessElementBase;
 
 #define TProcessAccessElement_dtor(PAEB, bfDel)\
-	((void (__cdecl *)(void*, BYTE))(PAEB)->VTable[0])(PAEB, bfDel)
+	((void(__cdecl *)(void*, BYTE))(PAEB)->VTable[0])(PAEB, bfDel)
 
 #define delete_TProcessAccessElement(PAEB) TProcessAccessElement_dtor(PAEB, DTCVF_PTRVAL | DTCVF_DELPTR)
 
 #define TProcessAccessElement_GetType(PAEB) (PAEB)->type
 
 #define TProcessAccessElement_GetSize(PAEB, IsTrueMode)\
-	((unsigned long (__cdecl *)(void*, BOOLEAN))(PAEB)->VTable[1])(PAEB, IsTrueMode)
+	((unsigned long(__cdecl *)(void*, BOOLEAN))(PAEB)->VTable[1])(PAEB, IsTrueMode)
 
 #define TProcessAccessElement_SetSize(PAEB, Val, IsTrueMode)\
-	((void (__cdecl *)(void*, unsigned long, BOOLEAN))(PAEB)->VTable[2])(PAEB, Val, IsTrueMode)
+	((void(__cdecl *)(void*, unsigned long, BOOLEAN))(PAEB)->VTable[2])(PAEB, Val, IsTrueMode)
 
 typedef struct _TProcessAccessElementLoop {
 	LPVOID               *VTable;

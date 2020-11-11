@@ -113,6 +113,7 @@ static TProcessAccessElementMaskData* __fastcall TSSGCtrl_StrToProcessAccessElem
 		 NowAE = bcb6_operator_new(sizeof(TProcessAccessElementMaskData));
 		*NowAE = (const TProcessAccessElementMaskData) { (LPVOID)0x00627294, atDATA };
 		vector_byte_reserve  (TProcessAccessElementData_GetData(NowAE), sizeof(uint64_t));
+		/* FALLTHROUGH */
 	case atDATA:
 	L_PUSH_DATA:
 		vector_byte_push_back(TProcessAccessElementData_GetData(NowAE), Data);
@@ -135,6 +136,7 @@ static TProcessAccessElementMaskData* __fastcall TSSGCtrl_StrToProcessAccessElem
 		*NowAE = (const TProcessAccessElementMaskData) { (LPVOID)0x0063FE38, atMASK_DATA };
 		vector_byte_reserve  (TProcessAccessElementData_GetData    (NowAE), sizeof(uint64_t));
 		vector_byte_reserve  (TProcessAccessElementMaskData_GetMask(NowAE), sizeof(uint64_t));
+		/* FALLTHROUGH */
 	case atMASK_DATA:
 	L_PUSH_MASK_DATA:
 		vector_byte_push_back(TProcessAccessElementData_GetData    (NowAE), Data);
@@ -199,7 +201,7 @@ EXTERN_C void __cdecl FixMaskBytes()
 
 	// TSSBitList::Write
 	*(LPDWORD)0x004BB488 = BSWAP32(0x8BBD70FF);// mov edi, dword ptr [ebp-90h]
-	*(LPDWORD)0x004BB48C = BSWAP32(0xFFFF0FAB);// bts edi, eax  
+	*(LPDWORD)0x004BB48C = BSWAP32(0xFFFF0FAB);// bts edi, eax
 	*(LPWORD )0x004BB490 = BSWAP16(0xC789    );// mov dword ptr [ebp-90h], edi
 
 	*(LPBYTE )0x004BB5D7 = CALL_REL32;

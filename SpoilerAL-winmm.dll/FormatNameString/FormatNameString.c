@@ -152,6 +152,7 @@ static char * __fastcall FindDelimiter(const char *p, const char *end)
 		case '\\':
 			if (++p >= end)
 				goto NOT_FOUND;
+			/* FALLTHROUGH */
 		default:
 			if (!__intrinsic_isleadbyte(*p) || ++p < end)
 				break;

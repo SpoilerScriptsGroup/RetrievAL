@@ -9,11 +9,11 @@ void * __cdecl _memccpy(void *dest, const void *src, int c, size_t count)
 		return NULL;
 	if (p = memchr(src, c, count))
 		p = (char *)dest + (count = (char *)p - (char *)src + sizeof(char));
-	memmove(dest, src, count);
+	memcpy(dest, src, count);
 	return p;
 }
 #else
-#pragma function(memchr, memmove)
+#pragma function(memchr, memcpy)
 
 __declspec(naked) void * __cdecl _memccpy(void *dest, const void *src, int c, size_t count)
 {
@@ -39,7 +39,7 @@ __declspec(naked) void * __cdecl _memccpy(void *dest, const void *src, int c, si
 		mov     ecx, dword ptr [dest + 20]                  // load dest
 		mov     edx, esi                                    // copy src
 		mov     esi, eax                                    // p = result of memchr
-		mov     dword ptr [esp], ecx                        // store the dest of memmove
+		mov     dword ptr [esp], ecx                        // store the dest of memcpy
 		test    eax, eax                                    // compare the result of memchr with NULL
 		jz      copy                                        // jump if the result of memchr == NULL
 		sub     esi, edx                                    // calculation
@@ -47,9 +47,9 @@ __declspec(naked) void * __cdecl _memccpy(void *dest, const void *src, int c, si
 		lea     edi, [esi + 1]                              // count = p - src + 1
 		add     esi, ecx                                    // p = dest + count
 	copy:
-		mov     dword ptr [esp + 4], edx                    // store the src of memmove
-		mov     dword ptr [esp + 8], edi                    // store the count of memmove
-		call    memmove                                     // call memmove function
+		mov     dword ptr [esp + 4], edx                    // store the src of memcpy
+		mov     dword ptr [esp + 8], edi                    // store the count of memcpy
+		call    memcpy                                      // call memcpy function
 		add     esp, 12                                     // restore esp register
 		mov     eax, esi                                    // set return value
 		pop     edi                                         // restore register

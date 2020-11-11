@@ -71,7 +71,7 @@ __inline void Attribute_scope_open(TSSGCtrl *this, string *code)
 				map_dword_dw_dw_insert(&it, &scope->heapMap, it, &sv);
 			if (assign)
 			{
-				char       *endptr;
+				char *endptr;
 
 				errno = 0;
 				*(uint64_t *)pair_second(it, sv.Identifier) = _strtoui64(string_c_str(tmpS), &endptr, 0);

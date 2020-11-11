@@ -257,6 +257,7 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 					break;
 				if (*next == '\n')
 					next++;
+				/* FALLTHROUGH */
 			case '\n':
 #ifndef __BORLANDC__
 				if (firstLine)
@@ -296,6 +297,7 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 						break;
 					if (*next == '\n')
 						next++;
+					/* FALLTHROUGH */
 				case '\n':
 					memcpy(p, next, end - next + 1);
 					length = next - p;
@@ -309,6 +311,7 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 #else
 				case_unsigned_leadbyte:
 					p++;
+					/* FALLTHROUGH */
 				default:
 #endif
 					p += 2;
@@ -322,6 +325,7 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 #else
 			case_unsigned_leadbyte:
 				next++;
+				/* FALLTHROUGH */
 			default:
 #endif
 				p = next;

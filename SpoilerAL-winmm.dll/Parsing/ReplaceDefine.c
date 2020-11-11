@@ -11,13 +11,6 @@
 typedef vector vector_TSSGAttributeElement;
 #else
 #pragma warn -8060
-#ifndef SIZE_MAX
-#ifdef _WIN64
-#define SIZE_MAX _UI64_MAX
-#else
-#define SIZE_MAX UINT_MAX
-#endif
-#endif
 #define vector_string                                                vector<string>
 #define vector_TSSGAttributeElement                                  vector<TSSGAttributeElement *>
 #define string                                                       string
@@ -62,6 +55,7 @@ size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LP
 			case '<':
 				if ((c = *(++p)) != '#' && c != '@')
 					continue;
+				/* FALLTHROUGH */
 			case '(':
 			case ',':
 				do
@@ -175,7 +169,7 @@ size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LP
 NESTED_BREAK:
 	return p - *line;
 FAILED:
-	return SIZE_MAX;
+	return -1;
 }
 
 void __stdcall ReplaceDefine(TSSGAttributeSelector *attributeSelector, string *line)
@@ -222,7 +216,7 @@ static void __stdcall ReplaceDefineByAttributeVector(vector_TSSGAttributeElement
 	{
 		memcpy(buffer, begin, length + 1);
 		length = ReplaceDefineByHeap(attributes, &buffer, length, capacity);
-		if (length != SIZE_MAX)
+		if (length != -1)
 		{
 #if defined(__BORLANDC__)
 			*line = buffer;
@@ -357,6 +351,7 @@ size_t __stdcall ByteArrayReplaceDefineByHeap(vector_TSSGAttributeElement *attri
 					prev = '{';
 					break;
 				}
+				/* FALLTHROUGH */
 			default:
 				prev = c;
 				break;
@@ -374,7 +369,7 @@ size_t __stdcall ByteArrayReplaceDefineByHeap(vector_TSSGAttributeElement *attri
 NESTED_BREAK:
 	return p - *line;
 FAILED:
-	return SIZE_MAX;
+	return -1;
 }
 
 void __stdcall ByteArrayReplaceDefine(TSSGSubject *SSGS, string *line)
@@ -403,7 +398,7 @@ void __stdcall ByteArrayReplaceDefine(TSSGSubject *SSGS, string *line)
 	{
 		memcpy(buffer, begin, length + 1);
 		length = ByteArrayReplaceDefineByHeap(attributes, &buffer, length, capacity);
-		if (length != SIZE_MAX)
+		if (length != -1)
 		{
 #if defined(__BORLANDC__)
 			*line = buffer;

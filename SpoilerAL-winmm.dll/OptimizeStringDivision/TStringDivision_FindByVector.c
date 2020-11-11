@@ -25,7 +25,7 @@ unsigned long __cdecl TStringDivision_FindByVector(
 	string *TokenIt;
 
 	if (FromIndex == ToIndex)
-		return (unsigned long)SIZE_MAX;
+		return (unsigned long)-1;
 
 	SrcLength = string_length(Src);
 	if (SrcLength < ToIndex)
@@ -57,14 +57,14 @@ unsigned long __cdecl TStringDivision_FindByVector(
 			size_t MinPos, tmpI;
 
 			// エスケープシーケンス等を考慮
-			MinPos = (unsigned long)SIZE_MAX;
+			MinPos = (unsigned long)-1;
 			for (TokenIt = string_begin(Token); TokenIt != string_end(Token); TokenIt++)
 			{
 				tmpI = TStringDivision_Find_WithoutTokenDtor(this, Src, string_c_str(TokenIt), string_length(TokenIt), FromIndex, ToIndex, Option);
 				if (tmpI < MinPos)
 					MinPos = tmpI;
 			}
-			if (MinPos != (unsigned long)SIZE_MAX)
+			if (MinPos != (unsigned long)-1)
 				return (unsigned long)MinPos;
 		}
 	}
@@ -99,7 +99,7 @@ unsigned long __cdecl TStringDivision_FindByVector(
 
 			// エスケープシーケンス等を考慮
 			i = 0;
-			MinPos = (unsigned long)SIZE_MAX;
+			MinPos = (unsigned long)-1;
 			for (TokenIt = string_begin(Token); TokenIt != string_end(Token); TokenIt++)
 			{
 				tmpI = TStringDivision_Find_WithoutTokenDtor(this, Src, string_c_str(TokenIt), string_length(TokenIt), FromIndex, ToIndex, Option);
@@ -110,7 +110,7 @@ unsigned long __cdecl TStringDivision_FindByVector(
 				}
 				i++;
 			}
-			if (MinPos != (unsigned long)SIZE_MAX)
+			if (MinPos != (unsigned long)-1)
 			{
 				*FindElementIndex = TokenNum;
 				return (unsigned long)MinPos;
@@ -118,5 +118,5 @@ unsigned long __cdecl TStringDivision_FindByVector(
 		}
 	}
 
-	return (unsigned long)SIZE_MAX;
+	return (unsigned long)-1;
 }

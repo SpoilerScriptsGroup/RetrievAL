@@ -151,7 +151,7 @@ static double sin_pi(double x)
 {
 	int n;
 	/* spurious inexact if odd int */
-	x = 2.0 * (x * 0.5 - floor(x * 0.5));  /* x mod 2.0 */
+	x = 2.0 * (x * 0.5 - floor(x * 0.5));	/* x mod 2.0 */
 	n = (int)(x * 4.0);
 	n = (n + 1) / 2;
 	x -= n * 0.5;
@@ -176,7 +176,7 @@ double __cdecl lgamma(double x)
 	ix = u.i >> 32 & 0x7fffffff;
 	if (ix >= 0x7ff00000)
 		return x * x;
-	if (ix < (0x3ff - 70) << 20) {  /* |x|<2**-70, return -log(|x|) */
+	if (ix < (0x3ff - 70) << 20) {	/* |x|<2**-70, return -log(|x|) */
 		if (sign)
 			x = -x;
 		return -log(x);
@@ -184,7 +184,7 @@ double __cdecl lgamma(double x)
 	if (sign) {
 		x = -x;
 		t = sin_pi(x);
-		if (t == 0.0) /* -integer */
+		if (t == 0.0)	/* -integer */
 			return 1.0 / (x - x);
 		if (t < 0.0)
 			t = -t;
@@ -195,7 +195,7 @@ double __cdecl lgamma(double x)
 		r = 0;
 	/* for x < 2.0 */
 	else if (ix < 0x40000000) {
-		if (ix <= 0x3feccccc) {   /* lgamma(x) = lgamma(x+1)-log(x) */
+		if (ix <= 0x3feccccc) {	/* lgamma(x) = lgamma(x+1)-log(x) */
 			r = -log(x);
 			if (ix >= 0x3FE76944) {
 				y = 1.0 - x;
@@ -209,10 +209,10 @@ double __cdecl lgamma(double x)
 			}
 		} else {
 			r = 0.0;
-			if (ix >= 0x3FFBB4C3) {  /* [1.7316,2] */
+			if (ix >= 0x3FFBB4C3) {	/* [1.7316,2] */
 				y = 2.0 - x;
 				i = 0;
-			} else if (ix >= 0x3FF3B4C4) {  /* [1.23,1.73] */
+			} else if (ix >= 0x3FF3B4C4) {	/* [1.23,1.73] */
 				y = x - tc;
 				i = 1;
 			} else {
@@ -231,7 +231,7 @@ double __cdecl lgamma(double x)
 		case 1:
 			z = y * y;
 			w = z * y;
-			p1 = t0 + w * (t3 + w * (t6 + w * (t9 + w * t12)));    /* parallel comp */
+			p1 = t0 + w * (t3 + w * (t6 + w * (t9 + w * t12)));	/* parallel comp */
 			p2 = t1 + w * (t4 + w * (t7 + w * (t10 + w * t13)));
 			p3 = t2 + w * (t5 + w * (t8 + w * (t11 + w * t14)));
 			p = z * p1 - (tt - w * (p2 + y * p3));
@@ -242,29 +242,29 @@ double __cdecl lgamma(double x)
 			p2 = 1.0 + y * (v1 + y * (v2 + y * (v3 + y * (v4 + y * v5))));
 			r += -0.5 * y + p1 / p2;
 		}
-	} else if (ix < 0x40200000) {  /* x < 8.0 */
+	} else if (ix < 0x40200000) {	/* x < 8.0 */
 		i = (int)x;
 		y = x - (double)i;
 		p = y * (s0 + y * (s1 + y * (s2 + y * (s3 + y * (s4 + y * (s5 + y * s6))))));
 		q = 1.0 + y * (r1 + y * (r2 + y * (r3 + y * (r4 + y * (r5 + y * r6)))));
 		r = 0.5 * y + p / q;
-		z = 1.0;    /* lgamma(1+s) = log(s) + lgamma(s) */
+		z = 1.0;	/* lgamma(1+s) = log(s) + lgamma(s) */
 		switch (i) {
-		case 7: z *= y + 6.0;  /* FALLTHRU */
-		case 6: z *= y + 5.0;  /* FALLTHRU */
-		case 5: z *= y + 4.0;  /* FALLTHRU */
-		case 4: z *= y + 3.0;  /* FALLTHRU */
-		case 3: z *= y + 2.0;  /* FALLTHRU */
+		case 7: z *= y + 6.0;	/* FALLTHRU */
+		case 6: z *= y + 5.0;	/* FALLTHRU */
+		case 5: z *= y + 4.0;	/* FALLTHRU */
+		case 4: z *= y + 3.0;	/* FALLTHRU */
+		case 3: z *= y + 2.0;	/* FALLTHRU */
 			r += log(z);
 			break;
 		}
-	} else if (ix < 0x43900000) {  /* 8.0 <= x < 2**58 */
+	} else if (ix < 0x43900000) {   /* 8.0 <= x < 2**58 */
 		t = log(x);
 		z = 1.0 / x;
 		y = z * z;
 		w = w0 + z * (w1 + y * (w2 + y * (w3 + y * (w4 + y * (w5 + y * w6)))));
 		r = (x - 0.5) * (t - 1.0) + w;
-	} else                         /* 2**58 <= x <= inf */
+	} else                          /* 2**58 <= x <= inf */
 		r = x * (log(x) - 1.0);
 	if (sign)
 		r = nadj - r;

@@ -26,38 +26,45 @@ __declspec(naked) size_t __cdecl _mbsnlen(const unsigned char *string, size_t ma
 		mov     eax, dword ptr [maxlen]
 		mov     ecx, dword ptr [string]
 		test    eax, eax
-		jz      L4
+		jz      L5
 		push    esi
 		push    edi
 		mov     esi, eax
 		xor     eax, eax
 		mov     edi, ecx
+		jmp     L2
 
 		align   16
 	L1:
+		dec     esi
+		jz      L4
+	L2:
 		mov     al, byte ptr [edi]
 		inc     edi
 		test    al, al
-		jz      L3
+		jz      L4
+	L3:
 		push    eax
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
-		jz      L2
+		jz      L1
+		mov     cl, byte ptr [edi]
 		xor     eax, eax
-		mov     al, byte ptr [edi]
-		inc     edi
-		test    al, al
-		jz      L3
-	L2:
+		test    cl, cl
+		jz      L4
 		dec     esi
-		jnz     L1
-	L3:
+		jz      L4
+		mov     al, byte ptr [edi + 1]
+		add     edi, 2
+		test    al, al
+		jnz     L3
+	L4:
 		mov     eax, dword ptr [maxlen + 8]
 		pop     edi
 		sub     eax, esi
 		pop     esi
-	L4:
+	L5:
 		ret
 
 		#undef string

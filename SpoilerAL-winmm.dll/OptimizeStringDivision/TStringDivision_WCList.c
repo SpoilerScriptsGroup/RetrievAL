@@ -70,7 +70,7 @@ BOOLEAN __cdecl TStringDivision_WCList(
 				string_assign_cstr_with_length(&StockS1, "*", 1);
 				string_clear(&StockS2);
 
-				FindPos = SIZE_MAX;
+				FindPos = -1;
 				NextPos = Val1Pos;
 				QCount = 0;	// '?'ÇÃòAë±êî
 				while (++NextPos < Val1Length)
@@ -100,7 +100,7 @@ BOOLEAN __cdecl TStringDivision_WCList(
 					}
 					Val1Pos = NextPos;
 				}
-				if (FindPos != SIZE_MAX)
+				if (FindPos != -1)
 				{
 					size_t TrailPos;
 
@@ -161,9 +161,9 @@ BOOLEAN __cdecl TStringDivision_WCList(
 				{
 					size_t WordPos;
 
-					WordPos = TStringDivision_Find_WithoutTokenDtor(this, Val2, string_c_str(&NextWord), string_length(&NextWord), Val2Pos, (unsigned long)SIZE_MAX, 0);
+					WordPos = TStringDivision_Find_WithoutTokenDtor(this, Val2, string_c_str(&NextWord), string_length(&NextWord), Val2Pos, (unsigned long)-1, 0);
 
-					if (WordPos == (unsigned long)SIZE_MAX)
+					if (WordPos == (unsigned long)-1)
 					{
 						// éüåÍÇî≠å©Ç≈Ç´Ç»Ç©Ç¡ÇΩ
 						Ret = FALSE;

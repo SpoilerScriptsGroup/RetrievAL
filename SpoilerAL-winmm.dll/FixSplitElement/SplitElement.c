@@ -2,13 +2,6 @@
 #include "intrinsic.h"
 
 #ifdef __BORLANDC__
-#ifndef SIZE_MAX
-#ifdef _WIN64
-#define SIZE_MAX _UI64_MAX
-#else
-#define SIZE_MAX UINT_MAX
-#endif
-#endif
 #define string_begin(s)                                              (s)->begin()
 #define string_end(s)                                                (s)->end()
 #define vector_TSSGAttributeElement                                  vector<TSSGAttributeElement *>
@@ -90,7 +83,7 @@ string * __cdecl SplitElement(string *Result, LPVOID SSGC_strD, string *Src, str
 		if (attributes)
 		{
 			length = ReplaceDefineByHeap(attributes, &buffer, length, capacity);
-			if (!length || length == SIZE_MAX)
+			if (!length || length == -1)
 				goto FAILED2;
 #ifndef _WIN64
 			_BitScanReverse(&bits, length);

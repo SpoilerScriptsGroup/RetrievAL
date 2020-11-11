@@ -12,11 +12,11 @@ wchar_t * __cdecl _wmemccpy(wchar_t *dest, const wchar_t *src, wchar_t c, size_t
 		p = (char *)dest + (count = (char *)p - (char *)src + sizeof(wchar_t));
 	else
 		count *= sizeof(wchar_t);
-	memmove(dest, src, count);
+	memcpy(dest, src, count);
 	return p;
 }
 #else
-#pragma function(memmove)
+#pragma function(memcpy)
 
 __declspec(naked) wchar_t * __cdecl _wmemccpy(wchar_t *dest, const wchar_t *src, wchar_t c, size_t count)
 {
@@ -42,7 +42,7 @@ __declspec(naked) wchar_t * __cdecl _wmemccpy(wchar_t *dest, const wchar_t *src,
 		mov     ecx, dword ptr [dest + 20]                  // load dest
 		mov     edx, esi                                    // copy src
 		mov     esi, eax                                    // p = result of memchr
-		mov     dword ptr [esp], ecx                        // store the dest of memmove
+		mov     dword ptr [esp], ecx                        // store the dest of memcpy
 		test    eax, eax                                    // compare the result of memchr with NULL
 		jnz     found                                       // jump if the result of memchr != NULL
 		add     edi, edi                                    // count *= 2
@@ -54,9 +54,9 @@ __declspec(naked) wchar_t * __cdecl _wmemccpy(wchar_t *dest, const wchar_t *src,
 		lea     edi, [esi + 2]                              // count = p - src + 2
 		add     esi, ecx                                    // p = dest + count
 	copy:
-		mov     dword ptr [esp + 4], edx                    // store the src of memmove
-		mov     dword ptr [esp + 8], edi                    // store the count of memmove
-		call    memmove                                     // call memmove function
+		mov     dword ptr [esp + 4], edx                    // store the src of memcpy
+		mov     dword ptr [esp + 8], edi                    // store the count of memcpy
+		call    memcpy                                      // call memcpy function
 		add     esp, 12                                     // restore esp register
 		mov     eax, esi                                    // set return value
 		pop     edi                                         // restore register

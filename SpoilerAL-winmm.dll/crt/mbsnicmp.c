@@ -80,9 +80,8 @@ __declspec(naked) int __cdecl _mbsnicmp(const unsigned char *string1, const unsi
 		push    NORM_IGNORECASE
 		push    eax
 		call    CompareStringA
-		xor     ecx, ecx
-		sub     eax, 1
-		adc     ecx, -1
+		add     eax, -1
+		sbb     ecx, ecx
 		and     eax, 7FFFFFFFH
 		add     eax, ecx
 		pop     esi

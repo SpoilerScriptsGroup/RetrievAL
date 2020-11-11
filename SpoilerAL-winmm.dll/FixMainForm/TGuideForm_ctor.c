@@ -15,7 +15,7 @@ __declspec(naked) void __cdecl TGuideForm_ctor()
 	{
 		#define this (ebp - 4H)
 
-		mov     ecx, dword ptr[esp + 4]
+		mov     ecx, dword ptr [esp + 4]
 		call    string_ctor
 		mov     ecx, dword ptr [this]
 		jmp     ctor

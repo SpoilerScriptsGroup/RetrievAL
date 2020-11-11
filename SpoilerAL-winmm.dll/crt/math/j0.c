@@ -125,12 +125,12 @@ double __cdecl _j0(double x)
 	if (ix >= 0x7ff00000)
 		return 1 / (x * x);
 	x = fabs(x);
-	if (ix >= 0x40000000) {  /* |x| >= 2 */
+	if (ix >= 0x40000000) {	/* |x| >= 2 */
 		/* large ulp error near zeros: 2.4, 5.52, 8.6537,.. */
 		return common(ix, x, 0);
 	}
 	/* 1 - x*x/4 + x*x*R(x^2)/S(x^2) */
-	if (ix >= 0x3f200000) {  /* |x| >= 2**-13 */
+	if (ix >= 0x3f200000) {	/* |x| >= 2**-13 */
 		/* up to 4ulp error close to 2 */
 		z = x * x;
 		r = z * (R02 + z * (R03 + z * (R04 + z * R05)));
@@ -140,7 +140,7 @@ double __cdecl _j0(double x)
 	/* 1 - x*x/4 */
 	/* prevent underflow */
 	/* inexact should be raised when x!=0, this is not done correctly */
-	if (ix >= 0x38000000)  /* |x| >= 2**-127 */
+	if (ix >= 0x38000000)	/* |x| >= 2**-127 */
 		x = 0.25 * x * x;
 	return 1 - x;
 }
@@ -170,12 +170,12 @@ double __cdecl y0(double x)
 		return /*0 / 0.0*/NAN;
 	if (ix >= 0x7ff00000)
 		return 1 / x;
-	if (ix >= 0x40000000) {  /* x >= 2 */
+	if (ix >= 0x40000000) {	/* x >= 2 */
 		/* large ulp errors near zeros: 3.958, 7.086,.. */
 		return common(ix, x, 1);
 	}
 	/* U(x^2)/V(x^2) + (2/pi)*j0(x)*log(x) */
-	if (ix >= 0x3e400000) {  /* x >= 2**-27 */
+	if (ix >= 0x3e400000) {	/* x >= 2**-27 */
 		/* large ulp error near the first zero, x ~= 0.89 */
 		z = x * x;
 		u = u00 + z * (u01 + z * (u02 + z * (u03 + z * (u04 + z * (u05 + z * u06)))));
@@ -194,7 +194,7 @@ double __cdecl y0(double x)
  * and
  *      | pzero(x)-1-R/S | <= 2  ** ( -60.26)
  */
-static const double pR8[6] = { /* for x in [inf, 8]=1/[0,0.125] */
+static const double pR8[6] = {	/* for x in [inf, 8]=1/[0,0.125] */
   0.00000000000000000000e+00, /* 0x00000000, 0x00000000 */
  -7.03124999999900357484e-02, /* 0xBFB1FFFF, 0xFFFFFD32 */
  -8.08167041275349795626e+00, /* 0xC02029D0, 0xB44FA779 */
@@ -209,7 +209,7 @@ static const double pS8[5] = {
   1.16752972564375915681e+05, /* 0x40FC810F, 0x8F9FA9BD */
   4.76277284146730962675e+04, /* 0x40E74177, 0x4F2C49DC */
 };
-static const double pR5[6] = { /* for x in [8,4.5454]=1/[0.125,0.22001] */
+static const double pR5[6] = {	/* for x in [8,4.5454]=1/[0.125,0.22001] */
  -1.14125464691894502584e-11, /* 0xBDA918B1, 0x47E495CC */
  -7.03124940873599280078e-02, /* 0xBFB1FFFF, 0xE69AFBC6 */
  -4.15961064470587782438e+00, /* 0xC010A370, 0xF90C6BBF */
@@ -224,7 +224,7 @@ static const double pS5[5] = {
   9.62544514357774460223e+03, /* 0x40C2CCB8, 0xFA76FA38 */
   2.40605815922939109441e+03, /* 0x40A2CC1D, 0xC70BE864 */
 };
-static const double pR3[6] = {/* for x in [4.547,2.8571]=1/[0.2199,0.35001] */
+static const double pR3[6] = {	/* for x in [4.547,2.8571]=1/[0.2199,0.35001] */
  -2.54704601771951915620e-09, /* 0xBE25E103, 0x6FE1AA86 */
  -7.03119616381481654654e-02, /* 0xBFB1FFF6, 0xF7C0E24B */
  -2.40903221549529611423e+00, /* 0xC00345B2, 0xAEA48074 */
@@ -239,7 +239,7 @@ static const double pS3[5] = {
   1.12799679856907414432e+03, /* 0x40919FFC, 0xB8C39B7E */
   1.73580930813335754692e+02, /* 0x4065B296, 0xFC379081 */
 };
-static const double pR2[6] = {/* for x in [2.8570,2]=1/[0.3499,0.5] */
+static const double pR2[6] = {	/* for x in [2.8570,2]=1/[0.3499,0.5] */
  -8.87534333032526411254e-08, /* 0xBE77D316, 0xE927026D */
  -7.03030995483624743247e-02, /* 0xBFB1FF62, 0x495E1E42 */
  -1.45073846780952986357e+00, /* 0xBFF73639, 0x8A24A843 */
@@ -281,7 +281,7 @@ static double pzero(double x)
  * and
  *      | qzero(x)/s +1.25-R/S | <= 2  ** ( -61.22)
  */
-static const double qR8[6] = { /* for x in [inf, 8]=1/[0,0.125] */
+static const double qR8[6] = {	/* for x in [inf, 8]=1/[0,0.125] */
   0.00000000000000000000e+00, /* 0x00000000, 0x00000000 */
   7.32421874999935051953e-02, /* 0x3FB2BFFF, 0xFFFFFE2C */
   1.17682064682252693899e+01, /* 0x40278952, 0x5BB334D6 */
@@ -297,7 +297,7 @@ static const double qS8[6] = {
   8.40501579819060512818e+05, /* 0x4129A66B, 0x28DE0B3D */
  -3.43899293537866615225e+05, /* 0xC114FD6D, 0x2C9530C5 */
 };
-static const double qR5[6] = { /* for x in [8,4.5454]=1/[0.125,0.22001] */
+static const double qR5[6] = {	/* for x in [8,4.5454]=1/[0.125,0.22001] */
   1.84085963594515531381e-11, /* 0x3DB43D8F, 0x29CC8CD9 */
   7.32421766612684765896e-02, /* 0x3FB2BFFF, 0xD172B04C */
   5.83563508962056953777e+00, /* 0x401757B0, 0xB9953DD3 */
@@ -313,7 +313,7 @@ static const double qS5[6] = {
   3.59767538425114471465e+04, /* 0x40E19118, 0x1F7A54A0 */
  -5.35434275601944773371e+03, /* 0xC0B4EA57, 0xBEDBC609 */
 };
-static const double qR3[6] = {/* for x in [4.547,2.8571]=1/[0.2199,0.35001] */
+static const double qR3[6] = {	/* for x in [4.547,2.8571]=1/[0.2199,0.35001] */
   4.37741014089738620906e-09, /* 0x3E32CD03, 0x6ADECB82 */
   7.32411180042911447163e-02, /* 0x3FB2BFEE, 0x0E8D0842 */
   3.34423137516170720929e+00, /* 0x400AC0FC, 0x61149CF5 */
@@ -329,7 +329,7 @@ static const double qS3[6] = {
   2.51633368920368957333e+03, /* 0x40A3A8AA, 0xD94FB1C0 */
  -1.49247451836156386662e+02, /* 0xC062A7EB, 0x201CF40F */
 };
-static const double qR2[6] = {/* for x in [2.8570,2]=1/[0.3499,0.5] */
+static const double qR2[6] = {	/* for x in [2.8570,2]=1/[0.3499,0.5] */
   1.50444444886983272379e-07, /* 0x3E84313B, 0x54F76BDB */
   7.32234265963079278272e-02, /* 0x3FB2BEC5, 0x3E883E34 */
   1.99819174093815998816e+00, /* 0x3FFFF897, 0xE727779C */

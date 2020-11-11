@@ -220,7 +220,7 @@ unsigned long __stdcall TStringDivision_Find_WithoutTokenDtor(
 	}
 
 FAILED:
-	return (unsigned long)SIZE_MAX;
+	return (unsigned long)-1;
 
 TOKEN_FOUND:
 	return (unsigned long)(SrcIt - string_c_str(Src));

@@ -48,13 +48,13 @@ __declspec(naked) wchar_t * __cdecl wcspbrk(const wchar_t *string, const wchar_t
 		jnc     dstnext                                     // did not find char, continue
 
 		// return code
-		xor     edx, edx
-		cmp     ecx, 1
-		adc     edx, -1
-		sub     eax, 2
-		and     eax, edx
 		mov     edx, dword ptr [control]                    // edx = control
-		mov     dword ptr [UTF16MAP], 0
+		add     ecx, -1
+		sbb     ecx, ecx
+		sub     eax, 2
+		and     eax, ecx
+		xor     ecx, ecx
+		mov     dword ptr [UTF16MAP], ecx
 		jmp     listclear
 
 		// clear char bit map

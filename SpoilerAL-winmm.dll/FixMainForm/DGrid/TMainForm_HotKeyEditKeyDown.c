@@ -169,6 +169,7 @@ void __fastcall TMainForm_HotKeyEditKeyDown(TMainForm *this, LPVOID Sender, WORD
 	case atDIR:
 		if (!vector_empty(&((TSSDir *)this->selectSubject)->childVec))
 			break;
+		/* FALLTHROUGH */
 	default:
 		return;
 	}

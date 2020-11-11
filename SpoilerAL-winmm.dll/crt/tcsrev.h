@@ -1,4 +1,4 @@
-#include <windows.h>
+#include <stdint.h>
 #include <tchar.h>
 #if defined(_MSC_VER) && _MSC_VER >= 1310
 #include <intrin.h>
@@ -6,20 +6,15 @@
 #pragma intrinsic(_rotl)
 #pragma intrinsic(_rotl16)
 #ifndef _WIN64
-#pragma intrinsic(_subborrow_u32)
-#define _sub_uintptr(a, b, out) _subborrow_u32(0, a, b, out)
+#pragma intrinsic(_addcarry_u32)
+#define _add_uintptr(a, b, out) _addcarry_u32(0, a, b, out)
 #else
-#pragma intrinsic(_subborrow_u64)
-#define _sub_uintptr(a, b, out) _subborrow_u64(0, a, b, out)
+#pragma intrinsic(_addcarry_u64)
+#define _add_uintptr(a, b, out) _addcarry_u64(0, a, b, out)
 #endif
-#endif
-
-#ifdef _MBCS
-extern HANDLE hHeap;
 #endif
 
 #ifndef _M_IX86
-#ifndef _MBCS
 TCHAR * __cdecl _tcsrev(TCHAR *string)
 {
 #if !defined(_MSC_VER) || _MSC_VER < 1310
@@ -39,20 +34,21 @@ TCHAR * __cdecl _tcsrev(TCHAR *string)
 	}
 	return string;
 #else
-	size_t length, offset;
-	BYTE   *first, *last;
+	size_t    length;
+	uint8_t   *first, *last;
+	ptrdiff_t offset;
 
-	last = (first = (BYTE *)string) + (length = _tcslen(string)) * sizeof(TCHAR) - sizeof(DWORD) * 4;
+	last = (first = (uint8_t *)string) + (length = _tcslen(string)) * sizeof(TCHAR) - sizeof(uint32_t) * 4;
 	if (length >= 16 / sizeof(TCHAR))
 	{
 		do
 		{
-			DWORD a, b, c, d;
+			uint32_t a, b, c, d;
 
-			a = *(DWORD *)first;
-			b = *(DWORD *)(first + 4);
-			c = *(DWORD *)(last + 8);
-			d = *(DWORD *)(last + 12);
+			a = *(uint32_t *)first;
+			b = *(uint32_t *)(first + 4);
+			c = *(uint32_t *)(last + 8);
+			d = *(uint32_t *)(last + 12);
 #ifdef _UNICODE
 			a = _rotl(a, 16);
 			b = _rotl(b, 16);
@@ -64,21 +60,21 @@ TCHAR * __cdecl _tcsrev(TCHAR *string)
 			c = _byteswap_ulong(c);
 			d = _byteswap_ulong(d);
 #endif
-			*(DWORD *)(last + 12) = a;
-			*(DWORD *)(last + 8) = b;
-			*(DWORD *)(first + 4) = c;
-			*(DWORD *)first = d;
+			*(uint32_t *)(last + 12) = a;
+			*(uint32_t *)(last + 8) = b;
+			*(uint32_t *)(first + 4) = c;
+			*(uint32_t *)first = d;
 			last -= 8;
 			first += 8;
 		} while (last >= first);
 	}
 	offset = last - first;
-	if (!_sub_uintptr(offset, -8, &offset))
+	if (_add_uintptr(offset, 8, &offset))
 	{
-		DWORD a, b;
+		uint32_t a, b;
 
-		a = *(DWORD *)first;
-		b = *(DWORD *)(first + offset + 4);
+		a = *(uint32_t *)first;
+		b = *(uint32_t *)(first + offset + 4);
 #ifdef _UNICODE
 		a = _rotl(a, 16);
 		b = _rotl(b, 16);
@@ -86,38 +82,38 @@ TCHAR * __cdecl _tcsrev(TCHAR *string)
 		a = _byteswap_ulong(a);
 		b = _byteswap_ulong(b);
 #endif
-		*(DWORD *)(first + offset + 4) = a;
+		*(uint32_t *)(first + offset + 4) = a;
 		offset -= 8;
-		*(DWORD *)first = b;
+		*(uint32_t *)first = b;
 		first += 4;
 	}
 #ifdef _UNICODE
-	if (!_sub_uintptr(offset, -4, &offset))
+	if (_add_uintptr(offset, 4, &offset))
 	{
-		WORD a, b;
+		uint16_t a, b;
 
-		a = *(WORD *)first;
-		b = *(WORD *)(first + offset + 2);
-		*(WORD *)(first + offset + 2) = a;
-		*(WORD *)first = b;
+		a = *(uint16_t *)first;
+		b = *(uint16_t *)(first + offset + 2);
+		*(uint16_t *)(first + offset + 2) = a;
+		*(uint16_t *)first = b;
 	}
 #else
-	if (!_sub_uintptr(offset, -4, &offset))
+	if (_add_uintptr(offset, 4, &offset))
 	{
-		WORD a, b;
+		uint16_t a, b;
 
-		a = *(WORD *)first;
-		b = *(WORD *)(first + offset + 2);
+		a = *(uint16_t *)first;
+		b = *(uint16_t *)(first + offset + 2);
 		a = _rotl16(a, 8);
 		b = _rotl16(b, 8);
-		*(WORD *)(first + offset + 2) = a;
+		*(uint16_t *)(first + offset + 2) = a;
 		offset -= 4;
-		*(WORD *)first = b;
+		*(uint16_t *)first = b;
 		first += 2;
 	}
-	if (!_sub_uintptr(offset, -2, &offset))
+	if (_add_uintptr(offset, 2, &offset))
 	{
-		BYTE a, b;
+		uint8_t a, b;
 
 		a = *first;
 		b = *(first + offset + 1);
@@ -128,41 +124,7 @@ TCHAR * __cdecl _tcsrev(TCHAR *string)
 	return string;
 #endif
 }
-#else	// _MBCS
-unsigned char * __cdecl _mbsrev(unsigned char *string)
-{
-	size_t         length;
-	unsigned short *buffer;
-
-	if ((length = strlen((const char *)string)) &&
-		length <= (~(size_t)0 >> 1) &&
-		(buffer = (unsigned short *)HeapAlloc(hHeap, 0, length * 2)))
-	{
-		unsigned char  *mbs;
-		unsigned short *wcs, w;
-
-		mbs = string;
-		wcs = buffer;
-		do
-			*(wcs++) =
-				!IsDBCSLeadByteEx(CP_THREAD_ACP, *mbs) || !mbs[1] ?
-					*(mbs++) :
-					*(((unsigned short *)mbs)++);
-		while (*mbs);
-		mbs = string;
-		do
-			if ((w = *(--wcs)) < 0x100)
-				*(mbs++) = (unsigned char)w;
-			else
-				*(((unsigned short *)mbs)++) = w;
-		while (wcs != buffer);
-		HeapFree(hHeap, 0, buffer);
-	}
-	return string;
-}
-#endif	// _MBCS
 #else	// _M_IX86
-#ifndef _MBCS
 #pragma function(_tcslen)
 __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 {
@@ -218,8 +180,8 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 	lt16:
 		sub     edi, esi
 		pop     ecx
-		sub     edi, -8
-		jb      lt8
+		add     edi, 8
+		jnc     lt8
 		mov     ecx, dword ptr [esi]                        // get front chars...
 		mov     edx, dword ptr [esi + edi + 4]              //   and end chars
 #ifdef _UNICODE
@@ -235,15 +197,15 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		add     esi, 4                                      //   and front moves up
 	lt8:
 #ifdef _UNICODE
-		sub     edi, -4
-		jb      done
+		add     edi, 4
+		jnc     done
 		mov     cx, word ptr [esi]                          // get front char...
 		mov     dx, word ptr [esi + edi + 2]                //   and end char
 		mov     word ptr [esi + edi + 2], cx                // put front char in end...
 		mov     word ptr [esi], dx                          //   and end char at front
 #else
-		sub     edi, -4
-		jb      lt4
+		add     edi, 4
+		jnc     lt4
 		mov     cx, word ptr [esi]                          // get front chars...
 		mov     dx, word ptr [esi + edi + 2]                //   and end chars
 		rol     cx, 8                                       // swap front chars...
@@ -253,8 +215,8 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		mov     word ptr [esi], dx                          // put end chars in front...
 		add     esi, 2                                      //   and front moves up
 	lt4:
-		sub     edi, -2
-		jb      done
+		add     edi, 2
+		jnc     done
 		mov     cl, byte ptr [esi]                          // get front char...
 		mov     dl, byte ptr [esi + edi + 1]                //   and end char
 		mov     byte ptr [esi + edi + 1], cl                // put front char in end...
@@ -270,98 +232,4 @@ __declspec(naked) TCHAR * __cdecl _tcsrev(TCHAR *string)
 		#undef string
 	}
 }
-#else	// _MBCS
-__declspec(naked) unsigned char * __cdecl _mbsrev(unsigned char *string)
-{
-	__asm
-	{
-		#define string (esp + 4)
-
-		push    ebx
-		push    ebp
-		push    esi
-		push    edi
-		mov     ebx, dword ptr [string + 16]
-		xor     eax, eax
-		mov     edi, ebx
-		mov     ecx, -1
-		repne scasb
-		dec     eax
-		inc     ecx
-		xor     eax, ecx
-		mov     esi, ebx
-		add     eax, eax
-		jbe     L7                                          // CF=1 or ZF=1
-		push    eax
-		push    0
-		push    dword ptr [hHeap]
-		call    HeapAlloc
-		test    eax, eax
-		jz      L7
-		mov     edi, eax
-		xor     eax, eax
-		mov     al, byte ptr [esi]
-		inc     esi
-		mov     ebp, edi
-
-		align   16
-	L1:
-		mov     byte ptr [edi], al
-		inc     edi
-		push    eax
-		push    CP_THREAD_ACP
-		call    IsDBCSLeadByteEx
-		test    eax, eax
-		jz      L2
-		xor     eax, eax
-		mov     al, byte ptr [esi]
-		inc     esi
-		test    al, al
-		jz      L3
-	L2:
-		mov     byte ptr [edi], al
-		inc     edi
-		mov     al, byte ptr [esi]
-		inc     esi
-		test    al, al
-		jnz     L1
-		jmp     L4
-
-		align   16
-	L3:
-		mov     byte ptr [edi], al
-		inc     edi
-	L4:
-		mov     ecx, ebx
-
-		align   16
-	L5:
-		mov     ax, word ptr [edi - 2]
-		sub     edi, 2
-		mov     byte ptr [ecx], al
-		inc     ecx
-		test    ah, ah
-		jz      L6
-		mov     byte ptr [ecx], ah
-		inc     ecx
-	L6:
-		cmp     edi, ebp
-		jne     L5
-
-		push    ebp
-		push    0
-		push    dword ptr [hHeap]
-		call    HeapFree
-	L7:
-		mov     eax, ebx
-		pop     edi
-		pop     esi
-		pop     ebp
-		pop     ebx
-		ret
-
-		#undef string
-	}
-}
-#endif	// _MBCS
 #endif	// _M_IX86

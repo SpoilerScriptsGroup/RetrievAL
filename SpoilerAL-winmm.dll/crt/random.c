@@ -118,14 +118,14 @@ static size_t   idx;                            // index counter to the 32-bit i
   MACROS
   ------*/
 #define _BSF8(x, default) ( \
-    ((x) & 0x01) ?  0 :     \
-    ((x) & 0x02) ?  1 :     \
-    ((x) & 0x04) ?  2 :     \
-    ((x) & 0x08) ?  3 :     \
-    ((x) & 0x10) ?  4 :     \
-    ((x) & 0x20) ?  5 :     \
-    ((x) & 0x40) ?  6 :     \
-    ((x) & 0x80) ?  7 :     \
+    ((x) & 0x01) ? 0 :      \
+    ((x) & 0x02) ? 1 :      \
+    ((x) & 0x04) ? 2 :      \
+    ((x) & 0x08) ? 3 :      \
+    ((x) & 0x10) ? 4 :      \
+    ((x) & 0x20) ? 5 :      \
+    ((x) & 0x40) ? 6 :      \
+    ((x) & 0x80) ? 7 :      \
     (default))
 #define _BSF16(x, default) _BSF8(x, _BSF8((x) >> 8, (default) - 8) + 8)
 #define _BSF32(x, default) _BSF16(x, _BSF16((x) >> 16, (default) - 16) + 16)

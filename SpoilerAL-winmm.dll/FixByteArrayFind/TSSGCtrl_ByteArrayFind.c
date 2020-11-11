@@ -28,10 +28,10 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 		*(LPWORD)string_begin(&Token) == BSWAP16('::'));
 
 	if (FromIndex >= ToIndex)
-		return SIZE_MAX;
+		return -1;
 	length = string_length(Src);
 	if (length <= FromIndex || length - FromIndex < TokenLength)
-		return SIZE_MAX;
+		return -1;
 	p = string_c_str(Src) + FromIndex;
 	end = string_c_str(Src) + ToIndex;
 	if (end < string_c_str(Src))
@@ -86,6 +86,7 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 					p += 3;
 					continue;
 				}
+				/* FALLTHROUGH */
 			case '<':
 			case '{':
 				nest++;
@@ -152,7 +153,7 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 		p++;
 	} while (p < end);
 	string_dtor(&Token);
-	return SIZE_MAX;
+	return -1;
 
 	#undef TokenLength
 }

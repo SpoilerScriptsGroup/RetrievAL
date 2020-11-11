@@ -6,6 +6,7 @@ unsigned char * __fastcall internal_mbschr_single_byte(const unsigned char *stri
 unsigned char * __fastcall internal_mbschr_multi_byte(const unsigned char *string, unsigned int c);
 
 #ifndef _M_IX86
+#ifndef _DEBUG
 unsigned char * __cdecl _mbschr(const unsigned char *string, unsigned int c)
 {
 	if (c < 0x100)
@@ -26,6 +27,7 @@ unsigned char * __cdecl _mbschr(const unsigned char *string, unsigned int c)
 	}
 }
 
+#endif
 unsigned char * __fastcall internal_mbschr_single_byte(const unsigned char *string, unsigned int c)
 {
 	unsigned char c2;
@@ -62,6 +64,7 @@ unsigned char * __fastcall internal_mbschr_multi_byte(const unsigned char *strin
 	return NULL;
 }
 #else
+#ifndef _DEBUG
 __declspec(naked) unsigned char * __cdecl _mbschr(const unsigned char *string, unsigned int c)
 {
 	__asm
@@ -120,6 +123,7 @@ __declspec(naked) unsigned char * __cdecl _mbschr(const unsigned char *string, u
 	}
 }
 
+#endif
 __declspec(naked) unsigned char * __fastcall internal_mbschr_single_byte(const unsigned char *string, unsigned int c)
 {
 	__asm

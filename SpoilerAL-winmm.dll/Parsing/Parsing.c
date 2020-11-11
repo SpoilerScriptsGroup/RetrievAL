@@ -164,6 +164,7 @@ EXTERN_C unsigned char * __cdecl _mbsrichr(const unsigned char *string, unsigned
 EXTERN_C unsigned char * __cdecl _mbsistr(const unsigned char *string1, const unsigned char *string2);
 EXTERN_C unsigned char * __cdecl _mbsrstr(const unsigned char *string1, const unsigned char *string2);
 EXTERN_C unsigned char * __cdecl _mbsristr(const unsigned char *string1, const unsigned char *string2);
+EXTERN_C size_t __cdecl _mbsnlen(const unsigned char *string, size_t maxlen);
 EXTERN_C char *__fastcall internal_strtok(char *string, const char *delimiter, char **context);
 EXTERN_C wchar_t *__fastcall internal_wcstok(wchar_t *string, const wchar_t *delimiter, wchar_t **context);
 EXTERN_C unsigned char *__fastcall internal_mbstok(unsigned char *string, const unsigned char *delimiter, unsigned char **context);
@@ -296,7 +297,7 @@ extern HANDLE pHeap;
      strninc         wcsninc         mbsninc
      strnextc        wcsnextc        mbsnextc
      strlen          wcslen                          mbslen
-     strnlen         wcsnlen
+     strnlen         wcsnlen                         mbsnlen
                                      mbsnbcnt        mbsnccnt
      strcmp          wcscmp
      strncmp         wcsncmp                         mbsncmp
@@ -530,6 +531,7 @@ typedef enum {
 	TAG_MBSLEN           ,  //  60 mbslen          OS_PUSH | OS_MONADIC
 	TAG_STRNLEN          ,  //  60 strnlen         OS_PUSH | OS_MONADIC
 	TAG_WCSNLEN          ,  //  60 wcsnlen         OS_PUSH | OS_MONADIC
+	TAG_MBSNLEN          ,  //  60 mbsnlen         OS_PUSH | OS_MONADIC
 	TAG_MBSNBCNT         ,  //  60 mbsnbcnt        OS_PUSH | OS_MONADIC
 	TAG_MBSNCCNT         ,  //  60 mbsnccnt        OS_PUSH | OS_MONADIC
 	TAG_STRCMP           ,  //  60 strcmp          OS_PUSH | OS_MONADIC
@@ -927,6 +929,7 @@ typedef enum {
 	                                    // mbslen          OS_PUSH | OS_MONADIC
 	                                    // strnlen         OS_PUSH | OS_MONADIC
 	                                    // wcsnlen         OS_PUSH | OS_MONADIC
+	                                    // mbsnlen         OS_PUSH | OS_MONADIC
 	                                    // mbsnbcnt        OS_PUSH | OS_MONADIC
 	                                    // mbsnccnt        OS_PUSH | OS_MONADIC
 	                                    // strcmp          OS_PUSH | OS_MONADIC
@@ -2121,6 +2124,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				case TAG_MBSNINC:
 				case TAG_STRNLEN:
 				case TAG_WCSNLEN:
+				case TAG_MBSNLEN:
 				case TAG_MBSNBCNT:
 				case TAG_MBSNCCNT:
 				case TAG_STRCMP:
@@ -2860,7 +2864,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			break;
 		case 'm':
 			// "max", "min"
-			// "mbschr", "mbscspn", "mbsdec", "mbsichr", "mbsicmp", "mbsinc", "mbsistr", "mbslen", "mbslwr", "mbsnbcnt", "mbsnbcat", "mbsnbcpy", "mbsnbicmp", "mbsnbset", "mbsnccnt", "mbsncmp", "mbsncat", "mbsncpy", "mbsnextc", "mbsninc", "mbsnicmp", "mbsnset", "mbspbrk", "mbsrchr", "mbsrev", "mbsrichr", "mbsristr", "mbsrstr", "mbsset", "mbsspn", "mbsspnp", "mbsstr", "mbstok", "mbsupr",
+			// "mbschr", "mbscspn", "mbsdec", "mbsichr", "mbsicmp", "mbsinc", "mbsistr", "mbslen", "mbslwr", "mbsnbcnt", "mbsnbcat", "mbsnbcpy", "mbsnbicmp", "mbsnbset", "mbsnccnt", "mbsncmp", "mbsncat", "mbsncpy", "mbsnextc", "mbsninc", "mbsnicmp", "mbsnlen", "mbsnset", "mbspbrk", "mbsrchr", "mbsrev", "mbsrichr", "mbsristr", "mbsrstr", "mbsset", "mbsspn", "mbsspnp", "mbsstr", "mbstok", "mbsupr",
 			// "memccpy", "memchr", "memcmp", "memcpy", "memdup", "memichr", "memicmp", "memimem", "memmem", "memmove", "mempcpy", "memrchr", "memrmem", "memrichr", "memrimem", "memset", "memset16", "memset32", "memset64"
 			if (!bIsSeparatedLeft)
 				break;
@@ -2971,6 +2975,10 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 							APPEND_FUNCTION_MULTI_PARAM(TAG_MBSNICMP, 8);
 						}
 						break;
+					case 'l':
+						if (*(uint16_t *)(p + 5) != BSWAP16('en'))
+							break;
+						APPEND_FUNCTION_MULTI_PARAM(TAG_MBSNLEN, 7);
 					case 's':
 						if (*(uint16_t *)(p + 5) != BSWAP16('et'))
 							break;
@@ -4587,6 +4595,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			case TAG_MBSNINC:         // mbsninc
 			case TAG_STRNLEN:         // strnlen
 			case TAG_WCSNLEN:         // wcsnlen
+			case TAG_MBSNLEN:         // mbsnlen
 			case TAG_MBSNBCNT:        // mbsnbcnt
 			case TAG_MBSNCCNT:        // mbsnccnt
 			case TAG_STRCMP:          // strcmp
@@ -9350,6 +9359,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		case TAG_MBSLEN:
 			lpFunction = NULL;
 			goto MBSLEN;
+		case TAG_MBSNLEN:
+			lpFunction = (FARPROC)_mbsnlen;
+			goto MBSLEN;
 		case TAG_MBSNBCNT:
 			lpFunction = (FARPROC)_mbsnbcnt;
 			goto MBSLEN;
@@ -9361,7 +9373,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 
 				MARKUP  *element;
 				LPCBYTE lpString;
-				size_t  nNumber;
 				size_t  nResult;
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
@@ -9390,6 +9401,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				}
 				else
 				{
+					size_t nNumber;
+
 					element = element->Next;
 					if (IsStringOperand(element->Param))
 						goto PARSING_ERROR_FREE1;

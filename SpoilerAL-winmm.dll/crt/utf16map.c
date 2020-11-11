@@ -10,7 +10,11 @@
 __declspec(align(16)) static unsigned long UTF16MAP[0x10000 / 32];
 #endif
 
+#ifndef _DEBUG
 #include "wcsspn.h"
+#endif
 #include "wcsspnp.h"
+#ifndef _DEBUG
 #include "wcscspn.h"
 #include "wcspbrk.h"
+#endif

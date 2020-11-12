@@ -1,6 +1,6 @@
 #include <windows.h>
 
-#pragma function(strlen)
+#pragma warning(disable:4414)
 
 unsigned char * __fastcall internal_mbsrchr_single_byte(const unsigned char *string, unsigned int c);
 unsigned char * __fastcall internal_mbsrchr_multi_byte(const unsigned char *string, unsigned int c);
@@ -11,8 +11,6 @@ unsigned char * __cdecl _mbsrchr(const unsigned char *string, unsigned int c)
 {
 	if (c < 0x100)
 	{
-		if (!c)
-			return (unsigned char *)string + strlen((char *)string);
 		if (IsDBCSLeadByteEx(CP_THREAD_ACP, c))
 			return NULL;
 		return internal_mbsrchr_single_byte(string, c);
@@ -74,50 +72,35 @@ __declspec(naked) unsigned char * __cdecl _mbsrchr(const unsigned char *string, 
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     eax, dword ptr [c]
-		mov     ecx, dword ptr [string]
-		cmp     eax, 100H
-		jae     L2
-		test    eax, eax
-		jz      L1
-		push    eax
-		push    CP_THREAD_ACP
-		call    IsDBCSLeadByteEx
-		test    eax, eax
-		jnz     L3
-		mov     ecx, dword ptr [string]
 		mov     edx, dword ptr [c]
-		jmp     internal_mbsrchr_single_byte
-
-		align   16
-	L1:
-		push    ecx
-		call    strlen
-		mov     ecx, dword ptr [string + 4]
-		pop     edx
-		add     eax, ecx
-		ret
-
-		align   16
-	L2:
-		cmp     eax, 10000H
-		jae     L3
-		test    al, al
-		jz      L3
-		shr     eax, 8
-		push    eax
+		xor     eax, eax
+		cmp     edx, 100H
+		jb      L1
+		cmp     edx, 10000H
+		jae     L2
+		test    dl, dl
+		jz      L2
+		shr     edx, 8
+		push    edx
 		push    CP_THREAD_ACP
 		call    IsDBCSLeadByteEx
 		test    eax, eax
-		jz      L4
+		jz      L2
 		mov     ecx, dword ptr [string]
 		mov     edx, dword ptr [c]
 		jmp     internal_mbsrchr_multi_byte
 
 		align   16
-	L3:
+	L1:
+		push    edx
+		push    CP_THREAD_ACP
+		call    IsDBCSLeadByteEx
+		mov     ecx, dword ptr [string]
+		mov     edx, dword ptr [c]
+		test    eax, eax
+		jz      internal_mbsrchr_single_byte
 		xor     eax, eax
-	L4:
+	L2:
 		ret
 
 		#undef string

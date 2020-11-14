@@ -17,7 +17,25 @@ size_t __cdecl wcscspn(const wchar_t *string, const wchar_t *control)
 		UTF16MAP[c >> 5] = 0;
 	return index;
 }
+
+wchar_t * __cdecl wcspbrk(const wchar_t *string, const wchar_t *control)
+{
+	const wchar_t *p;
+	wchar_t       c;
+
+	for (UTF16MAP[0] = 1, p = control; c = *(p++); )
+		_bittestandset(UTF16MAP, c);
+	do
+		c = *(string++);
+	while (!_bittest(map, c));
+	string = c ? string - 1 : NULL;
+	for (UTF16MAP[0] = 0, p = control; c = *(p++); )
+		UTF16MAP[c >> 5] = 0;
+	return (wchar_t *)string;
+}
 #else
+static unsigned __int64 __fastcall internal_wcspbrk(const wchar_t *string, const wchar_t *control);
+
 __declspec(naked) size_t __cdecl wcscspn(const wchar_t *string, const wchar_t *control)
 {
 	__asm
@@ -25,48 +43,94 @@ __declspec(naked) size_t __cdecl wcscspn(const wchar_t *string, const wchar_t *c
 		#define string  (esp + 4)
 		#define control (esp + 8)
 
-		mov     edx, dword ptr [string]                     // edx = string
-		mov     eax, dword ptr [control]                    // eax = control
-		xor     ecx, ecx
-		mov     dword ptr [UTF16MAP], 1
-		jmp     listinit
+		mov     ecx, dword ptr [string]                     // ecx = string
+		mov     edx, dword ptr [control]                    // edx = control
+		call    internal_wcspbrk
 
-		// init char bit map
+		// Return code
+		mov     ecx, dword ptr [string]                     // ecx = string
+		mov     eax, edx
+		sub     eax, ecx
+		shr     eax, 1
+		ret
+
+		#undef string
+		#undef control
+	}
+}
+
+__declspec(naked) wchar_t * __cdecl wcspbrk(const wchar_t *string, const wchar_t *control)
+{
+	__asm
+	{
+		#define string  (esp + 4)
+		#define control (esp + 8)
+
+		mov     ecx, dword ptr [string]                     // ecx = string
+		mov     edx, dword ptr [control]                    // edx = control
+		call    internal_wcspbrk
+
+		// Return code
+		add     eax, -1
+		sbb     eax, eax
+		and     eax, edx
+		ret
+
+		#undef string
+		#undef control
+	}
+}
+
+__declspec(naked) static unsigned __int64 __fastcall internal_wcspbrk(const wchar_t *string, const wchar_t *control)
+{
+	__asm
+	{
+		#define string  ecx
+		#define control edx
+
+		push    edx
+		xor     eax, eax
+		mov     dword ptr [UTF16MAP], 1
+		jmp     init
+
+		// Set control char bits in map
 		align   16
 	initnext:
-		bts     dword ptr [UTF16MAP], ecx
-	listinit:
-		mov     cx, word ptr [eax]
-		add     eax, 2
-		test    cx, cx
+		bts     dword ptr [UTF16MAP], eax
+	init:
+		mov     ax, word ptr [edx]
+		add     edx, 2
+		test    ax, ax
 		jnz     initnext
 
-		or      eax, -1                                     // eax = -1
-		add     edx, 2                                      // edx = string + 1
+		mov     edx, ecx                                    // edx = string
+		pop     ecx                                         // ecx = control
 
 		// Loop through comparing source string with control bits
 		align   16
 	dstnext:
-		mov     cx, word ptr [edx + eax * 2]
-		inc     eax
-		bt      dword ptr [UTF16MAP], ecx
+		mov     ax, word ptr [edx]
+		add     edx, 2
+		bt      dword ptr [UTF16MAP], eax
 		jnc     dstnext                                     // did not find char, continue
 
-		mov     edx, dword ptr [control]                    // edx = control
+		push    eax
 		mov     dword ptr [UTF16MAP], 0
-		jmp     listclear
+		jmp     clear
 
-		// clear char bit map
+		// Clear control char bits in map
 		align   16
 	clearnext:
-		shr     ecx, 5
-		mov     dword ptr [UTF16MAP + ecx * 4], 0
-		xor     ecx, ecx
-	listclear:
-		mov     cx, word ptr [edx]
-		add     edx, 2
-		test    cx, cx
+		shr     eax, 5
+		mov     dword ptr [UTF16MAP + eax * 4], 0
+		xor     eax, eax
+	clear:
+		mov     ax, word ptr [ecx]
+		add     ecx, 2
+		test    ax, ax
 		jnz     clearnext
+		pop     eax
+		sub     edx, 2
 		ret                                                 // __cdecl return
 
 		#undef string
@@ -76,7 +140,7 @@ __declspec(naked) size_t __cdecl wcscspn(const wchar_t *string, const wchar_t *c
 #endif
 #else
 #ifndef _M_IX86
-static size_t __cdecl wcscspn(const wchar_t *string, const wchar_t *control)
+size_t __cdecl wcscspn(const wchar_t *string, const wchar_t *control)
 {
 	size_t        n;
 	const wchar_t *p1, *p2;
@@ -90,8 +154,20 @@ static size_t __cdecl wcscspn(const wchar_t *string, const wchar_t *control)
 DONE:
 	return n;
 }
+
+wchar_t * __cdecl wcspbrk(const wchar_t *string, const wchar_t *control)
+{
+	const wchar_t *p1, *p2;
+	wchar_t       c1, c2;
+
+	for (p1 = string; c1 = *(p1++); )
+		for (p2 = control; c2 = *(p2++); )
+			if (c2 == c1)
+				return (wchar_t *)p1 - 1;
+	return NULL;
+}
 #else
-__declspec(naked) static size_t __cdecl wcscspn(const wchar_t *string, const wchar_t *control)
+__declspec(naked) size_t __cdecl wcscspn(const wchar_t *string, const wchar_t *control)
 {
 	__asm
 	{
@@ -126,6 +202,46 @@ __declspec(naked) static size_t __cdecl wcscspn(const wchar_t *string, const wch
 		pop     edi                                         // restore edi
 		shr     eax, 1
 		pop     esi                                         // restore esi
+		ret                                                 // __cdecl return
+
+		#undef string
+		#undef control
+	}
+}
+
+__declspec(naked) wchar_t * __cdecl wcspbrk(const wchar_t *string, const wchar_t *control)
+{
+	__asm
+	{
+		#define string  (esp + 4)
+		#define control (esp + 8)
+
+		push    ebx                                         // preserve ebx
+		push    esi                                         // preserve esi
+		mov     ecx, dword ptr [string + 8]
+		mov     esi, dword ptr [control + 8]
+		xor     eax, eax
+
+		align   16
+	outer_loop:
+		mov     ax, word ptr [ecx]
+		add     ecx, 2
+		test    ax, ax
+		jz      epilog
+		mov     edx, esi
+
+		align   16
+	inner_loop:
+		mov     bx, word ptr [edx]
+		add     edx, 2
+		test    bx, bx
+		jz      outer_loop
+		cmp     bx, ax
+		jne     inner_loop
+		lea     eax, [ecx - 2]
+	epilog:
+		pop     esi                                         // restore esi
+		pop     ebx                                         // restore ebx
 		ret                                                 // __cdecl return
 
 		#undef string

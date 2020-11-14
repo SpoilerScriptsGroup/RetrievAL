@@ -76,9 +76,6 @@ extern errno_t _terrno;
 
 #ifdef _MSC_VER
 #pragma warning(disable:4102)
-#define align16 align 16
-#else
-#define align16
 #endif
 
 #ifdef __BORLANDC__
@@ -279,6 +276,12 @@ STORE_POINTER:
 
 __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_unsigned, errno_t *errnoptr, errno_t reserved1, BOOL is_int64, void *reserved2, const TCHAR *nptr, TCHAR **endptr, int base)
 {
+#ifdef _MSC_VER
+	#define align(n) align n
+#else
+	#define align(n)
+#endif
+
 #ifdef _UNICODE
 	#define tchar_ptr word ptr
 	#define ta        ax
@@ -321,7 +324,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		mov     ebx, dword ptr [base]
 		jmp     short L2
 
-		align16
+		align(16)
 	L1:
 		mov     tc, tchar_ptr [esi + size TCHAR]                // skip whitespace
 		inc_tchar_ptr
@@ -334,7 +337,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		jae     short L1
 		jmp     L60
 
-		align16
+		align(16)
 	L3:
 		push    ecx                                             // store sign char
 		cmp     tc, '-'                                         // skip sign
@@ -366,7 +369,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		mov     ebx, 8
 		jmp     L32
 
-		align16
+		align(16)
 	L8:
 		je      short L9
 		cmp     ebx, 10
@@ -382,14 +385,14 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		mov     dword ptr [ecx], EINVAL
 		jmp     L60
 
-		align16
+		align(16)
 	L10:
 		sub     tc, '0'                                         // base == 10
 		cmp     tc, '9' - '0' + 1
 		jb      short L11
 		jmp     L60                                             // no number there; return 0 and point to beginning of string
 
-		align16
+		align(16)
 	L11:
 		inc_tchar_ptr
 		lea     eax, [eax + eax * 4]
@@ -411,7 +414,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 	L13:
 		jmp     L61
 
-		align16
+		align(16)
 	L14:
 		mov     edi, eax
 		mov     ebp, edx
@@ -444,7 +447,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 	L16:
 		jmp     L63
 
-		align16
+		align(16)
 	L20:
 		cmp     tc, '0'                                         // base == 16
 		jne     short L22
@@ -468,7 +471,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 	L23:
 		jmp     L60                                             // no number there; return 0 and point to beginning of string
 
-		align16
+		align(16)
 	L24:
 		shl     eax, 4
 		inc_tchar_ptr
@@ -493,7 +496,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 	L26:
 		jmp     L61
 
-		align16
+		align(16)
 	L27:
 		shl     eax, 4
 		inc_tchar_ptr
@@ -517,14 +520,14 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 	L28:
 		jmp     L63
 
-		align16
+		align(16)
 	L30:
 		sub     tc, '0'                                         // base == 8
 		cmp     tc, '7' - '0' + 1
 		jb      short L31
 		jmp     L60                                             // no number there; return 0 and point to beginning of string
 
-		align16
+		align(16)
 	L31:
 		shl     eax, 3
 		inc_tchar_ptr
@@ -545,7 +548,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 	L33:
 		jmp     L61
 
-		align16
+		align(16)
 	L34:
 		shl     eax, 3
 		inc_tchar_ptr
@@ -565,7 +568,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 	L35:
 		jmp     L63
 
-		align16
+		align(16)
 	L40:
 #ifdef _UNICODE
 		cmp     tc, 'z'
@@ -578,7 +581,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 	L41:
 		jmp     L60                                             // no number there; return 0 and point to beginning of string
 
-		align16
+		align(16)
 	L42:
 		mul     ebx
 		add     eax, ecx
@@ -602,7 +605,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		jne     short L47
 		jmp     short L50
 
-		align16
+		align(16)
 	L46:
 		mov     edi, eax
 		mov     eax, edx
@@ -627,7 +630,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 	L48:
 		jmp     L63
 
-		align16
+		align(16)
 	L50:
 		mov     eax, dword ptr [is_unsigned + 4]                // overflow there
 		pop     ecx
@@ -639,7 +642,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		add     eax, 7FFFFFFFH
 		jmp     short L54
 
-		align16
+		align(16)
 	L51:
 		mov     eax, dword ptr [is_unsigned + 4]
 		pop     ecx
@@ -653,7 +656,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		sbb     edx, 0
 		jmp     short L54
 
-		align16
+		align(16)
 	L52:
 		or      edx, -1
 	L53:
@@ -666,7 +669,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		jnz     short L55
 		jmp     L68
 
-		align16
+		align(16)
 	L55:
 		mov     tc, tchar_ptr [esi + size TCHAR]                // point to end of string
 		inc_tchar_ptr
@@ -679,7 +682,7 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 	L56:
 		jmp     L67
 
-		align16
+		align(16)
 	L60:
 		mov     esi, dword ptr [nptr + 4]                       // store beginning of string in endptr
 		mov     edi, dword ptr [endptr + 4]
@@ -757,6 +760,8 @@ __declspec(naked) unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_
 		#undef endptr
 		#undef base
 	}
+
+	#undef align
 	#undef tchar_ptr
 	#undef ta
 	#undef tc

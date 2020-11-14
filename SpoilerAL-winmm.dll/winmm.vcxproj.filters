@@ -882,9 +882,6 @@
     <ClCompile Include="crt\strnset.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\strpbrk.c">
-      <Filter>crt</Filter>
-    </ClCompile>
     <ClCompile Include="crt\strrchr.c">
       <Filter>crt</Filter>
     </ClCompile>
@@ -904,9 +901,6 @@
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strspn.c">
-      <Filter>crt</Filter>
-    </ClCompile>
-    <ClCompile Include="crt\strspnp.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="crt\strstr.c">
@@ -2238,13 +2232,7 @@
     <ClInclude Include="crt\wcscspn.h">
       <Filter>crt</Filter>
     </ClInclude>
-    <ClInclude Include="crt\wcspbrk.h">
-      <Filter>crt</Filter>
-    </ClInclude>
     <ClInclude Include="crt\wcsspn.h">
-      <Filter>crt</Filter>
-    </ClInclude>
-    <ClInclude Include="crt\wcsspnp.h">
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="EnumReadSSG\Attribute_allcate.h">

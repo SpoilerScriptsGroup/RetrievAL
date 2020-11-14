@@ -749,9 +749,6 @@ LCMAP_STRING:
 #else
 #ifdef __BORLANDC__
 #pragma warn -8070
-#define align16
-#else
-#define align16 align 16
 #endif
 
 #pragma function(strlen)
@@ -763,6 +760,12 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	OUT OPTIONAL LPSTR  lpDestStr,
 	IN           int    cchDest)
 {
+#ifdef _MSC_VER
+	#define align(n) align n
+#else
+	#define align(n)
+#endif
+
 	__asm
 	{
 	        #define Locale      (esp +  4)
@@ -795,7 +798,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        jnz     L101                                //
 	L100:   jmp     LCMapStringA                        //         return LCMapStringA(Locale, dwMapFlags, lpSrcStr, cchSrc, lpDestStr, cchDest);
 
-	        align16                                     //
+	        align(16)                                   //
 	L101:   cmp     eax, -1                             //     if (cchBuffer == -1)
 	        jne     L102                                //
 	        push    dword ptr [lpSrcStr]                //         cchBuffer = strlen(lpSrcStr) + 1;
@@ -818,7 +821,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        pop     ebx                                 //
 	L103:   ret     24                                  //     }
 
-	        align16                                     //
+	        align(16)                                   //
 	L104:   push    ebp                                 //
 	        push    esi                                 //
 	        push    edi                                 //
@@ -849,7 +852,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	                                                    //     else
 	        jmp     L800                                //         goto HALFWIDTH;
 
-	        align16                                     // FULLWIDTH_HIRAGANA:
+	        align(16)                                   // FULLWIDTH_HIRAGANA:
 	                                                    //     for (; ; ) {
 	L200:   mov     dl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
@@ -901,7 +904,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	L203:   inc     edi                                 //             dest++;
 	        jmp     L200                                //             continue;
 	                                                    //         }
-	        align16                                     //
+	        align(16)                                   //
 	L204:   mov     dl, byte ptr [esi + ebp]            //         c2 = src[offset];
 	        inc     ebp                                 //         offset++;
 	        cmp     cl, 0x82                            //         if (c1 == 0x82) {
@@ -1004,7 +1007,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	                                                    //     }
 	                                                    //     goto LCMAP_STRING;
 
-	        align16                                     // FULLWIDTH_KATAKANA:
+	        align(16)                                   // FULLWIDTH_KATAKANA:
 	                                                    //     for (; ; ) {
 	L300:   mov     dl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
@@ -1115,7 +1118,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	L309:   inc     edi                                 //             dest++;
 	        jmp     L300                                //             continue;
 	                                                    //         }
-	        align16                                     //
+	        align(16)                                   //
 	L310:   mov     dl, byte ptr [esi + ebp]            //         c2 = src[offset];
 	        inc     ebp                                 //         offset++;
 	        cmp     cl, 0x82                            //         if (c1 == 0x82) {
@@ -1308,7 +1311,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	                                                    //     }
 	                                                    //     goto LCMAP_STRING;
 
-	        align16                                     // FULLWIDTH:
+	        align(16)                                   // FULLWIDTH:
 	                                                    //     for (; ; ) {
 	L400:   mov     dl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
@@ -1419,7 +1422,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	L409:   inc     edi                                 //             dest++;
 	        jmp     L400                                //             continue;
 	                                                    //         }
-	        align16                                     //
+	        align(16)                                   //
 	L410:   mov     dl, byte ptr [esi + ebp]            //         c2 = src[offset];
 	        inc     ebp                                 //         if (++offset) {
 	        jz      L435                                //
@@ -1618,7 +1621,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	                                                    //     }
 	                                                    //     goto LCMAP_STRING;
 
-	        align16                                     // HIRAGANA:
+	        align(16)                                   // HIRAGANA:
 	                                                    //     for (; ; ) {
 	L500:   mov     dl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
@@ -1634,7 +1637,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        inc     edi                                 //             dest++;
 	        jmp     L500                                //             continue;
 	                                                    //         }
-	        align16                                     //
+	        align(16)                                   //
 	L501:   mov     dl, byte ptr [esi + ebp]            //         c2 = src[offset];
 	        cmp     cl, 0x83                            //         if (c1 == 0x83) {
 	        jne     L502                                //
@@ -1654,7 +1657,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	                                                    //     }
 	                                                    //     goto LCMAP_STRING;
 
-	        align16                                     // KATAKANA:
+	        align(16)                                   // KATAKANA:
 	                                                    //     for (; ; ) {
 	L600:   mov     dl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
@@ -1670,7 +1673,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        inc     edi                                 //             dest++;
 	        jmp     L600                                //             continue;
 	                                                    //         }
-	        align16                                     //
+	        align(16)                                   //
 	L601:   mov     dl, byte ptr [esi + ebp]            //         c2 = src[offset];
 	        cmp     cl, 0x82                            //         if (c1 == 0x82) {
 	        jne     L602                                //
@@ -1690,7 +1693,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	                                                    //     }
 	                                                    //     goto LCMAP_STRING;
 
-	        align16                                     // KATAKANA_HALFWIDTH:
+	        align(16)                                   // KATAKANA_HALFWIDTH:
 	                                                    //     for (; ; ) {
 	L700:   mov     dl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
@@ -1706,7 +1709,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        inc     edi                                 //             dest++;
 	        jmp     L700                                //             continue;
 	                                                    //         }
-	        align16                                     //
+	        align(16)                                   //
 	L701:   xor     edx, edx                            //         c2 = src[offset];
 	        cmp     cl, 0x82                            //         if (c1 == 0x82) {
 	        mov     dl, byte ptr [esi + ebp]            //
@@ -1775,7 +1778,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	                                                    //     }
 	                                                    //     goto LCMAP_STRING;
 
-	        align16                                     // HALFWIDTH:
+	        align(16)                                   // HALFWIDTH:
 	                                                    //     for (; ; ) {
 	L800:   mov     dl, byte ptr [esi + ebp]            //         dest[0] = c1 = src[offset];
 	        inc     ebp                                 //         if (!++offset)
@@ -1791,7 +1794,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        inc     edi                                 //             dest++;
 	        jmp     L800                                //             continue;
 	                                                    //         }
-	        align16                                     //
+	        align(16)                                   //
 	L801:   xor     edx, edx                            //         c2 = src[offset];
 	        cmp     cl, 0x83                            //         if (c1 == 0x83) {
 	        mov     dl, byte ptr [esi + ebp]            //
@@ -1841,7 +1844,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	                                                    //         break;
 	                                                    //     }
 
-	        align16                                     // LCMAP_STRING:
+	        align(16)                                   // LCMAP_STRING:
 	L900:   mov     ecx, dword ptr [cchDest + 16]       //     cchDest = LCMapStringA(Locale, dwMapFlags, lpBufferStr, cchBuffer, lpDestStr, cchDest);
 	        mov     edi, dword ptr [lpDestStr + 16]     //
 	        mov     ebp, dword ptr [hHeap + 16]         //
@@ -1886,5 +1889,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        #undef c2
 	        #undef LCMAP_FLAGS
 	}
+
+	#undef align
 }
 #endif

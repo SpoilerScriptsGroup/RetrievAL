@@ -118,7 +118,7 @@ __declspec(naked) static unsigned __int64 __fastcall internal_strspnp(const char
 		add     esp, 32
 		and     eax, edx
 		sub     edx, ecx
-		ret                                                 // __cdecl return
+		ret                                                 // __fastcall return
 
 		#undef string
 		#undef control

@@ -103,7 +103,7 @@ __declspec(naked) static unsigned __int64 __fastcall internal_wcsspnp(const wcha
 	init:
 		mov     ax, word ptr [edx]
 		add     edx, 2
-		test    ax, ax
+		test    eax, eax
 		jnz     initnext
 
 		mov     edx, ecx                                    // edx = string
@@ -129,11 +129,11 @@ __declspec(naked) static unsigned __int64 __fastcall internal_wcsspnp(const wcha
 	clear:
 		mov     ax, word ptr [ecx]
 		add     ecx, 2
-		test    ax, ax
+		test    eax, eax
 		jnz     clearnext
 		pop     eax
 		sub     edx, 2
-		ret                                                 // __cdecl return
+		ret                                                 // __fastcall return
 
 		#undef string
 		#undef control
@@ -171,6 +171,8 @@ wchar_t * __cdecl _wcsspnp(const wchar_t *string, const wchar_t *control)
 	return NULL;
 }
 #else
+static unsigned __int64 __fastcall internal_wcsspnp(const wchar_t *string, const wchar_t *control);
+
 #ifndef _DEBUG
 __declspec(naked) size_t __cdecl wcsspn(const wchar_t *string, const wchar_t *control)
 {
@@ -179,35 +181,11 @@ __declspec(naked) size_t __cdecl wcsspn(const wchar_t *string, const wchar_t *co
 		#define string  (esp + 4)
 		#define control (esp + 8)
 
-		push    esi                                         // preserve esi
-		push    edi                                         // preserve edi
-		mov     eax, dword ptr [string + 8]
-		mov     edi, dword ptr [control + 8]
-
-		align   16
-	outer_loop:
-		mov     dx, word ptr [eax]
-		add     eax, 2
-		test    dx, dx
-		jz      epilog
-		mov     esi, edi
-
-		align   16
-	inner_loop:
-		mov     cx, word ptr [esi]
-		add     esi, 2
-		cmp     cx, dx
-		je      outer_loop
-		test    cx, cx
-		jnz     inner_loop
-	epilog:
-		sub     eax, 2
-		mov     ecx, dword ptr [string + 8]
-		sub     eax, ecx
-		pop     edi                                         // restore edi
-		shr     eax, 1
-		pop     esi                                         // restore esi
-		ret                                                 // __cdecl return
+		mov     ecx, dword ptr [string]                     // ecx = string
+		mov     edx, dword ptr [control]                    // edx = control
+		call    internal_wcsspnp
+		mov     eax, edx
+		ret
 
 		#undef string
 		#undef control
@@ -222,33 +200,52 @@ __declspec(naked) wchar_t * __cdecl _wcsspnp(const wchar_t *string, const wchar_
 		#define string  (esp + 4)
 		#define control (esp + 8)
 
+		mov     ecx, dword ptr [string]                     // ecx = string
+		mov     edx, dword ptr [control]                    // edx = control
+		jmp     internal_wcsspnp
+
+		#undef string
+		#undef control
+	}
+}
+
+__declspec(naked) static unsigned __int64 __fastcall internal_wcsspnp(const wchar_t *string, const wchar_t *control)
+{
+	__asm
+	{
+		#define string  ecx
+		#define control edx
+
 		push    ebx                                         // preserve ebx
 		push    esi                                         // preserve esi
-		mov     ecx, dword ptr [string + 8]
-		mov     esi, dword ptr [control + 8]
+		push    edi                                         // preserve edi
+		add     ecx, 2
+		mov     edi, edx
+		or      edx, -1
 		xor     eax, eax
 
 		align   16
 	outer_loop:
-		mov     ax, word ptr [ecx]
-		add     ecx, 2
-		test    ax, ax
+		mov     ax, word ptr [ecx + edx * 2]
+		inc     edx
+		test    eax, eax
 		jz      epilog
-		mov     edx, esi
+		mov     esi, edi
 
 		align   16
 	inner_loop:
-		mov     bx, word ptr [edx]
-		add     edx, 2
+		mov     bx, word ptr [esi]
+		add     esi, 2
 		cmp     bx, ax
 		je      outer_loop
 		test    bx, bx
 		jnz     inner_loop
-		lea     eax, [ecx - 2]
+		lea     eax, [ecx + edx * 2 - 2]
 	epilog:
+		pop     edi                                         // restore edi
 		pop     esi                                         // restore esi
 		pop     ebx                                         // restore ebx
-		ret                                                 // __cdecl return
+		ret                                                 // __fastcall return
 
 		#undef string
 		#undef control
@@ -256,4 +253,3 @@ __declspec(naked) wchar_t * __cdecl _wcsspnp(const wchar_t *string, const wchar_
 }
 #endif
 #endif
-

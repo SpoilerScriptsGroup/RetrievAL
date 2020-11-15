@@ -148,9 +148,9 @@ __declspec(naked) static int __cdecl wcscmp386(const wchar_t *string1, const wch
 		mov     bx, word ptr [edx]
 		add     ecx, 2
 		add     edx, 2
-		cmp     ax, bx
+		cmp     eax, ebx
 		jne     epilog
-		test    ax, ax
+		test    eax, eax
 		jnz     loop_begin
 	epilog:
 		sub     eax, ebx

@@ -1,5 +1,5 @@
-#ifdef UTF16MAP
 #ifndef _M_IX86
+#ifdef UTF16MAP
 #ifndef _DEBUG
 size_t __cdecl wcsspn(const wchar_t *string, const wchar_t *control)
 {
@@ -35,6 +35,36 @@ wchar_t * __cdecl _wcsspnp(const wchar_t *string, const wchar_t *control)
 		UTF16MAP[c >> 5] = 0;
 	return (wchar_t *)string;
 }
+#else
+#ifndef _DEBUG
+size_t __cdecl wcsspn(const wchar_t *string, const wchar_t *control)
+{
+	size_t        n;
+	const wchar_t *p1, *p2;
+	wchar_t       c1, c2;
+
+	n = -1;
+	for (p1 = string + 1; c1 = p1[n++]; )
+		for (p2 = control; (c2 = *(p2++)) != c1; )
+			if (!c2)
+				goto DONE;
+DONE:
+	return n;
+}
+
+#endif
+wchar_t * __cdecl _wcsspnp(const wchar_t *string, const wchar_t *control)
+{
+	const wchar_t *p1, *p2;
+	wchar_t       c1, c2;
+
+	for (p1 = string; c1 = *(p1++); )
+		for (p2 = control; (c2 = *(p2++)) != c1; )
+			if (!c2)
+				return (wchar_t *)p1 - 1;
+	return NULL;
+}
+#endif
 #else
 static unsigned __int64 __fastcall internal_wcsspnp(const wchar_t *string, const wchar_t *control);
 
@@ -85,6 +115,7 @@ __declspec(naked) wchar_t * __cdecl _wcsspnp(const wchar_t *string, const wchar_
 	}
 }
 
+#ifdef UTF16MAP
 __declspec(naked) static unsigned __int64 __fastcall internal_wcsspnp(const wchar_t *string, const wchar_t *control)
 {
 	__asm
@@ -139,76 +170,7 @@ __declspec(naked) static unsigned __int64 __fastcall internal_wcsspnp(const wcha
 		#undef control
 	}
 }
-#endif
 #else
-#ifndef _M_IX86
-#ifndef _DEBUG
-size_t __cdecl wcsspn(const wchar_t *string, const wchar_t *control)
-{
-	size_t        n;
-	const wchar_t *p1, *p2;
-	wchar_t       c1, c2;
-
-	n = -1;
-	for (p1 = string + 1; c1 = p1[n++]; )
-		for (p2 = control; (c2 = *(p2++)) != c1; )
-			if (!c2)
-				goto DONE;
-DONE:
-	return n;
-}
-
-#endif
-wchar_t * __cdecl _wcsspnp(const wchar_t *string, const wchar_t *control)
-{
-	const wchar_t *p1, *p2;
-	wchar_t       c1, c2;
-
-	for (p1 = string; c1 = *(p1++); )
-		for (p2 = control; (c2 = *(p2++)) != c1; )
-			if (!c2)
-				return (wchar_t *)p1 - 1;
-	return NULL;
-}
-#else
-static unsigned __int64 __fastcall internal_wcsspnp(const wchar_t *string, const wchar_t *control);
-
-#ifndef _DEBUG
-__declspec(naked) size_t __cdecl wcsspn(const wchar_t *string, const wchar_t *control)
-{
-	__asm
-	{
-		#define string  (esp + 4)
-		#define control (esp + 8)
-
-		mov     ecx, dword ptr [string]                     // ecx = string
-		mov     edx, dword ptr [control]                    // edx = control
-		call    internal_wcsspnp
-		mov     eax, edx
-		ret
-
-		#undef string
-		#undef control
-	}
-}
-
-#endif
-__declspec(naked) wchar_t * __cdecl _wcsspnp(const wchar_t *string, const wchar_t *control)
-{
-	__asm
-	{
-		#define string  (esp + 4)
-		#define control (esp + 8)
-
-		mov     ecx, dword ptr [string]                     // ecx = string
-		mov     edx, dword ptr [control]                    // edx = control
-		jmp     internal_wcsspnp
-
-		#undef string
-		#undef control
-	}
-}
-
 __declspec(naked) static unsigned __int64 __fastcall internal_wcsspnp(const wchar_t *string, const wchar_t *control)
 {
 	__asm
@@ -218,19 +180,16 @@ __declspec(naked) static unsigned __int64 __fastcall internal_wcsspnp(const wcha
 
 		push    ebx                                         // preserve ebx
 		push    esi                                         // preserve esi
-		push    edi                                         // preserve edi
-		add     ecx, 2
-		mov     edi, edx
-		or      edx, -1
 		xor     eax, eax
+		jmp     outer_loop
 
 		align   16
 	outer_loop:
-		mov     ax, word ptr [ecx + edx * 2]
-		inc     edx
+		mov     ax, word ptr [ecx]
+		add     ecx, 2
 		test    eax, eax
 		jz      epilog
-		mov     esi, edi
+		mov     esi, edx
 
 		align   16
 	inner_loop:
@@ -240,10 +199,10 @@ __declspec(naked) static unsigned __int64 __fastcall internal_wcsspnp(const wcha
 		je      outer_loop
 		test    bx, bx
 		jnz     inner_loop
-		lea     eax, [ecx + edx * 2 - 2]
 	epilog:
-		pop     edi                                         // restore edi
+		mov     edx, ecx
 		pop     esi                                         // restore esi
+		sub     edx, 2
 		pop     ebx                                         // restore ebx
 		ret                                                 // __fastcall return
 

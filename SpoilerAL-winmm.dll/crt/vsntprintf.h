@@ -146,8 +146,8 @@ typedef size_t           uintptr_t;
 #include <stdbool.h>
 #else
 typedef unsigned char bool;
-#define true  1
 #define false 0
+#define true  1
 #endif
 
 // byte-order definition
@@ -158,7 +158,7 @@ typedef unsigned char bool;
 
 #include <stdlib.h>     // using _countof
 #ifndef _countof
-#define _countof(_Array) (sizeof(_Array) / sizeof((_Array)[0]))
+#define _countof(_array) (sizeof(_array) / sizeof((_array)[0]))
 #endif
 
 #include <errno.h>      // using ERANGE, EOVERFLOW
@@ -283,14 +283,20 @@ typedef struct _LONGDOUBLE {
 #endif
 #if defined(__LITTLE_ENDIAN__)
 		uint64_t mantissa;
-		struct {
-			uint16_t exponent : LDBL_EXP_BIT;
-			uint16_t sign     : LDBL_SIGN_BIT;
+		union {
+			uint16_t extension;
+			struct {
+				uint16_t exponent : LDBL_EXP_BIT;
+				uint16_t sign     : LDBL_SIGN_BIT;
+			};
 		};
 #else
-		struct {
-			uint16_t sign     : LDBL_SIGN_BIT;
-			uint16_t exponent : LDBL_EXP_BIT;
+		union {
+			uint16_t extension;
+			struct {
+				uint16_t sign     : LDBL_SIGN_BIT;
+				uint16_t exponent : LDBL_EXP_BIT;
+			};
 		};
 		uint64_t mantissa;
 #endif
@@ -486,7 +492,9 @@ enum {
 #if !INTMAX_IS_LLONG
 	C_INTMAX,
 #endif
+#if !LONGDOUBLE_IS_DOUBLE
 	C_LDOUBLE,
+#endif
 };
 
 #if INTMAX_IS_LLONG
@@ -874,7 +882,9 @@ int __fastcall internal_vsntprintf(TCHAR *buffer, size_t count, const TCHAR *for
 			break;
 		case 'L':
 			c = *(format++);
+#if !LONGDOUBLE_IS_DOUBLE
 			cflags = C_LDOUBLE;
+#endif
 			break;
 #ifdef _WIN32
 		case 'I':
@@ -1604,13 +1614,16 @@ static uint32_t intfmt(TCHAR *buffer, uint32_t count, uint32_t length, intmax_t 
 	return length;
 }
 
-#define ECVTBUF(value, ndigits, decpt, cvtbuf) \
-	fltcvt(value, ndigits, decpt, cvtbuf, true)
+#define USE_FCVT_S 0
 
-#define FCVTBUF(value, ndigits, decpt, cvtbuf) \
-	fltcvt(value, ndigits, decpt, cvtbuf, false)
+#if !USE_FCVT_S
+#define FCVTBUF(cvtbuf, value, ndigits, decpt) \
+	fltcvt(cvtbuf, value, ndigits, decpt, false)
 
-static uint32_t fltcvt(long_double value, uint32_t ndigits, int32_t *decpt, TCHAR cvtbuf[CVTBUFSIZE], bool eflag)
+#define ECVTBUF(cvtbuf, value, ndigits, decpt) \
+	fltcvt(cvtbuf, value, ndigits, decpt, true)
+
+static uint32_t fltcvt(TCHAR cvtbuf[CVTBUFSIZE], long_double value, uint32_t ndigits, int32_t *decpt, bool eflag)
 {
 #if !LONGDOUBLE_IS_DOUBLE && (!LONGDOUBLE_IS_X86_EXTENDED || INTMAX_IS_LLONG)
 	long_double intpart, fracpart;
@@ -1894,15 +1907,20 @@ static uint32_t fltcvt(long_double value, uint32_t ndigits, int32_t *decpt, TCHA
 	return length;
 #endif
 }
+#endif
 
-static inline uint32_t hexcvt(long_double value, uint32_t precision, TCHAR cvtbuf[CVTBUFSIZE], uint32_t *elen, TCHAR expbuf[EXPBUFSIZE], int flags)
+#if !USE_FCVT_S
+static inline uint32_t hexcvt(TCHAR cvtbuf[CVTBUFSIZE], long_double value, uint32_t precision, uint32_t *elen, TCHAR expbuf[EXPBUFSIZE], int flags)
+#else
+static inline uint32_t hexcvt(unsigned char cvtbuf[CVTBUFSIZE], long_double value, uint32_t precision, uint32_t *elen, TCHAR expbuf[EXPBUFSIZE], int flags)
+#endif
 {
 	uintmax_t   mantissa;
 	int32_t     exponent;
 	int32_t     i;
 	const TCHAR *digits;
-	TCHAR       *p1, *p2;
 #ifndef _MSC_VER
+	TCHAR       *p1, *p2;
 	TCHAR       c1, c2;
 #endif
 
@@ -1924,8 +1942,11 @@ static inline uint32_t hexcvt(long_double value, uint32_t precision, TCHAR cvtbu
 		mantissa >>= 4;
 	}
 	digits = (flags & FL_UP) ? digitsLarge : digitsSmall;
+#if !USE_FCVT_S
 	if (precision)
 	{
+		TCHAR *p1, *p2;
+
 		p1 = cvtbuf + 1;
 		p2 = p1 + precision;
 		do
@@ -1935,6 +1956,21 @@ static inline uint32_t hexcvt(long_double value, uint32_t precision, TCHAR cvtbu
 		} while (p2 != p1);
 	}
 	*cvtbuf = digits[(uint32_t)mantissa & 0x0F];
+#else
+	if (precision)
+	{
+		unsigned char *p1, *p2;
+
+		p1 = cvtbuf + 1;
+		p2 = p1 + precision;
+		do
+		{
+			*(--p2) = (unsigned char)digits[(uint32_t)mantissa & 0x0F];
+			mantissa >>= 4;
+		} while (p2 != p1);
+	}
+	*cvtbuf = (unsigned char)digits[(uint32_t)mantissa & 0x0F];
+#endif
 	expbuf[0] = (flags & FL_UP) ? 'P' : 'p';
 	if (exponent >= 0)
 	{
@@ -1966,23 +2002,27 @@ static inline uint32_t hexcvt(long_double value, uint32_t precision, TCHAR cvtbu
 
 static uint32_t fltfmt(TCHAR *buffer, uint32_t count, uint32_t length, long_double value, uint32_t width, int32_t precision, int flags)
 {
-	TCHAR       cvtbuf[CVTBUFSIZE];
-	TCHAR       expbuf[EXPBUFSIZE];	/* "e-12" */
-	TCHAR       sign;
-	TCHAR       hexprefix;
-	uint32_t    cvtlen;
-	int32_t     decpt;
-	uint32_t    ilen;
-	uint32_t    flen;
-	uint32_t    elen;
-	uint32_t    trailfraczeros;
-	uint32_t    separators;
-	uint32_t    emitpoint;
-	uint32_t    padlen;
-	int32_t     i;
-	TCHAR       *p;
-	const TCHAR *infnan;
-	TCHAR       c;
+#if !USE_FCVT_S
+	TCHAR         cvtbuf[CVTBUFSIZE];
+#else
+	unsigned char cvtbuf[CVTBUFSIZE];
+#endif
+	TCHAR         expbuf[EXPBUFSIZE];	/* "e-12" */
+	TCHAR         sign;
+	TCHAR         hexprefix;
+	uint32_t      cvtlen;
+	int32_t       decpt;
+	uint32_t      ilen;
+	uint32_t      flen;
+	uint32_t      elen;
+	uint32_t      trailfraczeros;
+	uint32_t      separators;
+	uint32_t      emitpoint;
+	uint32_t      padlen;
+	int32_t       i;
+	TCHAR         *p;
+	const TCHAR   *infnan;
+	TCHAR         c;
 
 #ifdef _DEBUG
 	assert(width     <= INT32_MAX);
@@ -2030,9 +2070,17 @@ static uint32_t fltfmt(TCHAR *buffer, uint32_t count, uint32_t length, long_doub
 	// Convert floating point number to text
 	if (!(flags & FL_TYPE_A))
 	{
+#if USE_FCVT_S
+		int sign;
+#endif
+
 		if (flags & FL_TYPE_G)
 		{
-			ECVTBUF(value, precision, &decpt, cvtbuf);
+#if !USE_FCVT_S
+			cvtlen = ECVTBUF(cvtbuf, value, precision, &decpt);
+#else
+			_ecvt_s(cvtbuf, _countof(cvtbuf), value, precision, &decpt, &sign);
+#endif
 			if (decpt <= -4 || decpt > precision)
 			{
 				flags |= FL_TYPE_E;
@@ -2051,7 +2099,11 @@ static uint32_t fltfmt(TCHAR *buffer, uint32_t count, uint32_t length, long_doub
 			TCHAR   c1, c2;
 #endif
 
-			cvtlen = ECVTBUF(value, precision + 1, &decpt, cvtbuf);
+#if !USE_FCVT_S
+			cvtlen = ECVTBUF(cvtbuf, value, precision + 1, &decpt);
+#else
+			_ecvt_s(cvtbuf, _countof(cvtbuf), value, precision + 1, &decpt, &sign);
+#endif
 
 			exponent = !decpt ? !value ? 0 : -1 : decpt - 1;
 			decpt = 1;
@@ -2102,11 +2154,22 @@ static uint32_t fltfmt(TCHAR *buffer, uint32_t count, uint32_t length, long_doub
 		else
 		{
 			elen = 0;
-			cvtlen = FCVTBUF(value, precision, &decpt, cvtbuf);
+#if !USE_FCVT_S
+			cvtlen = FCVTBUF(cvtbuf, value, precision, &decpt);
+#else
+			_fcvt_s(cvtbuf, _countof(cvtbuf), value, precision, &decpt, &sign);
+#endif
 		}
+#if USE_FCVT_S
+		cvtlen = strlen(cvtbuf);
+#endif
 		if ((flags & FL_TYPE_G) && !(flags & FL_ALTERNATE))
 		{
-			TCHAR *end;
+#if !USE_FCVT_S
+			TCHAR *p, *end;
+#else
+			unsigned char *p, *end;
+#endif
 
 			p = end = cvtbuf + cvtlen;
 			while (*(--p) == '0' && p != cvtbuf);
@@ -2126,7 +2189,7 @@ static uint32_t fltfmt(TCHAR *buffer, uint32_t count, uint32_t length, long_doub
 	}
 	else
 	{
-		cvtlen = hexcvt(value, precision, cvtbuf, &elen, expbuf, flags);
+		cvtlen = hexcvt(cvtbuf, value, precision, &elen, expbuf, flags);
 		ilen = decpt = 1;
 		flen = cvtlen - 1;
 		hexprefix = (flags & FL_UP) ? 'X' : 'x';
@@ -2317,7 +2380,7 @@ INF:
 	infnan = lpcszInf;
 
 INF_NaN:
-	p = cvtbuf;
+	p = (TCHAR *)cvtbuf;
 	if (sign)
 		*(p++) = sign;
 	if (flags & FL_UP)
@@ -2326,5 +2389,5 @@ INF_NaN:
 	else
 		while (c = *(infnan++))
 			*(p++) = c;
-	return tcsfmt(buffer, count, length, cvtbuf, -1, width, p - cvtbuf, flags);
+	return tcsfmt(buffer, count, length, (TCHAR *)cvtbuf, -1, width, p - (TCHAR *)cvtbuf, flags);
 }

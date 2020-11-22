@@ -49,7 +49,7 @@ errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t *source)
 
 static errno_t internal_gmtime32(struct tm *dest, uint32_t time32)
 {
-	#define DAY_SEC     (60 * 60 * 24)
+	#define DAY_SEC     (24 * 60 * 60)
 	#define SINCE(year) (((year) - 1) * 365 + ((year) - 1) / 4 - ((year) - 1) / 100 + ((year) - 1) / 400)
 	#define LEAP_DAY    (31 + 28)
 	#define YEAR        365
@@ -87,7 +87,7 @@ static errno_t internal_gmtime32(struct tm *dest, uint32_t time32)
 
 static errno_t internal_gmtime64(struct tm *dest, uint64_t time64)
 {
-	#define DAY_SEC     (60 * 60 * 24)
+	#define DAY_SEC     (24 * 60 * 60)
 	#define SINCE(year) (((year) - 1) * 365 + ((year) - 1) / 4 - ((year) - 1) / 100 + ((year) - 1) / 400)
 	#define LEAP_DAY    (31 + 28)
 	#define YEAR        365
@@ -135,7 +135,7 @@ static errno_t internal_gmtime_less_than_400_years_left(struct tm *dest, uint32_
 {
 	#define DIV(dividend, divisor) (((dividend) * ((0x100000000 + (divisor) - 1) / (divisor))) >> 32)
 	#define MOD(dividend, divisor) ((dividend) - DIV(dividend, divisor) * (divisor))
-	#define DAY_SEC                (60 * 60 * 24)
+	#define DAY_SEC                (24 * 60 * 60)
 	#define LEAP_DAY               (31 + 28)
 	#define YEAR                   365
 	#define YEAR4                  (YEAR * 4 + 1)

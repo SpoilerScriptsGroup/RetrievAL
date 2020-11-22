@@ -52,6 +52,9 @@
     <Filter Include="crt\msvc">
       <UniqueIdentifier>{62f0b878-ecc3-419c-a379-e4dfec950af4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="crt\ucrt">
+      <UniqueIdentifier>{8b4dd175-f99b-4753-affb-8c39629a1d22}</UniqueIdentifier>
+    </Filter>
     <Filter Include="crt\uitot">
       <UniqueIdentifier>{9d33f3e8-d27c-48e7-8b36-16fdeeef65c1}</UniqueIdentifier>
     </Filter>
@@ -917,6 +920,18 @@
     </ClCompile>
     <ClCompile Include="crt\time.c">
       <Filter>crt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\ucrt\big_integer.c">
+      <Filter>crt\ucrt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\ucrt\fcvt.c">
+      <Filter>crt\ucrt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\ucrt\strtod.c">
+      <Filter>crt\ucrt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\ucrt\wcstod.c">
+      <Filter>crt\ucrt</Filter>
     </ClCompile>
     <ClCompile Include="crt\uitot\uitoa.c">
       <Filter>crt\uitot</Filter>
@@ -2213,6 +2228,12 @@
     </ClInclude>
     <ClInclude Include="crt\ttoi64.h">
       <Filter>crt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\ucrt\big_integer.h">
+      <Filter>crt\ucrt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\ucrt\tcstod.h">
+      <Filter>crt\ucrt</Filter>
     </ClInclude>
     <ClInclude Include="crt\uitot\uitot.h">
       <Filter>crt\uitot</Filter>

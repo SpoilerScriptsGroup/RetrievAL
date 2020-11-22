@@ -79,22 +79,36 @@ double __cdecl _tcstod(const TCHAR *nptr, TCHAR **endptr)
 		while (*p == '0')
 			p++;
 		mantptr = p;
-		while ((uchar_t)(*p - '0') < '9' - '0' + 1)
-			p++;
-		e = (int32_t)(width = p - mantptr);
-		if (*p == '.')
+		if (*p != '.')
 		{
-			while ((uchar_t)(*(++p) - '0') < '9' - '0' + 1);
-			width = p - mantptr - 1;
+			while ((uchar_t)(*p - '0') < '9' - '0' + 1)
+				p++;
+			e = (int32_t)(width = p - mantptr);
+			if (*p == '.')
+			{
+				while ((uchar_t)(*(++p) - '0') < '9' - '0' + 1);
+				width = p - mantptr - 1;
+			}
+
+			if (!width && mantptr == first)
+				goto L_INVALIDATE;
+
+			expptr = p;
+			if (width > DBL_DECIMAL_DIG + 1)
+				width = DBL_DECIMAL_DIG + 1;
+			e -= width;
 		}
-
-		if (!width && mantptr == first)
-			goto L_INVALIDATE;
-
-		expptr = p;
-		if (width > DBL_DECIMAL_DIG + 1)
-			width = DBL_DECIMAL_DIG + 1;
-		e -= width;
+		else
+		{
+			do
+				p++;
+			while (*p == '0');
+			e = (int32_t)(mantptr - p);
+			mantptr = p;
+			while ((uchar_t)(*p - '0') < '9' - '0' + 1)
+				p++;
+			width = (expptr = p) - mantptr;
+		}
 
 		x = 0;
 		p = mantptr;

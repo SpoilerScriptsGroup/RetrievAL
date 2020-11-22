@@ -21,15 +21,15 @@ __declspec(naked) errno_t __cdecl _gmtime32_s(struct tm *dest, const __time32_t 
 		jge     internal_gmtime32
 	L1:
 		or      edx, -1
-		mov     dword ptr [ecx     ], edx
-		mov     dword ptr [ecx +  4], edx
-		mov     dword ptr [ecx +  8], edx
-		mov     dword ptr [ecx + 12], edx
-		mov     dword ptr [ecx + 16], edx
-		mov     dword ptr [ecx + 20], edx
-		mov     dword ptr [ecx + 24], edx
-		mov     dword ptr [ecx + 28], edx
-		mov     dword ptr [ecx + 32], edx
+		mov     [ecx].tm_sec  , edx
+		mov     [ecx].tm_min  , edx
+		mov     [ecx].tm_hour , edx
+		mov     [ecx].tm_mday , edx
+		mov     [ecx].tm_mon  , edx
+		mov     [ecx].tm_year , edx
+		mov     [ecx].tm_wday , edx
+		mov     [ecx].tm_yday , edx
+		mov     [ecx].tm_isdst, edx
 	L2:
 		mov     eax, EINVAL
 		ret
@@ -80,15 +80,15 @@ __declspec(naked) errno_t __cdecl _gmtime64_s(struct tm *dest, const __time64_t 
 		jbe     internal_gmtime64
 	L4:
 		or      ecx, -1
-		mov     dword ptr [edx     ], ecx
-		mov     dword ptr [edx +  4], ecx
-		mov     dword ptr [edx +  8], ecx
-		mov     dword ptr [edx + 12], ecx
-		mov     dword ptr [edx + 16], ecx
-		mov     dword ptr [edx + 20], ecx
-		mov     dword ptr [edx + 24], ecx
-		mov     dword ptr [edx + 28], ecx
-		mov     dword ptr [edx + 32], ecx
+		mov     [edx].tm_sec  , ecx
+		mov     [edx].tm_min  , ecx
+		mov     [edx].tm_hour , ecx
+		mov     [edx].tm_mday , ecx
+		mov     [edx].tm_mon  , ecx
+		mov     [edx].tm_year , ecx
+		mov     [edx].tm_wday , ecx
+		mov     [edx].tm_yday , ecx
+		mov     [edx].tm_isdst, ecx
 	L5:
 		mov     eax, EINVAL
 		ret
@@ -135,15 +135,15 @@ __declspec(naked) static errno_t __cdecl internal_gmtime32()
 		sub     esi, eax
 		mov     eax, 0x0AAAAAAB
 		mov     ebx, edx
-		mov     dword ptr [ecx], edi
+		mov     [ecx].tm_sec, edi
 		mul     edx
-		mov     dword ptr [ecx + 4], esi
+		mov     [ecx].tm_min, esi
 		lea     eax, [edx + edx * 2]
 		shl     eax, 3
 		lea     esi, [edx + SINCE(1970) - (SINCE(1600) + LEAP_DAY) - 1]
 		sub     ebx, eax
 		sub     esi, YEAR400
-		mov     dword ptr [ecx + 8], ebx
+		mov     [ecx].tm_hour, ebx
 		jb      L1
 		mov     edi, 400
 		jmp     internal_gmtime_less_than_400_years_left
@@ -220,9 +220,9 @@ __declspec(naked) static errno_t __cdecl internal_gmtime64()
 		sub     ebx, ecx
 		pop     ecx
 		sub     edi, eax
-		mov     dword ptr [ecx], ebx
-		mov     dword ptr [ecx + 4], edi
-		mov     dword ptr [ecx + 8], edx
+		mov     [ecx].tm_sec, ebx
+		mov     [ecx].tm_min, edi
+		mov     [ecx].tm_hour, edx
 		xor     edi, edi
 		sub     esi, YEAR400 * 2
 		jae     L2
@@ -284,7 +284,7 @@ __declspec(naked) static errno_t __cdecl internal_gmtime_less_than_400_years_lef
 		xor     ebx, ebx
 		sub     edx, eax
 		mov     eax, 0x002CDB61
-		mov     dword ptr [ecx + 24], edx
+		mov     [ecx].tm_wday, edx
 		cmp     esi, YEAR - LEAP_DAY + 1
 		adc     ebx, ebx
 		jnz     L5
@@ -348,9 +348,9 @@ __declspec(naked) static errno_t __cdecl internal_gmtime_less_than_400_years_lef
 		sub     edi, 1900 - 1600
 		mov     edx, esi
 		shr     esi, 5
-		mov     dword ptr [ecx + 20], edi
-		mov     dword ptr [ecx + 28], edx
-		mov     dword ptr [ecx + 32], 0
+		mov     [ecx].tm_year, edi
+		mov     [ecx].tm_yday, edx
+		mov     [ecx].tm_isdst, 0
 		cmp     esi, 1
 		je      L12
 		sub     edx, ebx
@@ -369,8 +369,8 @@ __declspec(naked) static errno_t __cdecl internal_gmtime_less_than_400_years_lef
 		sub     edx, ebx
 		inc     esi
 	L14:
-		mov     dword ptr [ecx + 12], edx
-		mov     dword ptr [ecx + 16], esi
+		mov     [ecx].tm_mday, edx
+		mov     [ecx].tm_mon, esi
 		xor     eax, eax
 		pop     edi
 		pop     esi

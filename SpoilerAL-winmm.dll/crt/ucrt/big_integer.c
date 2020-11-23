@@ -259,7 +259,7 @@ __forceinline static uint32_t add_multiply_carry(uint32_t *u_add, const uint32_t
 	return ((uint32_t *)&uu_res)[1];
 }
 
-static uint32_t multiply_core(uint32_t *multiplicand, const uint32_t multiplicand_count, const uint32_t multiplier)
+__forceinline static uint32_t multiply_core(uint32_t *multiplicand, const uint32_t multiplicand_count, const uint32_t multiplier)
 {
 	uint32_t carry;
 	uint32_t i;

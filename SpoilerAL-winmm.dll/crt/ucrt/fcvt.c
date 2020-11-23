@@ -122,15 +122,17 @@ typedef struct {
 // Precondition Validation Macros
 //
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#define _VALIDATE_RETURN_ERRCODE(expr, errorcode)                               \
-    do                                                                          \
-    {                                                                           \
-        if (!(expr))                                                            \
-        {                                                                       \
-            assert(expr);                                                       \
-            errno = errorcode;                                                  \
-            return errorcode;                                                   \
-        }                                                                       \
+#define _VALIDATE_RETURN_ERRCODE(expr, errorcode)                              \
+    do                                                                         \
+    {                                                                          \
+        int _expr_val;                                                         \
+                                                                               \
+        if (!(_expr_val = !!(expr)))                                           \
+        {                                                                      \
+            assert((#expr, _expr_val));                                        \
+            errno = errorcode;                                                 \
+            return errorcode;                                                  \
+        }                                                                      \
     } while (0)
 
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -329,7 +331,7 @@ __forceinline static void convert_to_fos_high_precision(
 	// be off by one, e.g. as is the case for powers of ten (log10(100) is two,
 	// but the correct value of k for 100 is 3).  We detect off-by-one errors
 	// later and correct for them.
-	environment = _controlfp(CW_DEFAULT, MCW_EM);
+	environment = _controlfp(CW_DEFAULT & MCW_EM, MCW_EM);
 	k = (int32_t)(ceil(log10(components->value)));
 	_controlfp(environment, MCW_EM);
 	if (k == INT32_MAX || k == INT32_MIN)
@@ -1514,9 +1516,8 @@ errno_t __cdecl _gcvt_s(
 	_VALIDATE_RETURN_ERRCODE((size_t)precision < buffer_count, ERANGE);
 	// Additional validation will be performed in the fp_format functions.
 
-	if (GetLocaleInfoA(GetThreadLocale(), LOCALE_SDECIMAL, (char *)&decimal_point_char, sizeof(decimal_point_char) / sizeof(char)))
-		decimal_point_char = *(char *)&decimal_point_char;
-	else
+	decimal_point_char = 0;
+	if (!GetLocaleInfoA(GetThreadLocale(), LOCALE_SDECIMAL, (char *)&decimal_point_char, 2))
 		decimal_point_char = '.';
 
 	// We only call __acrt_fltout in order to parse the correct exponent value (strflt.decpt).

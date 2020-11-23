@@ -104,26 +104,30 @@ __forceinline static unsigned char _BitScanReverse(unsigned long *Index, unsigne
 // Precondition Validation Macros
 //
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#define _VALIDATE_RETURN(expr, errorcode, retexpr)                              \
-    do                                                                          \
-    {                                                                           \
-        if (!(expr))                                                            \
-        {                                                                       \
-            assert(expr);                                                       \
-            errno = errorcode;                                                  \
-            return retexpr;                                                     \
-        }                                                                       \
+#define _VALIDATE_RETURN(expr, errorcode, retexpr)                             \
+    do                                                                         \
+    {                                                                          \
+        int _expr_val;                                                         \
+                                                                               \
+        if (!(_expr_val = !!(expr)))                                           \
+        {                                                                      \
+            assert((#expr, _expr_val));                                        \
+            errno = errorcode;                                                 \
+            return retexpr;                                                    \
+        }                                                                      \
     } while (0)
 
-#define _VALIDATE_RETURN_VOID(expr, errorcode)                                  \
-    do                                                                          \
-    {                                                                           \
-        if (!(expr))                                                            \
-        {                                                                       \
-            assert(expr);                                                       \
-            errno = errorcode;                                                  \
-            return;                                                             \
-        }                                                                       \
+#define _VALIDATE_RETURN_VOID(expr, errorcode)                                 \
+    do                                                                         \
+    {                                                                          \
+        int _expr_val;                                                         \
+                                                                               \
+        if (!(_expr_val = !!(expr)))                                           \
+        {                                                                      \
+            assert((#expr, _expr_val));                                        \
+            errno = errorcode;                                                 \
+            return;                                                            \
+        }                                                                      \
     } while (0)
 
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+

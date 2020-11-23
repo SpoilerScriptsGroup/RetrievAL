@@ -1614,7 +1614,7 @@ static uint32_t intfmt(TCHAR *buffer, uint32_t count, uint32_t length, intmax_t 
 	return length;
 }
 
-#define USE_FCVT_S 0
+#define USE_FCVT_S 1
 
 #if !USE_FCVT_S
 #define FCVTBUF(cvtbuf, value, ndigits, decpt) \

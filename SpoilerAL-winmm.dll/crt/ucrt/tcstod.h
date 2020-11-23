@@ -1,54 +1,28 @@
-#define _CRT_SECURE_NO_WARNINGS
+#include "big_integer.h"
+#include <tchar.h>
 #include <windows.h>
-#if !defined(_MSC_VER) || _MSC_VER >= 1600
-#include <stdbool.h>
-#include <stdint.h>
-#else
-#include <limits.h>
-typedef unsigned __int8  bool;
-typedef __int8           int8_t;
-typedef unsigned __int8  uint8_t;
-typedef __int16          int16_t;
-typedef unsigned __int16 uint16_t;
-typedef __int32          int32_t;
-typedef unsigned __int32 uint32_t;
-typedef __int64          int64_t;
-typedef unsigned __int64 uint64_t;
-#define false       0
-#define true        1
-#define INT8_MIN    _I8_MIN
-#define INT8_MAX    _I8_MAX
-#define INT16_MIN   _I16_MIN
-#define INT16_MAX   _I16_MAX
-#define INT32_MIN   _I32_MIN
-#define INT32_MAX   _I32_MAX
-#define INT64_MIN   _I64_MIN
-#define INT64_MAX   _I64_MAX
-#define INTMAX_MIN  _I64_MIN
-#define INTMAX_MAX  _I64_MAX
-#define UINT8_MAX   _UI8_MAX
-#define UINT16_MAX  _UI16_MAX
-#define UINT32_MAX  _UI32_MAX
-#define UINT64_MAX  _UI64_MAX
-#define INT8_C(x)   (x)
-#define INT16_C(x)  (x)
-#define INT32_C(x)  (x)
-#define INT64_C(x)  (x ## I64)
-#define UINT8_C(x)  (x)
-#define UINT16_C(x) (x)
-#define UINT32_C(x) (x ## U)
-#define UINT64_C(x) (x ## UI64)
+#include <float.h>
+#include <crtdbg.h>
+#ifndef _ASSERT_EXPR
+#define _ASSERT_EXPR(expr, msg) ((void)0)
 #endif
+#include <errno.h>
 #include <stdlib.h>
 #ifndef _countof
 #define _countof(_array) (sizeof(_array) / sizeof((_array)[0]))
 #endif
-#include <tchar.h>
-#include <float.h>
-#include <errno.h>
-#include <crtdbg.h>
-#include <assert.h>
-#include "big_integer.h"
+
+#if defined(_MSC_VER) && _MSC_VER < 1600
+typedef unsigned __int8  bool;
+typedef unsigned __int8  uint8_t;
+typedef unsigned __int16 uint16_t;
+typedef __int32          int32_t;
+typedef unsigned __int32 uint32_t;
+typedef unsigned __int64 uint64_t;
+#define false       0
+#define true        1
+#define UINT64_C(x) (x ## UI64)
+#endif
 
 #ifndef _UNICODE
 typedef uint8_t  uchar_t;
@@ -107,11 +81,11 @@ __forceinline static unsigned char _BitScanReverse(unsigned long *Index, unsigne
 #define _VALIDATE_RETURN(expr, errorcode, retexpr)                             \
     do                                                                         \
     {                                                                          \
-        int _expr_val;                                                         \
+        int _expr_val=!!(expr);                                                \
                                                                                \
-        if (!(_expr_val = !!(expr)))                                           \
+        _ASSERT_EXPR(_expr_val, _CRT_WIDE(#expr));                             \
+        if (!_expr_val)                                                        \
         {                                                                      \
-            assert((#expr, _expr_val));                                        \
             errno = errorcode;                                                 \
             return retexpr;                                                    \
         }                                                                      \
@@ -120,11 +94,11 @@ __forceinline static unsigned char _BitScanReverse(unsigned long *Index, unsigne
 #define _VALIDATE_RETURN_VOID(expr, errorcode)                                 \
     do                                                                         \
     {                                                                          \
-        int _expr_val;                                                         \
+        int _expr_val=!!(expr);                                                \
                                                                                \
-        if (!(_expr_val = !!(expr)))                                           \
+        _ASSERT_EXPR(_expr_val, _CRT_WIDE(#expr));                             \
+        if (!_expr_val)                                                        \
         {                                                                      \
-            assert((#expr, _expr_val));                                        \
             errno = errorcode;                                                 \
             return;                                                            \
         }                                                                      \

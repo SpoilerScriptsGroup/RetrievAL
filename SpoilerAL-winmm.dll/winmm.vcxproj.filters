@@ -924,7 +924,13 @@
     <ClCompile Include="crt\ucrt\big_integer.c">
       <Filter>crt\ucrt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\ucrt\corecrt_internal_fltintrn.c">
+      <Filter>crt\ucrt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\ucrt\fcvt.c">
+      <Filter>crt\ucrt</Filter>
+    </ClCompile>
+    <ClCompile Include="crt\ucrt\gcvt.c">
       <Filter>crt\ucrt</Filter>
     </ClCompile>
     <ClCompile Include="crt\ucrt\strtod.c">
@@ -2230,6 +2236,9 @@
       <Filter>crt</Filter>
     </ClInclude>
     <ClInclude Include="crt\ucrt\big_integer.h">
+      <Filter>crt\ucrt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\ucrt\corecrt_internal_fltintrn.h">
       <Filter>crt\ucrt</Filter>
     </ClInclude>
     <ClInclude Include="crt\ucrt\tcstod.h">

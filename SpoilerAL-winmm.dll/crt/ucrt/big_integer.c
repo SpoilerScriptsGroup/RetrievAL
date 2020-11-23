@@ -1,12 +1,24 @@
 #include "big_integer.h"
-#include <windows.h>
+#if defined(_MSC_VER) && _MSC_VER >= 1310
+#include <intrin.h>
+#endif
 #include <stdlib.h>
 #ifndef _countof
 #define _countof(_array) (sizeof(_array) / sizeof((_array)[0]))
 #endif
 #include <assert.h>
-#if defined(_MSC_VER) && _MSC_VER >= 1310
-#include <intrin.h>
+
+#if defined(_MSC_VER) && _MSC_VER < 1600
+typedef unsigned __int8  bool;
+typedef unsigned __int8  uint8_t;
+typedef unsigned __int16 uint16_t;
+typedef __int32          int32_t;
+typedef unsigned __int32 uint32_t;
+typedef unsigned __int64 uint64_t;
+#define false       0
+#define true        1
+#define UINT32_MAX  _UI32_MAX
+#define UINT32_C(x) (x ## U)
 #endif
 
 #pragma function(memcpy, memset)
@@ -33,8 +45,6 @@ __forceinline static unsigned char _BitScanReverse(unsigned long *Index, unsigne
 	*Index = (unsigned long)(x >> 32);
 	return (unsigned char)x;
 }
-#elif defined(__BORLANDC__)
-unsigned char __fastcall _BitScanReverse(unsigned long *Index, unsigned long Mask);
 #else
 __forceinline static unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
 {
@@ -60,14 +70,14 @@ __forceinline static unsigned char _BitScanReverse(unsigned long *Index, unsigne
 // point <=> decimal string conversion functions.
 //
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-bool __cdecl big_integer_equals(const big_integer *lhs, const big_integer *rhs)
+bool __fastcall big_integer_equals(const big_integer *lhs, const big_integer *rhs)
 {
 	return
 		lhs->used == rhs->used &&
 		memcmp(lhs->data, rhs->data, lhs->used * sizeof(*lhs->data)) == 0;
 }
 
-bool __cdecl big_integer_less_than(const big_integer *lhs, const big_integer *rhs)
+bool __fastcall big_integer_less_than(const big_integer *lhs, const big_integer *rhs)
 {
 	uint32_t i;
 
@@ -84,7 +94,7 @@ bool __cdecl big_integer_less_than(const big_integer *lhs, const big_integer *rh
 	return false;
 }
 
-big_integer *__cdecl big_integer_power_of_two(big_integer *x, const uint32_t power)
+big_integer *__fastcall big_integer_power_of_two(big_integer *x, const uint32_t power)
 {
 	uint32_t element_index;
 	uint32_t bit_index;
@@ -97,7 +107,7 @@ big_integer *__cdecl big_integer_power_of_two(big_integer *x, const uint32_t pow
 	return x;
 }
 
-uint32_t __cdecl big_integer_bit_scan_reverse32(const uint32_t value)
+uint32_t __fastcall big_integer_bit_scan_reverse32(const uint32_t value)
 {
 	unsigned long index;
 
@@ -107,7 +117,7 @@ uint32_t __cdecl big_integer_bit_scan_reverse32(const uint32_t value)
 	return 0;
 }
 
-uint32_t __cdecl big_integer_bit_scan_reverse64(const uint64_t value)
+uint32_t __fastcall big_integer_bit_scan_reverse64(const uint64_t value)
 {
 	if (value > UINT32_MAX)
 		return big_integer_bit_scan_reverse32(((const uint32_t *)&value)[1]) + 32;
@@ -115,7 +125,7 @@ uint32_t __cdecl big_integer_bit_scan_reverse64(const uint64_t value)
 		return big_integer_bit_scan_reverse32(((const uint32_t *)&value)[0]);
 }
 
-uint32_t __cdecl big_integer_bit_scan_reverse(const big_integer *x)
+uint32_t __fastcall big_integer_bit_scan_reverse(const big_integer *x)
 {
 	if (x->used == 0)
 		return 0;
@@ -125,7 +135,7 @@ uint32_t __cdecl big_integer_bit_scan_reverse(const big_integer *x)
 // Shifts the high precision integer x by n bits to the left.  Returns true if
 // the left shift was successful; false if it overflowed.  When overflow occurs,
 // the high precision integer is reset to zero.
-bool __cdecl big_integer_shift_left(big_integer *x, const uint32_t n)
+bool __fastcall big_integer_shift_left(big_integer *x, const uint32_t n)
 {
 	uint32_t unit_shift;
 	uint32_t bit_shift;
@@ -204,7 +214,7 @@ bool __cdecl big_integer_shift_left(big_integer *x, const uint32_t n)
 // Adds a 32-bit value to the high-precision integer x.  Returns true if the
 // addition was successful; false if it overflowed.  When overflow occurs, the
 // high precision integer is reset to zero.
-bool __cdecl big_integer_add(big_integer *x, const uint32_t value)
+bool __fastcall big_integer_add(big_integer *x, const uint32_t value)
 {
 	uint32_t carry;
 	uint32_t i;
@@ -279,7 +289,7 @@ __forceinline static uint32_t multiply_core(uint32_t *multiplicand, const uint32
 // Multiplies the high precision multiplicand by a 32-bit multiplier.  Returns
 // true if the multiplication was successful; false if it overflowed.  When
 // overflow occurs, the multiplicand is reset to zero.
-bool __cdecl big_integer_multiply_by_uint32(big_integer *multiplicand, const uint32_t multiplier)
+bool __fastcall big_integer_multiply_by_uint32(big_integer *multiplicand, const uint32_t multiplier)
 {
 	uint32_t carry;
 
@@ -322,7 +332,7 @@ bool __cdecl big_integer_multiply_by_uint32(big_integer *multiplicand, const uin
 // sources.  It multiplies the multiplicand by the multiplier and returns true
 // if the multiplication was successful; false if it overflowed.  When overflow
 // occurs, the multiplicand is reset to zero.
-bool __cdecl big_integer_multiply(big_integer *multiplicand, const big_integer *multiplier)
+bool __fastcall big_integer_multiply(big_integer *multiplicand, const big_integer *multiplier)
 {
 	bool           multiplier_is_shorter;
 	const uint32_t *rgu1;
@@ -420,7 +430,7 @@ bool __cdecl big_integer_multiply(big_integer *multiplicand, const big_integer *
 // Multiplies the high precision integer x by 10^power.  Returns true if the
 // multiplication was successful; false if it overflowed.  When overflow occurs,
 // the high precision integer is reset to zero.
-bool __cdecl big_integer_multiply_by_power_of_ten(big_integer *x, const uint32_t power)
+bool __fastcall big_integer_multiply_by_power_of_ten(big_integer *x, const uint32_t power)
 {
 	// To improve performance, we use a table of precomputed powers of ten, from
 	// 10^10 through 10^380, in increments of ten.  In its unpacked form, as an
@@ -623,7 +633,7 @@ __forceinline static uint64_t multiply_64_32(const uint64_t multiplicand, const 
 // Framework sources.  It computes both quotient and remainder:  the remainder
 // is stored in the numerator argument, and the least significant 32 bits of the
 // quotient are returned from the function.
-uint64_t __cdecl big_integer_divide(big_integer *numerator, const big_integer *denominator)
+uint64_t __fastcall big_integer_divide(big_integer *numerator, const big_integer *denominator)
 {
 	uint32_t max_numerator_element_index;
 	uint32_t max_denominator_element_index;

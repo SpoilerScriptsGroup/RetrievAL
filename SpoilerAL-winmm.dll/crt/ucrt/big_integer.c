@@ -21,7 +21,7 @@ typedef unsigned __int64 uint64_t;
 #define UINT32_C(x) (x ## U)
 #endif
 
-#pragma function(memcpy, memset)
+#pragma function(memset)
 
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //

@@ -1,11 +1,9 @@
+#include "corecrt_internal.h"
+#include "corecrt_internal_fltintrn.h"
 #include "big_integer.h"
 #include <tchar.h>
 #include <windows.h>
 #include <float.h>
-#include <crtdbg.h>
-#ifndef _ASSERT_EXPR
-#define _ASSERT_EXPR(expr, msg) ((void)0)
-#endif
 #include <errno.h>
 #include <stdlib.h>
 #ifndef _countof
@@ -32,105 +30,7 @@ typedef uint16_t uchar_t;
 
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //
-// Intrinsic functions.
-//
-//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#if defined(_MSC_VER) && _MSC_VER >= 1310
-#pragma intrinsic(_BitScanReverse)
-#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__forceinline static unsigned __int64 __reg64return_BitScanReverse(unsigned long Mask)
-{
-	__asm
-	{
-		bsr     edx, dword ptr [Mask]
-		setnz   al
-	}
-}
-__forceinline static unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
-{
-	unsigned __int64 x = __reg64return_BitScanReverse(Mask);
-	*Index = (unsigned long)(x >> 32);
-	return (unsigned char)x;
-}
-#elif defined(__BORLANDC__)
-unsigned char __fastcall _BitScanReverse(unsigned long *Index, unsigned long Mask);
-#else
-__forceinline static unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
-{
-	if (Mask)
-	{
-		unsigned long i;
-
-		for (i = 31; (long)Mask >= 0; Mask <<= 1)
-			i--;
-		*Index = i;
-		return 1;
-	}
-	else
-	{
-		return 0;
-	}
-}
-#endif
-
-//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//
-// Precondition Validation Macros
-//
-//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#define _VALIDATE_RETURN(expr, errorcode, retexpr)                             \
-    do                                                                         \
-    {                                                                          \
-        int _expr_val=!!(expr);                                                \
-                                                                               \
-        _ASSERT_EXPR(_expr_val, _CRT_WIDE(#expr));                             \
-        if (!_expr_val)                                                        \
-        {                                                                      \
-            errno = errorcode;                                                 \
-            return retexpr;                                                    \
-        }                                                                      \
-    } while (0)
-
-#define _VALIDATE_RETURN_VOID(expr, errorcode)                                 \
-    do                                                                         \
-    {                                                                          \
-        int _expr_val=!!(expr);                                                \
-                                                                               \
-        _ASSERT_EXPR(_expr_val, _CRT_WIDE(#expr));                             \
-        if (!_expr_val)                                                        \
-        {                                                                      \
-            errno = errorcode;                                                 \
-            return;                                                            \
-        }                                                                      \
-    } while (0)
-
-//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//
-// Floating Point Conversion Types
-//
-//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#define FLOATING_TRAITS_MANTISSA_BITS               DBL_MANT_DIG
-#define FLOATING_TRAITS_EXPONENT_BITS               (sizeof(double) * CHAR_BIT - DBL_MANT_DIG)
-#define FLOATING_TRAITS_MAXIMUM_BINARY_EXPONENT     (DBL_MAX_EXP - 1)
-#define FLOATING_TRAITS_MINIMUM_BINARY_EXPONENT     (DBL_MIN_EXP - 1)
-#define FLOATING_TRAITS_EXPONENT_BIAS               1023
-#define FLOATING_TRAITS_EXPONENT_MASK               ((UINT64_C(1) << FLOATING_TRAITS_EXPONENT_BITS) - 1)
-#define FLOATING_TRAITS_NORMAL_MANTISSA_MASK        ((UINT64_C(1) << FLOATING_TRAITS_MANTISSA_BITS) - 1)
-#define FLOATING_TRAITS_DENORMAL_MANTISSA_MASK      ((UINT64_C(1) << (FLOATING_TRAITS_MANTISSA_BITS - 1)) - 1)
-#define FLOATING_TRAITS_SPECIAL_NAN_MANTISSA_MASK   ((UINT64_C(1) << (FLOATING_TRAITS_MANTISSA_BITS - 2)))
-
-typedef union {
-	struct {
-		uint64_t mantissa : FLOATING_TRAITS_MANTISSA_BITS - 1;
-		uint64_t exponent : FLOATING_TRAITS_EXPONENT_BITS;
-		uint64_t sign     : 1;
-	};
-	double value;
-} floating_traits;
-
-//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//
-// Char Sources
+// Character Sources
 //
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 typedef struct

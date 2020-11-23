@@ -1,9 +1,6 @@
+#include "corecrt_internal.h"
 #include "corecrt_internal_fltintrn.h"
-#include <memory.h>
-#include <crtdbg.h>
-#ifndef _ASSERT_EXPR
-#define _ASSERT_EXPR(expr, msg) ((void)0)
-#endif
+#include "corecrt_internal_securecrt.h"
 #if !defined(_MSC_VER) || _MSC_VER >= 1600
 #include <stdbool.h>
 #endif
@@ -19,37 +16,6 @@
 typedef unsigned __int8  bool;
 typedef unsigned __int16 uint16_t;
 #endif
-
-#pragma function(memset)
-
-//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//
-// Precondition Validation Macros
-//
-//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#define _VALIDATE_RETURN_ERRCODE(expr, errorcode)                              \
-    do                                                                         \
-    {                                                                          \
-        int _expr_val=!!(expr);                                                \
-                                                                               \
-        _ASSERT_EXPR(_expr_val, _CRT_WIDE(#expr));                             \
-        if (!_expr_val)                                                        \
-        {                                                                      \
-            errno = errorcode;                                                 \
-            return errorcode;                                                  \
-        }                                                                      \
-    } while (0)
-
-//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//
-// String resetting
-//
-//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#define _RESET_STRING(_String, _Count)                                          \
-    memset(_String, 0,                                                          \
-        (_Count) != (size_t)-1 && (_Count) != INT_MAX && (_Count) ?             \
-            (_Count) * sizeof(*(_String)) :                                     \
-            sizeof(*(_String)))
 
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //

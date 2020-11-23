@@ -1,9 +1,8 @@
+#include "corecrt_internal.h"
 #include "corecrt_internal_fltintrn.h"
+#include "corecrt_internal_securecrt.h"
+#include "corecrt_stdio_config.h"
 #include <windows.h>
-#include <crtdbg.h>
-#ifndef _ASSERT_EXPR
-#define _ASSERT_EXPR(expr, msg) ((void)0)
-#endif
 #include <stdlib.h>
 #ifndef _CVTBUFSIZE
 #define _CVTBUFSIZE (309 + 40)
@@ -16,55 +15,6 @@
 typedef unsigned __int16 uint16_t;
 #define UINT64_C(x) (x ## UI64)
 #endif
-
-#pragma function(memset)
-
-//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//
-// Per-module <stdio.h> configuration.
-//
-//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#define _CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION   (UINT64_C(1) << 0)
-#define _CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR         (UINT64_C(1) << 1)
-#define _CRT_INTERNAL_PRINTF_LEGACY_WIDE_SPECIFIERS             (UINT64_C(1) << 2)
-#define _CRT_INTERNAL_PRINTF_LEGACY_MSVCRT_COMPATIBILITY        (UINT64_C(1) << 3)
-#define _CRT_INTERNAL_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS       (UINT64_C(1) << 4)
-
-//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//
-// CRT SAL Annotations
-//
-//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#define _CRT_UNBOUNDED_BUFFER_SIZE  ((size_t)-1)
-
-//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//
-// Precondition Validation Macros
-//
-//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#define _VALIDATE_RETURN_ERRCODE(expr, errorcode)                              \
-    do                                                                         \
-    {                                                                          \
-        int _expr_val=!!(expr);                                                \
-                                                                               \
-        _ASSERT_EXPR(_expr_val, _CRT_WIDE(#expr));                             \
-        if (!_expr_val)                                                        \
-        {                                                                      \
-            errno = errorcode;                                                 \
-            return errorcode;                                                  \
-        }                                                                      \
-    } while (0)
-
-//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//
-// String resetting
-//
-//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#define _RESET_STRING(_String, _Count)                                          \
-    memset(_String, 0,                                                          \
-        (_Count) != (size_t)-1 && (_Count) != INT_MAX && (_Count) ?             \
-            (_Count) * sizeof(*(_String)) :                                     \
-            sizeof(*(_String)))
 
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // Defines the _gcvt functions, which convert a floating point value to a narrow

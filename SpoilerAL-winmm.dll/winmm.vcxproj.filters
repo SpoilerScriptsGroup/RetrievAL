@@ -2238,7 +2238,16 @@
     <ClInclude Include="crt\ucrt\big_integer.h">
       <Filter>crt\ucrt</Filter>
     </ClInclude>
+    <ClInclude Include="crt\ucrt\corecrt_internal.h">
+      <Filter>crt\ucrt</Filter>
+    </ClInclude>
     <ClInclude Include="crt\ucrt\corecrt_internal_fltintrn.h">
+      <Filter>crt\ucrt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\ucrt\corecrt_internal_securecrt.h">
+      <Filter>crt\ucrt</Filter>
+    </ClInclude>
+    <ClInclude Include="crt\ucrt\corecrt_stdio_config.h">
       <Filter>crt\ucrt</Filter>
     </ClInclude>
     <ClInclude Include="crt\ucrt\tcstod.h">

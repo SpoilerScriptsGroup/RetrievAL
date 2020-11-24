@@ -23,8 +23,11 @@ typedef unsigned __int32 uint32_t;
 typedef unsigned __int64 uint64_t;
 #endif
 #include <memory.h>
+#if defined(_MSC_VER) && _MSC_VER >= 1310
+#include <intrin.h>
+#endif
 
-#pragma function(memcpy)
+#pragma function(memcpy, memset)
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,6 +61,53 @@ typedef struct {
 	uint32_t data[BIG_INTEGER_ELEMENT_COUNT];   // The number, stored in little endian form
 } big_integer;
 
+//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//
+// Intrinsic functions.
+//
+//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+#if defined(_MSC_VER) && _MSC_VER >= 1310
+#pragma intrinsic(_BitScanReverse)
+#elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
+__forceinline static unsigned __int64 __reg64return_BitScanReverse(unsigned long Mask)
+{
+	__asm
+	{
+		bsr     edx, dword ptr [Mask]
+		setnz   al
+	}
+}
+__forceinline static unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
+{
+	unsigned __int64 x = __reg64return_BitScanReverse(Mask);
+	*Index = (unsigned long)(x >> 32);
+	return (unsigned char)x;
+}
+#else
+__forceinline static unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
+{
+	if (Mask)
+	{
+		unsigned long i;
+
+		for (i = 31; (long)Mask >= 0; Mask <<= 1)
+			i--;
+		*Index = i;
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+#endif
+
+//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+//
+// A lightweight high precision integer type for use by the binary floating
+// point <=> decimal string conversion functions.
+//
+//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 __forceinline static big_integer *big_integer_clear(big_integer *x)
 {
 	x->used = 0;
@@ -89,22 +139,59 @@ __forceinline static big_integer *big_integer_assign_uint64(big_integer* x, cons
 	return x;
 }
 
-bool __fastcall big_integer_equals(const big_integer *lhs, const big_integer *rhs);
+__forceinline static bool big_integer_equals(const big_integer *lhs, const big_integer *rhs)
+{
+	return
+		lhs->used == rhs->used &&
+		memcmp(lhs->data, rhs->data, lhs->used * sizeof(*lhs->data)) == 0;
+}
 
 bool __fastcall big_integer_less_than(const big_integer *lhs, const big_integer *rhs);
 
-big_integer *__fastcall big_integer_power_of_two(big_integer *x, const uint32_t power);
+__forceinline static big_integer *big_integer_power_of_two(big_integer *x, const uint32_t power)
+{
+	uint32_t element_index;
+	uint32_t bit_index;
+
+	element_index = power / BIG_INTEGER_ELEMENT_BITS;
+	bit_index = power % BIG_INTEGER_ELEMENT_BITS;
+	x->used = element_index + 1;
+	x->data[element_index] = (UINT32_C(1) << bit_index);
+	memset(x->data, 0, element_index * sizeof(uint32_t));
+	return x;
+}
 
 __forceinline static bool big_integer_is_zero(big_integer *value)
 {
 	return value->used == 0;
 }
 
-uint32_t __fastcall big_integer_bit_scan_reverse32(const uint32_t value);
+__forceinline static uint32_t big_integer_bit_scan_reverse32(const uint32_t value)
+{
+	unsigned long index;
 
-uint32_t __fastcall big_integer_bit_scan_reverse64(const uint64_t value);
+	if (_BitScanReverse(&index, value))
+		return index + 1;
+	return 0;
+}
 
-uint32_t __fastcall big_integer_bit_scan_reverse(const big_integer *x);
+__forceinline static uint32_t big_integer_bit_scan_reverse64(const uint64_t value)
+{
+	unsigned long index;
+
+	if (_BitScanReverse(&index, (unsigned long)(value >> 32)))
+		return index + 33;
+	if (_BitScanReverse(&index, (unsigned long)value))
+		return index + 1;
+	return 0;
+}
+
+__forceinline static uint32_t big_integer_bit_scan_reverse(const big_integer *x)
+{
+	if (x->used == 0)
+		return 0;
+	return (x->used - 1) * BIG_INTEGER_ELEMENT_BITS + big_integer_bit_scan_reverse32(x->data[x->used - 1]);
+}
 
 // Shifts the high precision integer x by n bits to the left.  Returns true if
 // the left shift was successful; false if it overflowed.  When overflow occurs,

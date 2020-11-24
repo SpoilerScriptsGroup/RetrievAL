@@ -96,7 +96,7 @@
   128-bit SIMD like data type for standard C
   ------------------------------------------*/
 /* 128-bit data structure */
-typedef union __declspec(align(16)) {
+typedef __declspec(align(16)) union {
 	uint32_t    u[4];
 	uint64_t    u64[2];
 #if defined(_M_IX86) || defined(_M_X64)

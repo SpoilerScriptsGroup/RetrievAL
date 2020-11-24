@@ -52,10 +52,10 @@ typedef union {
 	uint64_t ui64;
 } floating_traits;
 
-#define MAKE_FLOATING_TRAITS_UI64(sign, exponent, mantissa) (                                         \
-    (((uint64_t)(sign) & 1) << (FLOATING_TRAITS_MANTISSA_BITS - 1 + FLOATING_TRAITS_EXPONENT_BITS)) | \
-    (((uint64_t)(exponent) & FLOATING_TRAITS_EXPONENT_MASK) << (FLOATING_TRAITS_MANTISSA_BITS - 1)) | \
-    ((uint64_t)(mantissa) & FLOATING_TRAITS_DENORMAL_MANTISSA_MASK))
+#define MAKE_FLOATING_TRAITS_UI64(sign, exponent, mantissa) (                                   \
+    ((uint64_t)(sign) << (FLOATING_TRAITS_MANTISSA_BITS - 1 + FLOATING_TRAITS_EXPONENT_BITS)) | \
+    ((uint64_t)(exponent) << (FLOATING_TRAITS_MANTISSA_BITS - 1)) |                             \
+    (uint64_t)(mantissa))
 
 #define FP_CLASS_FINITE         0
 #define FP_CLASS_INFINITY       1
@@ -67,27 +67,27 @@ typedef struct {
 	int  sign;      // Zero if positive otherwise negative
 	int  decpt;     // Exponent of floating point number
 	char *mantissa; // Pointer to mantissa in string form
-} _strflt;
+} _strflt, *STRFLT;
 
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //
 // Floating Point Conversion Routines
 //
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-errno_t __fastcall __acrt_fp_strflt_to_string(
+errno_t __fastcall fltintrn_fp_strflt_to_string(
 	char         *buffer,
 	const size_t buffer_count,
 	int          digits,
 	_strflt      *pflt);
 
-void __fastcall __acrt_fltout(
+void __fastcall fltintrn_fltout(
 	const double       *value,
 	const unsigned int precision,
 	_strflt            *flt,
 	char               *result,
 	const size_t       result_count);
 
-errno_t __fastcall __acrt_fp_format(
+errno_t __fastcall fltintrn_fp_format(
 	const double   *value,
 	char           *result_buffer,
 	const size_t   result_buffer_count,

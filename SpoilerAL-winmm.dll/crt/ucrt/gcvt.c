@@ -47,11 +47,11 @@ errno_t __cdecl _gcvt_s(
 	else
 		decimal_point_char = '.';
 
-	// We only call __acrt_fltout in order to parse the correct exponent value (strflt.decpt).
+	// We only call fltintrn_fltout in order to parse the correct exponent value (strflt.decpt).
 	// Therefore, we don't want to generate any digits, so we pass a buffer size only large
 	// enough to hold the inf, nan, or ind string to prevent failure.
 
-	__acrt_fltout(
+	fltintrn_fltout(
 		&value,
 		precision,
 		&strflt,
@@ -68,7 +68,7 @@ errno_t __cdecl _gcvt_s(
 		errno_t e;
 
 		// Ew.d where d = precision
-		e = __acrt_fp_format(
+		e = fltintrn_fp_format(
 			&value,
 			buffer,
 			buffer_count,
@@ -90,7 +90,7 @@ errno_t __cdecl _gcvt_s(
 		errno_t e;
 
 		// Fw.d where d = precision-string->decpt
-		e = __acrt_fp_format(
+		e = fltintrn_fp_format(
 			&value,
 			buffer,
 			buffer_count,

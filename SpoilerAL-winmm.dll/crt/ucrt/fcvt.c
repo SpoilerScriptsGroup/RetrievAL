@@ -22,7 +22,7 @@ typedef unsigned __int8 bool;
 
 // An internal helper that wraps the call to convert the STRFLT to a string and
 // updates all of the data that is used by its callers.
-static errno_t internal_to_string(
+static errno_t __fastcall internal_to_string(
 	char         *buffer,
 	const size_t buffer_count,
 	_strflt      *strflt,
@@ -44,7 +44,7 @@ static errno_t internal_to_string(
 
 	capped_digits = __min(requested_digits, (int)(buffer_count - 2));
 
-	e = __acrt_fp_strflt_to_string(buffer, buffer_count, capped_digits, strflt);
+	e = fltintrn_fp_strflt_to_string(buffer, buffer_count, capped_digits, strflt);
 
 	if (e != 0)
 		return errno = e;
@@ -89,7 +89,7 @@ errno_t __cdecl _fcvt_s(
 	_VALIDATE_RETURN_ERRCODE(decimal_point != NULL, EINVAL);
 	_VALIDATE_RETURN_ERRCODE(sign != NULL, EINVAL);
 
-	__acrt_fltout(
+	fltintrn_fltout(
 		&value,
 		_countof(result_string),
 		&strflt,
@@ -123,7 +123,7 @@ char *__cdecl _fcvt(
 	int      capped_digits;
 	errno_t  status;
 
-	__acrt_fltout(
+	fltintrn_fltout(
 		&value,
 		_countof(result_string),
 		&strflt,
@@ -177,7 +177,7 @@ errno_t __cdecl _ecvt_s(
 	_VALIDATE_RETURN_ERRCODE(decimal_point != NULL, EINVAL);
 	_VALIDATE_RETURN_ERRCODE(sign != NULL, EINVAL);
 
-	__acrt_fltout(
+	fltintrn_fltout(
 		&value,
 		_countof(result_string),
 		&strflt,

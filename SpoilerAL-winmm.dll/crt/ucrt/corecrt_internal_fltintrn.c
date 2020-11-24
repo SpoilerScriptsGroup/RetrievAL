@@ -64,7 +64,7 @@ static uint32_t __acrt_fp_classify(const double *value)
 	#undef value_is_nan_or_infinity
 }
 
-errno_t __fastcall __acrt_fp_strflt_to_string(
+errno_t __fastcall fltintrn_fp_strflt_to_string(
 	char         *buffer,
 	const size_t buffer_count,
 	int          digits,
@@ -213,7 +213,7 @@ __forceinline static void convert_to_fos_high_precision(
 	// be off by one, e.g. as is the case for powers of ten (log10(100) is two,
 	// but the correct value of k for 100 is 3).  We detect off-by-one errors
 	// later and correct for them.
-	environment = _controlfp(CW_DEFAULT, MCW_EM);
+	environment = _controlfp(CW_DEFAULT & MCW_EM, MCW_EM);
 	k = (int32_t)(ceil(log10(components->value)));
 	_controlfp(environment, MCW_EM);
 	if (k == INT32_MAX || k == INT32_MIN)
@@ -363,7 +363,7 @@ __forceinline static void convert_to_fos_high_precision(
 	*mantissa_it = '\0';
 }
 
-void __fastcall __acrt_fltout(
+void __fastcall fltintrn_fltout(
 	const double       *value,
 	const unsigned int precision,
 	_strflt            *flt,
@@ -630,20 +630,20 @@ static errno_t fp_format_e(
 	size_t       scratch_buffer_restricted_count;
 	errno_t      e;
 
-	// The precision passed to __acrt_fltout is the number of fractional digits.
+	// The precision passed to fltintrn_fltout is the number of fractional digits.
 	// To ensure that we get enough digits, we require a total of precision + 1 digits,
 	// to account for the digit placed to the left of the decimal point when all digits are fractional.
 	displayed_digits_count = precision + 1; // +1 for digit to left of decimal point
 
 	// Restrict buffer size because we know exactly how much space is needed to display %e formatted floating point numbers.
 	// With this change, we can optimize the %e path to not calculate precision past where will be displayed without
-	// modifying the binary interface of __acrt_fltout, which will calculate all digits that would be needed by %f formatting.
+	// modifying the binary interface of fltintrn_fltout, which will calculate all digits that would be needed by %f formatting.
 	calculated_digits_count = displayed_digits_count + 1; // +1 to calculate the value after last displayed digit (for rounding)
 	scratch_buffer_restricted_count = min(calculated_digits_count + 1, scratch_buffer_count); // +1 for null terminator
 
-	__acrt_fltout(value, displayed_digits_count, &strflt, scratch_buffer, scratch_buffer_restricted_count);
+	fltintrn_fltout(value, displayed_digits_count, &strflt, scratch_buffer, scratch_buffer_restricted_count);
 
-	e = __acrt_fp_strflt_to_string(
+	e = fltintrn_fp_strflt_to_string(
 		result_buffer + (strflt.sign == '-') + (precision > 0),
 		(result_buffer_count == _CRT_UNBOUNDED_BUFFER_SIZE
 			? result_buffer_count
@@ -1002,9 +1002,9 @@ __forceinline static errno_t fp_format_f(
 	_strflt strflt;
 	errno_t e;
 
-	__acrt_fltout(value, precision, &strflt, scratch_buffer, scratch_buffer_count);
+	fltintrn_fltout(value, precision, &strflt, scratch_buffer, scratch_buffer_count);
 
-	e = __acrt_fp_strflt_to_string(
+	e = fltintrn_fp_strflt_to_string(
 		result_buffer + (strflt.sign == '-'),
 		(result_buffer_count == _CRT_UNBOUNDED_BUFFER_SIZE ? result_buffer_count : result_buffer_count - (strflt.sign == '-')),
 		precision + strflt.decpt,
@@ -1050,7 +1050,7 @@ __forceinline static errno_t fp_format_g(
 	errno_t fptostr_result;
 	bool    g_round_expansion;
 
-	__acrt_fltout(value, precision, &strflt, scratch_buffer, scratch_buffer_count);
+	fltintrn_fltout(value, precision, &strflt, scratch_buffer, scratch_buffer_count);
 
 	minus_sign_length = strflt.sign == '-' ? 1 : 0;
 
@@ -1061,7 +1061,7 @@ __forceinline static errno_t fp_format_g(
 		? result_buffer_count
 		: result_buffer_count - minus_sign_length;
 
-	fptostr_result = __acrt_fp_strflt_to_string(p, buffer_count_for_fptostr, precision, &strflt);
+	fptostr_result = fltintrn_fp_strflt_to_string(p, buffer_count_for_fptostr, precision, &strflt);
 	if (fptostr_result != 0)
 	{
 		result_buffer[0] = '\0';
@@ -1104,7 +1104,7 @@ __forceinline static errno_t fp_format_g(
 // returns the result.  The other parameters are passed on to the selected
 // formatting function and are used as described in the documentation for
 // those functions.
-errno_t __fastcall __acrt_fp_format(
+errno_t __fastcall fltintrn_fp_format(
 	const double   *value,
 	char           *result_buffer,
 	const size_t   result_buffer_count,
@@ -1130,7 +1130,7 @@ errno_t __fastcall __acrt_fp_format(
 #endif
 
 	// Detect special cases (NaNs and infinities) and handle them specially.
-	// Note that the underlying __acrt_fltout function will also handle these
+	// Note that the underlying fltintrn_fltout function will also handle these
 	// special cases, but it does so using the legacy strings (e.g. 1.#INF).
 	// Our special handling here uses the C99 strings (e.g. INF).
 #if USE_PRINTF

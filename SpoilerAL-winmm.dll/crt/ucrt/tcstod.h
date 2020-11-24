@@ -89,7 +89,7 @@ __forceinline void c_string_character_source_restore_state(c_string_character_so
 // String-to-Integer Conversion
 //
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-static unsigned int parse_digit(const TCHAR c)
+static unsigned int __fastcall parse_digit(const TCHAR c)
 {
 	switch ((uchar_t)c)
 	{
@@ -191,58 +191,82 @@ typedef struct
 } floating_point_string;
 
 // Stores a positive or negative zero into the result object
-static void assemble_floating_point_zero(const bool is_negative, double *result)
+__forceinline static void assemble_floating_point_zero(const bool is_negative, double *result)
 {
-	floating_traits *components;
+	/*
+		floating_traits *components;
 
-	components = (floating_traits *)result;
-	components->sign     = is_negative ? 1 : 0;
-	components->exponent = 0;
-	components->mantissa = 0;
+		components = (floating_traits *)result;
+		components->sign     = is_negative ? 1 : 0;
+		components->exponent = 0;
+		components->mantissa = 0;
+	*/
+	*(uint64_t *)result = is_negative ?
+		MAKE_FLOATING_TRAITS_UI64(1, 0, 0) :
+		MAKE_FLOATING_TRAITS_UI64(0, 0, 0);
 }
 
 // Stores a positive or negative infinity into the result object
-static void assemble_floating_point_infinity(const bool is_negative, double *result)
+__forceinline static void assemble_floating_point_infinity(const bool is_negative, double *result)
 {
-	floating_traits *components;
+	/*
+		floating_traits *components;
 
-	components = (floating_traits *)result;
-	components->sign     = is_negative ? 1 : 0;
-	components->exponent = FLOATING_TRAITS_EXPONENT_MASK;
-	components->mantissa = 0;
+		components = (floating_traits *)result;
+		components->sign     = is_negative ? 1 : 0;
+		components->exponent = FLOATING_TRAITS_EXPONENT_MASK;
+		components->mantissa = 0;
+	*/
+	*(uint64_t *)result = is_negative ?
+		MAKE_FLOATING_TRAITS_UI64(1, FLOATING_TRAITS_EXPONENT_MASK, 0) :
+		MAKE_FLOATING_TRAITS_UI64(0, FLOATING_TRAITS_EXPONENT_MASK, 0);
 }
 
 // Stores a positive or negative quiet NaN into the result object
 __forceinline static void assemble_floating_point_qnan(const bool is_negative, double *result)
 {
-	floating_traits *components;
+	/*
+		floating_traits *components;
 
-	components = (floating_traits *)result;
-	components->sign     = is_negative ? 1 : 0;
-	components->exponent = FLOATING_TRAITS_EXPONENT_MASK;
-	components->mantissa = FLOATING_TRAITS_DENORMAL_MANTISSA_MASK;
+		components = (floating_traits *)result;
+		components->sign     = is_negative ? 1 : 0;
+		components->exponent = FLOATING_TRAITS_EXPONENT_MASK;
+		components->mantissa = FLOATING_TRAITS_DENORMAL_MANTISSA_MASK;
+	*/
+	*(uint64_t *)result = is_negative ?
+		MAKE_FLOATING_TRAITS_UI64(1, FLOATING_TRAITS_EXPONENT_MASK, FLOATING_TRAITS_DENORMAL_MANTISSA_MASK) :
+		MAKE_FLOATING_TRAITS_UI64(0, FLOATING_TRAITS_EXPONENT_MASK, FLOATING_TRAITS_DENORMAL_MANTISSA_MASK);
 }
 
 // Stores a positive or negative signaling NaN into the result object
 __forceinline static void assemble_floating_point_snan(const bool is_negative, double *result)
 {
-	floating_traits *components;
+	/*
+		floating_traits *components;
 
-	components = (floating_traits *)result;
-	components->sign     = is_negative ? 1 : 0;
-	components->exponent = FLOATING_TRAITS_EXPONENT_MASK;
-	components->mantissa = 1;
+		components = (floating_traits *)result;
+		components->sign     = is_negative ? 1 : 0;
+		components->exponent = FLOATING_TRAITS_EXPONENT_MASK;
+		components->mantissa = 1;
+	*/
+	*(uint64_t *)result = is_negative ?
+		MAKE_FLOATING_TRAITS_UI64(1, FLOATING_TRAITS_EXPONENT_MASK, 1) :
+		MAKE_FLOATING_TRAITS_UI64(0, FLOATING_TRAITS_EXPONENT_MASK, 1);
 }
 
 // Stores an indeterminate into the result object (the indeterminate is "negative")
 __forceinline static void assemble_floating_point_ind(double *result)
 {
-	floating_traits *components;
+	/*
+		floating_traits *components;
 
-	components = (floating_traits *)result;
-	components->sign     = 1;
-	components->exponent = FLOATING_TRAITS_EXPONENT_MASK;
-	components->mantissa = FLOATING_TRAITS_SPECIAL_NAN_MANTISSA_MASK;
+		components = (floating_traits *)result;
+		components->sign     = 1;
+		components->exponent = FLOATING_TRAITS_EXPONENT_MASK;
+		components->mantissa = FLOATING_TRAITS_SPECIAL_NAN_MANTISSA_MASK;
+	*/
+	*(uint64_t *)result =
+		MAKE_FLOATING_TRAITS_UI64(1, FLOATING_TRAITS_EXPONENT_MASK, FLOATING_TRAITS_SPECIAL_NAN_MANTISSA_MASK);
 }
 
 // Determines whether a mantissa should be rounded up in the current rounding
@@ -357,7 +381,7 @@ __forceinline static SLD_STATUS assemble_floating_point_value_t(
 	return SLD_OK;
 }
 
-static SLD_STATUS assemble_floating_point_value(
+static SLD_STATUS __fastcall assemble_floating_point_value(
 	const uint64_t  initial_mantissa,
 	const int32_t   initial_exponent,
 	const bool      is_negative,
@@ -498,7 +522,7 @@ static SLD_STATUS assemble_floating_point_value(
 // representation, storing the result in the result object.  If the value is not
 // representable, +/-infinity is stored and overflow is reported (since this
 // function only deals with integers, underflow is impossible).
-static SLD_STATUS assemble_floating_point_value_from_big_integer(
+static SLD_STATUS __fastcall assemble_floating_point_value_from_big_integer(
 	const big_integer *integer_value,
 	const uint32_t    integer_bits_of_precision,
 	const bool        is_negative,
@@ -604,7 +628,7 @@ static SLD_STATUS assemble_floating_point_value_from_big_integer(
 
 // Accumulates the decimal digits in [first_digit, last_digit) into the result
 // high precision integer.  This function assumes that no overflow will occur.
-static void accumulate_decimal_digits_into_big_integer(
+static void __fastcall accumulate_decimal_digits_into_big_integer(
 	const uint8_t *first_digit,
 	const uint8_t *last_digit,
 	big_integer   *result)
@@ -904,7 +928,7 @@ __forceinline static SLD_STATUS convert_hexadecimal_string_to_floating_type(
 	return convert_hexadecimal_string_to_floating_type_common(data, (floating_traits *)result);
 }
 
-static bool parse_next_characters_from_source(
+static bool __fastcall parse_next_characters_from_source(
 	const TCHAR               *uppercase,
 	const TCHAR               *lowercase,
 	const size_t              count,

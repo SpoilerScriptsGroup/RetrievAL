@@ -48,8 +48,14 @@ typedef union {
 		uint64_t exponent : FLOATING_TRAITS_EXPONENT_BITS;
 		uint64_t sign     : 1;
 	};
-	double value;
+	double   value;
+	uint64_t ui64;
 } floating_traits;
+
+#define MAKE_FLOATING_TRAITS_UI64(sign, exponent, mantissa) (                                         \
+    (((uint64_t)(sign) & 1) << (FLOATING_TRAITS_MANTISSA_BITS - 1 + FLOATING_TRAITS_EXPONENT_BITS)) | \
+    (((uint64_t)(exponent) & FLOATING_TRAITS_EXPONENT_MASK) << (FLOATING_TRAITS_MANTISSA_BITS - 1)) | \
+    ((uint64_t)(mantissa) & FLOATING_TRAITS_DENORMAL_MANTISSA_MASK))
 
 #define FP_CLASS_FINITE         0
 #define FP_CLASS_INFINITY       1

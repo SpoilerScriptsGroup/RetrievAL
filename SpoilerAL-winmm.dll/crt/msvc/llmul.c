@@ -116,23 +116,20 @@ __declspec(naked) __int64 __cdecl _allmul(__int64 multiplicand, __int64 multipli
 		// ---------------------
 		//
 
-		push    ebx
-		mov     eax, LOWORD(A + 4)
-		mov     ecx, HIWORD(A + 4)
-		mov     edx, LOWORD(B + 4)
-		mov     ebx, HIWORD(B + 4)
+		mov     ecx, HIWORD(A)
+		mov     eax, HIWORD(B)
 		test    ecx, ecx                    // test for AHI is zero
 		jz      L1
-		imul    ecx, edx                    // ecx = AHI * BLO
+		imul    ecx, dword ptr LOWORD(B)    // ecx = AHI * BLO
 	L1:
-		test    ebx, ebx                    // test for BHI is zero
+		test    eax, eax                    // test for BHI is zero
 		jz      L2
-		imul    ebx, eax                    // ebx = BHI * ALO
-		add     ecx, ebx                    // ecx = (AHI * BLO) + (BHI * ALO)
+		imul    eax, dword ptr LOWORD(A)    // eax = BHI * ALO
+		add     ecx, eax                    // ecx = (AHI * BLO) + (BHI * ALO)
 	L2:
-		mul     edx                         // edx:eax = ALO * BLO
+		mov     eax, LOWORD(A)
+		mul     dword ptr LOWORD(B)         // edx:eax = ALO * BLO
 		add     edx, ecx                    // now edx has all the LO * HI stuff
-		pop     ebx
 		ret     16                          // callee restores the stack
 
 		#undef A

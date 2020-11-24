@@ -3,18 +3,15 @@
 #include "corecrt_internal_securecrt.h"
 #if !defined(_MSC_VER) || _MSC_VER >= 1600
 #include <stdbool.h>
+#else
+typedef unsigned __int8 bool;
 #endif
 #include <stdlib.h>
-#ifndef _countof
-#define _countof(_array) (sizeof(_array) / sizeof((_array)[0]))
-#endif
 #ifndef _CVTBUFSIZE
 #define _CVTBUFSIZE (309 + 40)
 #endif
-
-#if defined(_MSC_VER) && _MSC_VER < 1600
-typedef unsigned __int8  bool;
-typedef unsigned __int16 uint16_t;
+#ifndef _countof
+#define _countof(_array) (sizeof(_array) / sizeof((_array)[0]))
 #endif
 
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+

@@ -12,15 +12,21 @@
 #pragma once
 #endif
 
+#if !defined(_MSC_VER) || _MSC_VER >= 1600
+#include <stdint.h>
+#else
+typedef unsigned __int64 uint64_t;
+#endif
+
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //
 // Per-module <stdio.h> configuration.
 //
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-#define _CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION   (UINT64_C(1) << 0)
-#define _CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR         (UINT64_C(1) << 1)
-#define _CRT_INTERNAL_PRINTF_LEGACY_WIDE_SPECIFIERS             (UINT64_C(1) << 2)
-#define _CRT_INTERNAL_PRINTF_LEGACY_MSVCRT_COMPATIBILITY        (UINT64_C(1) << 3)
-#define _CRT_INTERNAL_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS       (UINT64_C(1) << 4)
+#define _CRT_INTERNAL_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION   ((uint64_t)1 << 0)
+#define _CRT_INTERNAL_PRINTF_STANDARD_SNPRINTF_BEHAVIOR         ((uint64_t)1 << 1)
+#define _CRT_INTERNAL_PRINTF_LEGACY_WIDE_SPECIFIERS             ((uint64_t)1 << 2)
+#define _CRT_INTERNAL_PRINTF_LEGACY_MSVCRT_COMPATIBILITY        ((uint64_t)1 << 3)
+#define _CRT_INTERNAL_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS       ((uint64_t)1 << 4)
 
 #endif	// _CORECRT_STDIO_CONFIG_H_

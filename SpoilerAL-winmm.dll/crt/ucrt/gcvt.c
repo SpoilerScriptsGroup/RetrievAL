@@ -11,11 +11,6 @@
 #define _countof(_array) (sizeof(_array) / sizeof((_array)[0]))
 #endif
 
-#if defined(_MSC_VER) && _MSC_VER < 1600
-typedef unsigned __int16 uint16_t;
-#define UINT64_C(x) (x ## UI64)
-#endif
-
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 // Defines the _gcvt functions, which convert a floating point value to a narrow
 // character string.  It attempts to produce 'precision' significant digits in

@@ -110,25 +110,19 @@ errno_t __fastcall fltintrn_fp_strflt_to_string(
 		buffer_it--;
 
 		while (*buffer_it == '9')
-		{
 			*buffer_it-- = '0';
-		}
 
 		*buffer_it += 1;
 	}
 
 	if (*buffer == '1')
-	{
 		// The rounding caused overflow into the leading digit (e.g. 9.999...
 		// became 10.000...), so increment the decimal point position by 1:
 		pflt->decpt++;
-	}
 	else
-	{
 		// Move the entire string to the left one digit to remove the unused
 		// overflow digit:
 		strcpy(buffer, buffer + 1);
-	}
 
 	return 0;
 }
@@ -255,13 +249,9 @@ __forceinline static void convert_to_fos_high_precision(
 	}
 
 	if (k >= 0)
-	{
 		big_integer_multiply_by_power_of_ten(&s, k);
-	}
 	else
-	{
 		big_integer_multiply_by_power_of_ten(&r, -k);
-	}
 
 	mantissa_it = mantissa_buffer;
 
@@ -315,14 +305,10 @@ __forceinline static void convert_to_fos_high_precision(
 		uint32_t i;
 
 		if (mantissa_it == mantissa_last)
-		{
 			break;
-		}
 
 		if (big_integer_is_zero(&r))
-		{
 			break;
-		}
 
 		// To reduce the number of expensive high precision division operations,
 		// we generate multiple digits per iteration.  Our quotient type is a
@@ -347,9 +333,7 @@ __forceinline static void convert_to_fos_high_precision(
 			// We may not have room in the mantissa buffer for all of the digits;
 			// ignore the ones for which we do not have room:
 			if ((uint32_t)(mantissa_last - mantissa_it) < i)
-			{
 				continue;
-			}
 
 			mantissa_it[i] = d;
 		}
@@ -391,9 +375,7 @@ void __fastcall fltintrn_fltout(
 	// Handle special cases:
 	classification = fltintrn_fp_classify(value);
 	if (classification != FP_CLASS_FINITE)
-	{
 		flt->decpt = 1;
-	}
 
 	switch (classification)
 	{
@@ -430,9 +412,7 @@ __forceinline static void shift_bytes(
 	UNREFERENCED_PARAMETER(buffer_count);
 
 	if (distance != 0)
-	{
 		memmove(string + distance, string, strlen(string) + 1);
-	}
 }
 
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -476,9 +456,7 @@ __forceinline static errno_t fp_format_nan_or_infinity(
 		*result_buffer++ = '-';
 		*result_buffer = '\0';
 		if (result_buffer_count != _CRT_UNBOUNDED_BUFFER_SIZE)
-		{
 			--result_buffer_count;
-		}
 	}
 
 	row = (uint32_t)classification - 1;
@@ -605,9 +583,7 @@ __forceinline static errno_t fp_format_e_internal(
 	{
 		// If possible, reduce the exponent to two digits:
 		if (*exponentpos == '0')
-		{
 			memmove(exponentpos, exponentpos + 1, 3);
-		}
 	}
 
 	return 0;
@@ -741,9 +717,7 @@ __forceinline static errno_t fp_format_a(
 
 	// Sign:
 	if (internal_signbit(&components->value))
-	{
 		*result_buffer++ = '-';
-	}
 
 	hexadd = (capitals ? 'A' : 'a') - '9' - 1;
 
@@ -753,15 +727,11 @@ __forceinline static errno_t fp_format_a(
 	{
 		*result_buffer++ = '0';
 		if (components->mantissa == 0)
-		{
 			// Zero:
 			debias = 0;
-		}
 		else
-		{
 			// Denormal:
 			debias--;
-		}
 	}
 	else
 	{
@@ -771,15 +741,11 @@ __forceinline static errno_t fp_format_a(
 	// Decimal point (save the position in pos):
 	pos = result_buffer++;
 	if (precision == 0)
-	{
 		// If precision is 0, then we don't have to print the decimal point:
 		// we mark this putting 0 instead of the decimal point itself
 		*pos = 0;
-	}
 	else
-	{
 		*pos = (char)decimal_point_char;
-	}
 
 	// Mantissa:
 	if (components->mantissa > 0)
@@ -825,21 +791,15 @@ __forceinline static errno_t fp_format_a(
 				// If the last digit is 'f', we need to add one to the previous
 				// digit, too; pos is the position of the decimal point
 				while (*p == 'f' || *p == 'F')
-				{
 					*p-- = '0';
-				}
 				// If we reached the decimal point, it means we are rounding
 				// something like 0x0.fffff so this will become 0x1.00000 :
 				if (p != pos)
 				{
 					if (*p == '9')
-					{
 						*p += (char)(1 + hexadd);
-					}
 					else
-					{
 						*p += 1;
-					}
 				}
 				else // p == pos
 				{
@@ -856,15 +816,11 @@ __forceinline static errno_t fp_format_a(
 
 	// Add the final zeroes, if needed:
 	for (; precision > 0; --precision)
-	{
 		*result_buffer++ = '0';
-	}
 
 	// Move back the buffer pointer if there is no decimal point:
 	if (*pos == 0)
-	{
 		result_buffer = pos;
-	}
 
 	// Exponent:
 	*result_buffer++ = capitals ? 'P' : 'p';
@@ -1141,14 +1097,12 @@ errno_t __fastcall fltintrn_fp_format(
 
 		classification = fltintrn_fp_classify(value);
 		if (classification != FP_CLASS_FINITE)
-		{
 			return fp_format_nan_or_infinity(
 				classification,
 				(bool)internal_signbit(value),
 				result_buffer,
 				result_buffer_count,
 				use_capitals);
-		}
 	}
 
 #if USE_PRINTF

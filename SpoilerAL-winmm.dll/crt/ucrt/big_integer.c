@@ -500,7 +500,6 @@ bool __fastcall big_integer_multiply_by_power_of_ten(big_integer *x, const uint3
 /*
 #define _CRT_SECURE_NO_WARNINGS
 #include "big_integer.h"
-#include <windows.h>
 #include <stdio.h>
 
 typedef unsigned __int8  uint8_t;
@@ -522,27 +521,28 @@ uint32_t count_leading_zeroes(big_integer *x)
 
 void generate_table()
 {
+	#define GENERATE_TABLE_INITIAL 10
+	#define GENERATE_TABLE_MAXIMUM 390
+	#define GENERATE_TABLE_STEP    10
+
 	typedef struct {
 		uint16_t offset;    // The offset of this power's initial byte in the array
 		uint8_t  zeroes;    // The number of omitted leading zero elements
 		uint8_t  size;      // The number of elements present for this power
 	} unpack_index;
 
-	HANDLE       hHeap;
-	uint32_t     *elements;
-	size_t       elements_count;
-	unpack_index *indices;
-	size_t       indices_count;
+	unpack_index indices[(GENERATE_TABLE_MAXIMUM - GENERATE_TABLE_INITIAL) / GENERATE_TABLE_STEP];
+	size_t       indices_size;
+	size_t       offset;
 	uint32_t     i, j;
 	big_integer  x;
-	unpack_index index;
+	unpack_index *index;
 
-	elements = (uint32_t *)HeapAlloc(hHeap = GetProcessHeap(), 0, sizeof(uint32_t));
-	elements_count = 0;
-	indices = (unpack_index *)HeapAlloc(hHeap = GetProcessHeap(), 0, sizeof(uint32_t));
-	indices_count = 0;
+	indices_size = 0;
+	offset = 0;
 
-	for (i = 10; i != 390; i += 10)
+	printf("static const uint32_t large_power_data[] =\n{");
+	for (i = GENERATE_TABLE_INITIAL; i != GENERATE_TABLE_MAXIMUM; i += GENERATE_TABLE_STEP)
 	{
 		big_integer_assign_uint32(&x, 1);
 		for (j = 0; j != i; ++j)
@@ -550,28 +550,20 @@ void generate_table()
 			big_integer_multiply_by_uint32(&x, 10);
 		}
 
-		index.offset = (uint16_t)elements_count;
-		index.zeroes = (uint8_t)count_leading_zeroes(&x);
-		index.size   = (uint8_t)(x.used - index.zeroes);
+		index = indices + indices_size++;
+		index->offset = (uint16_t)offset;
+		index->zeroes = (uint8_t)count_leading_zeroes(&x);
+		index->size   = (uint8_t)(x.used - index->zeroes);
 
-		for (j = index.zeroes; j != x.used; ++j)
+		for (j = index->zeroes; j != x.used; ++j)
 		{
-			elements = (uint32_t *)HeapReAlloc(hHeap, 0, elements, (elements_count + 1) * sizeof(uint32_t));
-			elements[elements_count++] = x.data[j];
+			printf("%s0x%08X,", offset++ % 8 == 0 ? "\n\t" : " ", x.data[j]);
 		}
-		indices = (unpack_index *)HeapReAlloc(hHeap, 0, indices, (indices_count + 1) * sizeof(unpack_index));
-		indices[indices_count++] = index;
-	}
-
-	printf("static uint32_t const large_power_data[] =\n{");
-	for (i = 0; i != elements_count; ++i)
-	{
-	    printf("%s0x%08X,", i % 8 == 0 ? "\n\t" : " ", elements[i]);
 	}
 	printf("\n};\n\n");
 
-	printf("static unpack_index const large_power_indices[] =\n{\n");
-	for (i = 0; i != indices_count; ++i)
+	printf("static const unpack_index large_power_indices[] =\n{");
+	for (i = 0; i != indices_size; ++i)
 	{
 		printf("%s{ %3u, %2u, %2u },",
 			i % 4 == 0 ? "\n\t" : " ",
@@ -581,8 +573,9 @@ void generate_table()
 	}
 	printf("\n};\n\n");
 
-	HeapFree(hHeap, 0, indices);
-	HeapFree(hHeap, 0, elements);
+	#undef GENERATE_TABLE_INITIAL
+	#undef GENERATE_TABLE_MAXIMUM
+	#undef GENERATE_TABLE_STEP
 }
 */
 
@@ -839,8 +832,10 @@ uint64_t __fastcall big_integer_divide(big_integer *numerator, const big_integer
 	}
 
 	// Trim the remainder:
-	for (i = max_numerator_element_index + 1; i < numerator->used; ++i)
-		numerator->data[i] = 0;
+	memset(
+		numerator->data + max_numerator_element_index + 1,
+		0,
+		(numerator->used - (max_numerator_element_index + 1)) * sizeof(uint32_t));
 
 	numerator->used = max_numerator_element_index + 1;
 	while (numerator->used != 0 && numerator->data[numerator->used - 1] == 0)

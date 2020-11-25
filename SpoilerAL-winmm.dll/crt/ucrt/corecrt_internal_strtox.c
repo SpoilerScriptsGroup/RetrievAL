@@ -319,7 +319,6 @@ static SLD_STATUS __fastcall assemble_floating_point_value(
 			// We detect this case here and re-adjust the mantissa and exponent
 			// appropriately, to form a normal number:
 			if (mantissa > FLOATING_TRAITS_DENORMAL_MANTISSA_MASK)
-			{
 				// We add one to the denormal_mantissa_shift to account for the
 				// hidden mantissa bit (we subtracted one to account for this bit
 				// when we computed the denormal_mantissa_shift above).
@@ -327,7 +326,6 @@ static SLD_STATUS __fastcall assemble_floating_point_value(
 					initial_exponent -
 					(denormal_mantissa_shift + 1) -
 					normal_mantissa_shift;
-			}
 		}
 		else
 		{
@@ -686,14 +684,12 @@ __forceinline static SLD_STATUS convert_decimal_string_to_floating_type_common(
 		// large, odd integers with a fractional part greater than or equal to .5.
 		// Thus, we need to do the division to correctl round the result.
 		if (fractional_shift > remaining_bits_of_precision_required)
-		{
 			return assemble_floating_point_value_from_big_integer(
 				&integer_value,
 				integer_bits_of_precision,
 				data->is_negative,
 				(bool)(fractional_digits_present != 0),
 				result);
-		}
 
 		remaining_bits_of_precision_required -= fractional_shift;
 	}

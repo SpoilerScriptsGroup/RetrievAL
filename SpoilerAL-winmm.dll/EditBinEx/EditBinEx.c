@@ -224,7 +224,7 @@ static BOOL OutputConsoleA(HANDLE hConsoleOutput, LPCSTR lpBuffer, DWORD dwNumbe
  *      wmain
  */
 #define wmain inline_wmain
-static __forceinline DWORD wmain(int argc, wchar_t *argv[])
+__forceinline static DWORD wmain(int argc, wchar_t *argv[])
 {
 	DWORD dwExitCode;
 

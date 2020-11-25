@@ -1249,7 +1249,7 @@ static MARKUP * __fastcall ReAllocMarkup(MARKUP **lplpMarkupArray, size_t *lpnNu
 	return lpMarkupArray + nNumberOfMarkup;
 }
 //---------------------------------------------------------------------
-static __forceinline size_t TrimMarkupString(char **pfirst, const char *last)
+__forceinline static size_t TrimMarkupString(char **pfirst, const char *last)
 {
 	unsigned __int64 result;
 

@@ -927,6 +927,9 @@
     <ClCompile Include="crt\ucrt\corecrt_internal_fltintrn.c">
       <Filter>crt\ucrt</Filter>
     </ClCompile>
+    <ClCompile Include="crt\ucrt\corecrt_internal_strtox.c">
+      <Filter>crt\ucrt</Filter>
+    </ClCompile>
     <ClCompile Include="crt\ucrt\fcvt.c">
       <Filter>crt\ucrt</Filter>
     </ClCompile>

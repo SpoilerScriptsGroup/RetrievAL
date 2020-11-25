@@ -43,7 +43,7 @@ __forceinline static int internal_signbit(const double *x)
 // Floating Point Conversion Routines
 //
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-static uint32_t __acrt_fp_classify(const double *value)
+static uint32_t __fastcall fltintrn_fp_classify(const double *value)
 {
 	#define value_is_nan_or_infinity (components->exponent == (UINT32_C(1) << FLOATING_TRAITS_EXPONENT_BITS) - 1)
 
@@ -389,7 +389,7 @@ void __fastcall fltintrn_fltout(
 	}
 
 	// Handle special cases:
-	classification = __acrt_fp_classify(value);
+	classification = fltintrn_fp_classify(value);
 	if (classification != FP_CLASS_FINITE)
 	{
 		flt->decpt = 1;
@@ -503,7 +503,7 @@ __forceinline static errno_t fp_format_nan_or_infinity(
 // than or equal to zero, no decimal point will appear.  The low order digit is
 // rounded.  If 'capitals' is true, then the exponent will appear as E(+/-)ddd.
 #if USE_PRINTF
-static errno_t fp_format_e_internal(
+static errno_t __fastcall fp_format_e_internal(
 #else
 __forceinline static errno_t fp_format_e_internal(
 #endif
@@ -613,7 +613,7 @@ __forceinline static errno_t fp_format_e_internal(
 	return 0;
 }
 
-static errno_t fp_format_e(
+static errno_t __fastcall fp_format_e(
 	const double       *value,
 	char               *result_buffer,
 	const size_t       result_buffer_count,
@@ -917,7 +917,7 @@ __forceinline static errno_t fp_format_a(
 // precision digits following the decimal point.  If precision is less than or
 // equal to zero, no decimal point will appear.  The low order digit is rounded.
 #if USE_PRINTF
-static errno_t fp_format_f_internal(
+static errno_t __fastcall fp_format_f_internal(
 #else
 __forceinline static errno_t fp_format_f_internal(
 #endif
@@ -1139,7 +1139,7 @@ errno_t __fastcall fltintrn_fp_format(
 	{
 		uint32_t classification;
 
-		classification = __acrt_fp_classify(value);
+		classification = fltintrn_fp_classify(value);
 		if (classification != FP_CLASS_FINITE)
 		{
 			return fp_format_nan_or_infinity(

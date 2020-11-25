@@ -80,9 +80,7 @@ errno_t __cdecl _gcvt_s(
 			decimal_point_char);
 
 		if (e != 0)
-		{
 			return errno = e;
-		}
 	}
 	else
 	{
@@ -102,9 +100,7 @@ errno_t __cdecl _gcvt_s(
 			decimal_point_char);
 
 		if (e != 0)
-		{
 			return errno = e;
-		}
 	}
 
 	// Remove the trailing zeroes before the exponent; we don't need to check

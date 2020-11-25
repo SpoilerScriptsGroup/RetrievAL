@@ -156,7 +156,7 @@ __forceinline static big_integer *big_integer_power_of_two(big_integer *x, const
 	element_index = power / BIG_INTEGER_ELEMENT_BITS;
 	bit_index = power % BIG_INTEGER_ELEMENT_BITS;
 	x->used = element_index + 1;
-	x->data[element_index] = (UINT32_C(1) << bit_index);
+	x->data[element_index] = ((uint32_t)1 << bit_index);
 	memset(x->data, 0, element_index * sizeof(uint32_t));
 	return x;
 }

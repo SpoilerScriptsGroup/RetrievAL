@@ -27,9 +27,7 @@ double __cdecl _tcstod(
 	SLD_STATUS                status;
 
 	if (end_ptr)
-	{
 		*end_ptr = (TCHAR *)string;
-	}
 
 	_VALIDATE_RETURN(string != NULL, EINVAL, 0.0);
 
@@ -39,9 +37,7 @@ double __cdecl _tcstod(
 	c_string_character_source_dtor(&source);
 
 	if (status == SLD_OVERFLOW || status == SLD_UNDERFLOW)
-	{
 		errno = ERANGE;
-	}
 
 	return result;
 }

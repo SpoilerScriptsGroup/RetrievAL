@@ -17,7 +17,7 @@ wchar_t * __fastcall UnescapeW(wchar_t *first, wchar_t **plast, BOOL breakSingle
 unsigned char * __fastcall UnescapeU(unsigned char *first, unsigned char **plast, BOOL breakSingleQuate);
 #else
 unsigned __int64 __fastcall __reg64return_UnescapeA(char *first, char *last, BOOL breakSingleQuate);
-static __forceinline char *UnescapeA(char *first, char **plast, BOOL breakSingleQuate)
+__forceinline static char *UnescapeA(char *first, char **plast, BOOL breakSingleQuate)
 {
 	unsigned __int64 result;
 
@@ -26,7 +26,7 @@ static __forceinline char *UnescapeA(char *first, char **plast, BOOL breakSingle
 	return (char *)result;
 }
 unsigned __int64 __fastcall __reg64return_UnescapeW(wchar_t *first, wchar_t *last, BOOL breakSingleQuate);
-static __forceinline wchar_t *UnescapeW(wchar_t *first, wchar_t **plast, BOOL breakSingleQuate)
+__forceinline static wchar_t *UnescapeW(wchar_t *first, wchar_t **plast, BOOL breakSingleQuate)
 {
 	unsigned __int64 result;
 
@@ -35,7 +35,7 @@ static __forceinline wchar_t *UnescapeW(wchar_t *first, wchar_t **plast, BOOL br
 	return (wchar_t *)result;
 }
 unsigned __int64 __fastcall __reg64return_UnescapeU(unsigned char *first, unsigned char *last, BOOL breakSingleQuate);
-static __forceinline unsigned char *UnescapeU(unsigned char *first, unsigned char **plast, BOOL breakSingleQuate)
+__forceinline static unsigned char *UnescapeU(unsigned char *first, unsigned char **plast, BOOL breakSingleQuate)
 {
 	unsigned __int64 result;
 

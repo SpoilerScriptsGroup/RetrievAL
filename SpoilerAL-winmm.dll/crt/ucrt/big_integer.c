@@ -110,10 +110,7 @@ bool __fastcall big_integer_shift_left(big_integer *x, const uint32_t n)
 		x->data[destination_index] = combined_shifted_source;
 	}
 
-	for (destination_index = 0; destination_index != unit_shift; ++destination_index)
-	{
-		x->data[destination_index] = 0;
-	}
+	memset(x->data, 0, unit_shift * sizeof(uint32_t));
 
 	x->used = bit_shifts_into_next_unit
 		? max_destination_index + 1
@@ -131,9 +128,7 @@ bool __fastcall big_integer_add(big_integer *x, const uint32_t value)
 	uint32_t i;
 
 	if (value == 0)
-	{
 		return true;
-	}
 
 	carry = value;
 	for (i = 0; i != x->used; ++i)
@@ -211,14 +206,10 @@ bool __fastcall big_integer_multiply_by_uint32(big_integer *multiplicand, const 
 	}
 
 	if (multiplier == 1)
-	{
 		return true;
-	}
 
 	if (multiplicand->used == 0)
-	{
 		return true;
-	}
 
 	carry = multiply_core(multiplicand->data, multiplicand->used, multiplier);
 	if (carry != 0)
@@ -429,8 +420,7 @@ bool __fastcall big_integer_multiply_by_power_of_ten(big_integer *x, const uint3
 		0x24E4047E, 0x00005099,
 	};
 
-	typedef struct
-	{
+	typedef struct {
 		uint16_t offset;    // The offset of this power's initial byte in the array
 		uint8_t  zeroes;    // The number of omitted leading zero elements
 		uint8_t  size;      // The number of elements present for this power
@@ -498,15 +488,103 @@ bool __fastcall big_integer_multiply_by_power_of_ten(big_integer *x, const uint3
 
 	small_power = power % 10;
 	if (small_power != 0)
-	{
 		if (!big_integer_multiply_by_uint32(x, small_powers_of_ten[small_power - 1]))
-		{
 			return false;
-		}
-	}
 
 	return true;
 }
+
+// The following non-compiled functions are the generators for the big powers of
+// ten table found in big_integer_multiply_by_power_of_ten().  This code is provided for
+// future use if the table needs to be amended.  Do not remove this code.
+/*
+#define _CRT_SECURE_NO_WARNINGS
+#include "big_integer.h"
+#include <windows.h>
+#include <stdio.h>
+
+typedef unsigned __int8  uint8_t;
+typedef unsigned __int16 uint16_t;
+typedef unsigned __int32 uint32_t;
+
+uint32_t count_leading_zeroes(big_integer *x)
+{
+	uint32_t i;
+
+	for (i = 0; i != x->used; ++i)
+	{
+		if (x->data[i] != 0)
+			return i;
+	}
+
+	return 0;
+}
+
+void generate_table()
+{
+	typedef struct {
+		uint16_t offset;    // The offset of this power's initial byte in the array
+		uint8_t  zeroes;    // The number of omitted leading zero elements
+		uint8_t  size;      // The number of elements present for this power
+	} unpack_index;
+
+	HANDLE       hHeap;
+	uint32_t     *elements;
+	size_t       elements_count;
+	unpack_index *indices;
+	size_t       indices_count;
+	uint32_t     i, j;
+	big_integer  x;
+	unpack_index index;
+
+	elements = (uint32_t *)HeapAlloc(hHeap = GetProcessHeap(), 0, sizeof(uint32_t));
+	elements_count = 0;
+	indices = (unpack_index *)HeapAlloc(hHeap = GetProcessHeap(), 0, sizeof(uint32_t));
+	indices_count = 0;
+
+	for (i = 10; i != 390; i += 10)
+	{
+		big_integer_assign_uint32(&x, 1);
+		for (j = 0; j != i; ++j)
+		{
+			big_integer_multiply_by_uint32(&x, 10);
+		}
+
+		index.offset = (uint16_t)elements_count;
+		index.zeroes = (uint8_t)count_leading_zeroes(&x);
+		index.size   = (uint8_t)(x.used - index.zeroes);
+
+		for (j = index.zeroes; j != x.used; ++j)
+		{
+			elements = (uint32_t *)HeapReAlloc(hHeap, 0, elements, (elements_count + 1) * sizeof(uint32_t));
+			elements[elements_count++] = x.data[j];
+		}
+		indices = (unpack_index *)HeapReAlloc(hHeap, 0, indices, (indices_count + 1) * sizeof(unpack_index));
+		indices[indices_count++] = index;
+	}
+
+	printf("static uint32_t const large_power_data[] =\n{");
+	for (i = 0; i != elements_count; ++i)
+	{
+	    printf("%s0x%08X,", i % 8 == 0 ? "\n\t" : " ", elements[i]);
+	}
+	printf("\n};\n\n");
+
+	printf("static unpack_index const large_power_indices[] =\n{\n");
+	for (i = 0; i != indices_count; ++i)
+	{
+		printf("%s{ %3u, %2u, %2u },",
+			i % 4 == 0 ? "\n\t" : " ",
+			indices[i].offset,
+			indices[i].zeroes,
+			indices[i].size);
+	}
+	printf("\n};\n\n");
+
+	HeapFree(hHeap, 0, indices);
+	HeapFree(hHeap, 0, elements);
+}
+*/
 
 // Computes the number of zeroes higher than the most significant set bit in 'u'
 __forceinline static uint32_t count_sequential_high_zeroes(const uint32_t u)
@@ -561,9 +639,7 @@ uint64_t __fastcall big_integer_divide(big_integer *numerator, const big_integer
 
 	// If the numerator is zero, then both the quotient and remainder are zero:
 	if (numerator->used == 0)
-	{
 		return 0;
-	}
 
 	// If the denominator is zero, then uh oh. We can't big_integer_divide by zero:
 	if (denominator->used == 0)
@@ -626,9 +702,7 @@ uint64_t __fastcall big_integer_divide(big_integer *numerator, const big_integer
 	}
 
 	if (max_denominator_element_index > max_numerator_element_index)
-	{
 		return 0;
-	}
 
 	cu_den = max_denominator_element_index + 1;
 	cu_diff = max_numerator_element_index - max_denominator_element_index;
@@ -646,17 +720,13 @@ uint64_t __fastcall big_integer_divide(big_integer *numerator, const big_integer
 		if (denominator->data[iu - cu_diff] != numerator->data[iu])
 		{
 			if (denominator->data[iu - cu_diff] < numerator->data[iu])
-			{
 				++cu_quo;
-			}
 			break;
 		}
 	}
 
 	if (cu_quo == 0)
-	{
 		return 0;
-	}
 
 	// Get the uint to use for the trial divisions.  We normalize so the
 	// high bit is set:
@@ -671,9 +741,7 @@ uint64_t __fastcall big_integer_divide(big_integer *numerator, const big_integer
 		u_den_next <<= cbit_shift_left;
 
 		if (cu_den > 2)
-		{
 			u_den_next |= denominator->data[cu_den - 3] >> cbit_shift_right;
-		}
 	}
 
 	quotient = 0;
@@ -700,9 +768,7 @@ uint64_t __fastcall big_integer_divide(big_integer *numerator, const big_integer
 			u_num_next <<= cbit_shift_left;
 
 			if (iu + cu_den >= 3)
-			{
 				u_num_next |= numerator->data[iu + cu_den - 3] >> cbit_shift_right;
-			}
 		}
 
 		// Divide to get the quotient digit:
@@ -739,9 +805,7 @@ uint64_t __fastcall big_integer_divide(big_integer *numerator, const big_integer
 				u_sub = (uint32_t)uu_borrow;
 				uu_borrow >>= 32;
 				if (numerator->data[iu + iu2] < u_sub)
-				{
 					++uu_borrow;
-				}
 
 				numerator->data[iu + iu2] -= u_sub;
 			}
@@ -776,15 +840,11 @@ uint64_t __fastcall big_integer_divide(big_integer *numerator, const big_integer
 
 	// Trim the remainder:
 	for (i = max_numerator_element_index + 1; i < numerator->used; ++i)
-	{
 		numerator->data[i] = 0;
-	}
 
 	numerator->used = max_numerator_element_index + 1;
 	while (numerator->used != 0 && numerator->data[numerator->used - 1] == 0)
-	{
 		--numerator->used;
-	}
 
 	return quotient;
 }

@@ -2045,10 +2045,7 @@ static uint32_t fltfmt(TCHAR *buffer, uint32_t count, uint32_t length, long_doub
 		'-';
 
 	if (!isfinitel(value))
-		if (LDBL_MANT_WORD(value) & LDBL_MANT_MASK)
-			goto NaN;
-		else
-			goto INF;
+		goto INF_NAN;
 
 	if (signbitl(value))
 		value = -value;
@@ -2349,37 +2346,34 @@ static uint32_t fltfmt(TCHAR *buffer, uint32_t count, uint32_t length, long_doub
 
 	return length;
 
-NaN:
+INF_NAN:
+	if (!(LDBL_MANT_WORD(value) & LDBL_MANT_MASK))
+		infnan = lpcszInf;
 #if !defined(_WIN32) || (!LONGDOUBLE_IS_DOUBLE && !LONGDOUBLE_IS_X86_EXTENDED && !LONGDOUBLE_IS_QUAD)
-	infnan = lpcszNan;
+	else
+		infnan = lpcszNan;
 #elif LONGDOUBLE_IS_DOUBLE
-	if (!(*(uint64_t *)&value & 0x0008000000000000))
+	else if (!(*(uint64_t *)&value & 0x0008000000000000))
 		infnan = lpcszNanSnan;
 	else if (*(uint64_t *)&value != 0xFFF8000000000000)
 		infnan = lpcszNan;
 	else
 		infnan = lpcszNanInd;
 #elif LONGDOUBLE_IS_X86_EXTENDED
-	if (!(LDBL_MANT_WORD(value) & 0x4000000000000000))
+	else if (!(LDBL_MANT_WORD(value) & 0x4000000000000000))
 		infnan = lpcszNanSnan;
 	else if (LDBL_MANT_WORD(value) != 0xC000000000000000 || LDBL_SIGN_WORD(value) != 0xFFFF)
 		infnan = lpcszNan;
 	else
 		infnan = lpcszNanInd;
 #elif LONGDOUBLE_IS_QUAD
-	if (!(*(uint128_t *)&value & 0x00008000000000000000000000000000))
+	else if (!(*(uint128_t *)&value & 0x00008000000000000000000000000000))
 		infnan = lpcszNanSnan;
 	else if (*(uint128_t *)&value != 0xFFFF8000000000000000000000000000)
 		infnan = lpcszNan;
 	else
 		infnan = lpcszNanInd;
 #endif
-	goto INF_NaN;
-
-INF:
-	infnan = lpcszInf;
-
-INF_NaN:
 	p = (TCHAR *)cvtbuf;
 	if (sign)
 		*(p++) = sign;

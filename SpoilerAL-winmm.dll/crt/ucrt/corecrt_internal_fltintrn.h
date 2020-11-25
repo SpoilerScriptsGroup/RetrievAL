@@ -52,9 +52,9 @@ typedef union {
 	uint64_t ui64;
 } floating_traits;
 
-#define MAKE_FLOATING_TRAITS_UI64(sign, exponent, mantissa) (                                   \
-    ((uint64_t)(sign) << (FLOATING_TRAITS_MANTISSA_BITS - 1 + FLOATING_TRAITS_EXPONENT_BITS)) | \
-    ((uint64_t)(exponent) << (FLOATING_TRAITS_MANTISSA_BITS - 1)) |                             \
+#define MAKE_FLOATING_TRAITS_UI64(sign, exponent, mantissa) ( \
+    ((uint64_t)(sign) << 63) |                                \
+    ((uint64_t)(exponent) << (DBL_MANT_DIG - 1)) |            \
     (uint64_t)(mantissa))
 
 #define FP_CLASS_FINITE         0

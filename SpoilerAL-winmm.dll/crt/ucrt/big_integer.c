@@ -628,7 +628,6 @@ uint64_t __fastcall big_integer_divide(big_integer *numerator, const big_integer
 	uint32_t cbit_shift_left;
 	uint32_t cbit_shift_right;
 	uint64_t quotient;
-	uint32_t i;
 
 	// If the numerator is zero, then both the quotient and remainder are zero:
 	if (numerator->used == 0)

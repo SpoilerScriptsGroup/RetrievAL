@@ -381,31 +381,31 @@ static void __cdecl _except1(DWORD fpe, int op, double arg, double res, DWORD cw
 
 		if (fpe & 0x01)
 		{
-			if ((fpe == 0x01 && (cw & 0x0008)) || (fpe == (0x01 | 0x10) && (cw & (0x0008 | 0x0020))))
+			if ((cw & (0x0008 | 0x0020)) && (fpe == (0x01 | 0x10) || (cw & 0x0008) && fpe == 0x01))
 				break;
 			exception = EXCEPTION_FLT_OVERFLOW;
 		}
 		else if (fpe & 0x02)
 		{
-			if ((fpe == 0x02 && (cw & 0x0010)) || (fpe == (0x02 | 0x10) && (cw & (0x0010 | 0x0020))))
+			if ((cw & (0x0010 | 0x0020)) && (fpe == (0x02 | 0x10) || (cw & 0x0010) && fpe == 0x02))
 				break;
 			exception = EXCEPTION_FLT_UNDERFLOW;
 		}
 		else if (fpe & 0x04)
 		{
-			if ((fpe == 0x04 && (cw & 0x0004)) || (fpe == (0x04 | 0x10) && (cw & (0x0004 | 0x0020))))
+			if ((cw & (0x0004 | 0x0020)) && (fpe == (0x04 | 0x10) || (cw & 0x0004) && fpe == 0x04))
 				break;
 			exception = EXCEPTION_FLT_DIVIDE_BY_ZERO;
 		}
 		else if (fpe & 0x08)
 		{
-			if (fpe == 0x08 && (cw & 0x0001))
+			if ((cw & 0x0001) && fpe == 0x08)
 				break;
 			exception = EXCEPTION_FLT_INVALID_OPERATION;
 		}
 		else if (fpe & 0x10)
 		{
-			if (fpe == 0x10 && (cw & 0x0020))
+			if ((cw & 0x0020) && fpe == 0x10)
 				break;
 			exception = EXCEPTION_FLT_INEXACT_RESULT;
 		}
@@ -458,87 +458,84 @@ __declspec(naked) static void __cdecl _except1(DWORD fpe, int op, double arg, do
 		#define res (esp + 16)
 		#define cw  (esp + 20)
 
+		mov     edx, dword ptr [op]
 		mov     eax, dword ptr [fpe]
+		shl     edx, 5
 		mov     ecx, dword ptr [cw]
 		test    eax, 0x01
-		jnz     overflow_check1
+		jnz     check_overflow
 		test    eax, 0x02
-		jnz     underflow_check1
+		jnz     check_underflow
 		test    eax, 0x04
-		jnz     zerodivide_check1
+		jnz     check_zerodivide
 		test    eax, 0x08
-		jnz     invalid_check1
+		jnz     check_invalid
 		test    eax, 0x10
-		jnz     inexact_check1
+		jnz     check_inexact
 		jmp     epilog
 
 		align   16
-	overflow_check1:
-		cmp     eax, 0x01
-		jne     overflow_check2
-		test    ecx, 0x0008
-		jnz     epilog
-	overflow_check2:
-		cmp     eax, 0x01 or 0x10
-		jne     overflow_exception
+	check_overflow:
 		and     ecx, 0x0008 or 0x0020
-		jnz     epilog
-	overflow_exception:
+		jz      overflow
+		cmp     eax, 0x01 or 0x10
+		je      epilog
+		and     ecx, 0x0008
+		jz      overflow
+		cmp     eax, 0x01
+		je      epilog
+	overflow:
 		mov     ecx, _EXCEPTION_FLT_OVERFLOW
 		jmp     exception
 
 		align   16
-	underflow_check1:
-		cmp     eax, 0x02
-		jne     underflow_check2
-		test    ecx, 0x0010
-		jnz     epilog
-	underflow_check2:
-		cmp     eax, 0x02 or 0x10
-		jne     underflow_exception
+	check_underflow:
 		and     ecx, 0x0010 or 0x0020
-		jnz     epilog
-	underflow_exception:
+		jz      underflow
+		cmp     eax, 0x02 or 0x10
+		je      epilog
+		and     ecx, 0x0010
+		jz      underflow
+		cmp     eax, 0x02
+		je      epilog
+	underflow:
 		mov     ecx, _EXCEPTION_FLT_UNDERFLOW
 		jmp     exception
 
 		align   16
-	zerodivide_check1:
-		cmp     eax, 0x04
-		jne     zerodivide_check2
-		test    ecx, 0x0004
-		jnz     epilog
-	zerodivide_check2:
-		cmp     eax, 0x04 or 0x10
-		jne     zerodivide_exception
+	check_zerodivide:
 		and     ecx, 0x0004 or 0x0020
-		jnz     epilog
-	zerodivide_exception:
+		jz      zerodivide
+		cmp     eax, 0x04 or 0x10
+		je      epilog
+		and     ecx, 0x0004
+		jz      zerodivide
+		cmp     eax, 0x04
+		je      epilog
+	zerodivide:
 		mov     ecx, _EXCEPTION_FLT_DIVIDE_BY_ZERO
 		jmp     exception
 
 		align   16
-	invalid_check1:
-		cmp     eax, 0x08
-		jne     invalid_exception
+	check_invalid:
 		and     ecx, 0x0001
-		jnz     epilog
-	invalid_exception:
+		jz      invalid
+		cmp     eax, 0x08
+		je      epilog
+	invalid:
 		mov     ecx, _EXCEPTION_FLT_INVALID_OPERATION
 		jmp     exception
 
 		align   16
-	inexact_check1:
-		cmp     eax, 0x10
-		jne     inexact_exception
+	check_inexact:
 		and     ecx, 0x0020
-		jnz     epilog
-	inexact_exception:
+		jz      inexact
+		cmp     eax, 0x10
+		je      epilog
+	inexact:
 		mov     ecx, _EXCEPTION_FLT_INEXACT_RESULT
 	exception:
-		mov     eax, dword ptr [op]
-		shl     eax, 5
-		push    eax
+		push    edx
 		push    esp
 		push    1
 		push    0

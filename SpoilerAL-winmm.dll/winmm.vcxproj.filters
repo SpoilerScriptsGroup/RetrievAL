@@ -387,9 +387,6 @@
     <ClCompile Include="crt\errno.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\except1.c">
-      <Filter>crt</Filter>
-    </ClCompile>
     <ClCompile Include="crt\fbit\fband.c">
       <Filter>crt\fbit</Filter>
     </ClCompile>

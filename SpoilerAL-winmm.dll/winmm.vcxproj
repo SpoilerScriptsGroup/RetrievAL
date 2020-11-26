@@ -213,10 +213,6 @@
     <ClCompile Include="crt\errno.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\except1.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</WholeProgramOptimization>
-    </ClCompile>
     <ClCompile Include="crt\fbit\fband.c" />
     <ClCompile Include="crt\fbit\fbnot32.c" />
     <ClCompile Include="crt\fbit\fbor.c" />

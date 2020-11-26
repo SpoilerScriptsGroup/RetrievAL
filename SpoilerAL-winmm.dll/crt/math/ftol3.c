@@ -1,3 +1,5 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <windows.h>
 #include <stdint.h>
 #include <float.h>
 
@@ -15,8 +17,6 @@ static const uint8_t  FpExcptTable[16] = { 0x08, 0x10, 0x00, 0x00, 0x00, 0x00, 0
 static const uint32_t i1075            = 1075;
 static const uint16_t CWMask           = 0x133F;
 
-extern double __cdecl _except1(unsigned long, int, double, double, unsigned long, void *);
-
 void __cdecl _ftoui3();
 void __cdecl _ftoul3();
 void __cdecl _ftol3();
@@ -32,6 +32,7 @@ static void __cdecl ftol3_common();
 static void __cdecl ftol3_arg_error();
 static void __cdecl ftol3_except();
 static void __cdecl dtol3_NaN();
+static void __cdecl _except1(unsigned long, int, double, double, unsigned long);
 
 #pragma warning(disable:4102 4414)
 
@@ -364,3 +365,201 @@ __declspec(naked) void __cdecl _ltod3()
 		ret
 	}
 }
+
+#ifndef _M_IX86
+static void __cdecl _except1(DWORD fpe, int op, double arg, double res, DWORD cw)
+{
+#ifndef _M_IX86
+	DWORD fpword;
+#endif
+
+	do	/* do { ... } while (0); */
+	{
+		DWORD     exception;
+		ULONG_PTR exception_arg;
+	    WORD      operation;
+
+		if (fpe & 0x01)
+		{
+			if ((fpe == 0x01 && (cw & 0x0008)) || (fpe == (0x01 | 0x10) && (cw & (0x0008 | 0x0020))))
+				break;
+			exception = EXCEPTION_FLT_OVERFLOW;
+		}
+		else if (fpe & 0x02)
+		{
+			if ((fpe == 0x02 && (cw & 0x0010)) || (fpe == (0x02 | 0x10) && (cw & (0x0010 | 0x0020))))
+				break;
+			exception = EXCEPTION_FLT_UNDERFLOW;
+		}
+		else if (fpe & 0x04)
+		{
+			if ((fpe == 0x04 && (cw & 0x0004)) || (fpe == (0x04 | 0x10) && (cw & (0x0004 | 0x0020))))
+				break;
+			exception = EXCEPTION_FLT_DIVIDE_BY_ZERO;
+		}
+		else if (fpe & 0x08)
+		{
+			if (fpe == 0x08 && (cw & 0x0001))
+				break;
+			exception = EXCEPTION_FLT_INVALID_OPERATION;
+		}
+		else if (fpe & 0x10)
+		{
+			if (fpe == 0x10 && (cw & 0x0020))
+				break;
+			exception = EXCEPTION_FLT_INEXACT_RESULT;
+		}
+		else
+		{
+			break;
+		}
+		operation = op << 5;
+		exception_arg = (ULONG_PTR)&operation;
+		RaiseException(exception, 0, 1, &exception_arg);
+	} while (0);
+
+#ifndef _M_IX86
+#ifdef _WIN64
+	cw = ((cw >> 7) & 0x003F) | ((cw >> 3) & 0x0C00);
+#endif
+	fpword =
+		((~cw << 8) & MCW_PC) |
+		((cw >> 2) & MCW_RC) |
+		(-(int)(((cw & 0x8000) << 9) | ((cw & 0x0040) << 19)) & MCW_DN);
+	if (cw & 0x0001) fpword |= EM_INVALID;
+	if (cw & 0x0002) fpword |= EM_DENORMAL;
+	if (cw & 0x0004) fpword |= EM_ZERODIVIDE;
+	if (cw & 0x0008) fpword |= EM_OVERFLOW;
+	if (cw & 0x0010) fpword |= EM_UNDERFLOW;
+	if (cw & 0x0020) fpword |= EM_INEXACT;
+	if (cw & 0x1000) fpword |= IC_AFFINE;
+	_controlfp(fpword, MCW_EM | MCW_RC | MCW_PC | MCW_IC | MCW_DN);
+#else
+	__asm
+	{
+		fldcw   word ptr [cw]
+	}
+#endif
+}
+#else
+__declspec(naked) static void __cdecl _except1(DWORD fpe, int op, double arg, double res, DWORD cw)
+{
+	#define _EXCEPTION_FLT_OVERFLOW          0xC0000091
+	#define _EXCEPTION_FLT_UNDERFLOW         0xC0000093
+	#define _EXCEPTION_FLT_DIVIDE_BY_ZERO    0xC000008E
+	#define _EXCEPTION_FLT_INVALID_OPERATION 0xC0000090
+	#define _EXCEPTION_FLT_INEXACT_RESULT    0xC000008F
+
+	__asm
+	{
+		#define fpe (esp + 4)
+		#define op  (esp + 8)
+		#define arg (esp + 12)
+		#define res (esp + 16)
+		#define cw  (esp + 20)
+
+		mov     eax, dword ptr [fpe]
+		mov     ecx, dword ptr [cw]
+		test    eax, 0x01
+		jnz     overflow_check1
+		test    eax, 0x02
+		jnz     underflow_check1
+		test    eax, 0x04
+		jnz     zerodivide_check1
+		test    eax, 0x08
+		jnz     invalid_check1
+		test    eax, 0x10
+		jnz     inexact_check1
+		jmp     epilog
+
+		align   16
+	overflow_check1:
+		cmp     eax, 0x01
+		jne     overflow_check2
+		test    ecx, 0x0008
+		jnz     epilog
+	overflow_check2:
+		cmp     eax, 0x01 or 0x10
+		jne     overflow_exception
+		and     ecx, 0x0008 or 0x0020
+		jnz     epilog
+	overflow_exception:
+		mov     ecx, _EXCEPTION_FLT_OVERFLOW
+		jmp     exception
+
+		align   16
+	underflow_check1:
+		cmp     eax, 0x02
+		jne     underflow_check2
+		test    ecx, 0x0010
+		jnz     epilog
+	underflow_check2:
+		cmp     eax, 0x02 or 0x10
+		jne     underflow_exception
+		and     ecx, 0x0010 or 0x0020
+		jnz     epilog
+	underflow_exception:
+		mov     ecx, _EXCEPTION_FLT_UNDERFLOW
+		jmp     exception
+
+		align   16
+	zerodivide_check1:
+		cmp     eax, 0x04
+		jne     zerodivide_check2
+		test    ecx, 0x0004
+		jnz     epilog
+	zerodivide_check2:
+		cmp     eax, 0x04 or 0x10
+		jne     zerodivide_exception
+		and     ecx, 0x0004 or 0x0020
+		jnz     epilog
+	zerodivide_exception:
+		mov     ecx, _EXCEPTION_FLT_DIVIDE_BY_ZERO
+		jmp     exception
+
+		align   16
+	invalid_check1:
+		cmp     eax, 0x08
+		jne     invalid_exception
+		and     ecx, 0x0001
+		jnz     epilog
+	invalid_exception:
+		mov     ecx, _EXCEPTION_FLT_INVALID_OPERATION
+		jmp     exception
+
+		align   16
+	inexact_check1:
+		cmp     eax, 0x10
+		jne     inexact_exception
+		and     ecx, 0x0020
+		jnz     epilog
+	inexact_exception:
+		mov     ecx, _EXCEPTION_FLT_INEXACT_RESULT
+	exception:
+		mov     eax, dword ptr [op]
+		shl     eax, 5
+		push    eax
+		push    esp
+		push    1
+		push    0
+		push    ecx
+		call    RaiseException
+		pop     ecx
+	epilog:
+		fldcw   word ptr [cw]
+		ret
+
+		#undef fpe
+		#undef op
+		#undef arg
+		#undef res
+		#undef cw
+	}
+
+	#undef _EXCEPTION_FLT_OVERFLOW
+	#undef _EXCEPTION_FLT_UNDERFLOW
+	#undef _EXCEPTION_FLT_DIVIDE_BY_ZERO
+	#undef _EXCEPTION_FLT_INVALID_OPERATION
+	#undef _EXCEPTION_FLT_INEXACT_RESULT
+}
+#endif

@@ -8,40 +8,47 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define CW_EM_MASK                        0x003F
-#define CW_EM_INVALID                     0x0001
-#define CW_EM_DENORMAL                    0x0002
-#define CW_EM_ZERODIVIDE                  0x0004
-#define CW_EM_OVERFLOW                    0x0008
-#define CW_EM_UNDERFLOW                   0x0010
-#define CW_EM_INEXACT                     0x0020
-#define CW_EM_DEFAULT                     0x003F
-#define CW_PC_MASK                        0x0300
-#define CW_PC_24                          0x0100
-#define CW_PC_53                          0x0200
-#define CW_PC_64                          0x0300
-#define CW_PC_DEFAULT                     CW_PC_53
-#define CW_RC_MASK                        0x0C00
-#define CW_RC_NEAR                        0x0000
-#define CW_RC_DOWN                        0x0400
-#define CW_RC_UP                          0x0800
-#define CW_RC_CHOP                        0x0C00
-#define CW_RC_DEFAULT                     CW_RC_NEAR
-#define CW_IC_MASK                        0x1000
-#define CW_IC_PROJECTIVE                  0x0000
-#define CW_IC_AFFINE                      0x1000
-#define CW_IC_DEFAULT                     CW_IC_PROJECTIVE
-#define CW_DN_MASK                        0x8040
-#define CW_DN_SAVE                        0x0000
-#define CW_DN_FLUSH_OPERANDS_SAVE_RESULTS 0x0040
-#define CW_DN_SAVE_OPERANDS_FLUSH_RESULTS 0x8000
-#define CW_DN_FLUSH                       0x8040
-#define CW_DN_DEFAULT                     CW_DN_FLUSH_OPERANDS_SAVE_RESULTS
+#define X87_MCW_EM                         0x003F
+#define X87_EM_INVALID                     0x0001
+#define X87_EM_DENORMAL                    0x0002
+#define X87_EM_ZERODIVIDE                  0x0004
+#define X87_EM_OVERFLOW                    0x0008
+#define X87_EM_UNDERFLOW                   0x0010
+#define X87_EM_INEXACT                     0x0020
+#define X87_MCW_PC                         0x0300
+#define X87_PC_24                          0x0100
+#define X87_PC_53                          0x0200
+#define X87_PC_64                          0x0300
+#define X87_MCW_RC                         0x0C00
+#define X87_RC_NEAR                        0x0000
+#define X87_RC_DOWN                        0x0400
+#define X87_RC_UP                          0x0800
+#define X87_RC_CHOP                        0x0C00
+#define X87_MCW_IC                         0x1000
+#define X87_IC_PROJECTIVE                  0x0000
+#define X87_IC_AFFINE                      0x1000
+#define X87_MCW_DN                         0x8040
+#define X87_DN_SAVE                        0x0000
+#define X87_DN_FLUSH_OPERANDS_SAVE_RESULTS 0x0040
+#define X87_DN_SAVE_OPERANDS_FLUSH_RESULTS 0x8000
+#define X87_DN_FLUSH                       0x8040
+#define X87_CW_DEFAULT                     0x027F
 
-#define SW_C0 0x0100
-#define SW_C1 0x0200
-#define SW_C2 0x0400
-#define SW_C3 0x4000
+#define X87_SW_INVALID                     0x0001
+#define X87_SW_DENORMAL                    0x0002
+#define X87_SW_ZERODIVIDE                  0x0004
+#define X87_SW_OVERFLOW                    0x0008
+#define X87_SW_UNDERFLOW                   0x0010
+#define X87_SW_INEXACT                     0x0020
+#define X87_SW_STACKFAULT                  0x0040
+#define X87_SW_ERRORSUMMARY                0x0080
+#define X87_SW_C0                          0x0100
+#define X87_SW_C1                          0x0200
+#define X87_SW_C2                          0x0400
+#define X87_SW_TOP                         0x0800
+#define X87_SW_C3                          0x4000
+#define X87_SW_BUSY                        0x8000
+#define X87_SW_DEFAULT                     0x0000
 
 #ifdef __cplusplus
 struct longdouble;
@@ -130,7 +137,7 @@ typedef struct _longdouble {
 	uint8_t padding[sizeof(uintptr_t) - 10 % sizeof(uintptr_t)];
 
 #ifdef __cplusplus
-	static __inline uint16_t initialize()                                          { uint16_t cw = _fstcw(); _fldcw(cw | CW_PC_64); return cw; }
+	static __inline uint16_t initialize()                                          { uint16_t cw = _fstcw(); _fldcw(cw | X87_PC_64); return cw; }
 	static __inline void finalize(const uint16_t cw)                               { _fldcw(cw); }
 	__inline longdouble()                                                          { mantissa = 0; extension = 0; }
 	__inline longdouble(uint64_t mantissa, uint16_t extension)                     { this->mantissa = mantissa; this->extension = extension; }
@@ -153,8 +160,8 @@ typedef struct _longdouble {
 	__inline longdouble operator--()                                               { return *this = _fdec(*this); }
 	__inline longdouble operator+()                                                { return *this; }
 	__inline longdouble operator-()                                                { return _fchs(*this); }
-	__inline bool operator!()                                                      { return _ftst(*this) == SW_C3; }
-	__inline explicit operator bool()                                              { return _ftst(*this) != SW_C3; }
+	__inline bool operator!()                                                      { return _ftst(*this) == X87_SW_C3; }
+	__inline explicit operator bool()                                              { return _ftst(*this) != X87_SW_C3; }
 	__inline explicit operator float()                                             { return _fst_r4(*this); }
 	__inline explicit operator double()                                            { return _fst_r8(*this); }
 	__inline explicit operator int8_t()                                            { return _fst_i1(*this); }
@@ -277,17 +284,17 @@ typedef struct _longdouble {
 	__inline friend longdouble operator-(const uint64_t x, const longdouble& y)    { return _fsub(x, y); }
 	__inline longdouble operator<<(const int x)                                    { return __ldexp(*this, x); }
 	__inline longdouble operator>>(const int x)                                    { return __ldexp(*this, -x); }
-	__inline bool operator<(const longdouble& x)                                   { return _fcom(*this, x) == SW_C0; }
-	__inline bool operator<(const float x)                                         { return _fcom_r4(*this, x) == SW_C0; }
-	__inline bool operator<(const double x)                                        { return _fcom_r8(*this, x) == SW_C0; }
-	__inline bool operator<(const int8_t x)                                        { return _fcom_i1(*this, x) == SW_C0; }
-	__inline bool operator<(const int16_t x)                                       { return _fcom_i2(*this, x) == SW_C0; }
-	__inline bool operator<(const int32_t x)                                       { return _fcom_i4(*this, x) == SW_C0; }
-	__inline bool operator<(const int64_t x)                                       { return _fcom_i8(*this, x) == SW_C0; }
-	__inline bool operator<(const uint8_t x)                                       { return _fcom_u1(*this, x) == SW_C0; }
-	__inline bool operator<(const uint16_t x)                                      { return _fcom_u2(*this, x) == SW_C0; }
-	__inline bool operator<(const uint32_t x)                                      { return _fcom_u4(*this, x) == SW_C0; }
-	__inline bool operator<(const uint64_t x)                                      { return _fcom_u8(*this, x) == SW_C0; }
+	__inline bool operator<(const longdouble& x)                                   { return _fcom(*this, x) == X87_SW_C0; }
+	__inline bool operator<(const float x)                                         { return _fcom_r4(*this, x) == X87_SW_C0; }
+	__inline bool operator<(const double x)                                        { return _fcom_r8(*this, x) == X87_SW_C0; }
+	__inline bool operator<(const int8_t x)                                        { return _fcom_i1(*this, x) == X87_SW_C0; }
+	__inline bool operator<(const int16_t x)                                       { return _fcom_i2(*this, x) == X87_SW_C0; }
+	__inline bool operator<(const int32_t x)                                       { return _fcom_i4(*this, x) == X87_SW_C0; }
+	__inline bool operator<(const int64_t x)                                       { return _fcom_i8(*this, x) == X87_SW_C0; }
+	__inline bool operator<(const uint8_t x)                                       { return _fcom_u1(*this, x) == X87_SW_C0; }
+	__inline bool operator<(const uint16_t x)                                      { return _fcom_u2(*this, x) == X87_SW_C0; }
+	__inline bool operator<(const uint32_t x)                                      { return _fcom_u4(*this, x) == X87_SW_C0; }
+	__inline bool operator<(const uint64_t x)                                      { return _fcom_u8(*this, x) == X87_SW_C0; }
 	__inline friend bool operator<(const float x, const longdouble& y)             { return !_fcom_r4(y, x); }
 	__inline friend bool operator<(const double x, const longdouble& y)            { return !_fcom_r8(y, x); }
 	__inline friend bool operator<(const int8_t x, const longdouble& y)            { return !_fcom_i1(y, x); }
@@ -298,27 +305,27 @@ typedef struct _longdouble {
 	__inline friend bool operator<(const uint16_t x, const longdouble& y)          { return !_fcom_u2(y, x); }
 	__inline friend bool operator<(const uint32_t x, const longdouble& y)          { return !_fcom_u4(y, x); }
 	__inline friend bool operator<(const uint64_t x, const longdouble& y)          { return !_fcom_u8(y, x); }
-	__inline bool operator<=(const longdouble& x)                                  { uint16_t sw = _fcom(*this, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline bool operator<=(const float x)                                        { uint16_t sw = _fcom_r4(*this, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline bool operator<=(const double x)                                       { uint16_t sw = _fcom_r8(*this, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline bool operator<=(const int8_t x)                                       { uint16_t sw = _fcom_i1(*this, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline bool operator<=(const int16_t x)                                      { uint16_t sw = _fcom_i2(*this, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline bool operator<=(const int32_t x)                                      { uint16_t sw = _fcom_i4(*this, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline bool operator<=(const int64_t x)                                      { uint16_t sw = _fcom_i8(*this, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline bool operator<=(const uint8_t x)                                      { uint16_t sw = _fcom_u1(*this, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline bool operator<=(const uint16_t x)                                     { uint16_t sw = _fcom_u2(*this, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline bool operator<=(const uint32_t x)                                     { uint16_t sw = _fcom_u4(*this, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline bool operator<=(const uint64_t x)                                     { uint16_t sw = _fcom_u8(*this, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline friend bool operator<=(const float x, const longdouble& y)            { uint16_t sw = _fcom_r4(y, x); return !sw || sw == SW_C3; }
-	__inline friend bool operator<=(const double x, const longdouble& y)           { uint16_t sw = _fcom_r8(y, x); return !sw || sw == SW_C3; }
-	__inline friend bool operator<=(const int8_t x, const longdouble& y)           { uint16_t sw = _fcom_i1(y, x); return !sw || sw == SW_C3; }
-	__inline friend bool operator<=(const int16_t x, const longdouble& y)          { uint16_t sw = _fcom_i2(y, x); return !sw || sw == SW_C3; }
-	__inline friend bool operator<=(const int32_t x, const longdouble& y)          { uint16_t sw = _fcom_i4(y, x); return !sw || sw == SW_C3; }
-	__inline friend bool operator<=(const int64_t x, const longdouble& y)          { uint16_t sw = _fcom_i8(y, x); return !sw || sw == SW_C3; }
-	__inline friend bool operator<=(const uint8_t x, const longdouble& y)          { uint16_t sw = _fcom_u1(y, x); return !sw || sw == SW_C3; }
-	__inline friend bool operator<=(const uint16_t x, const longdouble& y)         { uint16_t sw = _fcom_u2(y, x); return !sw || sw == SW_C3; }
-	__inline friend bool operator<=(const uint32_t x, const longdouble& y)         { uint16_t sw = _fcom_u4(y, x); return !sw || sw == SW_C3; }
-	__inline friend bool operator<=(const uint64_t x, const longdouble& y)         { uint16_t sw = _fcom_u8(y, x); return !sw || sw == SW_C3; }
+	__inline bool operator<=(const longdouble& x)                                  { uint16_t sw = _fcom(*this, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline bool operator<=(const float x)                                        { uint16_t sw = _fcom_r4(*this, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline bool operator<=(const double x)                                       { uint16_t sw = _fcom_r8(*this, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline bool operator<=(const int8_t x)                                       { uint16_t sw = _fcom_i1(*this, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline bool operator<=(const int16_t x)                                      { uint16_t sw = _fcom_i2(*this, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline bool operator<=(const int32_t x)                                      { uint16_t sw = _fcom_i4(*this, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline bool operator<=(const int64_t x)                                      { uint16_t sw = _fcom_i8(*this, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline bool operator<=(const uint8_t x)                                      { uint16_t sw = _fcom_u1(*this, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline bool operator<=(const uint16_t x)                                     { uint16_t sw = _fcom_u2(*this, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline bool operator<=(const uint32_t x)                                     { uint16_t sw = _fcom_u4(*this, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline bool operator<=(const uint64_t x)                                     { uint16_t sw = _fcom_u8(*this, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline friend bool operator<=(const float x, const longdouble& y)            { uint16_t sw = _fcom_r4(y, x); return !sw || sw == X87_SW_C3; }
+	__inline friend bool operator<=(const double x, const longdouble& y)           { uint16_t sw = _fcom_r8(y, x); return !sw || sw == X87_SW_C3; }
+	__inline friend bool operator<=(const int8_t x, const longdouble& y)           { uint16_t sw = _fcom_i1(y, x); return !sw || sw == X87_SW_C3; }
+	__inline friend bool operator<=(const int16_t x, const longdouble& y)          { uint16_t sw = _fcom_i2(y, x); return !sw || sw == X87_SW_C3; }
+	__inline friend bool operator<=(const int32_t x, const longdouble& y)          { uint16_t sw = _fcom_i4(y, x); return !sw || sw == X87_SW_C3; }
+	__inline friend bool operator<=(const int64_t x, const longdouble& y)          { uint16_t sw = _fcom_i8(y, x); return !sw || sw == X87_SW_C3; }
+	__inline friend bool operator<=(const uint8_t x, const longdouble& y)          { uint16_t sw = _fcom_u1(y, x); return !sw || sw == X87_SW_C3; }
+	__inline friend bool operator<=(const uint16_t x, const longdouble& y)         { uint16_t sw = _fcom_u2(y, x); return !sw || sw == X87_SW_C3; }
+	__inline friend bool operator<=(const uint32_t x, const longdouble& y)         { uint16_t sw = _fcom_u4(y, x); return !sw || sw == X87_SW_C3; }
+	__inline friend bool operator<=(const uint64_t x, const longdouble& y)         { uint16_t sw = _fcom_u8(y, x); return !sw || sw == X87_SW_C3; }
 	__inline bool operator>(const longdouble& x)                                   { return !_fcom(*this, x); }
 	__inline bool operator>(const float x)                                         { return !_fcom_r4(*this, x); }
 	__inline bool operator>(const double x)                                        { return !_fcom_r8(*this, x); }
@@ -330,79 +337,79 @@ typedef struct _longdouble {
 	__inline bool operator>(const uint16_t x)                                      { return !_fcom_u2(*this, x); }
 	__inline bool operator>(const uint32_t x)                                      { return !_fcom_u4(*this, x); }
 	__inline bool operator>(const uint64_t x)                                      { return !_fcom_u8(*this, x); }
-	__inline friend bool operator>(const float x, const longdouble& y)             { return _fcom_r4(y, x) == SW_C0; }
-	__inline friend bool operator>(const double x, const longdouble& y)            { return _fcom_r8(y, x) == SW_C0; }
-	__inline friend bool operator>(const int8_t x, const longdouble& y)            { return _fcom_i1(y, x) == SW_C0; }
-	__inline friend bool operator>(const int16_t x, const longdouble& y)           { return _fcom_i2(y, x) == SW_C0; }
-	__inline friend bool operator>(const int32_t x, const longdouble& y)           { return _fcom_i4(y, x) == SW_C0; }
-	__inline friend bool operator>(const int64_t x, const longdouble& y)           { return _fcom_i8(y, x) == SW_C0; }
-	__inline friend bool operator>(const uint8_t x, const longdouble& y)           { return _fcom_u1(y, x) == SW_C0; }
-	__inline friend bool operator>(const uint16_t x, const longdouble& y)          { return _fcom_u2(y, x) == SW_C0; }
-	__inline friend bool operator>(const uint32_t x, const longdouble& y)          { return _fcom_u4(y, x) == SW_C0; }
-	__inline friend bool operator>(const uint64_t x, const longdouble& y)          { return _fcom_u8(y, x) == SW_C0; }
-	__inline bool operator>=(const longdouble& x)                                  { uint16_t sw = _fcom(*this, x); return !sw || sw == SW_C3; }
-	__inline bool operator>=(const float x)                                        { uint16_t sw = _fcom_r4(*this, x); return !sw || sw == SW_C3; }
-	__inline bool operator>=(const double x)                                       { uint16_t sw = _fcom_r8(*this, x); return !sw || sw == SW_C3; }
-	__inline bool operator>=(const int8_t x)                                       { uint16_t sw = _fcom_i1(*this, x); return !sw || sw == SW_C3; }
-	__inline bool operator>=(const int16_t x)                                      { uint16_t sw = _fcom_i2(*this, x); return !sw || sw == SW_C3; }
-	__inline bool operator>=(const int32_t x)                                      { uint16_t sw = _fcom_i4(*this, x); return !sw || sw == SW_C3; }
-	__inline bool operator>=(const int64_t x)                                      { uint16_t sw = _fcom_i8(*this, x); return !sw || sw == SW_C3; }
-	__inline bool operator>=(const uint8_t x)                                      { uint16_t sw = _fcom_u1(*this, x); return !sw || sw == SW_C3; }
-	__inline bool operator>=(const uint16_t x)                                     { uint16_t sw = _fcom_u2(*this, x); return !sw || sw == SW_C3; }
-	__inline bool operator>=(const uint32_t x)                                     { uint16_t sw = _fcom_u4(*this, x); return !sw || sw == SW_C3; }
-	__inline bool operator>=(const uint64_t x)                                     { uint16_t sw = _fcom_u8(*this, x); return !sw || sw == SW_C3; }
-	__inline friend bool operator>=(const float x, const longdouble& y)            { uint16_t sw = _fcom_r4(y, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline friend bool operator>=(const double x, const longdouble& y)           { uint16_t sw = _fcom_r8(y, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline friend bool operator>=(const int8_t x, const longdouble& y)           { uint16_t sw = _fcom_i1(y, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline friend bool operator>=(const int16_t x, const longdouble& y)          { uint16_t sw = _fcom_i2(y, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline friend bool operator>=(const int32_t x, const longdouble& y)          { uint16_t sw = _fcom_i4(y, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline friend bool operator>=(const int64_t x, const longdouble& y)          { uint16_t sw = _fcom_i8(y, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline friend bool operator>=(const uint8_t x, const longdouble& y)          { uint16_t sw = _fcom_u1(y, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline friend bool operator>=(const uint16_t x, const longdouble& y)         { uint16_t sw = _fcom_u2(y, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline friend bool operator>=(const uint32_t x, const longdouble& y)         { uint16_t sw = _fcom_u4(y, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline friend bool operator>=(const uint64_t x, const longdouble& y)         { uint16_t sw = _fcom_u8(y, x); return sw == SW_C0 || sw == SW_C3; }
-	__inline bool operator==(const longdouble& x)                                  { return _fcom(*this, x) == SW_C3; }
-	__inline bool operator==(const float x)                                        { return _fcom_r4(*this, x) == SW_C3; }
-	__inline bool operator==(const double x)                                       { return _fcom_r8(*this, x) == SW_C3; }
-	__inline bool operator==(const int8_t x)                                       { return _fcom_i1(*this, x) == SW_C3; }
-	__inline bool operator==(const int16_t x)                                      { return _fcom_i2(*this, x) == SW_C3; }
-	__inline bool operator==(const int32_t x)                                      { return _fcom_i4(*this, x) == SW_C3; }
-	__inline bool operator==(const int64_t x)                                      { return _fcom_i8(*this, x) == SW_C3; }
-	__inline bool operator==(const uint8_t x)                                      { return _fcom_u1(*this, x) == SW_C3; }
-	__inline bool operator==(const uint16_t x)                                     { return _fcom_u2(*this, x) == SW_C3; }
-	__inline bool operator==(const uint32_t x)                                     { return _fcom_u4(*this, x) == SW_C3; }
-	__inline bool operator==(const uint64_t x)                                     { return _fcom_u8(*this, x) == SW_C3; }
-	__inline friend bool operator==(const float x, const longdouble& y)            { return _fcom_r4(y, x) == SW_C3; }
-	__inline friend bool operator==(const double x, const longdouble& y)           { return _fcom_r8(y, x) == SW_C3; }
-	__inline friend bool operator==(const int8_t x, const longdouble& y)           { return _fcom_i1(y, x) == SW_C3; }
-	__inline friend bool operator==(const int16_t x, const longdouble& y)          { return _fcom_i2(y, x) == SW_C3; }
-	__inline friend bool operator==(const int32_t x, const longdouble& y)          { return _fcom_i4(y, x) == SW_C3; }
-	__inline friend bool operator==(const int64_t x, const longdouble& y)          { return _fcom_i8(y, x) == SW_C3; }
-	__inline friend bool operator==(const uint8_t x, const longdouble& y)          { return _fcom_u1(y, x) == SW_C3; }
-	__inline friend bool operator==(const uint16_t x, const longdouble& y)         { return _fcom_u2(y, x) == SW_C3; }
-	__inline friend bool operator==(const uint32_t x, const longdouble& y)         { return _fcom_u4(y, x) == SW_C3; }
-	__inline friend bool operator==(const uint64_t x, const longdouble& y)         { return _fcom_u8(y, x) == SW_C3; }
-	__inline bool operator!=(const longdouble& x)                                  { return _fcom(*this, x) != SW_C3; }
-	__inline bool operator!=(const float x)                                        { return _fcom_r4(*this, x) != SW_C3; }
-	__inline bool operator!=(const double x)                                       { return _fcom_r8(*this, x) != SW_C3; }
-	__inline bool operator!=(const int8_t x)                                       { return _fcom_i1(*this, x) != SW_C3; }
-	__inline bool operator!=(const int16_t x)                                      { return _fcom_i2(*this, x) != SW_C3; }
-	__inline bool operator!=(const int32_t x)                                      { return _fcom_i4(*this, x) != SW_C3; }
-	__inline bool operator!=(const int64_t x)                                      { return _fcom_i8(*this, x) != SW_C3; }
-	__inline bool operator!=(const uint8_t x)                                      { return _fcom_u1(*this, x) != SW_C3; }
-	__inline bool operator!=(const uint16_t x)                                     { return _fcom_u2(*this, x) != SW_C3; }
-	__inline bool operator!=(const uint32_t x)                                     { return _fcom_u4(*this, x) != SW_C3; }
-	__inline bool operator!=(const uint64_t x)                                     { return _fcom_u8(*this, x) != SW_C3; }
-	__inline friend bool operator!=(const float x, const longdouble& y)            { return _fcom_r4(y, x) != SW_C3; }
-	__inline friend bool operator!=(const double x, const longdouble& y)           { return _fcom_r8(y, x) != SW_C3; }
-	__inline friend bool operator!=(const int8_t x, const longdouble& y)           { return _fcom_i1(y, x) != SW_C3; }
-	__inline friend bool operator!=(const int16_t x, const longdouble& y)          { return _fcom_i2(y, x) != SW_C3; }
-	__inline friend bool operator!=(const int32_t x, const longdouble& y)          { return _fcom_i4(y, x) != SW_C3; }
-	__inline friend bool operator!=(const int64_t x, const longdouble& y)          { return _fcom_i8(y, x) != SW_C3; }
-	__inline friend bool operator!=(const uint8_t x, const longdouble& y)          { return _fcom_u1(y, x) != SW_C3; }
-	__inline friend bool operator!=(const uint16_t x, const longdouble& y)         { return _fcom_u2(y, x) != SW_C3; }
-	__inline friend bool operator!=(const uint32_t x, const longdouble& y)         { return _fcom_u4(y, x) != SW_C3; }
-	__inline friend bool operator!=(const uint64_t x, const longdouble& y)         { return _fcom_u8(y, x) != SW_C3; }
+	__inline friend bool operator>(const float x, const longdouble& y)             { return _fcom_r4(y, x) == X87_SW_C0; }
+	__inline friend bool operator>(const double x, const longdouble& y)            { return _fcom_r8(y, x) == X87_SW_C0; }
+	__inline friend bool operator>(const int8_t x, const longdouble& y)            { return _fcom_i1(y, x) == X87_SW_C0; }
+	__inline friend bool operator>(const int16_t x, const longdouble& y)           { return _fcom_i2(y, x) == X87_SW_C0; }
+	__inline friend bool operator>(const int32_t x, const longdouble& y)           { return _fcom_i4(y, x) == X87_SW_C0; }
+	__inline friend bool operator>(const int64_t x, const longdouble& y)           { return _fcom_i8(y, x) == X87_SW_C0; }
+	__inline friend bool operator>(const uint8_t x, const longdouble& y)           { return _fcom_u1(y, x) == X87_SW_C0; }
+	__inline friend bool operator>(const uint16_t x, const longdouble& y)          { return _fcom_u2(y, x) == X87_SW_C0; }
+	__inline friend bool operator>(const uint32_t x, const longdouble& y)          { return _fcom_u4(y, x) == X87_SW_C0; }
+	__inline friend bool operator>(const uint64_t x, const longdouble& y)          { return _fcom_u8(y, x) == X87_SW_C0; }
+	__inline bool operator>=(const longdouble& x)                                  { uint16_t sw = _fcom(*this, x); return !sw || sw == X87_SW_C3; }
+	__inline bool operator>=(const float x)                                        { uint16_t sw = _fcom_r4(*this, x); return !sw || sw == X87_SW_C3; }
+	__inline bool operator>=(const double x)                                       { uint16_t sw = _fcom_r8(*this, x); return !sw || sw == X87_SW_C3; }
+	__inline bool operator>=(const int8_t x)                                       { uint16_t sw = _fcom_i1(*this, x); return !sw || sw == X87_SW_C3; }
+	__inline bool operator>=(const int16_t x)                                      { uint16_t sw = _fcom_i2(*this, x); return !sw || sw == X87_SW_C3; }
+	__inline bool operator>=(const int32_t x)                                      { uint16_t sw = _fcom_i4(*this, x); return !sw || sw == X87_SW_C3; }
+	__inline bool operator>=(const int64_t x)                                      { uint16_t sw = _fcom_i8(*this, x); return !sw || sw == X87_SW_C3; }
+	__inline bool operator>=(const uint8_t x)                                      { uint16_t sw = _fcom_u1(*this, x); return !sw || sw == X87_SW_C3; }
+	__inline bool operator>=(const uint16_t x)                                     { uint16_t sw = _fcom_u2(*this, x); return !sw || sw == X87_SW_C3; }
+	__inline bool operator>=(const uint32_t x)                                     { uint16_t sw = _fcom_u4(*this, x); return !sw || sw == X87_SW_C3; }
+	__inline bool operator>=(const uint64_t x)                                     { uint16_t sw = _fcom_u8(*this, x); return !sw || sw == X87_SW_C3; }
+	__inline friend bool operator>=(const float x, const longdouble& y)            { uint16_t sw = _fcom_r4(y, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline friend bool operator>=(const double x, const longdouble& y)           { uint16_t sw = _fcom_r8(y, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline friend bool operator>=(const int8_t x, const longdouble& y)           { uint16_t sw = _fcom_i1(y, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline friend bool operator>=(const int16_t x, const longdouble& y)          { uint16_t sw = _fcom_i2(y, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline friend bool operator>=(const int32_t x, const longdouble& y)          { uint16_t sw = _fcom_i4(y, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline friend bool operator>=(const int64_t x, const longdouble& y)          { uint16_t sw = _fcom_i8(y, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline friend bool operator>=(const uint8_t x, const longdouble& y)          { uint16_t sw = _fcom_u1(y, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline friend bool operator>=(const uint16_t x, const longdouble& y)         { uint16_t sw = _fcom_u2(y, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline friend bool operator>=(const uint32_t x, const longdouble& y)         { uint16_t sw = _fcom_u4(y, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline friend bool operator>=(const uint64_t x, const longdouble& y)         { uint16_t sw = _fcom_u8(y, x); return sw == X87_SW_C0 || sw == X87_SW_C3; }
+	__inline bool operator==(const longdouble& x)                                  { return _fcom(*this, x) == X87_SW_C3; }
+	__inline bool operator==(const float x)                                        { return _fcom_r4(*this, x) == X87_SW_C3; }
+	__inline bool operator==(const double x)                                       { return _fcom_r8(*this, x) == X87_SW_C3; }
+	__inline bool operator==(const int8_t x)                                       { return _fcom_i1(*this, x) == X87_SW_C3; }
+	__inline bool operator==(const int16_t x)                                      { return _fcom_i2(*this, x) == X87_SW_C3; }
+	__inline bool operator==(const int32_t x)                                      { return _fcom_i4(*this, x) == X87_SW_C3; }
+	__inline bool operator==(const int64_t x)                                      { return _fcom_i8(*this, x) == X87_SW_C3; }
+	__inline bool operator==(const uint8_t x)                                      { return _fcom_u1(*this, x) == X87_SW_C3; }
+	__inline bool operator==(const uint16_t x)                                     { return _fcom_u2(*this, x) == X87_SW_C3; }
+	__inline bool operator==(const uint32_t x)                                     { return _fcom_u4(*this, x) == X87_SW_C3; }
+	__inline bool operator==(const uint64_t x)                                     { return _fcom_u8(*this, x) == X87_SW_C3; }
+	__inline friend bool operator==(const float x, const longdouble& y)            { return _fcom_r4(y, x) == X87_SW_C3; }
+	__inline friend bool operator==(const double x, const longdouble& y)           { return _fcom_r8(y, x) == X87_SW_C3; }
+	__inline friend bool operator==(const int8_t x, const longdouble& y)           { return _fcom_i1(y, x) == X87_SW_C3; }
+	__inline friend bool operator==(const int16_t x, const longdouble& y)          { return _fcom_i2(y, x) == X87_SW_C3; }
+	__inline friend bool operator==(const int32_t x, const longdouble& y)          { return _fcom_i4(y, x) == X87_SW_C3; }
+	__inline friend bool operator==(const int64_t x, const longdouble& y)          { return _fcom_i8(y, x) == X87_SW_C3; }
+	__inline friend bool operator==(const uint8_t x, const longdouble& y)          { return _fcom_u1(y, x) == X87_SW_C3; }
+	__inline friend bool operator==(const uint16_t x, const longdouble& y)         { return _fcom_u2(y, x) == X87_SW_C3; }
+	__inline friend bool operator==(const uint32_t x, const longdouble& y)         { return _fcom_u4(y, x) == X87_SW_C3; }
+	__inline friend bool operator==(const uint64_t x, const longdouble& y)         { return _fcom_u8(y, x) == X87_SW_C3; }
+	__inline bool operator!=(const longdouble& x)                                  { return _fcom(*this, x) != X87_SW_C3; }
+	__inline bool operator!=(const float x)                                        { return _fcom_r4(*this, x) != X87_SW_C3; }
+	__inline bool operator!=(const double x)                                       { return _fcom_r8(*this, x) != X87_SW_C3; }
+	__inline bool operator!=(const int8_t x)                                       { return _fcom_i1(*this, x) != X87_SW_C3; }
+	__inline bool operator!=(const int16_t x)                                      { return _fcom_i2(*this, x) != X87_SW_C3; }
+	__inline bool operator!=(const int32_t x)                                      { return _fcom_i4(*this, x) != X87_SW_C3; }
+	__inline bool operator!=(const int64_t x)                                      { return _fcom_i8(*this, x) != X87_SW_C3; }
+	__inline bool operator!=(const uint8_t x)                                      { return _fcom_u1(*this, x) != X87_SW_C3; }
+	__inline bool operator!=(const uint16_t x)                                     { return _fcom_u2(*this, x) != X87_SW_C3; }
+	__inline bool operator!=(const uint32_t x)                                     { return _fcom_u4(*this, x) != X87_SW_C3; }
+	__inline bool operator!=(const uint64_t x)                                     { return _fcom_u8(*this, x) != X87_SW_C3; }
+	__inline friend bool operator!=(const float x, const longdouble& y)            { return _fcom_r4(y, x) != X87_SW_C3; }
+	__inline friend bool operator!=(const double x, const longdouble& y)           { return _fcom_r8(y, x) != X87_SW_C3; }
+	__inline friend bool operator!=(const int8_t x, const longdouble& y)           { return _fcom_i1(y, x) != X87_SW_C3; }
+	__inline friend bool operator!=(const int16_t x, const longdouble& y)          { return _fcom_i2(y, x) != X87_SW_C3; }
+	__inline friend bool operator!=(const int32_t x, const longdouble& y)          { return _fcom_i4(y, x) != X87_SW_C3; }
+	__inline friend bool operator!=(const int64_t x, const longdouble& y)          { return _fcom_i8(y, x) != X87_SW_C3; }
+	__inline friend bool operator!=(const uint8_t x, const longdouble& y)          { return _fcom_u1(y, x) != X87_SW_C3; }
+	__inline friend bool operator!=(const uint16_t x, const longdouble& y)         { return _fcom_u2(y, x) != X87_SW_C3; }
+	__inline friend bool operator!=(const uint32_t x, const longdouble& y)         { return _fcom_u4(y, x) != X87_SW_C3; }
+	__inline friend bool operator!=(const uint64_t x, const longdouble& y)         { return _fcom_u8(y, x) != X87_SW_C3; }
 	__inline const longdouble& operator=(const longdouble& x)                      { mantissa = x.mantissa; extension = x.extension; return *this; }
 	__inline const longdouble& operator=(const float x)                            { return *this = _fld_r4(x); }
 	__inline const longdouble& operator=(const double x)                           { return *this = _fld_r8(x); }
@@ -455,7 +462,7 @@ typedef struct _longdouble {
 		const char *a;
 
 		cw = longdouble::fstcw();
-		longdouble::fldcw(cw | CW_PC_64);
+		longdouble::fldcw(cw | X87_PC_64);
 		a = p;
 		while (*p == ' ' || (unsigned char)(*p - '\t') < '\r' - '\t' + 1)
 			p++;
@@ -706,7 +713,7 @@ __forceinline longdouble _fmod(const longdouble x, const longdouble y)
 	L1:
 		fprem
 		fstsw   ax
-		test    ax, SW_C2
+		test    ax, X87_SW_C2
 		jnz     L1
 		fstp    tbyte ptr [x]
 		fstp    st(0)
@@ -770,7 +777,7 @@ __forceinline uint16_t _fcom(const longdouble x, const longdouble y)
 		fld     tbyte ptr [x]
 		fcompp
 		fstsw   ax
-		and     ax, SW_C0 | SW_C2 | SW_C3
+		and     ax, X87_SW_C0 | X87_SW_C2 | X87_SW_C3
 	}
 }
 __forceinline uint16_t _fcom_r8(const longdouble x, const double y)
@@ -781,7 +788,7 @@ __forceinline uint16_t _fcom_r8(const longdouble x, const double y)
 		fld     tbyte ptr [x]
 		fcompp
 		fstsw   ax
-		and     ax, SW_C0 | SW_C2 | SW_C3
+		and     ax, X87_SW_C0 | X87_SW_C2 | X87_SW_C3
 	}
 }
 __forceinline uint16_t _fcom_i2(const longdouble x, const int16_t y)
@@ -792,7 +799,7 @@ __forceinline uint16_t _fcom_i2(const longdouble x, const int16_t y)
 		fld     tbyte ptr [x]
 		fcompp
 		fstsw   ax
-		and     ax, SW_C0 | SW_C2 | SW_C3
+		and     ax, X87_SW_C0 | X87_SW_C2 | X87_SW_C3
 	}
 }
 __forceinline uint16_t _fcom_i4(const longdouble x, const int32_t y)
@@ -803,7 +810,7 @@ __forceinline uint16_t _fcom_i4(const longdouble x, const int32_t y)
 		fld     tbyte ptr [x]
 		fcompp
 		fstsw   ax
-		and     ax, SW_C0 | SW_C2 | SW_C3
+		and     ax, X87_SW_C0 | X87_SW_C2 | X87_SW_C3
 	}
 }
 __forceinline uint16_t _fcom_i8(const longdouble x, const int64_t y)
@@ -814,7 +821,7 @@ __forceinline uint16_t _fcom_i8(const longdouble x, const int64_t y)
 		fld     tbyte ptr [x]
 		fcompp
 		fstsw   ax
-		and     ax, SW_C0 | SW_C2 | SW_C3
+		and     ax, X87_SW_C0 | X87_SW_C2 | X87_SW_C3
 	}
 }
 __forceinline uint16_t _fcom_u8(const longdouble x, const uint64_t y)
@@ -837,7 +844,7 @@ __forceinline uint16_t _fcom_u8(const longdouble x, const uint64_t y)
 		fld     tbyte ptr [x    ]
 		fcompp
 		fstsw   ax
-		and     ax, SW_C0 | SW_C2 | SW_C3
+		and     ax, X87_SW_C0 | X87_SW_C2 | X87_SW_C3
 	}
 }
 __forceinline uint16_t _ftst(const longdouble x)
@@ -848,7 +855,7 @@ __forceinline uint16_t _ftst(const longdouble x)
 		ftst
 		fstp    st(0)
 		fstsw   ax
-		and     ax, SW_C0 | SW_C2 | SW_C3
+		and     ax, X87_SW_C0 | X87_SW_C2 | X87_SW_C3
 	}
 }
 __forceinline uint16_t _fxam(const longdouble x)
@@ -859,7 +866,7 @@ __forceinline uint16_t _fxam(const longdouble x)
 		fxam
 		fstp    st(0)
 		fstsw   ax
-		and     ax, SW_C0 | SW_C2 | SW_C3
+		and     ax, X87_SW_C0 | X87_SW_C2 | X87_SW_C3
 	}
 }
 __forceinline __LONGDOUBLE_PROC2(fsin)

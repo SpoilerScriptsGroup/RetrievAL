@@ -44,14 +44,6 @@ static void __cdecl dtol3_NaN();
 #define X87_EM_UNDERFLOW                0x0010
 #define X87_EM_INEXACT                  0x0020
 
-#define X87_SW_OVERFLOW                 0x0008
-#define X87_SW_UNDERFLOW                0x0010
-
-#if X87_EM_OVERFLOW  != X87_SW_OVERFLOW  || \
-    X87_EM_UNDERFLOW != X87_SW_UNDERFLOW
-#error "Unmatch FPU environment definitions."
-#endif
-
 #pragma warning(disable:4102 4414)
 
 __declspec(naked) void __cdecl _ftoui3()

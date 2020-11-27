@@ -31,7 +31,7 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 	}
 #ifdef __cplusplus
 	cw1 = longdouble::fstcw();
-	cw2 = (cw1 & ~CW_RC_MASK) | CW_PC_64 | CW_EM_UNDERFLOW | CW_EM_OVERFLOW;
+	cw2 = (cw1 & ~X87_MCW_RC) | X87_PC_64 | X87_EM_UNDERFLOW | X87_EM_OVERFLOW;
 	longdouble::fldcw(cw2);
 	z = (longdouble)exp;
 	i = (z * longdouble::fldl2t()).frndint();
@@ -43,7 +43,7 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 	x = (double)z;
 	if (fabs(x) > DBL_MAX || !x)
 	{
-		cw2 |= CW_RC_CHOP;
+		cw2 |= X87_RC_CHOP;
 		longdouble::fldcw(cw2);
 		x = (double)z;
 		if (!x || fabs(x) > DBL_MAX)
@@ -54,7 +54,7 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 	return x;
 #else
 	cw1 = _fstcw();
-	cw2 = (cw1 & ~CW_RC_MASK) | CW_PC_64 | CW_EM_UNDERFLOW | CW_EM_OVERFLOW;
+	cw2 = (cw1 & ~X87_MCW_RC) | X87_PC_64 | X87_EM_UNDERFLOW | X87_EM_OVERFLOW;
 	_fldcw(cw2);
 	z = _fld_i4(exp);
 	i = _frndint(_fmul(z, _fldl2t()));
@@ -66,7 +66,7 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 	x = _fst_r8(z);
 	if (fabs(x) > DBL_MAX || !x)
 	{
-		cw2 |= CW_RC_CHOP;
+		cw2 |= X87_RC_CHOP;
 		_fldcw(cw2);
 		x = _fst_r8(z);
 		if (!x || fabs(x) > DBL_MAX)
@@ -88,35 +88,31 @@ EXTERN_C double __cdecl ldexp10(double x, int exp)
 #endif
 #endif
 
-#define CW_EM_MASK                        0x003F
-#define CW_EM_INVALID                     0x0001
-#define CW_EM_DENORMAL                    0x0002
-#define CW_EM_ZERODIVIDE                  0x0004
-#define CW_EM_OVERFLOW                    0x0008
-#define CW_EM_UNDERFLOW                   0x0010
-#define CW_EM_INEXACT                     0x0020
-#define CW_EM_DEFAULT                     0x003F
-#define CW_PC_MASK                        0x0300
-#define CW_PC_24                          0x0100
-#define CW_PC_53                          0x0200
-#define CW_PC_64                          0x0300
-#define CW_PC_DEFAULT                     CW_PC_53
-#define CW_RC_MASK                        0x0C00
-#define CW_RC_NEAR                        0x0000
-#define CW_RC_DOWN                        0x0400
-#define CW_RC_UP                          0x0800
-#define CW_RC_CHOP                        0x0C00
-#define CW_RC_DEFAULT                     CW_RC_NEAR
-#define CW_IC_MASK                        0x1000
-#define CW_IC_PROJECTIVE                  0x0000
-#define CW_IC_AFFINE                      0x1000
-#define CW_IC_DEFAULT                     CW_IC_PROJECTIVE
-#define CW_DN_MASK                        0x8040
-#define CW_DN_SAVE                        0x0000
-#define CW_DN_FLUSH_OPERANDS_SAVE_RESULTS 0x0040
-#define CW_DN_SAVE_OPERANDS_FLUSH_RESULTS 0x8000
-#define CW_DN_FLUSH                       0x8040
-#define CW_DN_DEFAULT                     CW_DN_FLUSH_OPERANDS_SAVE_RESULTS
+#define X87_MCW_EM                         0x003F
+#define X87_EM_INVALID                     0x0001
+#define X87_EM_DENORMAL                    0x0002
+#define X87_EM_ZERODIVIDE                  0x0004
+#define X87_EM_OVERFLOW                    0x0008
+#define X87_EM_UNDERFLOW                   0x0010
+#define X87_EM_INEXACT                     0x0020
+#define X87_MCW_PC                         0x0300
+#define X87_PC_24                          0x0100
+#define X87_PC_53                          0x0200
+#define X87_PC_64                          0x0300
+#define X87_MCW_RC                         0x0C00
+#define X87_RC_NEAR                        0x0000
+#define X87_RC_DOWN                        0x0400
+#define X87_RC_UP                          0x0800
+#define X87_RC_CHOP                        0x0C00
+#define X87_MCW_IC                         0x1000
+#define X87_IC_PROJECTIVE                  0x0000
+#define X87_IC_AFFINE                      0x1000
+#define X87_MCW_DN                         0x8040
+#define X87_DN_SAVE                        0x0000
+#define X87_DN_FLUSH_OPERANDS_SAVE_RESULTS 0x0040
+#define X87_DN_SAVE_OPERANDS_FLUSH_RESULTS 0x8000
+#define X87_DN_FLUSH                       0x8040
+#define X87_CW_DEFAULT                     0x027F
 
 EXTERN_C const double fpconst_inf;
 EXTERN_C const double fpconst_one;
@@ -158,12 +154,12 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		jz      L6
 		fstcw   word ptr [esp - 4]              /* Store control word */
 		mov     cx, word ptr [esp - 4]
-		and     cx, not CW_RC_MASK
-		or      cx, CW_PC_64        or \
-		            CW_EM_UNDERFLOW or \
-		            CW_EM_OVERFLOW
+		and     cx, not X87_MCW_RC
+		or      cx, X87_PC_64        or \
+		            X87_EM_UNDERFLOW or \
+		            X87_EM_OVERFLOW
 		mov     word ptr [esp - 8], cx          /* Set new control word */
-		or      cx, CW_RC_CHOP
+		or      cx, X87_RC_CHOP
 		fldcw   word ptr [esp - 8]
 		fild    dword ptr [exp]
 		fldl2t                                  /* 1 log2(10)         */

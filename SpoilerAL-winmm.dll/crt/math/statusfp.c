@@ -14,21 +14,17 @@ __declspec(naked) unsigned int __cdecl _statusfp()
 {
 	__asm
 	{
-		xor     ecx, ecx
+		xor     eax, eax
+		sub     esp, 4
 		fstsw   ax
-		mov     cx, ax
-		call    ToStatusFlag
 		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
 		je      L1
-		push    eax
-		push    0
 		stmxcsr dword ptr [esp]
-		pop     ecx
-		call    ToStatusFlag
-		pop     ecx
-		or      eax, ecx
+		or      eax, dword ptr [esp]
 	L1:
-		ret
+		add     esp, 4
+		mov     ecx, eax
+		jmp     ToStatusFlag
 	}
 }
 
@@ -36,26 +32,22 @@ __declspec(naked) unsigned int __cdecl _clearfp()
 {
 	__asm
 	{
-		xor     ecx, ecx
+		xor     eax, eax
+		sub     esp, 4
 		fstsw   ax
 		fclex
-		mov     cx, ax
-		call    ToStatusFlag
 		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
 		je      L1
-		push    eax
-		push    0
 		stmxcsr dword ptr [esp]
 		pop     ecx
+		or      eax, ecx
 		and     ecx, not _MM_EXCEPT_MASK
 		push    ecx
 		ldmxcsr dword ptr [esp]
-		call    ToStatusFlag
-		pop     edx
-		pop     ecx
-		or      eax, ecx
 	L1:
-		ret
+		add     esp, 4
+		mov     ecx, eax
+		jmp     ToStatusFlag
 	}
 }
 

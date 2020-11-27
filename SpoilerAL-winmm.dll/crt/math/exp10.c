@@ -46,7 +46,7 @@ EXTERN_C double __cdecl exp10(double x)
 	}
 #ifdef __cplusplus
 	cw = longdouble::fstcw();
-	longdouble::fldcw((cw & ~CW_RC_MASK) | CW_PC_64);
+	longdouble::fldcw((cw & ~X87_MCW_RC) | X87_PC_64);
 	z = x;
 	i = (z * longdouble::fldl2t()).frndint();
 	xi = z.frndint();
@@ -60,7 +60,7 @@ EXTERN_C double __cdecl exp10(double x)
 	longdouble::fldcw(cw);
 #else
 	cw = _fstcw();
-	_fldcw((cw & ~CW_RC_MASK) | CW_PC_64);
+	_fldcw((cw & ~X87_MCW_RC) | X87_PC_64);
 	z = _fld_r8(x);
 	i = _frndint(_fmul(z, _fldl2t()));
 	xi = _frndint(z);
@@ -90,35 +90,31 @@ EXTERN_C double __cdecl exp10(double x)
 #endif
 #endif
 
-#define CW_EM_MASK                        0x003F
-#define CW_EM_INVALID                     0x0001
-#define CW_EM_DENORMAL                    0x0002
-#define CW_EM_ZERODIVIDE                  0x0004
-#define CW_EM_OVERFLOW                    0x0008
-#define CW_EM_UNDERFLOW                   0x0010
-#define CW_EM_INEXACT                     0x0020
-#define CW_EM_DEFAULT                     0x003F
-#define CW_PC_MASK                        0x0300
-#define CW_PC_24                          0x0100
-#define CW_PC_53                          0x0200
-#define CW_PC_64                          0x0300
-#define CW_PC_DEFAULT                     CW_PC_53
-#define CW_RC_MASK                        0x0C00
-#define CW_RC_NEAR                        0x0000
-#define CW_RC_DOWN                        0x0400
-#define CW_RC_UP                          0x0800
-#define CW_RC_CHOP                        0x0C00
-#define CW_RC_DEFAULT                     CW_RC_NEAR
-#define CW_IC_MASK                        0x1000
-#define CW_IC_PROJECTIVE                  0x0000
-#define CW_IC_AFFINE                      0x1000
-#define CW_IC_DEFAULT                     CW_IC_PROJECTIVE
-#define CW_DN_MASK                        0x8040
-#define CW_DN_SAVE                        0x0000
-#define CW_DN_FLUSH_OPERANDS_SAVE_RESULTS 0x0040
-#define CW_DN_SAVE_OPERANDS_FLUSH_RESULTS 0x8000
-#define CW_DN_FLUSH                       0x8040
-#define CW_DN_DEFAULT                     CW_DN_FLUSH_OPERANDS_SAVE_RESULTS
+#define X87_MCW_EM                         0x003F
+#define X87_EM_INVALID                     0x0001
+#define X87_EM_DENORMAL                    0x0002
+#define X87_EM_ZERODIVIDE                  0x0004
+#define X87_EM_OVERFLOW                    0x0008
+#define X87_EM_UNDERFLOW                   0x0010
+#define X87_EM_INEXACT                     0x0020
+#define X87_MCW_PC                         0x0300
+#define X87_PC_24                          0x0100
+#define X87_PC_53                          0x0200
+#define X87_PC_64                          0x0300
+#define X87_MCW_RC                         0x0C00
+#define X87_RC_NEAR                        0x0000
+#define X87_RC_DOWN                        0x0400
+#define X87_RC_UP                          0x0800
+#define X87_RC_CHOP                        0x0C00
+#define X87_MCW_IC                         0x1000
+#define X87_IC_PROJECTIVE                  0x0000
+#define X87_IC_AFFINE                      0x1000
+#define X87_MCW_DN                         0x8040
+#define X87_DN_SAVE                        0x0000
+#define X87_DN_FLUSH_OPERANDS_SAVE_RESULTS 0x0040
+#define X87_DN_SAVE_OPERANDS_FLUSH_RESULTS 0x8000
+#define X87_DN_FLUSH                       0x8040
+#define X87_CW_DEFAULT                     0x027F
 
 EXTERN_C const double fpconst_inf;
 EXTERN_C const double fpconst_max;
@@ -188,8 +184,8 @@ EXTERN_C __declspec(naked) double __cdecl exp10(double x)
 	L2:
 		fstcw   word ptr [esp - 4]              /* Store control word */
 		mov     ax, word ptr [esp - 4]          /* Set new control word */
-		and     ax, not CW_RC_MASK
-		or      ax, CW_PC_64
+		and     ax, not X87_MCW_RC
+		or      ax, X87_PC_64
 		mov     word ptr [esp - 8], ax
 		fldcw   word ptr [esp - 8]
 		fld     qword ptr [x]

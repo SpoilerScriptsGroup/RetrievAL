@@ -37,8 +37,8 @@ __declspec(naked) unsigned int __cdecl _clearfp()
 	__asm
 	{
 		xor     ecx, ecx
-		fnstsw  ax
-		fnclex
+		fstsw   ax
+		fclex
 		mov     cx, ax
 		call    ToStatusFlag
 		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86

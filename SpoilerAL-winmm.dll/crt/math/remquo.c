@@ -20,30 +20,19 @@ __declspec(naked) double __cdecl remquo(double x, double y, int *quo)
 	{
 		fld     qword ptr [esp + 12]            ; Load real from stack
 		ftst                                    ; Compare y with zero
-		fnstsw  ax                              ; Get the FPU status word
+		fstsw   ax                              ; Get the FPU status word
 		mov     cx, ax                          ;
 		fld     qword ptr [esp + 4]             ; Load real from stack
 		fxam                                    ; Examine st
-		fnstsw  ax                              ; Get the FPU status word
+		fstsw   ax                              ; Get the FPU status word
 		and     ch, 40H                         ; Zero ?
 		and     ah, 05H                         ; NaN or infinity ?
 		or      ch, ah                          ;
-		jz      L2                              ; Re-direct if x is not NaN, not infinity, and y is not zero
-		cmp     ah, 01H                         ; NaN ?
-		je      L1                              ; Re-direct if x is NaN
-		fstp    st(0)                           ; Set new top of stack
-		set_errno(EDOM)                         ; Set domain error (EDOM)
-		fld     qword ptr [_nan]                ; Load NaN
-	L1:
-		fstp    st(1)                           ; Set new stack top and pop
-		ret
-
-		align   16
-	L2:
+		jnz     L1                              ; Re-direct if x is NaN, infinity, or y is zero
 		fprem1                                  ; Get the partial remainder
 		fstsw   ax                              ; Get coprocessor status
 		test    ah, 04H                         ; Complete remainder ?
-		jnz     L2                              ; No, go get next remainder
+		jnz     L1                              ; No, go get next remainder
 		fstp    st(1)                           ; Set new stack top and pop
 		shr     eax, 6                          ; Extract the three low-order bits of the quotient from C0, C3, C1.
 		mov     ecx, eax
@@ -62,6 +51,17 @@ __declspec(naked) double __cdecl remquo(double x, double y, int *quo)
 		add     eax, ecx
 		mov     ecx, dword ptr [esp + 20]       ; Store the quotient and return.
 		mov     dword ptr [ecx], eax
+		ret
+
+		align   16
+	L1:
+		cmp     ah, 01H                         ; NaN ?
+		je      L2                              ; Re-direct if x is NaN
+		fstp    st(0)                           ; Set new top of stack
+		set_errno(EDOM)                         ; Set domain error (EDOM)
+		fld     qword ptr [_nan]                ; Load NaN
+	L2:
+		fstp    st(1)                           ; Set new stack top and pop
 		ret
 	}
 

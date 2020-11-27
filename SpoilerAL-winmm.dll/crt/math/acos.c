@@ -36,7 +36,7 @@ __declspec(naked) double __cdecl _CIacos(/*st0 x*/)
 		fld     st(0)                           ; Load x
 		fabs                                    ; Take the absolute value
 		fcomp   qword ptr [_one]                ; Compare |x| with 1
-		fnstsw  ax                              ; Get the FPU status word
+		fstsw   ax                              ; Get the FPU status word
 		test    ah, 45H                         ; |x| > 1 ?
 		jz      L1                              ; Re-direct if |x| > 1
 		fld     st(0)                           ; Load x

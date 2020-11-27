@@ -76,7 +76,7 @@ __declspec(naked) double __cdecl ldexp(double x, int exp)
 		fstp    qword ptr [esp - 8]             ; Cast to qword
 		fld     qword ptr [esp - 8]             ;
 #else
-		fnstcw  word ptr [esp - 4]              ; Qword rounding
+		fstcw   word ptr [esp - 4]              ; Qword rounding
 		mov     ax, word ptr [esp - 4]          ;
 		or      ax, 0C00h                       ;
 		mov     word ptr [esp - 8], ax          ;

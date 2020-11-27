@@ -20,11 +20,11 @@ __declspec(naked) double __cdecl remainder(double x, double y)
 	{
 		fld     qword ptr [esp + 12]            ; Load real from stack
 		ftst                                    ; Compare y with zero
-		fnstsw  ax                              ; Get the FPU status word
+		fstsw   ax                              ; Get the FPU status word
 		mov     cx, ax                          ;
 		fld     qword ptr [esp + 4]             ; Load real from stack
 		fxam                                    ; Examine st
-		fnstsw  ax                              ; Get the FPU status word
+		fstsw   ax                              ; Get the FPU status word
 		and     ch, 40H                         ; Zero ?
 		and     ah, 05H                         ; NaN or infinity ?
 		or      ch, ah                          ;

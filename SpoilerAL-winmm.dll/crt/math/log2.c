@@ -24,12 +24,12 @@ __declspec(naked) double __cdecl log2(double x)
 	{
 		fld     qword ptr [esp + 4]             // x
 		fxam
-		fnstsw  ax
+		fstsw   ax
 		and     ah, 45H
 		cmp     ah, 01H
 		je      L2                              // x is NaN ?
 		ftst
-		fnstsw  ax
+		fstsw   ax
 		test    ah, 41H
 		jnz     L4                              // x <= 0 ?
 		fld1                                    // 1 : x
@@ -39,11 +39,11 @@ __declspec(naked) double __cdecl log2(double x)
 		fld     st(0)                           // x-1 : x-1 : x : 1
 		fabs                                    // |x-1| : x-1 : x : 1
 		fcomp   qword ptr [_limit]              // x-1 : x : 1
-		fnstsw  ax                              // x-1 : x : 1
+		fstsw   ax                              // x-1 : x : 1
 		test    ah, 45H
 		jz      L3
 		ftst
-		fnstsw  ax
+		fstsw   ax
 		test    ah, 40H                         // Is Zero ?
 		jz      L1
 		fabs                                    // log10(1) is +0 in all rounding modes.

@@ -33,11 +33,11 @@ __declspec(naked) double __cdecl _CIfmod(/*st1 x, st0 y*/)
 	__asm
 	{
 		ftst                                    ; Compare y with zero
-		fnstsw  ax                              ; Get the FPU status word
+		fstsw   ax                              ; Get the FPU status word
 		mov     cx, ax                          ;
 		fxch                                    ; Swap arguments
 		fxam                                    ; Examine st
-		fnstsw  ax                              ; Get the FPU status word
+		fstsw   ax                              ; Get the FPU status word
 		and     ch, 40H                         ; Zero ?
 		and     ah, 05H                         ; NaN or infinity ?
 		or      ch, ah                          ;

@@ -206,7 +206,7 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		align   16
 	L1:
 		mov     dx, ax                          ; Save flags of compare y with zero
-		fnstcw  word ptr [esp - 4]              ; Save control word
+		fstcw   word ptr [esp - 4]              ; Save control word
 		fxch                                    ; Swap st, st(1)
 		ftst                                    ; Compare x with zero
 		fstsw   ax                              ; Get the FPU status word

@@ -50,12 +50,12 @@ __declspec(naked) double __cdecl _CIlog10(/*st0 x*/)
 	__asm
 	{
 		fxam
-		fnstsw  ax
+		fstsw   ax
 		and     ah, 45H
 		cmp     ah, 01H
 		je      L2                              // x is NaN ?
 		ftst
-		fnstsw  ax
+		fstsw   ax
 		test    ah, 41H
 		jnz     L4                              // x <= 0 ?
 		fldlg2                                  // log10(2) : x
@@ -65,11 +65,11 @@ __declspec(naked) double __cdecl _CIlog10(/*st0 x*/)
 		fld     st(0)                           // x-1 : x-1 : x : log10(2)
 		fabs                                    // |x-1| : x-1 : x : log10(2)
 		fcomp   qword ptr [_limit]              // x-1 : x : log10(2)
-		fnstsw  ax                              // x-1 : x : log10(2)
+		fstsw   ax                              // x-1 : x : log10(2)
 		test    ah, 45H
 		jz      L3
 		ftst
-		fnstsw  ax
+		fstsw   ax
 		test    ah, 40H                         // Is Zero ?
 		jz      L1
 		fabs                                    // log10(1) is +0 in all rounding modes.

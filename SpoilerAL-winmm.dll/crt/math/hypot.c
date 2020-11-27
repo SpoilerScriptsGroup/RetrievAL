@@ -131,7 +131,7 @@ __declspec(naked) double __cdecl _hypot(double x, double y)
 		fscale                                  ; Scale by power of 2
 		fstp    st(1)                           ; Set new stack top and pop
 #if MSC_COMPATIBLE
-		fnstcw  word ptr [esp - 4]              ; Qword rounding
+		fstcw   word ptr [esp - 4]              ; Qword rounding
 		mov     ax, word ptr [esp - 4]          ;
 		or      ax, 0C00h                       ;
 		mov     word ptr [esp - 8], ax          ;

@@ -23,7 +23,7 @@ __declspec(naked) double __cdecl acosh(double x)
 		fld     qword ptr [esp + 4]             ; Load real from stack
 		fld1                                    ; Load real number 1
 		fcom                                    ; Compare 1 with x
-		fnstsw  ax                              ; Get the FPU status word
+		fstsw   ax                              ; Get the FPU status word
 		test    ah, 45H                         ; 1 > x ?
 		jz      L1                              ; Re-direct if 1 > x
 		fld     st(1)                           ; Duplicate st1

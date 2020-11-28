@@ -40,11 +40,6 @@ static void __cdecl dtol3_NaN();
 #define EXCEPTION_FLT_UNDERFLOW         0xC0000093
 #pragma warning(pop)
 
-#define X87_EM_INVALID                  0x0001
-#define X87_EM_OVERFLOW                 0x0008
-#define X87_EM_UNDERFLOW                0x0010
-#define X87_EM_INEXACT                  0x0020
-
 #pragma warning(disable:4102 4414)
 
 __declspec(naked) void __cdecl _ftoui3()
@@ -100,7 +95,7 @@ __declspec(naked) static void __cdecl ftol3_work()
 		comisd  xmm0, xmm2
 		jbe     ftol3_non_ftoul3
 		mov     ecx, EXCEPTION_FLT_INEXACT_RESULT
-		mov     edx, X87_EM_INEXACT
+		mov     edx, _MM_EXCEPT_INEXACT
 		call    ftol3_except
 
 	ftol3_non_ftoul3:
@@ -127,7 +122,7 @@ __declspec(naked) static void __cdecl ftol3_work()
 		pop     eax
 		jnz     ftol3_common
 		mov     ecx, EXCEPTION_FLT_UNDERFLOW
-		mov     edx, X87_EM_UNDERFLOW
+		mov     edx, _MM_EXCEPT_UNDERFLOW
 		call    ftol3_except
 		xor     eax, eax
 		mov     edx, 80000000H
@@ -180,7 +175,7 @@ __declspec(naked) static void __cdecl ftol3_common()
 		or      eax, edx
 		jz      ftol3_exact
 		mov     ecx, EXCEPTION_FLT_INEXACT_RESULT
-		mov     edx, X87_EM_INEXACT
+		mov     edx, _MM_EXCEPT_INEXACT
 		call    ftol3_except
 
 	ftol3_zero:
@@ -197,7 +192,7 @@ __declspec(naked) static void __cdecl ftol3_arg_error()
 	__asm
 	{
 		mov     ecx, EXCEPTION_FLT_INVALID_OPERATION
-		mov     edx, X87_EM_INVALID
+		mov     edx, _MM_EXCEPT_INVALID
 		call    ftol3_except
 		xor     eax, eax
 		mov     edx, 80000000H
@@ -215,7 +210,7 @@ __declspec(naked) static void __cdecl ftol3_except()
 		mov     ax, word ptr [esp]
 		and     edx, eax
 		jz      ftol3_eh_gen
-		and     edx, X87_EM_OVERFLOW or X87_EM_UNDERFLOW
+		and     edx, _MM_EXCEPT_OVERFLOW or _MM_EXCEPT_UNDERFLOW
 		jz      ftol3_eh_cont
 		stmxcsr dword ptr [esp + 28]
 		or      dword ptr [esp + 4], edx
@@ -299,20 +294,20 @@ __declspec(naked) static void __cdecl dtol3_NaN()
 		cmp     ecx, 4
 		je      dtoul3_overflow
 		mov     ecx, EXCEPTION_FLT_OVERFLOW
-		mov     edx, X87_EM_OVERFLOW
+		mov     edx, _MM_EXCEPT_OVERFLOW
 		call    ftol3_except
 		mov     ecx, EXCEPTION_FLT_INEXACT_RESULT
-		mov     edx, X87_EM_INEXACT
+		mov     edx, _MM_EXCEPT_INEXACT
 		call    ftol3_except
 		jmp     dtol3_underflow
 
 		align   16
 	dtoul3_overflow:
 		mov     ecx, EXCEPTION_FLT_INEXACT_RESULT
-		mov     edx, X87_EM_INEXACT
+		mov     edx, _MM_EXCEPT_INEXACT
 		call    ftol3_except
 		mov     ecx, EXCEPTION_FLT_OVERFLOW
-		mov     edx, X87_EM_OVERFLOW
+		mov     edx, _MM_EXCEPT_OVERFLOW
 		call    ftol3_except
 
 	dtol3_underflow:
@@ -323,10 +318,10 @@ __declspec(naked) static void __cdecl dtol3_NaN()
 		comisd  xmm1, xmm2
 		je      ftol3_common
 		mov     ecx, EXCEPTION_FLT_UNDERFLOW
-		mov     edx, X87_EM_UNDERFLOW
+		mov     edx, _MM_EXCEPT_UNDERFLOW
 		call    ftol3_except
 		mov     ecx, EXCEPTION_FLT_INEXACT_RESULT
-		mov     edx, X87_EM_INEXACT
+		mov     edx, _MM_EXCEPT_INEXACT
 		call    ftol3_except
 		jmp     ftol3_common
 
@@ -348,7 +343,7 @@ __declspec(naked) static void __cdecl dtol3_NaN()
 		or      eax, eax
 		jz      dtol3_exact
 		mov     ecx, EXCEPTION_FLT_INEXACT_RESULT
-		mov     edx, X87_EM_INEXACT
+		mov     edx, _MM_EXCEPT_INEXACT
 		call    ftol3_except
 
 	dtol3_exact:

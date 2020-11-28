@@ -2,6 +2,7 @@
 #include <windows.h>
 #include <stdint.h>
 #include <float.h>
+#include <xmmintrin.h>
 
 static const double   Int32ToUInt32[2] = { 0, (UINT64_C(1) << 32)/*0x41F0000000000000*/ };
 #define DP2to32 (Int32ToUInt32 + 8)
@@ -208,23 +209,29 @@ __declspec(naked) static void __cdecl ftol3_except()
 {
 	__asm
 	{
-		sub     esp, 28
+		sub     esp, 32
 		xor     eax, eax
 		fstenv  [esp]
 		mov     ax, word ptr [esp]
 		and     edx, eax
 		jz      ftol3_eh_gen
-		cmp     ecx, EXCEPTION_FLT_OVERFLOW
-		jb      ftol3_eh_cont
+		and     edx, X87_EM_OVERFLOW or X87_EM_UNDERFLOW
+		jz      ftol3_eh_cont
+		stmxcsr dword ptr [esp + 28]
 		or      dword ptr [esp + 4], edx
+		or      dword ptr [esp + 28], edx
 		fldenv  [esp]
+		ldmxcsr dword ptr [esp + 28]
 		jmp     ftol3_eh_cont
 
 		align   16
 	ftol3_eh_gen:
+		stmxcsr dword ptr [esp + 28]
 		mov     dword ptr [esp], 133FH
 		mov     dword ptr [esp + 4], edx
+		and     dword ptr [esp + 28], not _MM_EXCEPT_MASK
 		fldenv  [esp]
+		ldmxcsr dword ptr [esp + 28]
 		mov     dword ptr [esp], eax
 		push    edx
 		push    edx
@@ -234,7 +241,7 @@ __declspec(naked) static void __cdecl ftol3_except()
 		fldcw   word ptr [esp]
 
 	ftol3_eh_cont:
-		add     esp, 28
+		add     esp, 32
 		ret
 	}
 }

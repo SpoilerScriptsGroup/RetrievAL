@@ -25,7 +25,7 @@ static unsigned seqElement = MAXDWORD;
 static __declspec(naked) uint64_t __cdecl TSSGAttributeSelector_StartElementCheck_new_attributeSetMap(size_t const __n)
 {
 	__asm {
-#pragma region TSSGAttributeSelector.AESet 
+#pragma region TSSGAttributeSelector.AESet
 		mov  ecx, size bcb6_std_set
 #if OPTIMIZE_ALLOCATOR
 		call bcb6_operator_new
@@ -71,7 +71,7 @@ static __declspec(naked) uint64_t __cdecl TSSGAttributeSelector_StartElementChec
 #endif
 		xor  edx, edx
 
-		REVERT:
+	REVERT:
 		ret
 	}
 }
@@ -261,7 +261,7 @@ static void __fastcall TSSDir_GetSubjectVec_onOpen(TSSGSubject *const SSGS, TSSG
 			 pos < (TAdjustmentAttribute **)vector_end(attr);
 			 pos++)
 		{
-			TAdjustmentAttribute *const AElem = *pos;
+			const TAdjustmentAttribute *const AElem = *pos;
 #if ABBREV_SELECT
 			list_dword_push_back(TSSGCtrl_GetAttributeSelector(SSGC)->nowAttributeList, (LPDWORD)pos);
 			if (TSSGAttributeElement_GetType(AElem) & multi && AElem->seqElement >= seqElement)
@@ -284,17 +284,17 @@ static void __fastcall TSSDir_GetSubjectVec_onOpen(TSSGSubject *const SSGS, TSSG
 #endif
 		}
 		{
-			TDirAttribute *NewAElem = new_TDirAttribute();
+			TDirAttribute * const NewAElem = new_TDirAttribute();
 			TDirAttribute_Setting(NewAElem, TSSGCtrl_GetDirLevel(SSGC, SSGS) + 1);
 			TSSGAttributeSelector_PushElement(TSSGCtrl_GetAttributeSelector(SSGC), NewAElem);
 		}
 		{
 			stack_ptr ParentStack;
-			const TSSGSubjectProperty *prop;
+			const TSSGSubjectProperty *const prop = GetSubjectProperty(SSGS);
 
 			stack_ptr_ctor(&ParentStack, 0);
 			stack_ptr_push(&ParentStack, &SSGS);
-			if (prop = GetSubjectProperty(SSGS))
+			if (prop)
 			{
 				RepeatDepth = prop->RepeatDepth;
 				repeat_ReadSSRFile(SSGC, &ParentStack, NULL, Code, prop->RepeatIndex, prop->OuterRepeat, SSGS);
@@ -330,7 +330,7 @@ static void __declspec(naked) TSSGCtrl_ChangeDirectorySubject_GetSubjectVec(TSSD
 #define PUSH_EAX  (BYTE)0x50
 #define JNZ_SHORT (BYTE)0x75
 #define NOP       (BYTE)0x90
-#define NOP_X8  (UINT64)0x0000000000841F0F
+#define NOP_X8    0x0000000000841F0Full
 #define JECXZ     (BYTE)0xE3
 #define CALL_REL  (BYTE)0xE8
 #define JMP_REL32 (BYTE)0xE9
@@ -353,10 +353,10 @@ EXTERN_C void __cdecl Attach_FixClearChild()
 
 	// TSSGAttributeSelector::EndElementCheck
 	//   retain attributeSetMap if caller isn't TSSGAttributeSelector::Clear
-	*(LPWORD )0x004D3686 = BSWAP16(0x8BCB    );// mov    ecx, ebx  
+	*(LPWORD )0x004D3686 = BSWAP16(0x8BCB    );// mov    ecx, ebx
 	*(LPDWORD)0x004D3688 = BSWAP32(0x8B45042D);// mov    eax, dword ptr [_AddressOfReturnAddress]
 	*(LPDWORD)0x004D368C =         0x004D2D15 ;// sub    eax, TSSGAttributeSelector::Clear
-	*(LPDWORD)0x004D3690 = BSWAP32(0xF7D81BD2);// neg    eax; sbb edx, edx  
+	*(LPDWORD)0x004D3690 = BSWAP32(0xF7D81BD2);// neg    eax; sbb edx, edx
 	*(LPDWORD)0x004D3694 = BSWAP32(0x83C201E8);// add    edx, 1
 	*(LPDWORD)0x004D3698 = (DWORD)TSSGAttributeSelector_EndElementCheck_delete_attributeSetMap - (0x004D3698 + sizeof(DWORD));
 	*(LPDWORD)0x004D369C = BSWAP32(0x83632800);// and    dword ptr [nowAttributeVec], 0
@@ -388,14 +388,14 @@ EXTERN_C void __cdecl Attach_FixClearChild()
 
 	// TSSGAttributeSelector::EraseElement
 	//   reverse iterate
-	*(LPWORD )(0x004D414F + 1) = BSWAP16(0x4204);
-	*(LPWORD )(0x004D4152 + 0) = BSWAP16(0x8945);
+	*(LPWORD )(0x004D414F + 1) = BSWAP16(0x4204);// mov eax, nowAttributeList->_M_node->_M_prev
+	*(LPWORD )(0x004D4152 + 0) = BSWAP16(0x8945);// mov SIt, eax
 	*(LPWORD )(0x004D4152 + 2) = BSWAP16(0xF0 << 8 | NOP);
-	*(LPBYTE )(0x004D4156 + 1) =         0x55;
+	*(LPBYTE )(0x004D4156 + 1) =         0x55;// eax => edx
 
-	*(LPWORD )(0x004D41CD + 1) = BSWAP16(0x5104);
+	*(LPWORD )(0x004D41CD + 1) = BSWAP16(0x5104);// mov eax, SIt->_M_prev
 	*(LPBYTE ) 0x004D41D0      = NOP;
-	*(LPBYTE )(0x004D41D4 + 1) = 0x5D;
+	*(LPBYTE )(0x004D41D4 + 1) = 0x5D;// eax => ebx
 
 	*(UINT64 *)0x004D41DD = NOP_X8;
 
@@ -414,7 +414,7 @@ EXTERN_C void __cdecl Attach_FixClearChild()
 	*(UINT64 *)0x004D57F1 = NOP_X8;
 
 	// TSSGAttributeSelector::MakeNowAttributeVec
-	//   AESet = *this.AESet;
+	//   AESet = *this->AESet;
 	*(LPBYTE )(0x004D5891 + 0) =         0x8B;// mov eax, [esi]TSSGAttributeSelector.AESet
 	*(LPWORD )(0x004D5891 + 1) = BSWAP16(0x46 << 8 | offsetof(TSSGAttributeSelector, AESet));
 
@@ -423,8 +423,8 @@ EXTERN_C void __cdecl Attach_FixClearChild()
 	*(LPWORD ) 0x004D58A8      = BSWAP16(0x0F7F    );// movdqu xmmword ptr [edx], xmm0
 	*(LPBYTE ) 0x004D58AA      =         0x02;
 	*(LPWORD ) 0x004D58AE      = INC_ECX << 8 | INC_ECX;
-	*(LPDWORD) 0x004D58B0      = BSWAP32(0xF30F6F04);// movdqu xmm0, xmmword ptr [eax + ecx*8]  
-	*(LPDWORD) 0x004D58B4      = BSWAP32(0xC8F30F7F);// movdqu xmmword ptr [edx + ecx*8], xmm0  
+	*(LPDWORD) 0x004D58B0      = BSWAP32(0xF30F6F04);// movdqu xmm0, xmmword ptr [eax + ecx*8]
+	*(LPDWORD) 0x004D58B4      = BSWAP32(0xC8F30F7F);// movdqu xmmword ptr [edx + ecx*8], xmm0
 	*(LPWORD ) 0x004D58B8      = BSWAP16(0x04CA);
 	*(LPBYTE ) 0x004D58BA      = JMP_SHORT;
 	*(LPBYTE ) 0x004D58BB      = 0x004D58D6 - (0x004D58BB + sizeof(BYTE));
@@ -434,7 +434,7 @@ EXTERN_C void __cdecl Attach_FixClearChild()
 
 	//   omit dtor AESet
 	*(LPBYTE )(0x004D59F2 + 0) = JMP_SHORT;
-	//   *this.AESet = AESet;
+	//   *this->AESet = AESet;
 	*(LPBYTE ) 0x004D5A2D = NOP;
 	*(LPWORD ) 0x004D5A2E = BSWAP16(0x8B56    );// mov edx, [esi]TSSGAttributeSelector.AESet
 	*(LPBYTE ) 0x004D5A30 = offsetof(TSSGAttributeSelector, AESet);
@@ -459,9 +459,9 @@ EXTERN_C void __cdecl Attach_FixClearChild()
 
 	//   omit dtor AESet
 	*(LPBYTE )(0x004D5E6E + 0) = JMP_SHORT;
-	//   *this.AESet = AESet;
+	//   *this->AESet = AESet;
 	*(LPBYTE ) 0x004D5E9E = NOP;
-	*(LPBYTE ) 0x004D5E9F =         0x8B;// mov edx, [esi]TSSGAttributeSelector.AESet
+	*(LPBYTE ) 0x004D5E9F =         0x8B       ;// mov edx, [esi]TSSGAttributeSelector.AESet
 	*(LPDWORD) 0x004D5EA0 = BSWAP32(0x56 << 24 | offsetof(TSSGAttributeSelector, AESet) << 16 | 0x897A);
 	*(LPDWORD) 0x004D5EA4 = BSWAP32(0x088B4DF0);// mov [edx]bcb6_std_set._M_header, edi
 	*(LPWORD ) 0x004D5EA8 = BSWAP16(0x894A    );// mov ecx, AESet._M_node_count

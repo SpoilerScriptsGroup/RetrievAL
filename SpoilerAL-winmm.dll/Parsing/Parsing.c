@@ -12085,7 +12085,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				{
 #if EMBED_BREADTH
 					const TSSGSubjectProperty *prop;
-					if ((prop = GetSubjectProperty(SSGS)) && !(Object = &prop->ParentEntry->super)->isRepeatable)
+					if ((prop = GetSubjectProperty(SSGS)) && (Object = &prop->ParentEntry->super) && !Object->isRepeatable)
 						Finish = (Source = SubjectStringTable_GetString(&Object->code)) + 1;
 					else
 #endif

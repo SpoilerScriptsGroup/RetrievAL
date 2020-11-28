@@ -3,7 +3,7 @@
 #ifndef _countof
 #define _countof(_array) (sizeof(_array) / sizeof((_array)[0]))
 #endif
-#include <assert.h>
+#include <crtdbg.h>
 
 #if defined(_MSC_VER) && _MSC_VER < 1600
 typedef unsigned __int8  bool;
@@ -506,7 +506,7 @@ typedef unsigned __int8  uint8_t;
 typedef unsigned __int16 uint16_t;
 typedef unsigned __int32 uint32_t;
 
-uint32_t count_leading_zeroes(big_integer *x)
+static uint32_t count_leading_zeroes(big_integer *x)
 {
 	uint32_t i;
 
@@ -521,9 +521,7 @@ uint32_t count_leading_zeroes(big_integer *x)
 
 void generate_table()
 {
-	#define GENERATE_TABLE_INITIAL 10
-	#define GENERATE_TABLE_MAXIMUM 390
-	#define GENERATE_TABLE_STEP    10
+	#define NUMBER_OF_INDICES (380 / 10)
 
 	typedef struct {
 		uint16_t offset;    // The offset of this power's initial byte in the array
@@ -531,7 +529,7 @@ void generate_table()
 		uint8_t  size;      // The number of elements present for this power
 	} unpack_index;
 
-	unpack_index indices[(GENERATE_TABLE_MAXIMUM - GENERATE_TABLE_INITIAL) / GENERATE_TABLE_STEP];
+	unpack_index indices[NUMBER_OF_INDICES];
 	size_t       indices_size;
 	size_t       offset;
 	uint32_t     i, j;
@@ -542,7 +540,7 @@ void generate_table()
 	offset = 0;
 
 	printf("static const uint32_t large_power_data[] =\n{");
-	for (i = GENERATE_TABLE_INITIAL; i != GENERATE_TABLE_MAXIMUM; i += GENERATE_TABLE_STEP)
+	for (i = 10; i != NUMBER_OF_INDICES * 10 + 10; i += 10)
 	{
 		big_integer_assign_uint32(&x, 1);
 		for (j = 0; j != i; ++j)
@@ -563,7 +561,7 @@ void generate_table()
 	printf("\n};\n\n");
 
 	printf("static const unpack_index large_power_indices[] =\n{");
-	for (i = 0; i != indices_size; ++i)
+	for (i = 0; i != NUMBER_OF_INDICES; ++i)
 	{
 		printf("%s{ %3u, %2u, %2u },",
 			i % 4 == 0 ? "\n\t" : " ",
@@ -573,9 +571,7 @@ void generate_table()
 	}
 	printf("\n};\n\n");
 
-	#undef GENERATE_TABLE_INITIAL
-	#undef GENERATE_TABLE_MAXIMUM
-	#undef GENERATE_TABLE_STEP
+	#undef NUMBER_OF_INDICES
 }
 */
 
@@ -636,7 +632,7 @@ uint64_t __fastcall big_integer_divide(big_integer *numerator, const big_integer
 	// If the denominator is zero, then uh oh. We can't big_integer_divide by zero:
 	if (denominator->used == 0)
 	{
-		assert(("Division by zero", false));
+		_ASSERTE(("Division by zero", false));
 		return 0;
 	}
 

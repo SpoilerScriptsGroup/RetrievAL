@@ -1123,7 +1123,7 @@ errno_t __fastcall fltintrn_fp_format(
 		return fp_format_f(value, result_buffer, result_buffer_count, scratch_buffer, scratch_buffer_count, precision, decimal_point_char);
 
 	default:
-		assert(("Unsupported format specifier", 0));
+		_ASSERTE(("Unsupported format specifier", 0));
 	case 'g':
 	case 'G':
 		return fp_format_g(value, result_buffer, result_buffer_count, scratch_buffer, scratch_buffer_count, precision, decimal_point_char, use_capitals, min_exponent_digits);

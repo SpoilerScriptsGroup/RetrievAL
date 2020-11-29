@@ -848,9 +848,6 @@ __forceinline unsigned char _BitScanForward64(unsigned long *Index, uint64_t Mas
 	{
 		if (!_BitScanForward(Index, (unsigned long)(Mask >> 32)))
 			return 0;
-	}
-	else
-	{
 		*Index += 32;
 	}
 	return 1;

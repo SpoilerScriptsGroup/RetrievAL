@@ -59,35 +59,6 @@ double __cdecl modf(double x, double *intptr)
 	#undef DBL_MANT_MASK
 }
 #else	// _WIN64
-#if defined(_MSC_VER) && defined(_M_IX86) && _MSC_VER >= 1310	// _BitScanReverse64
-#include <intrin.h>
-#pragma intrinsic(_BitScanReverse)
-static __inline unsigned char _BitScanReverse64(unsigned long *Index, uint64_t Mask)
-{
-	unsigned char Result;
-
-	if (Result = _BitScanReverse(Index, (unsigned long)(Mask >> 32)))
-		*Index += 32;
-	else
-		Result = _BitScanReverse(Index, (unsigned long)Mask);
-	return Result;
-}
-#elif defined(_MSC_VER) && defined(_M_IX86)	// _BitScanReverse64
-static __inline unsigned char _BitScanReverse64(unsigned long *Index, unsigned long Mask)
-{
-	__asm
-	{
-		mov     ecx, dword ptr [Index]
-		bsr     eax, dword ptr [Mask + 4]
-		lea     eax, [eax + 32]
-		jnz     L1
-		bsr     eax, dword ptr [Mask]
-	L1:
-		mov     dword ptr [ecx], eax
-		setnz   al
-	}
-}
-#else	// _BitScanReverse64
 static __inline unsigned char _BitScanReverse64(unsigned long *Index, uint64_t Mask)
 {
 	if (!Mask)
@@ -96,7 +67,6 @@ static __inline unsigned char _BitScanReverse64(unsigned long *Index, uint64_t M
 		--(*Index);
 	return 1;
 }
-#endif	// _BitScanReverse64
 
 double __cdecl modf(double x, double *intptr)
 {

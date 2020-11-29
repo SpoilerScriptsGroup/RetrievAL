@@ -86,19 +86,14 @@ __forceinline static unsigned char _BitScanReverse(unsigned long *Index, unsigne
 #else
 __forceinline static unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
 {
-	if (Mask)
-	{
-		unsigned long i;
+	unsigned long i;
 
-		for (i = 31; (long)Mask >= 0; Mask <<= 1)
-			i--;
-		*Index = i;
-		return 1;
-	}
-	else
-	{
+	if (!Mask)
 		return 0;
-	}
+	for (i = 31; (long)Mask >= 0; Mask <<= 1)
+		i--;
+	*Index = i;
+	return 1;
 }
 #endif
 

@@ -336,8 +336,8 @@ __forceinline unsigned char _rotl8(unsigned char value, unsigned char shift)
 {
 	__asm
 	{
-		mov     cl, byte ptr [shift]
 		mov     al, byte ptr [value]
+		mov     cl, byte ptr [shift]
 		rol     al, cl
 	}
 }
@@ -345,8 +345,8 @@ __forceinline unsigned char _rotr8(unsigned char value, unsigned char shift)
 {
 	__asm
 	{
-		mov     cl, byte ptr [shift]
 		mov     al, byte ptr [value]
+		mov     cl, byte ptr [shift]
 		ror     al, cl
 	}
 }
@@ -354,8 +354,8 @@ __forceinline unsigned short _rotl16(unsigned short value, unsigned char shift)
 {
 	__asm
 	{
-		mov     cl, byte ptr [shift]
 		mov     ax, word ptr [value]
+		mov     cl, byte ptr [shift]
 		rol     ax, cl
 	}
 }
@@ -363,8 +363,8 @@ __forceinline unsigned short _rotr16(unsigned short value, unsigned char shift)
 {
 	__asm
 	{
-		mov     cl, byte ptr [shift]
 		mov     ax, word ptr [value]
+		mov     cl, byte ptr [shift]
 		ror     ax, cl
 	}
 }
@@ -372,8 +372,8 @@ __forceinline unsigned int _rotl(unsigned int value, int shift)
 {
 	__asm
 	{
-		mov     cl, byte ptr [shift]
 		mov     eax, dword ptr [value]
+		mov     cl, byte ptr [shift]
 		rol     eax, cl
 	}
 }
@@ -381,8 +381,8 @@ __forceinline unsigned int _rotr(unsigned int value, int shift)
 {
 	__asm
 	{
-		mov     cl, byte ptr [shift]
 		mov     eax, dword ptr [value]
+		mov     cl, byte ptr [shift]
 		ror     eax, cl
 	}
 }
@@ -496,9 +496,9 @@ do                                                              \
     const unsigned char *__restrict _Source      = Source;      \
     size_t                          _Count       = Count;       \
                                                                 \
-    __asm   mov     ecx, dword ptr [_Count]                     \
-    __asm   mov     esi, dword ptr [_Source]                    \
     __asm   mov     edi, dword ptr [_Destination]               \
+    __asm   mov     esi, dword ptr [_Source]                    \
+    __asm   mov     ecx, dword ptr [_Count]                     \
     __asm   rep movsb                                           \
 } while (0)
 #define __movsw(Destination, Source, Count)                      \
@@ -508,9 +508,9 @@ do                                                               \
     const unsigned short *__restrict _Source      = Source;      \
     size_t                           _Count       = Count;       \
                                                                  \
-    __asm   mov     ecx, dword ptr [_Count]                      \
-    __asm   mov     esi, dword ptr [_Source]                     \
     __asm   mov     edi, dword ptr [_Destination]                \
+    __asm   mov     esi, dword ptr [_Source]                     \
+    __asm   mov     ecx, dword ptr [_Count]                      \
     __asm   rep movsw                                            \
 } while (0)
 #define __movsd(Destination, Source, Count)                     \
@@ -520,9 +520,9 @@ do                                                              \
     const unsigned long *__restrict _Source      = Source;      \
     size_t                          _Count       = Count;       \
                                                                 \
-    __asm   mov     ecx, dword ptr [_Count]                     \
-    __asm   mov     esi, dword ptr [_Source]                    \
     __asm   mov     edi, dword ptr [_Destination]               \
+    __asm   mov     esi, dword ptr [_Source]                    \
+    __asm   mov     ecx, dword ptr [_Count]                     \
     __asm   rep movsd                                           \
 } while (0)
 #elif defined(__BORLANDC__)
@@ -553,9 +553,9 @@ do                                            \
     unsigned char             _Data  = Data;  \
     size_t                    _Count = Count; \
                                               \
-    __asm   mov     ecx, dword ptr [_Count]   \
-    __asm   mov     al, byte ptr [_Data]      \
     __asm   mov     edi, dword ptr [_Dest]    \
+    __asm   mov     al, byte ptr [_Data]      \
+    __asm   mov     ecx, dword ptr [_Count]   \
     __asm   rep stosb                         \
 } while (0)
 #define __stosw(Dest, Data, Count)             \
@@ -565,9 +565,9 @@ do                                             \
     unsigned short             _Data  = Data;  \
     size_t                     _Count = Count; \
                                                \
-    __asm   mov     ecx, dword ptr [_Count]    \
-    __asm   mov     ax, word ptr [_Data]       \
     __asm   mov     edi, dword ptr [_Dest]     \
+    __asm   mov     ax, word ptr [_Data]       \
+    __asm   mov     ecx, dword ptr [_Count]    \
     __asm   rep stosw                          \
 } while (0)
 #define __stosd(Dest, Data, Count)            \
@@ -577,9 +577,9 @@ do                                            \
     unsigned long             _Data  = Data;  \
     size_t                    _Count = Count; \
                                               \
-    __asm   mov     ecx, dword ptr [_Count]   \
-    __asm   mov     eax, dword ptr [_Data]    \
     __asm   mov     edi, dword ptr [_Dest]    \
+    __asm   mov     eax, dword ptr [_Data]    \
+    __asm   mov     ecx, dword ptr [_Count]   \
     __asm   rep stosd                         \
 } while (0)
 #elif defined(__BORLANDC__)
@@ -774,35 +774,25 @@ unsigned char __fastcall _BitScanReverse(unsigned long *Index, unsigned long Mas
 #else
 __forceinline unsigned char _BitScanForward(unsigned long *Index, unsigned long Mask)
 {
-	if (Mask)
-	{
-		unsigned long i;
+	unsigned long i;
 
-		for (i = 0; !(Mask & 1); Mask >>= 1)
-			i++;
-		*Index = i;
-		return 1;
-	}
-	else
-	{
+	if (!Mask)
 		return 0;
-	}
+	for (i = 0; !(Mask & 1); Mask >>= 1)
+		i++;
+	*Index = i;
+	return 1;
 }
 __forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
 {
-	if (Mask)
-	{
-		unsigned long i;
+	unsigned long i;
 
-		for (i = 31; (long)Mask >= 0; Mask <<= 1)
-			i--;
-		*Index = i;
-		return 1;
-	}
-	else
-	{
+	if (!Mask)
 		return 0;
-	}
+	for (i = 31; (long)Mask >= 0; Mask <<= 1)
+		i--;
+	*Index = i;
+	return 1;
 }
 #endif
 
@@ -854,22 +844,29 @@ unsigned char __fastcall __fastcall_BitScanReverse64(uint32_t low, uint32_t high
 #else
 __forceinline unsigned char _BitScanForward64(unsigned long *Index, uint64_t Mask)
 {
-	unsigned char Result;
-
-	if (!(Result = _BitScanForward(Index, (unsigned long)Mask)))
-		if (Result = _BitScanForward(Index, (unsigned long)(Mask >> 32)))
-			*Index += 32;
-	return Result;
+	if (!_BitScanForward(Index, (unsigned long)Mask))
+	{
+		if (!_BitScanForward(Index, (unsigned long)(Mask >> 32)))
+			return 0;
+	}
+	else
+	{
+		*Index += 32;
+	}
+	return 1;
 }
 __forceinline unsigned char _BitScanReverse64(unsigned long *Index, uint64_t Mask)
 {
-	unsigned char Result;
-
-	if (Result = _BitScanReverse(Index, (unsigned long)(Mask >> 32)))
-		*Index += 32;
+	if (!_BitScanReverse(Index, (unsigned long)(Mask >> 32)))
+	{
+		if (!_BitScanReverse(Index, (unsigned long)Mask))
+			return 0;
+	}
 	else
-		Result = _BitScanReverse(Index, (unsigned long)Mask);
-	return Result;
+	{
+		*Index += 32;
+	}
+	return 1;
 }
 #endif
 

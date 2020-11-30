@@ -41,57 +41,6 @@ typedef unsigned __int64 uint64_t;
 
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //
-// Character Sources
-//
-//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-typedef struct {
-	const TCHAR *p;
-	const TCHAR **end;
-} c_string_character_source;
-
-__forceinline static void c_string_character_source_ctor(c_string_character_source *this, const TCHAR *string, const TCHAR **end)
-{
-	this->p = string;
-	this->end = end;
-	if (end)
-		*end = string;
-}
-
-__forceinline static void c_string_character_source_dtor(c_string_character_source *this)
-{
-	if (this->end)
-		*this->end = this->p;
-}
-
-__forceinline static bool c_string_character_source_validate(c_string_character_source *this)
-{
-	_VALIDATE_RETURN(this->p != NULL, EINVAL, false);
-	return true;
-}
-
-__forceinline static TCHAR c_string_character_source_get(c_string_character_source *this)
-{
-	return *this->p++;
-}
-
-__forceinline static void c_string_character_source_unget(c_string_character_source *this, const TCHAR c)
-{
-	--this->p;
-	_VALIDATE_RETURN_VOID(c == '\0' || *this->p == c, EINVAL);
-}
-
-__forceinline static const TCHAR *c_string_character_source_save_state(c_string_character_source *this)
-{
-	return this->p;
-}
-
-__forceinline static void c_string_character_source_restore_state(c_string_character_source *this, const TCHAR *state)
-{
-	this->p = state;
-}
-
-//-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//
 // String-to-Integer Conversion
 //
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -116,12 +65,12 @@ __forceinline static bool is_space(const TCHAR c)
 // String-to-Floating-Point Conversion
 //
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-typedef enum {
-	SLD_OK,
-	SLD_NODIGITS,
-	SLD_UNDERFLOW,
-	SLD_OVERFLOW
-} SLD_STATUS;
+#define SLD_OK        0
+#define SLD_NODIGITS  0
+#define SLD_UNDERFLOW 1
+#define SLD_OVERFLOW  1
+
+typedef int SLD_STATUS;
 
 // This is the internal result type of an attempt to parse a floating point value
 // from a string.  The SLD_STATUS type (above) is the type returned to callers of
@@ -171,212 +120,156 @@ typedef struct {
 	bool     is_negative;
 } floating_point_string;
 
-static bool __fastcall parse_next_characters_from_source(
-	const TCHAR               *uppercase,
-	const TCHAR               *lowercase,
-	const size_t              count,
-	TCHAR                     *c,
-	c_string_character_source *source)
+static floating_point_parse_result __fastcall parse_floating_point_possible_infinity(
+	const TCHAR *p,
+	const TCHAR **source)
 {
-	size_t i;
-
-	for (i = 0; i != count; ++i)
+	if ((p[0] | ('a' - 'A')) != 'n' ||
+		(p[1] | ('a' - 'A')) != 'f')
 	{
-		if (*c != uppercase[i] && *c != lowercase[i])
-			return false;
-		*c = c_string_character_source_get(source);
-	}
-	return true;
-}
-
-__forceinline static bool parse_floating_point_possible_nan_is_snan(
-	TCHAR                     *c,
-	c_string_character_source *source)
-{
-	static const TCHAR uppercase[] = { 'S', 'N', 'A', 'N', ')' };
-	static const TCHAR lowercase[] = { 's', 'n', 'a', 'n', ')' };
-
-	return parse_next_characters_from_source(uppercase, lowercase, _countof(uppercase), c, source);
-}
-
-__forceinline static bool parse_floating_point_possible_nan_is_ind(
-	TCHAR                     *c,
-	c_string_character_source *source)
-{
-	static const TCHAR uppercase[] = { 'I', 'N', 'D', ')' };
-	static const TCHAR lowercase[] = { 'i', 'n', 'd', ')' };
-
-	return parse_next_characters_from_source(uppercase, lowercase, _countof(uppercase), c, source);
-}
-
-__forceinline static floating_point_parse_result parse_floating_point_possible_infinity(
-	TCHAR                     c,
-	c_string_character_source *source,
-	const TCHAR               *stored_state)
-{
-	static const TCHAR inf_uppercase[]   = { 'I', 'N', 'F' };
-	static const TCHAR inf_lowercase[]   = { 'i', 'n', 'f' };
-	static const TCHAR inity_uppercase[] = { 'I', 'N', 'I', 'T', 'Y' };
-	static const TCHAR inity_lowercase[] = { 'i', 'n', 'i', 't', 'y' };
-
-	if (!parse_next_characters_from_source(inf_uppercase, inf_lowercase, _countof(inf_uppercase), &c, source))
-	{
-		c_string_character_source_unget(source, c);
-		c_string_character_source_restore_state(source, stored_state);
 		return FLOATING_POINT_PARSE_RESULT_NO_DIGITS;
 	}
-
-	c_string_character_source_unget(source, c);
-	stored_state = c_string_character_source_save_state(source);
-	c = c_string_character_source_get(source);
-
-	if (!parse_next_characters_from_source(inity_uppercase, inity_lowercase, _countof(inity_uppercase), &c, source))
+	if ((p[2] | ('a' - 'A')) != 'i' ||
+		(p[3] | ('a' - 'A')) != 'n' ||
+		(p[4] | ('a' - 'A')) != 'i' ||
+		(p[5] | ('a' - 'A')) != 't' ||
+		(p[6] | ('a' - 'A')) != 'y')
 	{
-		c_string_character_source_unget(source, c);
-		c_string_character_source_restore_state(source, stored_state);
-		return FLOATING_POINT_PARSE_RESULT_INFINITY;
+		*source = p + 2;
 	}
-
-	c_string_character_source_unget(source, c);
+	else
+	{
+		*source = p + 7;
+	}
 	return FLOATING_POINT_PARSE_RESULT_INFINITY;
 }
 
-__forceinline static floating_point_parse_result parse_floating_point_possible_nan(
-	TCHAR                     c,
-	c_string_character_source *source,
-	const TCHAR               *stored_state)
+static floating_point_parse_result __fastcall parse_floating_point_possible_nan(
+	const TCHAR *p,
+	const TCHAR **source)
 {
-	static const TCHAR uppercase[] = { 'N', 'A', 'N' };
-	static const TCHAR lowercase[] = { 'n', 'a', 'n' };
+	const TCHAR *stored_state;
+	TCHAR       c;
+	TCHAR       lowercase;
 
-	if (!parse_next_characters_from_source(uppercase, lowercase, _countof(uppercase), &c, source))
+	if ((p[0] | ('a' - 'A')) != 'a' ||
+		(p[1] | ('a' - 'A')) != 'n')
 	{
-		c_string_character_source_unget(source, c);
-		c_string_character_source_restore_state(source, stored_state);
 		return FLOATING_POINT_PARSE_RESULT_NO_DIGITS;
 	}
 
-	c_string_character_source_unget(source, c);
-	stored_state = c_string_character_source_save_state(source);
-	c = c_string_character_source_get(source);
+	stored_state = p += 2;
+	c = *p++;
 
 	if (c != '(')
 	{
-		c_string_character_source_unget(source, c);
-		c_string_character_source_restore_state(source, stored_state);
+		*source = stored_state;
 		return FLOATING_POINT_PARSE_RESULT_QNAN;
 	}
 
-	c = c_string_character_source_get(source); // Advance past the left parenthesis
+	c = *p++; // Advance past the left parenthesis
 
 	// After we've parsed a left parenthesis, test to see whether the parenthesized
 	// string represents a signaling NaN "(SNAN)" or an indeterminate "(IND)".  If
 	// so, we return the corresponding kind of NaN:
-	if (parse_floating_point_possible_nan_is_snan(&c, source))
+	if ((lowercase = (c | ('a' - 'A'))) == 's')
 	{
-		c_string_character_source_unget(source, c);
-		return FLOATING_POINT_PARSE_RESULT_SNAN;
+		if (((c = *p++) | ('a' - 'A')) == 'n' &&
+			((c = *p++) | ('a' - 'A')) == 'a' &&
+			((c = *p++) | ('a' - 'A')) == 'n' &&
+			 (c = *p++)                == ')')
+		{
+			*source = p - 1;
+			return FLOATING_POINT_PARSE_RESULT_SNAN;
+		}
 	}
-
-	if (parse_floating_point_possible_nan_is_ind(&c, source))
+	else if (lowercase == 'i')
 	{
-		c_string_character_source_unget(source, c);
-		return FLOATING_POINT_PARSE_RESULT_INDETERMINATE;
+		if (((c = *p++) | ('a' - 'A')) == 'n' &&
+			((c = *p++) | ('a' - 'A')) == 'd' &&
+			 (c = *p++)                == ')')
+		{
+			*source = p - 1;
+			return FLOATING_POINT_PARSE_RESULT_INDETERMINATE;
+		}
 	}
 
 	// Otherwise, we didn't match one of the two special parenthesized strings.
 	// Keep eating chracters until we come across the right parenthesis or the
 	// end of the character sequence:
-	while (c != ')' && c != '\0')
+	while (c != ')')
 	{
-		if (!strtox_is_digit_or_nondigit(c))
+		if (strtox_is_digit_or_nondigit(c))
 		{
-			c_string_character_source_unget(source, c);
-			c_string_character_source_restore_state(source, stored_state);
-			return FLOATING_POINT_PARSE_RESULT_QNAN;
+			c = *p++;
 		}
-
-		c = c_string_character_source_get(source);
+		else
+		{
+			p = stored_state;
+			break;
+		}
 	}
 
-	if (c != ')')
-	{
-		c_string_character_source_unget(source, c);
-		c_string_character_source_restore_state(source, stored_state);
-		return FLOATING_POINT_PARSE_RESULT_QNAN;
-	}
-
+	*source = p;
 	return FLOATING_POINT_PARSE_RESULT_QNAN;
 }
 
 __forceinline static floating_point_parse_result parse_floating_point_from_source(
-	c_string_character_source *source,
-	floating_point_string     *fp_string)
+	const TCHAR           **source,
+	floating_point_string *fp_string)
 {
+	const TCHAR   *p;
 	const TCHAR   *stored_state;
 	TCHAR         c;
+	TCHAR         lowercase;
 	bool          is_hexadecimal;
 	uint8_t       *mantissa_first;
 	const uint8_t *mantissa_last;
 	uint8_t       *mantissa_it;
 	int           exponent_adjustment;
 	bool          found_digits;
+	unsigned int  max_digit_value;
+	unsigned int  digit_value;
 	int           radix_point;
 	bool          has_exponent;
 	int           exponent;
 	int           exponent_adjustment_multiplier;
 
-	if (!c_string_character_source_validate(source))
-		return FLOATING_POINT_PARSE_RESULT_NO_DIGITS;
+	p = *source;
 
-	stored_state = c_string_character_source_save_state(source);
+	_ASSERTE(p != NULL);
+
+	stored_state = p;
 
 	// Skip past any leading whitespace:
 	do
-		c = c_string_character_source_get(source);
+		c = *p++;
 	while (is_space(c));
 
 	// Check for the optional plus or minus sign:
-	fp_string->is_negative = c == '-';
-	if (c == '-' || c == '+')
-		c = c_string_character_source_get(source);
+	if ((fp_string->is_negative = c == '-') || c == '+')
+		c = *p++;
 
 	// Handle special cases "INF" and "INFINITY" (these are the only accepted
 	// character sequences that start with 'I'):
-	if (c == 'I' || c == 'i')
-		return parse_floating_point_possible_infinity(c, source, stored_state);
+	if ((lowercase = (c | ('a' - 'A'))) == 'i')
+		return parse_floating_point_possible_infinity(p, source);
 
 	// Handle special cases "NAN" and "NAN(...)" (these are the only accepted
 	// character sequences that start with 'N'):
-	if (c == 'N' || c == 'n')
-		return parse_floating_point_possible_nan(c, source, stored_state);
+	if (lowercase == 'n')
+		return parse_floating_point_possible_nan(p, source);
 
 	// Check for optional "0x" or "0X" hexadecimal base prefix:
-	is_hexadecimal = false;
-	if (c == '0')
+	if (is_hexadecimal = c == '0' && (*p | ('a' - 'A')) == 'x')
 	{
-		const TCHAR *next_stored_state;
-		TCHAR       next_c;
-
-		next_stored_state = c_string_character_source_save_state(source);
-
-		next_c = c_string_character_source_get(source);
-		if (next_c == 'x' || next_c == 'X')
-		{
-			is_hexadecimal = true;
-			c = c_string_character_source_get(source);
-
-			// If we match the hexadecimal base prefix we update the state to
-			// reflect that we consumed the leading zero to handle the case
-			// where a valid mantissa does not follow the base prefix.  In this
-			// case, the "0x" string is treated as a decimal zero subject ("0")
-			// followed by a final string starting with the "x".
-			stored_state = next_stored_state;
-		}
-		else
-		{
-			c_string_character_source_unget(source, next_c);
-		}
+		// If we match the hexadecimal base prefix we update the state to
+		// reflect that we consumed the leading zero to handle the case
+		// where a valid mantissa does not follow the base prefix.  In this
+		// case, the "0x" string is treated as a decimal zero subject ("0")
+		// followed by a final string starting with the "x".
+		stored_state = p++;
+		c = *p++;
 	}
 
 	mantissa_first = fp_string->mantissa;
@@ -393,29 +286,25 @@ __forceinline static floating_point_parse_result parse_floating_point_from_sourc
 	found_digits = false;
 
 	// Skip past any leading zeroes in the mantissa:
-	while (c == '0')
+	if (found_digits = c == '0')
 	{
 		found_digits = true;
-		c = c_string_character_source_get(source);
+		do
+			c = *p++;
+		while (c == '0');
 	}
 
 	// Scan the integer part of the mantissa:
-	for (; ; c = c_string_character_source_get(source))
+	max_digit_value = is_hexadecimal ? 0xFu : 9u;
+	if ((digit_value = strtox_parse_digit(c)) <= max_digit_value)
 	{
-		unsigned int max_digit_value;
-		unsigned int digit_value;
-
-		max_digit_value = is_hexadecimal ? 0xfu : 9u;
-
-		digit_value = strtox_parse_digit(c);
-		if (digit_value > max_digit_value)
-			break;
-
 		found_digits = true;
-		if (mantissa_it != mantissa_last)
-			*mantissa_it++ = (uint8_t)digit_value;
-
-		++exponent_adjustment;
+		do
+		{
+			if (mantissa_it != mantissa_last)
+				*mantissa_it++ = (uint8_t)digit_value;
+			++exponent_adjustment;
+		} while ((digit_value = strtox_parse_digit(c = *p++)) <= max_digit_value);
 	}
 
 	// If a radix point is present, scan the fractional part of the mantissa:
@@ -423,35 +312,26 @@ __forceinline static floating_point_parse_result parse_floating_point_from_sourc
 		radix_point = '.';
 	if (c == (TCHAR)radix_point)
 	{
-		c = c_string_character_source_get(source);
+		c = *p++;
 
 		// If we haven't yet scanned any nonzero digits, continue skipping over
 		// zeroes, updating the exponent adjustment to account for the zeroes
 		// we are skipping:
-		if (mantissa_it == mantissa_first)
+		if (mantissa_it == mantissa_first && c == '0')
 		{
-			while (c == '0')
-			{
-				found_digits = true;
+			found_digits = true;
+			do
 				--exponent_adjustment;
-				c = c_string_character_source_get(source);
-			}
+			while ((c = *p++) == '0');
 		}
 
-		for (; ; c = c_string_character_source_get(source))
+		if ((digit_value = strtox_parse_digit(c)) <= max_digit_value)
 		{
-			unsigned int max_digit_value;
-			unsigned int digit_value;
-
-			max_digit_value = is_hexadecimal ? 0xfu : 9u;
-
-			digit_value = strtox_parse_digit(c);
-			if (digit_value > max_digit_value)
-				break;
-
 			found_digits = true;
-			if (mantissa_it != mantissa_last)
-				*mantissa_it++ = (uint8_t)digit_value;
+			do
+				if (mantissa_it != mantissa_last)
+					*mantissa_it++ = (uint8_t)digit_value;
+			while ((digit_value = strtox_parse_digit(c = *p++)) <= max_digit_value);
 		}
 	}
 
@@ -461,8 +341,7 @@ __forceinline static floating_point_parse_result parse_floating_point_from_sourc
 		// good terminal state.  This may fail if we are reading from a stream,
 		// we read a hexadecimal base prefix ("0x"), but we did not find any digits
 		// following the base prefix.
-		c_string_character_source_unget(source, c);
-		c_string_character_source_restore_state(source, stored_state);
+		*source = stored_state;
 
 		// If a hexadecimal base prefix was present ("0x"), then the string is a
 		// valid input:  the "0" is the subject sequence and the "x" is the first
@@ -473,14 +352,15 @@ __forceinline static floating_point_parse_result parse_floating_point_from_sourc
 			: FLOATING_POINT_PARSE_RESULT_NO_DIGITS;
 	}
 
-	c_string_character_source_unget(source, c);
-	stored_state = c_string_character_source_save_state(source);
-	c = c_string_character_source_get(source);
+	stored_state = p - 1;
 
 	// Check for the optional 'e' or 'p' exponent introducer:
-	has_exponent = false;
 	switch (c)
 	{
+	default:
+		has_exponent = false;
+		break;
+
 	case 'e':
 	case 'E':
 		has_exponent = !is_hexadecimal;
@@ -499,42 +379,41 @@ __forceinline static floating_point_parse_result parse_floating_point_from_sourc
 		bool exponent_is_negative;
 		bool has_exponent_digits;
 
-		c = c_string_character_source_get(source); // Skip past exponent introducer character
+		c = *p++; // Skip past exponent introducer character
 
 		// Check for the optional plus or minus sign:
 		exponent_is_negative = c == '-';
 		if (c == '+' || c == '-')
-			c = c_string_character_source_get(source);
+			c = *p++;
 
 		has_exponent_digits = false;
 
-		while (c == '0')
+		if (c == '0')
 		{
 			has_exponent_digits = true;
-			c = c_string_character_source_get(source);
+			do
+				c = *p++;
+			while (c == '0');
 		}
 
-		for (; ; c = c_string_character_source_get(source))
+		if ((digit_value = strtox_parse_digit(c)) < 10)
 		{
-			unsigned int digit_value;
-
-			digit_value = strtox_parse_digit(c);
-			if (digit_value >= 10)
-				break;
-
 			has_exponent_digits = true;
-			exponent = exponent * 10 + digit_value;
-			if (exponent > MAXIMUM_TEMPORARY_DECIMAL_EXPONENT)
+			do
 			{
-				exponent = MAXIMUM_TEMPORARY_DECIMAL_EXPONENT + 1;
-				break;
-			}
+				exponent = exponent * 10 + digit_value;
+				if (exponent > MAXIMUM_TEMPORARY_DECIMAL_EXPONENT)
+				{
+					exponent = MAXIMUM_TEMPORARY_DECIMAL_EXPONENT + 1;
+					break;
+				}
+			} while ((digit_value = strtox_parse_digit(c = *p++)) < 10);
 		}
 
 		// If the exponent is too large, skip over the remaining exponent digits
 		// so we can correctly update the end pointer:
 		while (strtox_parse_digit(c) < 10)
-			c = c_string_character_source_get(source);
+			c = *p++;
 
 		if (exponent_is_negative)
 			exponent = -exponent;
@@ -543,19 +422,18 @@ __forceinline static floating_point_parse_result parse_floating_point_from_sourc
 		// terminal state.
 		if (!has_exponent_digits)
 		{
-			c_string_character_source_unget(source, c);
-			c_string_character_source_restore_state(source, stored_state);
+			p = stored_state;
 
 			// The call to restore_state will have ungotten the exponent
 			// introducer.  Re-get this character, to restore us to the
 			// state we had before we entered the exponent parsing block.
-			c = c_string_character_source_get(source);
+			c = *p++;
 		}
 	}
 
 	// Unget the last character that we read that terminated input.  After this
 	// point, we must not use the source, c, or stored_state.
-	c_string_character_source_unget(source, c);
+	*source = p - 1;
 
 	// Remove trailing zeroes from mantissa:
 	while (mantissa_it != mantissa_first && *(mantissa_it - 1) == 0)
@@ -607,13 +485,13 @@ SLD_STATUS __fastcall strtox_parse_floating_point_write_result(
 	double                            *result);
 
 __forceinline static SLD_STATUS parse_floating_point(
-	c_string_character_source *source,
-	double                    *result)
+	const TCHAR **source,
+	double      *result)
 {
 	floating_point_string       fp_string;
 	floating_point_parse_result parse_result;
 
-	_VALIDATE_RETURN(result != NULL, EINVAL, SLD_NODIGITS);
+	_ASSERTE(result != NULL);
 
 	// PERFORMANCE NOTE:  fp_string is intentionally left uninitialized.  Zero-
 	// initialization is quite expensive and is unnecessary.  The benefit of not

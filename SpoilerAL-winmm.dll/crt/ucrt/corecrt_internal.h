@@ -48,19 +48,6 @@
         }                                                                      \
     } while (0)
 
-#define _VALIDATE_RETURN_VOID(expr, errorcode)                                 \
-    do                                                                         \
-    {                                                                          \
-        int _expr_val = !!(expr);                                              \
-                                                                               \
-        _ASSERT_EXPR(_expr_val, _CRT_WIDE(#expr));                             \
-        if (!_expr_val)                                                        \
-        {                                                                      \
-            errno = errorcode;                                                 \
-            return;                                                            \
-        }                                                                      \
-    } while (0)
-
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //
 // CRT SAL Annotations

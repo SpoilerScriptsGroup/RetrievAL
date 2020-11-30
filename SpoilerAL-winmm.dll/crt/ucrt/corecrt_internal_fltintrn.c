@@ -424,9 +424,14 @@ __forceinline static errno_t fp_format_nan_or_infinity(
 	const uint32_t classification,
 	const bool     is_negative,
 	char           *result_buffer,
+#if USE_PRINTF
 	size_t         result_buffer_count,
 	const bool     use_capitals)
+#else
+	size_t         result_buffer_count)
+#endif
 {
+#if USE_PRINTF
 	static const char *strings[][4] =
 	{
 		{ "INF",       "INF", "inf",       "inf" }, // Infinity
@@ -434,9 +439,20 @@ __forceinline static errno_t fp_format_nan_or_infinity(
 		{ "NAN(SNAN)", "NAN", "nan(snan)", "nan" }, // Signaling NAN
 		{ "NAN(IND)",  "NAN", "nan(ind)",  "nan" }, // Indeterminate
 	};
+#else
+	static const char *strings[][2] =
+	{
+		{ "inf",       "inf" }, // Infinity
+		{ "nan",       "nan" }, // Quiet NAN
+		{ "nan(snan)", "nan" }, // Signaling NAN
+		{ "nan(ind)",  "nan" }, // Indeterminate
+	};
+#endif
 
 	uint32_t row;
+#if USE_PRINTF
 	uint32_t column;
+#endif
 	bool     long_string_will_fit;
 
 	#define restricted_count (size_t)4 // "INF" + 1 null terminator
@@ -459,6 +475,7 @@ __forceinline static errno_t fp_format_nan_or_infinity(
 			--result_buffer_count;
 	}
 
+#if USE_PRINTF
 	row = (uint32_t)classification - 1;
 	column = use_capitals ? 0 : 2;
 
@@ -467,6 +484,15 @@ __forceinline static errno_t fp_format_nan_or_infinity(
 		result_buffer,
 		strings[row][column + !long_string_will_fit],
 		result_buffer_count);
+#else
+	row = (uint32_t)classification - 1;
+
+	long_string_will_fit = result_buffer_count > strlen(strings[row][0]);
+	strncpy(
+		result_buffer,
+		strings[row][!long_string_will_fit],
+		result_buffer_count);
+#endif
 	return 0;
 }
 
@@ -489,7 +515,9 @@ __forceinline static errno_t fp_format_e_internal(
 	const size_t       result_buffer_count,
 	const int          precision,
 	const int          decimal_point_char,
+#if USE_PRINTF
 	const bool         capitals,
+#endif
 	const unsigned int min_exponent_digits,
 	const _strflt      *pflt,
 	const bool         g_fmt)
@@ -540,10 +568,12 @@ __forceinline static errno_t fp_format_e_internal(
 			: result_buffer_count - (p - result_buffer));
 	exponentpos = p + 2;
 
+#if USE_PRINTF
 	// Adjust exponent indicator according to capitals flag and increment
 	// pointer to point to exponent sign:
 	if (capitals)
 		*p = 'E';
+#endif
 
 	++p;
 
@@ -597,7 +627,9 @@ static errno_t __fastcall fp_format_e(
 	const size_t       scratch_buffer_count,
 	const int          precision,
 	const int          decimal_point_char,
+#if USE_PRINTF
 	const bool         capitals,
+#endif
 	const unsigned int min_exponent_digits)
 {
 	_strflt      strflt;
@@ -633,7 +665,11 @@ static errno_t __fastcall fp_format_e(
 		return e;
 	}
 
+#if USE_PRINTF
 	return fp_format_e_internal(result_buffer, result_buffer_count, precision, decimal_point_char, capitals, min_exponent_digits, &strflt, false);
+#else
+	return fp_format_e_internal(result_buffer, result_buffer_count, precision, decimal_point_char, min_exponent_digits, &strflt, false);
+#endif
 }
 
 #if USE_PRINTF
@@ -1071,7 +1107,9 @@ errno_t __fastcall fltintrn_fp_format(
 	const uint64_t options,
 	const int      decimal_point_char)
 {
+#if USE_PRINTF
 	bool         use_capitals;
+#endif
 	unsigned int min_exponent_digits;
 
 	_VALIDATE_RETURN_ERRCODE(result_buffer != NULL, EINVAL);
@@ -1081,8 +1119,6 @@ errno_t __fastcall fltintrn_fp_format(
 
 #if USE_PRINTF
 	use_capitals = format == 'A' || format == 'E' || format == 'F' || format == 'G';
-#else
-	use_capitals = false;
 #endif
 
 	// Detect special cases (NaNs and infinities) and handle them specially.
@@ -1101,8 +1137,12 @@ errno_t __fastcall fltintrn_fp_format(
 				classification,
 				(bool)internal_signbit(value),
 				result_buffer,
+#if USE_PRINTF
 				result_buffer_count,
 				use_capitals);
+#else
+				result_buffer_count);
+#endif
 	}
 
 #if USE_PRINTF
@@ -1134,7 +1174,7 @@ errno_t __fastcall fltintrn_fp_format(
 	switch (format)
 	{
 	case 'e':
-		return fp_format_e(value, result_buffer, result_buffer_count, scratch_buffer, scratch_buffer_count, precision, decimal_point_char, use_capitals, min_exponent_digits);
+		return fp_format_e(value, result_buffer, result_buffer_count, scratch_buffer, scratch_buffer_count, precision, decimal_point_char, min_exponent_digits);
 
 	case 'f':
 		return fp_format_f(value, result_buffer, result_buffer_count, scratch_buffer, scratch_buffer_count, precision, decimal_point_char);

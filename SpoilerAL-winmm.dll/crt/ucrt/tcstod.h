@@ -22,19 +22,19 @@ double __cdecl _tcstod(
 	const TCHAR *string,
 	TCHAR       **end_ptr)
 {
-	double                    result;
-	c_string_character_source source;
-	SLD_STATUS                status;
+	double     result;
+	SLD_STATUS status;
 
+	_ASSERTE(string != NULL);
+	if (string == NULL)
+	{
+		errno = EINVAL;
+		return 0.0;
+	}
+
+	status = parse_floating_point(&string, &result);
 	if (end_ptr)
 		*end_ptr = (TCHAR *)string;
-
-	_VALIDATE_RETURN(string != NULL, EINVAL, 0.0);
-
-	result = 0;
-	c_string_character_source_ctor(&source, string, (const TCHAR **)end_ptr);
-	status = parse_floating_point(&source, &result);
-	c_string_character_source_dtor(&source);
 
 	if (status == SLD_OVERFLOW || status == SLD_UNDERFLOW)
 		errno = ERANGE;

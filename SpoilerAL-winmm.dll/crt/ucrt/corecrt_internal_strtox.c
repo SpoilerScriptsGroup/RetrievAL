@@ -1,5 +1,9 @@
 #include "corecrt_internal_strtox.h"
 
+#if defined(_MSC_VER) && _MSC_VER < 1600
+typedef unsigned __int16 uint16_t;
+#endif
+
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //
 // String-to-Integer Conversion
@@ -140,7 +144,10 @@ __forceinline static bool should_round_up(
 	const bool round_bit,
 	const bool has_tail_bits)
 {
-	bool is_exactly_representable;
+	bool     is_exactly_representable;
+#ifdef _M_IX86
+	uint16_t rounding;
+#endif
 
 	// If there are no insignificant set bits, the value is exactly representable
 	// and should not be rounded in any rounding mode:
@@ -154,6 +161,7 @@ __forceinline static bool should_round_up(
 	// between two exactly representable values or [2] the value is exactly the
 	// midpoint between two exactly representable values and the greater of the
 	// two is even (this is "round-to-even").
+#ifndef _M_IX86
 	switch (_controlfp(0, 0) & MCW_RC)
 	{
 	case RC_NEAR: return round_bit && (has_tail_bits || lsb_bit);
@@ -166,6 +174,21 @@ __forceinline static bool should_round_up(
 	default:      return false;
 #endif
 	}
+#else
+	__asm   fstcw   word ptr [rounding]
+	switch (rounding & 0x0C00)
+	{
+	case 0x0000: return round_bit && (has_tail_bits || lsb_bit);
+	case 0x0400: return is_negative;
+	case 0x0800: return !is_negative;
+#if defined(_MSC_VER) && _MSC_VER >= 1200
+	case 0x0C00: return false;
+	default:     __assume(0);
+#else
+	default:     return false;
+#endif
+	}
+#endif
 
 /*
 	_ASSERTE(("unexpected rounding mode", false));

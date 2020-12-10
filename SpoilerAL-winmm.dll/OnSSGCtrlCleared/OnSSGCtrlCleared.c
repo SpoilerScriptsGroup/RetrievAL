@@ -57,11 +57,11 @@ static void __cdecl InternalOnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl)
 
 			if (ftProcessCreationTime.dwLowDateTime || ftProcessCreationTime.dwHighDateTime)
 			{
-				DWORD  dwProcessId;
 				HANDLE hProcess;
 
-				dwProcessId = SSGCtrl->processCtrl.entry.th32ProcessID;
-				if (dwProcessId && (hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION, FALSE, dwProcessId)))
+				if (hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION,
+										   FALSE,
+										   SSGCtrl->processCtrl.entry.th32ProcessID))
 				{
 					FILETIME creationTime, exitTime, kernelTime, userTime;
 

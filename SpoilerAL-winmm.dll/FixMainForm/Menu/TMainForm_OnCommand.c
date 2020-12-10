@@ -1,12 +1,11 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
+#include <shlwapi.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "intrinsic.h"
 #include "TMainForm.h"
 #include "TMenuItem.h"
 #include "TComboBox.h"
-#include <shlwapi.h>
-#pragma comment(lib, "shlwapi.lib")
 
 extern WORD    wBegginerModeId;
 extern WORD    wDebuggerModeId;

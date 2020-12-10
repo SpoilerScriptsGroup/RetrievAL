@@ -29,6 +29,7 @@ typedef struct
 
 EXTERN_C void(__cdecl * const TSSGAttributeSelector_StartElementCheck)(TSSGAttributeSelector *this);
 EXTERN_C void(__cdecl * const TSSGAttributeSelector_EndElementCheck)(TSSGAttributeSelector *this);
+EXTERN_C void(__cdecl * const TSSGAttributeSelector_PushStack)(TSSGAttributeSelector *this, LPVOID AElem);
 EXTERN_C bcb6_std_vector *(__cdecl * const TSSGAttributeSelector_AddElement)(TSSGAttributeSelector *this, LPVOID element);
 
 EXTERN_C void __cdecl TSSGAttributeSelector_EraseElement(TSSGAttributeSelector *this, LPVOID element);

@@ -32,17 +32,17 @@ __declspec(naked) void __stdcall TMainForm_Guide(const char *Mes, int Flags)
 		push    ebx
 		mov     ebx, dword ptr ds:[_MainForm]
 		call    dword ptr [__InitExceptBlockLDTC]
-		mov     ecx, dword ptr [ebx + 448H]
-		mov     eax, dword ptr [ebx + 56CH]
+		mov     ecx, [ebx]TMainForm.userMode
+		mov     eax, [ebx]TMainForm.guideForm
 		dec     ecx
-		jz      L2
+	//	jz      L2
 		test    eax, eax
 		jnz     L1
 		mov     eax, dword ptr ds:[0062089CH]
 		mov     ecx, ebx
 		mov     dl, 1
 		call    dword ptr [F0048C1F8]
-		mov     dword ptr [ebx + 56CH], eax
+		mov     [ebx]TMainForm.guideForm, eax
 	L1:
 		mov     ecx, dword ptr [ebp + 0CH]
 		mov     edx, dword ptr [ebp + 8H]
@@ -50,7 +50,7 @@ __declspec(naked) void __stdcall TMainForm_Guide(const char *Mes, int Flags)
 		push    edx
 		push    eax
 		call    TGuideForm_Guide
-		mov     eax, dword ptr [ebx + 56CH]
+		mov     eax, [ebx]TMainForm.guideForm
 		add     esp, 12
 		cmp     byte ptr [eax + 57H], 0
 		jne     L2

@@ -16,6 +16,22 @@ EXTERN_C void __cdecl LoadHeapList(TProcessCtrl *this);
 EXTERN_C BOOL __cdecl VerifyInternalSpecificationOfHeapID();
 #endif
 
+static HANDLE __stdcall TProcessCtrl_Open_OpenProcess(DWORD dwDesiredAccess, BOOL bInheritHandle, long dwProcessId)
+{
+	if (dwProcessId > 0)
+	{
+		HANDLE hProcess = OpenProcess(dwDesiredAccess | SYNCHRONIZE, bInheritHandle, dwProcessId);
+		if (hProcess)
+		{
+			if (WaitForSingleObject(hProcess, 0) == WAIT_TIMEOUT)
+				return hProcess;
+			else
+				CloseHandle(hProcess);
+		}
+	}
+	return NULL;
+}
+
 #define JMP_REL32 (BYTE )0xE9
 #define NOP       (BYTE )0x90
 #define NOP_X4    (DWORD)0x00401F0F
@@ -105,9 +121,10 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 	*(LPDWORD)0x00497048 = (DWORD)TSearchForm_AddressLBoxDblClick_SubjectAccess - (0x00497048 + sizeof(DWORD));
 
 	// TProcessCtrl::Clear
-	//   adjust register so that return false
-	*(LPBYTE )(0x004A34A6 + 1) = 0xC0;
-	*(LPBYTE )(0x004A34A8 + 1) = 0x83;
+	//   entry.th32ProcessID=NULL; => entry.th32ProcessID=-1;
+	*(LPWORD)  0x004A34A6      = BSWAP16(NOP << 8 | 0x5F);
+	*(LPWORD )(0x004A34A8 + 0) = BSWAP16(0x838B);
+	*(LPBYTE )(0x004A34A8 + 6) = -1;
 
 	// TProcessCtrl::LoadHeapList
 #if USE_INTERNAL_SPECIFICATION_OF_HEAP_ID
@@ -133,6 +150,9 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 	*(LPBYTE )0x004A610C = JMP_REL32;
 	*(LPDWORD)0x004A610D = (DWORD)TProcessCtrl_Attach - (0x004A610D + sizeof(DWORD));
 	*(LPBYTE )0x004A6111 = NOP;
+
+	// TProcessCtrl::Open
+	*(LPDWORD)(0x004A61A1 + 1) = (DWORD)TProcessCtrl_Open_OpenProcess - (0x04A61A1 + 1 + sizeof(DWORD));
 
 	// TProcessCtrl::SearchFunc
 	//	missing Listner->OnSearchEnd()

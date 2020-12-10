@@ -540,7 +540,7 @@ static void __fastcall accumulate_decimal_digits_into_big_integer(
 	{
 		if (accumulator_count == 9)
 		{
-			big_integer_multiply_by_uint32(result, 1000 * 1000 * 1000);
+			big_integer_multiply_by_uint32(result, 1000000000);
 			big_integer_add(result, accumulator);
 
 			accumulator = 0;
@@ -847,3 +847,4 @@ SLD_STATUS __fastcall strtox_parse_floating_point_write_result(
 		return SLD_NODIGITS;
 	}
 }
+

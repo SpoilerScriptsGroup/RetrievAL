@@ -803,9 +803,7 @@ __forceinline static errno_t fp_format_a(
 			digit = (unsigned short)((components->mantissa & mask) >> maskpos);
 			digit += '0';
 			if (digit > '9')
-			{
 				digit += (unsigned short)hexadd;
-			}
 			*result_buffer++ = (char)digit;
 			mask >>= 4;
 			maskpos -= 4;
@@ -1184,3 +1182,4 @@ errno_t __fastcall fltintrn_fp_format(
 	}
 #endif
 }
+

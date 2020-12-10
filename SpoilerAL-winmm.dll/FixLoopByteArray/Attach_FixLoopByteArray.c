@@ -49,6 +49,11 @@ EXTERN_C void __cdecl Attach_FixLoopByteArray()
 	*(LPDWORD)(0x00508466 + 1) = 0x0050848B - (0x00508466 + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::StrToProcessAccessElementVec
+	*(LPBYTE )(0x0050A9FF + 0) = 0xC7;
+	*(LPWORD )(0x0050A9FF + 1) = BSWAP16(0x42 << 8 | offsetof(TProcessAccessElementLoop, loopCount));
+	*(LPDWORD)(0x0050A9FF + 3) = 0;
+	*(LPBYTE ) 0x0050AA06      = NOP;
+
 	*(LPBYTE )(0x0050AEF8 + 1) = 0x00;
 #if 0
 	*(LPBYTE )0x0050AF9C = JMP_REL32;

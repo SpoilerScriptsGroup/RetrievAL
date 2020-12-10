@@ -125,45 +125,33 @@ bool __fastcall big_integer_shift_left(big_integer *x, const uint32_t n)
 bool __fastcall big_integer_add(big_integer *x, const uint32_t value)
 {
 	uint32_t carry;
-	uint32_t i;
 
-	if (value == 0)
-		return true;
-
-	carry = value;
-	for (i = 0; i != x->used; ++i)
+	if (carry = value)
 	{
-		uint64_t result;
-
-		result = (uint64_t)x->data[i] + carry;
-		x->data[i] = (uint32_t)result;
-		carry = (uint32_t)(result >> 32);
-	}
-
-	if (carry != 0)
-	{
-		if (x->used < BIG_INTEGER_ELEMENT_COUNT)
+		if (x->used)
 		{
-			x->data[x->used] = carry;
-			++x->used;
-		}
-		else
-		{
-			big_integer_clear(x);
-			return false;
-		}
-	}
+			uint32_t i;
 
+			i = 0;
+			do
+			{
+				uint64_t uu;
+
+				uu = (uint64_t)x->data[i] + carry;
+				x->data[i] = (uint32_t)uu;
+				if (!(carry = (uint32_t)(uu >> 32)))
+					return true;
+			} while (++i != x->used);
+			if (i >= BIG_INTEGER_ELEMENT_COUNT)
+			{
+				big_integer_clear(x);
+				return false;
+			}
+		}
+		x->data[x->used] = carry;
+		++x->used;
+	}
 	return true;
-}
-
-__forceinline static uint32_t add_carry(uint32_t *u1, const uint32_t u2, const uint32_t u_carry)
-{
-	uint64_t uu;
-
-	uu = (uint64_t)*u1 + u2 + u_carry;
-	*u1 = (uint32_t)uu;
-	return (uint32_t)(uu >> 32);
 }
 
 __forceinline static uint32_t add_multiply_carry(uint32_t *u_add, const uint32_t u_mul_1, const uint32_t u_mul_2, const uint32_t u_carry)
@@ -183,11 +171,11 @@ __forceinline static uint32_t multiply_core(uint32_t *multiplicand, const uint32
 	carry = 0;
 	for (i = 0; i != multiplicand_count; ++i)
 	{
-		uint64_t result;
+		uint64_t uu;
 
-		result = (uint64_t)multiplicand[i] * multiplier + carry;
-		multiplicand[i] = (uint32_t)result;
-		carry = (uint32_t)(result >> 32);
+		uu = (uint64_t)multiplicand[i] * multiplier + carry;
+		multiplicand[i] = (uint32_t)uu;
+		carry = (uint32_t)(uu >> 32);
 	}
 	return carry;
 }
@@ -307,13 +295,17 @@ bool __fastcall big_integer_multiply(big_integer *multiplicand, const big_intege
 
 		while (u_carry != 0 && iu_res != BIG_INTEGER_ELEMENT_COUNT)
 		{
+			uint64_t uu;
+
 			if (iu_res == result.used)
 			{
 				result.data[iu_res] = 0;
 				result.used = iu_res + 1;
 			}
 
-			u_carry = add_carry(&result.data[iu_res++], 0, u_carry);
+			uu = (uint64_t)result.data[iu_res] + u_carry;
+			result.data[iu_res++] = (uint32_t)uu;
+			u_carry = (uint32_t)(uu >> 32);
 		}
 
 		if (iu_res == BIG_INTEGER_ELEMENT_COUNT)
@@ -838,3 +830,4 @@ uint64_t __fastcall big_integer_divide(big_integer *numerator, const big_integer
 
 	return quotient;
 }
+

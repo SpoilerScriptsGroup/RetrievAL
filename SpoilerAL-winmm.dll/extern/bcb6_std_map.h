@@ -33,7 +33,7 @@ EXTERN_C _Rb_tree_iterator(__cdecl *const _Rb_global_Rebalance_for_erase)(
 EXTERN_C _Rb_tree_iterator(__cdecl * const _Rb_global_M_increment)(_Rb_tree_iterator);
 EXTERN_C _Rb_tree_iterator(__cdecl * const _Rb_global_M_decrement)(_Rb_tree_iterator);
 
-#define bcb6_std_map_erase_sans_delete(this, it) \
+#define tree_erase_sans_delete(this, it) \
 	((this)->_M_node_count--, _Rb_global_Rebalance_for_erase(it, &(this)->_M_header->_M_parent, &(this)->_M_header->_M_left, &(this)->_M_header->_M_right))
 
 EXTERN_C bcb6_std_map_iterator(__cdecl *const bcb6_std_map_find)(bcb6_std_map *this, const DWORD *key);

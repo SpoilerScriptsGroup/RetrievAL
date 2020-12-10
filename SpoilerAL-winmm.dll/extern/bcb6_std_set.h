@@ -17,5 +17,4 @@ typedef pbcb6_std_set          pset;
 #define set_end                bcb6_std_map_end
 #define set_find               bcb6_std_map_find
 #define set_iterator_decrement bcb6_std_map_iterator_decrement
-#define set_erase_sans_delete  bcb6_std_map_erase_sans_delete
 #endif

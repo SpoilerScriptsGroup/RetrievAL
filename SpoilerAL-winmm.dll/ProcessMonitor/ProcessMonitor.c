@@ -25,6 +25,8 @@
 #include <psapi.h>
 #pragma comment(lib, "psapi.lib")
 
+#include <Shlwapi.h>
+
 #ifndef __BORLANDC__
 #define USING_REGEX 1
 #endif
@@ -192,17 +194,19 @@ static DWORD WINAPI ProcessMonitor(LPVOID lpParameter)
 {
 	HQUERY hQuery;
 
-	if (PdhOpenQuery(NULL, 0, &hQuery) == ERROR_SUCCESS)
+	if (PdhOpenQueryW(NULL, 0, &hQuery) == ERROR_SUCCESS)
 	{
-		LPCWSTR szInstanceName = L"SpoilerAL";
+		wchar_t szInstanceName[MAX_PATH];
 
 		DWORD                       dwProcessId;
 		PDH_COUNTER_PATH_ELEMENTS_W cpe;
 
+		GetModuleFileNameW(GetModuleHandleW(NULL), szInstanceName, _countof(szInstanceName));
+		PathRemoveExtensionW(szInstanceName);
 		dwProcessId = GetCurrentProcessId();
 		cpe.szMachineName    = NULL;
 		cpe.szObjectName     = L"Process";
-		cpe.szInstanceName   = (LPWSTR)szInstanceName;
+		cpe.szInstanceName   = PathFindFileNameW(szInstanceName);
 		cpe.szParentInstance = NULL;
 		cpe.dwInstanceIndex  = 0;
 		cpe.szCounterName    = L"ID Process";
@@ -233,7 +237,7 @@ static DWORD WINAPI ProcessMonitor(LPVOID lpParameter)
 			dwThreadIndex = 0;
 			cpe.szObjectName     = L"Thread";
 			cpe.szInstanceName   = szNumberString;
-			cpe.szParentInstance = (LPWSTR)szInstanceName;
+			cpe.szParentInstance = PathFindFileNameW(szInstanceName);
 			cpe.szCounterName    = L"ID Thread";
 			do
 			{
@@ -478,9 +482,11 @@ DWORD __stdcall FindProcessId(
 	{
 		if (!hMonitorThread)
 		{
+#if 0
 			DWORD dwThreadId;
 
 			hMonitorThread = CreateThread(NULL, 0, ProcessMonitor, NULL, 0, &dwThreadId);
+#endif
 		}
 	}
 	else

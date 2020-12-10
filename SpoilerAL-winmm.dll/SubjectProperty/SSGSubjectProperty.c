@@ -45,6 +45,7 @@ TSSGSubjectProperty * __fastcall GrowSubjectProperty(DWORD *lpdwIndex)
 				if (prop == NULL)
 					break;
 				SubjectProperty = prop;
+				Allocation <<= 1;
 			}
 		}
 		else

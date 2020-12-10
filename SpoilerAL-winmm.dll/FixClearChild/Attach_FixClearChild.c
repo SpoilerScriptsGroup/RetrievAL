@@ -138,7 +138,7 @@ void __fastcall TSSGAttributeSelector_AESet_erase(TSSGAttributeSelector *const t
 {
 	set_iterator const it = set_find(this->AESet, (LPDWORD)&AElem);
 	if (it != set_end(this->AESet))
-		node_alloc_deallocate(set_erase_sans_delete(this->AESet, it)
+		node_alloc_deallocate(tree_erase_sans_delete(this->AESet, it)
 #if !OPTIMIZE_ALLOCATOR
 							  , sizeof(bcb6_std_set_node) + sizeof(DWORD)
 #endif
@@ -261,8 +261,9 @@ static void __fastcall TSSDir_GetSubjectVec_onOpen(TSSGSubject *const SSGS, TSSG
 			 pos < (TAdjustmentAttribute **)vector_end(attr);
 			 pos++)
 		{
-			const TAdjustmentAttribute *const AElem = *pos;
+			TAdjustmentAttribute *const AElem = *pos;
 #if ABBREV_SELECT
+			TSSGAttributeSelector_PushStack(TSSGCtrl_GetAttributeSelector(SSGC), AElem);
 			list_dword_push_back(TSSGCtrl_GetAttributeSelector(SSGC)->nowAttributeList, (LPDWORD)pos);
 			if (TSSGAttributeElement_GetType(AElem) & multi && AElem->seqElement >= seqElement)
 				seqElement = AElem->seqElement + 1;
@@ -330,7 +331,7 @@ static void __declspec(naked) TSSGCtrl_ChangeDirectorySubject_GetSubjectVec(TSSD
 #define PUSH_EAX  (BYTE)0x50
 #define JNZ_SHORT (BYTE)0x75
 #define NOP       (BYTE)0x90
-#define NOP_X8    0x0000000000841F0Full
+#define NOP_X8          0x0000000000841F0Full
 #define JECXZ     (BYTE)0xE3
 #define CALL_REL  (BYTE)0xE8
 #define JMP_REL32 (BYTE)0xE9
@@ -444,7 +445,7 @@ EXTERN_C void __cdecl Attach_FixClearChild()
 
 	*(UINT64 *)0x004D5C60 = NOP_X8;
 
-	// push LIt
+	// push allAtteributeVecList iterator
 	*(LPBYTE )(0x004D5CF1 + 0) =         0x83   ;// add  dword ptr [ebx + 0x1C], 2
 	*(LPWORD )(0x004D5CF1 + 3) = BSWAP16(0x0257);// push edi
 	*(LPBYTE ) 0x004D5CF6      = NOP;

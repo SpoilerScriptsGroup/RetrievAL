@@ -1460,9 +1460,11 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 	bIsSeparatedLeft = TRUE;
 	for (p = lpSrc, end = lpSrc + nSrcLength; p < end; bIsSeparatedLeft = bNextIsSeparatedLeft)
 	{
-		TAG    iTag;
-		size_t nLength;
-		BYTE   bPriority;
+		TAG     iTag;
+		size_t  nLength;
+		BYTE    bPriority;
+		LPCBYTE last;
+		BYTE    c;
 
 		#define APPEND_TAG(tag, length, priority, type)                                         \
 		do                                                                                      \
@@ -2459,7 +2461,11 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					break;
 				if (p[6] != 't')
 					break;
-				if (p[7] != ':' && !__intrinsic_isspace(p[7]) && p[7] != ';' )
+				last = p + 7;
+				do
+					c = *(last++);
+				while (__intrinsic_isspace(c));
+				if (c != ':')
 					break;
 				bNextIsSeparatedLeft = TRUE;
 				APPEND_TAG_WITH_CONTINUE(TAG_DEFAULT, 7, PRIORITY_DEFAULT, OS_PUSH);

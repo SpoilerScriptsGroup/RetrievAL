@@ -124,7 +124,7 @@ __declspec(naked) static char * __cdecl strstrSSE42(const char *string1, const c
 		add     eax, 16
 		cmp     ecx, PAGE_SIZE - 15
 		jae     byte_compare_loop_entry                     // jump if cross pages
-		movdqu  xmm0, xmmword ptr [edi]                     // read 16 bytes of needle
+		movdqu  xmm0, xmmword ptr [edi]                     // read 16 bytes of haystack
 		pcmpistri xmm0, xmmword ptr [eax], 00011000B        // unsigned bytes, equal each, invert. returns index in ecx
 		jnbe    xmmword_compare_loop                        // jump if not carry flag and not zero flag
 		jc      find_first_char
@@ -359,4 +359,3 @@ __declspec(naked) static char * __cdecl strstrCPUDispatch(const char *string1, c
 	#undef __ISA_AVAILABLE_SSE42
 }
 #endif
-

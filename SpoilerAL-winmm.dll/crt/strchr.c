@@ -17,6 +17,7 @@ char * __cdecl strchr(const char *string, int c)
 #else
 #pragma function(strlen)
 
+char * __cdecl strchrSSE42(const char *string, int c);
 char * __cdecl strchrSSE2(const char *string, int c);
 char * __cdecl strchr386(const char *string, int c);
 static char * __cdecl strchrCPUDispatch(const char *string, int c);
@@ -31,6 +32,69 @@ __declspec(naked) char * __cdecl strchr(const char *string, int c)
 	}
 }
 
+// SSE4.2 version
+__declspec(naked) char * __cdecl strchrSSE42(const char *string, int c)
+{
+	__asm
+	{
+		#define string (esp + 4)
+		#define c      (esp + 8)
+
+		mov     edx, dword ptr [c]
+		mov     ecx, dword ptr [string]
+		test    dl, dl
+		jz      char_is_null
+		movd    xmm0, edx
+		punpcklbw xmm0, xmm0
+		pshuflw xmm0, xmm0, 0
+		movlhps xmm0, xmm0
+		mov     eax, ecx
+		or      edx, -1
+		and     ecx, 15
+		jz      loop_entry
+		sub     eax, ecx
+		shl     edx, cl
+		movdqa  xmm1, xmmword ptr [eax]
+		pxor    xmm2, xmm2
+		pcmpeqb xmm2, xmm1
+		pcmpeqb xmm1, xmm0
+		por     xmm1, xmm2
+		pmovmskb ecx, xmm1
+		and     ecx, edx
+		jz      loop_begin
+		bsf     ecx, ecx
+		cmp     byte ptr [eax + ecx], 0
+		je      not_found
+		jmp     found
+
+		align   16
+	loop_begin:
+		add     eax, 16
+	loop_entry:
+		pcmpistri xmm0, xmmword ptr [eax], 00001000B
+		jnbe    loop_begin
+		jc      found
+	not_found:
+		xor     eax, eax
+		ret
+
+		align   16
+	char_is_null:
+		push    ecx
+		push    ecx
+		call    strlen
+		pop     edx
+		pop     ecx
+	found:
+		add     eax, ecx
+		ret
+
+		#undef string
+		#undef c
+	}
+}
+
+// SSE2 version
 __declspec(naked) char * __cdecl strchrSSE2(const char *string, int c)
 {
 	__asm
@@ -90,6 +154,7 @@ __declspec(naked) char * __cdecl strchrSSE2(const char *string, int c)
 	}
 }
 
+// 80386 version
 __declspec(naked) char * __cdecl strchr386(const char *string, int c)
 {
 	__asm
@@ -249,24 +314,31 @@ __declspec(naked) char * __cdecl strchr386(const char *string, int c)
 
 __declspec(naked) static char * __cdecl strchrCPUDispatch(const char *string, int c)
 {
-	#define __ISA_AVAILABLE_X86  0
-	#define __ISA_AVAILABLE_SSE2 1
+	#define __ISA_AVAILABLE_X86   0
+	#define __ISA_AVAILABLE_SSE2  1
+	#define __ISA_AVAILABLE_SSE42 2
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
-		jne     L1
-		mov     dword ptr [strchrDispatch], offset strchr386
-		jmp     strchr386
+		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
+		jbe     L1
+		mov     dword ptr [strchrDispatch], offset strchrSSE42
+		jmp     strchrSSE42
 
 	L1:
 		mov     dword ptr [strchrDispatch], offset strchrSSE2
+		jb      L2
 		jmp     strchrSSE2
+
+	L2:
+		mov     dword ptr [strchrDispatch], offset strchr386
+		jmp     strchr386
 	}
 
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
+	#undef __ISA_AVAILABLE_SSE42
 }
 #endif

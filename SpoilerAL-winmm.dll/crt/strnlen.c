@@ -13,6 +13,10 @@ size_t __cdecl strnlen(const char *string, size_t maxlen)
 	return length;
 }
 #else
+extern const char xmmconst_maskbit[32];
+#define maskbit xmmconst_maskbit
+
+static size_t __cdecl strnlenSSE42(const char *string, size_t maxlen);
 static size_t __cdecl strnlenSSE2(const char *string, size_t maxlen);
 static size_t __cdecl strnlen386(const char *string, size_t maxlen);
 static size_t __cdecl strnlenCPUDispatch(const char *string, size_t maxlen);
@@ -27,6 +31,68 @@ __declspec(naked) size_t __cdecl strnlen(const char *string, size_t maxlen)
 	}
 }
 
+// SSE4.2 version
+__declspec(naked) static size_t __cdecl strnlenSSE42(const char *string, size_t maxlen)
+{
+	__asm
+	{
+		#define string (esp + 4)
+		#define maxlen (esp + 8)
+
+		mov     eax, dword ptr [maxlen]                     // eax = maxlen
+		mov     ecx, dword ptr [string]                     // ecx = string
+		test    eax, eax                                    // check if maxlen=0
+		jz      retzero                                     // if maxlen=0, leave
+		push    esi                                         // preserve esi
+		lea     esi, [ecx + eax]                            // esi = end of string
+		pxor    xmm0, xmm0                                  // xmm0 = zero clear
+		mov     edx, ecx
+		and     ecx, -16
+		and     edx, 15
+		jz      negate_count
+		xor     edx, 15
+		movdqa  xmm1, xmmword ptr [ecx]                     // read 16 bytes from string
+		movdqu  xmm2, xmmword ptr [maskbit + edx + 1]       // load the non target bits mask
+		por     xmm1, xmm2                                  // fill the non target bits to 1
+		pcmpistri xmm0, xmm1, 00001000B                     // find null. returns index in ecx
+		lea     edx, [edx + 1]
+		jz      found_at_first
+	negate_count:
+		sub     edx, eax                                    // edx = negative count
+		jb      loop_entry
+		jmp     epilog
+
+		align   16
+	found_at_first:
+		add     ecx, edx
+		xor     edx, edx
+		sub     ecx, 16
+		sub     edx, eax                                    // edx = negative count
+		jmp     found
+
+		align   16
+	loop_begin:
+		add     edx, 16
+		jc      epilog
+	loop_entry:
+		pcmpistri xmm0, xmmword ptr [esi + edx], 00001000B  // find null. returns index in ecx
+		jnz     loop_begin
+
+	found:
+		add     edx, ecx
+		jc      epilog
+		add     eax, edx
+	epilog:
+		pop     esi                                         // restore esi
+	retzero:
+		ret
+
+		#undef string
+		#undef maxlen
+	}
+}
+
+// SSE2 version
 __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t maxlen)
 {
 	__asm
@@ -89,6 +155,7 @@ __declspec(naked) static size_t __cdecl strnlenSSE2(const char *string, size_t m
 	}
 }
 
+// 80386 version
 __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t maxlen)
 {
 	__asm
@@ -199,24 +266,31 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 
 __declspec(naked) static size_t __cdecl strnlenCPUDispatch(const char *string, size_t maxlen)
 {
-	#define __ISA_AVAILABLE_X86  0
-	#define __ISA_AVAILABLE_SSE2 1
+	#define __ISA_AVAILABLE_X86   0
+	#define __ISA_AVAILABLE_SSE2  1
+	#define __ISA_AVAILABLE_SSE42 2
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
-		jne     L1
-		mov     dword ptr [strnlenDispatch], offset strnlen386
-		jmp     strnlen386
+		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
+		jbe     L1
+		mov     dword ptr [strnlenDispatch], offset strnlenSSE42
+		jmp     strnlenSSE42
 
 	L1:
 		mov     dword ptr [strnlenDispatch], offset strnlenSSE2
+		jb      L2
 		jmp     strnlenSSE2
+
+	L2:
+		mov     dword ptr [strnlenDispatch], offset strnlen386
+		jmp     strnlen386
 	}
 
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
+	#undef __ISA_AVAILABLE_SSE42
 }
 #endif

@@ -13,6 +13,10 @@ size_t __cdecl strlen(const char *string)
 	return length;
 }
 #else
+extern const char xmmconst_maskbit[32];
+#define maskbit xmmconst_maskbit
+
+static size_t __cdecl strlenSSE42(const char *string);
 static size_t __cdecl strlenSSE2(const char *string);
 static size_t __cdecl strlen386(const char *string);
 static size_t __cdecl strlenCPUDispatch(const char *string);
@@ -24,6 +28,45 @@ __declspec(naked) size_t __cdecl strlen(const char *string)
 	__asm
 	{
 		jmp     dword ptr [strlenDispatch]                  // Go to appropriate version, depending on instruction set
+	}
+}
+
+// SSE4.2 version
+__declspec(naked) static size_t __cdecl strlenSSE42(const char *string)
+{
+	__asm
+	{
+		#define string (esp + 4)
+
+		mov     eax, dword ptr [string]                     // get pointer to string
+		pxor    xmm0, xmm0                                  // set to zero
+		mov     ecx, eax
+		mov     edx, eax
+		and     eax, 15
+		jz      loop_entry
+		sub     ecx, eax
+		xor     eax, 15
+		movdqa  xmm1, xmmword ptr [ecx]                     // read 16 bytes from string
+		movdqu  xmm2, xmmword ptr [maskbit + eax + 1]       // load the non target bits mask
+		por     xmm1, xmm2                                  // fill the non target bits to 1
+		pcmpistri xmm0, xmm1, 00001000B                     // find null. returns index in ecx
+		lea     eax, [eax + 1]
+		jnz     loop_entry                                  // next 16 bytes
+		sub     eax, 16
+		jmp     last
+
+		align   16
+	loop_begin:
+		add     eax, 16                                     // increment pointer by 16
+	loop_entry:
+		pcmpistri xmm0, xmmword ptr [edx + eax], 00001000B  // find null. returns index in ecx
+		jnz     loop_begin                                  // next 16 bytes
+
+	last:
+		add     eax, ecx
+		ret
+
+		#undef string
 	}
 }
 
@@ -151,24 +194,31 @@ __declspec(naked) static size_t __cdecl strlen386(const char *string)
 
 __declspec(naked) static size_t __cdecl strlenCPUDispatch(const char *string)
 {
-	#define __ISA_AVAILABLE_X86  0
-	#define __ISA_AVAILABLE_SSE2 1
+	#define __ISA_AVAILABLE_X86   0
+	#define __ISA_AVAILABLE_SSE2  1
+	#define __ISA_AVAILABLE_SSE42 2
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
-		jne     L1
-		mov     dword ptr [strlenDispatch], offset strlen386
-		jmp     strlen386
+		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
+		jbe     L1
+		mov     dword ptr [strlenDispatch], offset strlenSSE42
+		jmp     strlenSSE42
 
 	L1:
 		mov     dword ptr [strlenDispatch], offset strlenSSE2
+		jb      L2
 		jmp     strlenSSE2
+
+	L2:
+		mov     dword ptr [strlenDispatch], offset strlen386
+		jmp     strlen386
 	}
 
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
+	#undef __ISA_AVAILABLE_SSE42
 }
 #endif

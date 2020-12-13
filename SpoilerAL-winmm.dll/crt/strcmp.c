@@ -101,15 +101,15 @@ __declspec(naked) static int __cdecl strcmpSSE42(const char *string1, const char
 		jae     dword_check_cross_pages                     // jump if cross pages
 		movdqu  xmm0, xmmword ptr [eax + esi]               // read 16 bytes of string1
 		pcmpistri xmm0, xmmword ptr [eax], 00011000B        // unsigned bytes, equal each, invert. returns index in ecx
-		jc      xmmword_not_equal
-		jz      return_equal
+		jbe     xmmword_break                               // jump if carry flag or zero flag
 		add     edi, 16
 		add     eax, 16
 		and     edi, PAGE_SIZE - 1
 		jmp     xmmword_loop
 
 		align   16
-	xmmword_not_equal:
+	xmmword_break:
+		jnc     return_equal
 		// strings are not equal
 		add     ecx, eax                                    // offset to first differing byte
 		pop     edi
@@ -330,3 +330,4 @@ __declspec(naked) static int __cdecl strcmpCPUDispatch(const char *string1, cons
 	#undef __ISA_AVAILABLE_SSE42
 }
 #endif
+

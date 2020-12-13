@@ -87,7 +87,7 @@ __declspec(naked) static char * __cdecl strstrSSE42(const char *string1, const c
 		mov     cl, byte ptr [esi + eax]                    // cl is char from haystack
 		add     esi, eax                                    // increment pointer into haystack
 		test    cl, cl                                      // end of haystack?
-		je      not_found                                   // yes, and no match has been found
+		jz      not_found                                   // yes, and no match has been found
 
 		// check if remaining consecutive characters match continuously
 		mov     eax, dword ptr [needle + 8]
@@ -124,11 +124,10 @@ __declspec(naked) static char * __cdecl strstrSSE42(const char *string1, const c
 		add     eax, 16
 		cmp     ecx, PAGE_SIZE - 15
 		jae     byte_compare_loop_entry                     // jump if cross pages
-		movdqa  xmm0, xmmword ptr [eax]                     // read 16 bytes of needle
-		pcmpistri xmm0, xmmword ptr [edi], 00011000B        // unsigned bytes, equal each, invert. returns index in ecx
+		movdqu  xmm0, xmmword ptr [edi]                     // read 16 bytes of needle
+		pcmpistri xmm0, xmmword ptr [eax], 00011000B        // unsigned bytes, equal each, invert. returns index in ecx
 		jnbe    xmmword_compare_loop                        // jump if not carry flag and not zero flag
-		cmp     byte ptr [eax + ecx], '\0'
-		jne     find_first_char
+		jc      find_first_char
 		jmp     found
 
 		align   16
@@ -360,3 +359,4 @@ __declspec(naked) static char * __cdecl strstrCPUDispatch(const char *string1, c
 	#undef __ISA_AVAILABLE_SSE42
 }
 #endif
+

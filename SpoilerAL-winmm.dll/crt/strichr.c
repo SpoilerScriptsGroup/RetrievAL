@@ -22,8 +22,12 @@ char * __cdecl _strichr(const char *string, int c)
 
 extern const char    xmmconst_casebitA[16];
 extern const wchar_t xmmconst_casebitW[8];
+extern const char    xmmconst_one[16];
+extern const char    xmmconst_maskbit[32];
 #define casebit     xmmconst_casebitA
 #define insensitive xmmconst_casebitW
+#define one         xmmconst_one
+#define maskbit     xmmconst_maskbit
 
 char * __cdecl strichrSSE42(const char *string, int c);
 char * __cdecl strichrSSE2(const char *string, int c);
@@ -59,45 +63,41 @@ __declspec(naked) char * __cdecl strichrSSE42(const char *string, int c)
 		cmp     al, 'z' - 'a' + 1
 		jae     strchrSSE42
 		movd    xmm0, edx
+		movdqa  xmm1, xmmword ptr [insensitive]
 		punpcklbw xmm0, xmm0
 		pshuflw xmm0, xmm0, 0
 		movlhps xmm0, xmm0
+		pxor    xmm0, xmm1
 		mov     eax, ecx
-		or      edx, -1
 		and     ecx, 15
-		jz      loop_start
+		jz      loop_entry1
 		sub     eax, ecx
-		shl     edx, cl
+		xor     ecx, 15
 		movdqa  xmm1, xmmword ptr [eax]
-		pxor    xmm2, xmm2
-		pcmpeqb xmm2, xmm1
-		por     xmm1, xmmword ptr [casebit]
-		pcmpeqb xmm1, xmm0
-		por     xmm1, xmm2
-		pmovmskb ecx, xmm1
-		and     ecx, edx
-		jnz     found_at_first
-		add     eax, 16
-	loop_start:
-		pxor    xmm0, xmmword ptr [insensitive]
-		jmp     loop_entry
+		movdqa  xmm2, xmmword ptr [one]
+		movdqu  xmm3, xmmword ptr [maskbit + ecx + 1]
+		pcmpeqb xmm4, xmm4
+		pand    xmm2, xmm3
+		pxor    xmm4, xmm3
+		pand    xmm3, xmm0
+		pand    xmm1, xmm4
+		por     xmm1, xmm3
+		psubb   xmm1, xmm2
+		jmp     loop_entry2
 
 		align   16
 	loop_begin:
 		add     eax, 16
-	loop_entry:
-		pcmpistri xmm0, xmmword ptr [eax], 00000000B
+	loop_entry1:
+		movdqa  xmm1, xmmword ptr [eax]
+	loop_entry2:
+		pcmpistri xmm0, xmm1, 00000000B
 		jnbe    loop_begin
 		jc      found
-	not_found:
 		xor     eax, eax
 		ret
 
 		align   16
-	found_at_first:
-		bsf     ecx, ecx
-		cmp     byte ptr [eax + ecx], 0
-		je      not_found
 	found:
 		add     eax, ecx
 		ret

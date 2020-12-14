@@ -17,6 +17,11 @@ char * __cdecl strchr(const char *string, int c)
 #else
 #pragma function(strlen)
 
+extern const char xmmconst_one[16];
+extern const char xmmconst_maskbit[32];
+#define one     xmmconst_one
+#define maskbit xmmconst_maskbit
+
 char * __cdecl strchrSSE42(const char *string, int c);
 char * __cdecl strchrSSE2(const char *string, int c);
 char * __cdecl strchr386(const char *string, int c);
@@ -49,32 +54,38 @@ __declspec(naked) char * __cdecl strchrSSE42(const char *string, int c)
 		pshuflw xmm0, xmm0, 0
 		movlhps xmm0, xmm0
 		mov     eax, ecx
-		or      edx, -1
 		and     ecx, 15
-		jz      loop_entry
+		jz      loop_entry1
 		sub     eax, ecx
-		shl     edx, cl
+		xor     ecx, 15
 		movdqa  xmm1, xmmword ptr [eax]
-		pxor    xmm2, xmm2
-		pcmpeqb xmm2, xmm1
-		pcmpeqb xmm1, xmm0
-		por     xmm1, xmm2
-		pmovmskb ecx, xmm1
-		and     ecx, edx
-		jz      loop_begin
-		bsf     ecx, ecx
-		cmp     byte ptr [eax + ecx], 0
-		je      not_found
-		jmp     found
+		movdqa  xmm2, xmmword ptr [one]
+		movdqu  xmm3, xmmword ptr [maskbit + ecx + 1]
+		pcmpeqb xmm4, xmm4
+		pand    xmm2, xmm3
+		pxor    xmm4, xmm3
+		pand    xmm3, xmm0
+		pand    xmm1, xmm4
+		por     xmm1, xmm3
+		dec     dl
+		jz      addition
+		psubb   xmm1, xmm2
+		jmp     loop_entry2
+
+		align   16
+	addition:
+		paddb   xmm1, xmm2
+		jmp     loop_entry2
 
 		align   16
 	loop_begin:
 		add     eax, 16
-	loop_entry:
-		pcmpistri xmm0, xmmword ptr [eax], 00000000B
+	loop_entry1:
+		movdqa  xmm1, xmmword ptr [eax]
+	loop_entry2:
+		pcmpistri xmm0, xmm1, 00000000B
 		jnbe    loop_begin
 		jc      found
-	not_found:
 		xor     eax, eax
 		ret
 

@@ -144,7 +144,7 @@ static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 			{
 				do	// do { ... } while (0);
 				{
-					if (!(flags & HORZ) || pRect->top >= rect.bottom || pRect->bottom < rect.top)
+					if (!(flags & HORZ) || pRect->top > rect.bottom || pRect->bottom < rect.top)
 						break;
 					if (fwSide == WMSZ_LEFT || fwSide == WMSZ_TOPLEFT || fwSide == WMSZ_BOTTOMLEFT)
 						if (pRect->left >= rect.left - SNAP_PIXELS && pRect->left < rect.left + SNAP_PIXELS)
@@ -164,7 +164,7 @@ static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 						break;
 					flags &= ~HORZ;
 				} while (0);
-				if (!(flags & VERT) || pRect->left >= rect.right || pRect->right < rect.left)
+				if (!(flags & VERT) || pRect->left > rect.right || pRect->right < rect.left)
 					break;
 				if (fwSide >= WMSZ_TOP && fwSide <= WMSZ_TOPRIGHT)
 					if (pRect->top >= rect.top - SNAP_PIXELS && pRect->top < rect.top + SNAP_PIXELS)
@@ -295,7 +295,7 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 			{
 				do	// do { ... } while (0);
 				{
-					if (!(flags & HORZ) || pRect->top >= rect.bottom || pRect->bottom < rect.top)
+					if (!(flags & HORZ) || pRect->top > rect.bottom || pRect->bottom < rect.top)
 						break;
 					if (pRect->left >= rect.left - SNAP_PIXELS && pRect->left < rect.left + SNAP_PIXELS)
 					{
@@ -321,7 +321,7 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 						break;
 					flags &= ~HORZ;
 				} while (0);
-				if (!(flags & VERT) || pRect->left >= rect.right || pRect->right < rect.left)
+				if (!(flags & VERT) || pRect->left > rect.right || pRect->right < rect.left)
 					break;
 				if (pRect->top >= rect.top - SNAP_PIXELS && pRect->top < rect.top + SNAP_PIXELS)
 				{

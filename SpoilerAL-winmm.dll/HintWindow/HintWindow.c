@@ -30,7 +30,7 @@ void __cdecl CreateHintWindow()
 		NULL);
 	if (!hToolTip)
 		return;
-    SendMessageA(hToolTip, TTM_SETMAXTIPWIDTH, 0, INT_MAX);
+    SendMessageA(hToolTip, TTM_SETMAXTIPWIDTH, 0, USHRT_MAX);
 	SendMessageA(hToolTip, TTM_SETDELAYTIME, TTDT_AUTOPOP, MAKELPARAM(2500, 0));
 	SendMessageA(hToolTip, TTM_SETDELAYTIME, TTDT_INITIAL, MAKELPARAM(0, 0));
 	SendMessageA(hToolTip, TTM_SETDELAYTIME, TTDT_RESHOW, MAKELPARAM(0, 0));

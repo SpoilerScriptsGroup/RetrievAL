@@ -71,7 +71,7 @@ __declspec(naked) char * __cdecl strchrSSE42(const char *string, int c)
 	loop_begin:
 		add     eax, 16
 	loop_entry:
-		pcmpistri xmm0, xmmword ptr [eax], 00001000B
+		pcmpistri xmm0, xmmword ptr [eax], 00000000B
 		jnbe    loop_begin
 		jc      found
 	not_found:

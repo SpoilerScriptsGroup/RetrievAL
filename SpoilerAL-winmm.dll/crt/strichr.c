@@ -20,11 +20,14 @@ char * __cdecl _strichr(const char *string, int c)
 
 #pragma warning(disable:4414)
 
-extern const char xmmconst_casebitA[16];
-#define casebit xmmconst_casebitA
+extern const char    xmmconst_casebitA[16];
+extern const wchar_t xmmconst_casebitW[8];
+#define casebit     xmmconst_casebitA
+#define insensitive xmmconst_casebitW
 
-static char * __cdecl strichrSSE2(const char *string, int c);
-static char * __cdecl strichr386(const char *string, int c);
+char * __cdecl strichrSSE42(const char *string, int c);
+char * __cdecl strichrSSE2(const char *string, int c);
+char * __cdecl strichr386(const char *string, int c);
 static char * __cdecl strichrCPUDispatch(const char *string, int c);
 
 static char *(__cdecl *strichrDispatch)(const char *string, int c) = strichrCPUDispatch;
@@ -37,7 +40,75 @@ __declspec(naked) char * __cdecl _strichr(const char *string, int c)
 	}
 }
 
-__declspec(naked) static char * __cdecl strichrSSE2(const char *string, int c)
+// SSE4.2 version
+__declspec(naked) char * __cdecl strichrSSE42(const char *string, int c)
+{
+	extern char * __cdecl strchrSSE42(const char *string, int c);
+
+	__asm
+	{
+		#define string (esp + 4)
+		#define c      (esp + 8)
+
+		mov     eax, dword ptr [c]
+		mov     ecx, dword ptr [string]
+		or      eax, 'a' - 'A'
+		xor     edx, edx
+		mov     dl, al
+		sub     eax, 'a'
+		cmp     al, 'z' - 'a' + 1
+		jae     strchrSSE42
+		movd    xmm0, edx
+		punpcklbw xmm0, xmm0
+		pshuflw xmm0, xmm0, 0
+		movlhps xmm0, xmm0
+		mov     eax, ecx
+		or      edx, -1
+		and     ecx, 15
+		jz      loop_start
+		sub     eax, ecx
+		shl     edx, cl
+		movdqa  xmm1, xmmword ptr [eax]
+		pxor    xmm2, xmm2
+		pcmpeqb xmm2, xmm1
+		por     xmm1, xmmword ptr [casebit]
+		pcmpeqb xmm1, xmm0
+		por     xmm1, xmm2
+		pmovmskb ecx, xmm1
+		and     ecx, edx
+		jnz     found_at_first
+		add     eax, 16
+	loop_start:
+		pxor    xmm0, xmmword ptr [insensitive]
+		jmp     loop_entry
+
+		align   16
+	loop_begin:
+		add     eax, 16
+	loop_entry:
+		pcmpistri xmm0, xmmword ptr [eax], 00000000B
+		jnbe    loop_begin
+		jc      found
+	not_found:
+		xor     eax, eax
+		ret
+
+		align   16
+	found_at_first:
+		bsf     ecx, ecx
+		cmp     byte ptr [eax + ecx], 0
+		je      not_found
+	found:
+		add     eax, ecx
+		ret
+
+		#undef string
+		#undef c
+	}
+}
+
+// SSE2 version
+__declspec(naked) char * __cdecl strichrSSE2(const char *string, int c)
 {
 	extern char * __cdecl strchrSSE2(const char *string, int c);
 
@@ -94,7 +165,8 @@ __declspec(naked) static char * __cdecl strichrSSE2(const char *string, int c)
 	}
 }
 
-__declspec(naked) static char * __cdecl strichr386(const char *string, int c)
+// 80386 version
+__declspec(naked) char * __cdecl strichr386(const char *string, int c)
 {
 	extern char * __cdecl strchr386(const char *string, int c);
 
@@ -256,24 +328,31 @@ __declspec(naked) static char * __cdecl strichr386(const char *string, int c)
 
 __declspec(naked) static char * __cdecl strichrCPUDispatch(const char *string, int c)
 {
-	#define __ISA_AVAILABLE_X86  0
-	#define __ISA_AVAILABLE_SSE2 1
+	#define __ISA_AVAILABLE_X86   0
+	#define __ISA_AVAILABLE_SSE2  1
+	#define __ISA_AVAILABLE_SSE42 2
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
-		jne     L1
-		mov     dword ptr [strichrDispatch], offset strichr386
-		jmp     strichr386
+		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
+		jbe     L1
+		mov     dword ptr [strichrDispatch], offset strichrSSE42
+		jmp     strichrSSE42
 
 	L1:
 		mov     dword ptr [strichrDispatch], offset strichrSSE2
+		jb      L2
 		jmp     strichrSSE2
+
+	L2:
+		mov     dword ptr [strichrDispatch], offset strichr386
+		jmp     strichr386
 	}
 
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
+	#undef __ISA_AVAILABLE_SSE42
 }
 #endif

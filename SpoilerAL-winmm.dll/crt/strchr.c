@@ -17,9 +17,7 @@ char * __cdecl strchr(const char *string, int c)
 #else
 #pragma function(strlen)
 
-extern const char xmmconst_one[16];
 extern const char xmmconst_maskbit[32];
-#define one     xmmconst_one
 #define maskbit xmmconst_maskbit
 
 char * __cdecl strchrSSE42(const char *string, int c);
@@ -55,49 +53,48 @@ __declspec(naked) char * __cdecl strchrSSE42(const char *string, int c)
 		movlhps xmm0, xmm0
 		mov     eax, ecx
 		and     ecx, 15
-		jz      loop_entry1
+		jz      loop_entry
 		sub     eax, ecx
 		xor     ecx, 15
 		movdqa  xmm1, xmmword ptr [eax]
-		movdqa  xmm2, xmmword ptr [one]
-		movdqu  xmm3, xmmword ptr [maskbit + ecx + 1]
-		pcmpeqb xmm4, xmm4
-		pand    xmm2, xmm3
-		pxor    xmm4, xmm3
-		pand    xmm3, xmm0
-		pand    xmm1, xmm4
-		por     xmm1, xmm3
-		dec     dl
-		jz      addition
-		psubb   xmm1, xmm2
-		jmp     loop_entry2
-
-		align   16
-	addition:
+		movdqu  xmm2, xmmword ptr [maskbit + ecx + 1]
+		pcmpeqb xmm3, xmm3
+		movdqa  xmm4, xmm2
+		pxor    xmm3, xmm2
+		pand    xmm4, xmm0
+		pand    xmm1, xmm3
+		por     xmm1, xmm4
+		cmp     dl, 1
+		je      addition
 		paddb   xmm1, xmm2
-		jmp     loop_entry2
+		jmp     loop_start
 
-		align   16
-	loop_begin:
-		add     eax, 16
-	loop_entry1:
-		movdqa  xmm1, xmmword ptr [eax]
-	loop_entry2:
-		pcmpistri xmm0, xmm1, 00000000B
-		jnbe    loop_begin
-		jc      found
-		xor     eax, eax
-		ret
-
-		align   16
+		align   8
 	char_is_null:
 		push    ecx
 		push    ecx
 		call    strlen
 		pop     edx
 		pop     ecx
-	found:
 		add     eax, ecx
+		ret
+
+	addition:
+		psubb   xmm1, xmm2
+	loop_start:
+		pcmpistri xmm0, xmm1, 00000000B
+		jbe     epilog
+
+		align   16                                          // already aligned
+	loop_begin:
+		add     eax, 16
+	loop_entry:
+		pcmpistri xmm0, xmmword ptr [eax], 00000000B
+		jnbe    loop_begin
+	epilog:
+		sbb     edx, edx
+		add     eax, ecx
+		and     eax, edx
 		ret
 
 		#undef string

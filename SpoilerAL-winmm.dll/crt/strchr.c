@@ -65,7 +65,7 @@ __declspec(naked) char * __cdecl strchrSSE42(const char *string, int c)
 		pand    xmm1, xmm3
 		por     xmm1, xmm4
 		cmp     dl, 1
-		je      addition
+		je      increment
 		paddb   xmm1, xmm2
 		jmp     loop_start
 
@@ -79,7 +79,7 @@ __declspec(naked) char * __cdecl strchrSSE42(const char *string, int c)
 		add     eax, ecx
 		ret
 
-	addition:
+	increment:
 		psubb   xmm1, xmm2
 	loop_start:
 		pcmpistri xmm0, xmm1, 00000000B

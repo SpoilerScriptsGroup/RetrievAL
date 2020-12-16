@@ -11,6 +11,8 @@ void * __cdecl _memrchr(const void *buffer, int c, size_t count)
 #else
 #include <xmmintrin.h>
 
+void * __cdecl memrchrSSE42(const void *buffer, int c, size_t count);
+void * __vectorcall internal_memrchrSSE42(const void *buffer, __m128 reserved, __m128 c, size_t count);
 void * __cdecl memrchrSSE2(const void *buffer, int c, size_t count);
 void * __vectorcall internal_memrchrSSE2(const void *buffer, __m128 c, size_t count);
 void * __cdecl memrchr386(const void *buffer, int c, size_t count);
@@ -27,6 +29,118 @@ __declspec(naked) void * __cdecl _memrchr(const void *buffer, int c, size_t coun
 	}
 }
 
+// SSE4.2 version
+__declspec(naked) void * __cdecl memrchrSSE42(const void *buffer, int c, size_t count)
+{
+	__asm
+	{
+		#define buffer (esp + 4)
+		#define c      (esp + 8)
+		#define count  (esp + 12)
+
+		mov     edx, dword ptr [count]                      // edx = count
+		mov     ecx, dword ptr [buffer]                     // ecx = buffer
+		test    edx, edx                                    // check if count == 0
+		jz      retnull                                     // if count == 0, leave
+		movd    xmm1, dword ptr [c]                         // xmm1 = search char
+		jmp     internal_memrchrSSE42
+
+		align   16
+	retnull:
+		xor     eax, eax
+		ret
+
+		#undef buffer
+		#undef c
+		#undef count
+	}
+}
+
+__declspec(naked) void * __vectorcall internal_memrchrSSE42(const void *buffer, __m128 reserved, __m128 c, size_t count)
+{
+	__asm
+	{
+		#define buffer ecx
+		#define c      xmm1
+		#define count  edx
+
+		add     ecx, edx                                    // ecx = end of buffer
+		push    esi                                         // preserve esi
+		mov     esi, ecx                                    // esi = end of buffer
+		push    edi                                         // preserve edi
+		dec     esi                                         // esi = last byte of buffer
+		mov     edi, edx                                    // edi = count
+		and     esi, -16                                    // esi = last xmmword of buffer
+		mov     eax, 1
+		sub     esi, edx                                    // esi = last xmmword of buffer - count
+		mov     edx, 16
+		and     ecx, 15
+		jz      loop_begin
+		xor     ecx, 15
+		pcmpestrm xmm1, xmmword ptr [esi + edi], 00000000B
+		jnc     increment
+		mov     edx, 7FFFH
+		movd    eax, xmm0
+		shr     edx, cl
+		and     eax, edx
+		jnz     has_char_at_last_xmmword
+		inc     eax
+		mov     edx, 16
+	increment:
+		sub     esi, ecx
+		xor     ecx, 15
+		sub     edi, ecx
+		jbe     retnull
+		dec     esi
+
+		align   16
+	loop_begin:
+		pcmpestrm xmm1, xmmword ptr [esi + edi], 00000000B
+		jc      has_char
+		sub     edi, 16
+		ja      loop_begin
+	retnull:
+		xor     eax, eax
+		pop     edi                                         // restore edi
+		pop     esi                                         // restore esi
+		ret
+
+		align   16
+	has_char_at_last_xmmword:
+		xor     ecx, 15
+		or      edx, -1
+		sub     ecx, edi
+		ja      mask_result
+		jmp     found
+
+		align   16
+	has_char:
+		movd    eax, xmm0
+		cmp     edi, 16
+		jae     found
+		mov     ecx, esi
+		or      edx, -1
+		and     ecx, 15
+		jz      found
+	mask_result:
+		shl     edx, cl
+		and     eax, edx
+		jz      retnull
+	found:
+		bsr     eax, eax
+		add     eax, edi
+		pop     edi                                         // restore edi
+		add     eax, esi
+		pop     esi                                         // restore esi
+		ret
+
+		#undef buffer
+		#undef c
+		#undef count
+	}
+}
+
+// SSE2 version
 __declspec(naked) void * __cdecl memrchrSSE2(const void *buffer, int c, size_t count)
 {
 	__asm
@@ -135,6 +249,7 @@ __declspec(naked) void * __vectorcall internal_memrchrSSE2(const void *buffer, _
 	}
 }
 
+// 80386 version
 __declspec(naked) void * __cdecl memrchr386(const void *buffer, int c, size_t count)
 {
 	__asm
@@ -276,24 +391,31 @@ __declspec(naked) void * __fastcall internal_memrchr386(const void *buffer, unsi
 
 __declspec(naked) static void * __cdecl memrchrCPUDispatch(const void *buffer, int c, size_t count)
 {
-	#define __ISA_AVAILABLE_X86  0
-	#define __ISA_AVAILABLE_SSE2 1
+	#define __ISA_AVAILABLE_X86   0
+	#define __ISA_AVAILABLE_SSE2  1
+	#define __ISA_AVAILABLE_SSE42 2
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
-		jne     L1
-		mov     dword ptr [memrchrDispatch], offset memrchr386
-		jmp     memrchr386
+		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
+		jbe     L1
+		mov     dword ptr [memrchrDispatch], offset memrchrSSE42
+		jmp     memrchrSSE42
 
 	L1:
 		mov     dword ptr [memrchrDispatch], offset memrchrSSE2
+		jb      L2
 		jmp     memrchrSSE2
+
+	L2:
+		mov     dword ptr [memrchrDispatch], offset memrchr386
+		jmp     memrchr386
 	}
 
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
+	#undef __ISA_AVAILABLE_SSE42
 }
 #endif

@@ -43,37 +43,36 @@ __declspec(naked) char * __cdecl strrchrSSE42(const char *string, int c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     eax, dword ptr [c]
-		mov     ecx, dword ptr [string]
-		test    al, al
+		mov     ecx, dword ptr [c]
+		mov     eax, dword ptr [string]
+		test    cl, cl
 		jz      char_is_null
-		movd    xmm0, eax
+		movd    xmm0, ecx
 		punpcklbw xmm0, xmm0
 		pshuflw xmm0, xmm0, 0
 		movlhps xmm0, xmm0
-		mov     edx, ecx
-		xor     eax, eax
-		and     ecx, 15
+		mov     edx, eax
+		and     eax, 15
 		jz      loop_entry
-		sub     edx, ecx
-		xor     ecx, 15
+		sub     edx, eax
+		xor     eax, 15
 		movdqa  xmm1, xmmword ptr [edx]
-		movdqu  xmm2, xmmword ptr [maskbit + ecx + 1]
+		movdqu  xmm2, xmmword ptr [maskbit + eax + 1]
 		pcmpeqb xmm3, xmm3
 		movdqa  xmm4, xmm2
 		pxor    xmm3, xmm2
 		pand    xmm4, xmm0
 		pand    xmm1, xmm3
 		por     xmm1, xmm4
-		cmp     byte ptr [c], 1
+		cmp     cl, 1
 		je      increment
 		paddb   xmm1, xmm2
 		jmp     loop_start
 
 		align   16
 	char_is_null:
-		push    ecx
-		push    ecx
+		push    eax
+		push    eax
 		call    strlen
 		pop     edx
 		pop     ecx
@@ -84,10 +83,12 @@ __declspec(naked) char * __cdecl strrchrSSE42(const char *string, int c)
 	increment:
 		psubb   xmm1, xmm2
 	loop_start:
+		xor     eax, eax
+		xor     ecx, ecx                                    // padding 2 byte
 		pcmpistri xmm0, xmm1, 01000000B
 		jbe     loop_found
 
-		align   16
+		align   16                                          // already aligned
 	loop_begin:
 		add     edx, 16
 	loop_entry:

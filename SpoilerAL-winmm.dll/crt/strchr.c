@@ -17,9 +17,6 @@ char * __cdecl strchr(const char *string, int c)
 #else
 #pragma function(strlen)
 
-extern const char xmmconst_maskbit[32];
-#define maskbit xmmconst_maskbit
-
 char * __cdecl strchrSSE42(const char *string, int c);
 char * __cdecl strchrSSE2(const char *string, int c);
 char * __cdecl strchr386(const char *string, int c);
@@ -47,27 +44,27 @@ __declspec(naked) char * __cdecl strchrSSE42(const char *string, int c)
 		mov     ecx, dword ptr [string]
 		test    dl, dl
 		jz      char_is_null
-		movd    xmm0, edx
-		punpcklbw xmm0, xmm0
-		pshuflw xmm0, xmm0, 0
-		movlhps xmm0, xmm0
-		mov     eax, ecx
+		movd    xmm1, edx
+		push    esi
+		mov     esi, ecx
+		mov     eax, 2
+		sub     esi, 16
 		and     ecx, 15
 		jz      loop_entry
-		sub     eax, ecx
-		xor     ecx, 15
-		movdqa  xmm1, xmmword ptr [eax]
-		movdqu  xmm2, xmmword ptr [maskbit + ecx + 1]
-		pcmpeqb xmm3, xmm3
-		movdqa  xmm4, xmm2
-		pxor    xmm3, xmm2
-		pand    xmm4, xmm0
-		pand    xmm1, xmm3
-		por     xmm1, xmm4
-		cmp     dl, 1
-		je      increment
-		paddb   xmm1, xmm2
-		jmp     loop_start
+		sub     esi, ecx
+		mov     edx, 16
+		pcmpestrm xmm1, xmmword ptr [esi + 16], 00000000B
+		lea     esi, [esi + 16]
+		jnc     loop_entry
+		movd    eax, xmm0
+		shr     eax, cl
+		jz      loop_entry
+		bsf     eax, eax
+		add     ecx, eax
+		xor     eax, eax
+		mov     al, byte ptr [esi + ecx]
+		add     eax, -1
+		jmp     epilog
 
 		align   8
 	char_is_null:
@@ -79,22 +76,23 @@ __declspec(naked) char * __cdecl strchrSSE42(const char *string, int c)
 		add     eax, ecx
 		ret
 
-	increment:
-		psubb   xmm1, xmm2
-	loop_start:
-		pcmpistri xmm0, xmm1, 00000000B
-		jbe     epilog
-
-		align   16                                          // already aligned
-	loop_begin:
-		add     eax, 16
+		align   16
 	loop_entry:
-		pcmpistri xmm0, xmmword ptr [eax], 00000000B
+		punpcklbw xmm1, xmm1
+		pshuflw xmm1, xmm1, 0
+		movlhps xmm1, xmm1
+
+		align   16
+	loop_begin:
+		pcmpistri xmm1, xmmword ptr [esi + 16], 00000000B
+		lea     esi, [esi + 16]
 		jnbe    loop_begin
+
 	epilog:
 		sbb     edx, edx
-		add     eax, ecx
+		lea     eax, [esi + ecx]
 		and     eax, edx
+		pop     esi
 		ret
 
 		#undef string

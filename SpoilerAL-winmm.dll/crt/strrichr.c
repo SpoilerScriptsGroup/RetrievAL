@@ -53,27 +53,26 @@ __declspec(naked) char * __cdecl strrichrSSE42(const char *string, int c)
 		#define c      (esp + 8)
 
 		mov     edx, dword ptr [c]
-		mov     ecx, dword ptr [string]
+		mov     eax, dword ptr [string]
 		or      edx, 'a' - 'A'
-		xor     eax, eax
-		mov     al, dl
+		xor     ecx, ecx
+		mov     cl, dl
 		sub     edx, 'a'
 		cmp     dl, 'z' - 'a' + 1
 		jae     strrchrSSE42
-		movd    xmm0, eax
+		movd    xmm0, ecx
 		movdqa  xmm1, xmmword ptr [insensitive]
 		punpcklbw xmm0, xmm0
 		pshuflw xmm0, xmm0, 0
 		movlhps xmm0, xmm0
 		pxor    xmm0, xmm1
-		mov     edx, ecx
-		xor     eax, eax
-		and     ecx, 15
+		mov     edx, eax
+		and     eax, 15
 		jz      loop_entry
-		sub     edx, ecx
-		xor     ecx, 15
+		sub     edx, eax
+		xor     eax, 15
 		movdqa  xmm1, xmmword ptr [edx]
-		movdqu  xmm2, xmmword ptr [maskbit + ecx + 1]
+		movdqu  xmm2, xmmword ptr [maskbit + eax + 1]
 		pcmpeqb xmm3, xmm3
 		movdqa  xmm4, xmm2
 		pxor    xmm3, xmm2
@@ -81,6 +80,7 @@ __declspec(naked) char * __cdecl strrichrSSE42(const char *string, int c)
 		pand    xmm1, xmm3
 		por     xmm1, xmm4
 		paddb   xmm1, xmm2
+		xor     eax, eax
 		pcmpistri xmm0, xmm1, 01000000B
 		jbe     loop_found
 

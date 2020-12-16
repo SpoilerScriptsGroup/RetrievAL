@@ -14,6 +14,8 @@ void * __cdecl memchr(const void *buffer, int c, size_t count)
 #else
 #include <xmmintrin.h>
 
+void * __cdecl memchrSSE42(const void *buffer, int c, size_t count);
+void * __vectorcall internal_memchrSSE42(const void *buffer, __m128 reserved, __m128 c, size_t count);
 void * __cdecl memchrSSE2(const void *buffer, int c, size_t count);
 void * __vectorcall internal_memchrSSE2(const void *buffer, __m128 c, size_t count);
 void * __cdecl memchr386(const void *buffer, int c, size_t count);
@@ -32,6 +34,100 @@ __declspec(naked) void * __cdecl memchr(const void *buffer, int c, size_t count)
 }
 #endif
 
+// SSE4.2 version
+__declspec(naked) void * __cdecl memchrSSE42(const void *buffer, int c, size_t count)
+{
+	__asm
+	{
+		#define buffer (esp + 4)
+		#define c      (esp + 8)
+		#define count  (esp + 12)
+
+		mov     edx, dword ptr [count]                      // edx = count
+		mov     ecx, dword ptr [buffer]                     // ecx = buffer
+		test    edx, edx                                    // check if count == 0
+		jz      retnull                                     // if count == 0, leave
+		movd    xmm1, dword ptr [c]                         // xmm1 = search char
+		jmp     internal_memchrSSE42
+
+		align   16
+	retnull:
+		xor     eax, eax
+		ret
+
+		#undef buffer
+		#undef c
+		#undef count
+	}
+}
+
+__declspec(naked) void * __vectorcall internal_memchrSSE42(const void *buffer, __m128 reserved, __m128 c, size_t count)
+{
+	__asm
+	{
+		#define buffer ecx
+		#define c      xmm1
+		#define count  edx
+
+		push    ebx                                         // preserve ebx
+		push    esi                                         // preserve esi
+		push    edi                                         // preserve edi
+		lea     esi, [ecx + edx]                            // esi = end of buffer
+		mov     ebx, -16
+		xor     edx, -1
+		and     ebx, ecx
+		lea     edi, [edx + 1]                              // edi = -count
+		mov     eax, 1
+		mov     edx, 16
+		and     ecx, 15
+		jz      loop_begin
+		pcmpestrm xmm1, xmmword ptr [ebx], 00000000B
+		jnc     increment
+		movd    ebx, xmm0
+		shr     ebx, cl
+		jnz     found_at_first
+	increment:
+		sub     ecx, 16
+		sub     edi, ecx
+		jae     retnull
+
+		align   16
+	loop_begin:
+		pcmpestri xmm1, xmmword ptr [esi + edi], 00000000B
+		jc      found
+		add     edi, 16
+		jnc     loop_begin
+	retnull:
+		xor     eax, eax
+		pop     edi                                         // restore edi
+		pop     esi                                         // restore esi
+		pop     ebx                                         // restore ebx
+		ret
+
+		align   16
+	found:
+		mov     eax, ecx
+		jmp     epilog
+
+		align   16
+	found_at_first:
+		bsf     eax, ebx
+	epilog:
+		add     eax, edi
+		jc      retnull
+		add     eax, esi
+		pop     edi                                         // restore edi
+		pop     esi                                         // restore esi
+		pop     ebx                                         // restore ebx
+		ret
+
+		#undef buffer
+		#undef c
+		#undef count
+	}
+}
+
+// SSE2 version
 __declspec(naked) void * __cdecl memchrSSE2(const void *buffer, int c, size_t count)
 {
 	__asm
@@ -117,6 +213,7 @@ __declspec(naked) void * __vectorcall internal_memchrSSE2(const void *buffer, __
 	}
 }
 
+// 80386 version
 __declspec(naked) void * __cdecl memchr386(const void *buffer, int c, size_t count)
 {
 	__asm
@@ -253,25 +350,32 @@ __declspec(naked) void * __fastcall internal_memchr386(const void *buffer, unsig
 
 __declspec(naked) static void * __cdecl memchrCPUDispatch(const void *buffer, int c, size_t count)
 {
-	#define __ISA_AVAILABLE_X86  0
-	#define __ISA_AVAILABLE_SSE2 1
+	#define __ISA_AVAILABLE_X86   0
+	#define __ISA_AVAILABLE_SSE2  1
+	#define __ISA_AVAILABLE_SSE42 2
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
-		jne     L1
-		mov     dword ptr [memchrDispatch], offset memchr386
-		jmp     memchr386
+		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
+		jbe     L1
+		mov     dword ptr [memchrDispatch], offset memchrSSE42
+		jmp     memchrSSE42
 
 	L1:
 		mov     dword ptr [memchrDispatch], offset memchrSSE2
+		jb      L2
 		jmp     memchrSSE2
+
+	L2:
+		mov     dword ptr [memchrDispatch], offset memchr386
+		jmp     memchr386
 	}
 
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
+	#undef __ISA_AVAILABLE_SSE42
 }
 #endif
 #endif

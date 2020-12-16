@@ -11,6 +11,8 @@ wchar_t * __cdecl _wmemrchr(const wchar_t *buffer, wchar_t c, size_t count)
 #else
 #include <xmmintrin.h>
 
+wchar_t * __cdecl wmemrchrSSE42(const wchar_t *buffer, wchar_t c, size_t count);
+wchar_t * __vectorcall internal_wmemrchrSSE42(const wchar_t *buffer, __m128 reserved, __m128 c, size_t count);
 wchar_t * __cdecl wmemrchrSSE2(const wchar_t *buffer, wchar_t c, size_t count);
 wchar_t * __vectorcall internal_wmemrchrSSE2(const wchar_t *buffer, __m128 c, size_t count);
 static wchar_t * __cdecl wmemrchr386(const wchar_t *buffer, wchar_t c, size_t count);
@@ -26,6 +28,154 @@ __declspec(naked) wchar_t * __cdecl _wmemrchr(const wchar_t *buffer, wchar_t c, 
 	}
 }
 
+// SSE4.2 version
+__declspec(naked) wchar_t * __cdecl wmemrchrSSE42(const wchar_t *buffer, wchar_t c, size_t count)
+{
+	__asm
+	{
+		#define buffer (esp + 4)
+		#define c      (esp + 8)
+		#define count  (esp + 12)
+
+		mov     edx, dword ptr [count]                      // edx = count
+		mov     ecx, dword ptr [buffer]                     // ecx = buffer
+		test    edx, edx                                    // check if count == 0
+		jz      retnull                                     // if count == 0, leave
+		movd    xmm1, dword ptr [c]                         // xmm1 = search char
+		jmp     internal_wmemrchrSSE42
+
+		align   16
+	retnull:
+		xor     eax, eax
+		ret
+
+		#undef buffer
+		#undef c
+		#undef count
+	}
+}
+
+__declspec(naked) wchar_t * __vectorcall internal_wmemrchrSSE42(const wchar_t *buffer, __m128 reserved, __m128 c, size_t count)
+{
+	__asm
+	{
+		#define buffer ecx
+		#define c      xmm1
+		#define count  edx
+
+		push    ebx                                         // preserve ebx
+		push    esi                                         // preserve esi
+		push    edi                                         // preserve edi
+		lea     esi, [ecx + edx * 2]                        // esi = end of buffer
+		mov     edi, edx                                    // edi = count
+		sub     esi, 2                                      // esi = last word of buffer
+		add     edx, edx                                    // edx = count * 2
+		and     esi, -16 or 1                               // esi = last xmmword of buffer
+		add     ecx, edx                                    // ecx = end of buffer
+		sub     esi, edx                                    // esi = last xmmword of buffer - count
+		mov     eax, 1
+		mov     edx, 8
+		and     ecx, 15
+		jz      aligned_loop
+		shr     ecx, 1
+		jc      unaligned
+		xor     ecx, 7
+		pcmpestrm xmm1, xmmword ptr [esi + edi * 2], 00000001B
+		mov     eax, 7FH
+		jnc     aligned_increment
+		movd    ebx, xmm0
+		shr     eax, cl
+		and     ebx, eax
+		jnz     has_char_at_last
+	aligned_increment:
+		lea     eax, [ecx * 2 + 2]
+		xor     ecx, 7
+		sub     esi, eax
+		mov     eax, 1
+		sub     edi, ecx
+		jbe     retnull
+
+		align   16
+	aligned_loop:
+		pcmpestrm xmm1, xmmword ptr [esi + edi * 2], 00000001B
+		jc      has_char
+		sub     edi, 8
+		ja      aligned_loop
+		jmp     retnull
+
+		align   16
+	unaligned:
+		jz      unaligned_loop
+		xor     ecx, 7
+		movdqa  xmm0, xmmword ptr [esi + edi * 2 - 1]
+		psrldq  xmm0, 1
+		pcmpestrm xmm1, xmm0, 00000001B
+		mov     eax, 7FH
+		jnc     unaligned_increment
+		movd    ebx, xmm0
+		shr     eax, cl
+		and     ebx, eax
+		jnz     has_char_at_last
+	unaligned_increment:
+		lea     eax, [ecx * 2 + 2]
+		xor     ecx, 7
+		sub     esi, eax
+		mov     eax, 1
+		sub     edi, ecx
+		jbe     retnull
+
+		align   16
+	unaligned_loop:
+		pcmpestrm xmm1, xmmword ptr [esi + edi * 2], 00000001B
+		jc      has_char
+		sub     edi, 8
+		ja      unaligned_loop
+	retnull:
+		xor     eax, eax
+		pop     edi                                         // restore edi
+		pop     esi                                         // restore esi
+		pop     ebx                                         // restore ebx
+		ret
+
+		align   16
+	has_char_at_last:
+		xor     ecx, 7
+		sub     ecx, edi
+		jbe     found
+		or      eax, -1
+		jmp     mask_xmmword
+
+		align   16
+	has_char:
+		movd    ebx, xmm0
+		cmp     edi, 8
+		jae     found
+		mov     ecx, esi
+		or      eax, -1
+		and     ecx, 14
+		jz      found
+		shr     ecx, 1
+	mask_xmmword:
+		shl     eax, cl
+		and     ebx, eax
+		jz      retnull
+	found:
+		bsr     edx, ebx
+		mov     eax, esi
+		add     edx, edi
+		pop     edi                                         // restore edi
+		pop     esi                                         // restore esi
+		pop     ebx                                         // restore ebx
+		lea     eax, [eax + edx * 2]
+		ret
+
+		#undef buffer
+		#undef c
+		#undef count
+	}
+}
+
+// SSE2 version
 __declspec(naked) wchar_t * __cdecl wmemrchrSSE2(const wchar_t *buffer, wchar_t c, size_t count)
 {
 	__asm
@@ -81,7 +231,7 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrchrSSE2(const wchar_t *bu
 		xor     ecx, 14
 		shr     edi, cl
 		and     edx, edi
-		jnz     has_char_at_last_xmmword
+		jnz     has_char_at_last
 		sub     esi, ecx
 		xor     ecx, 14
 		shr     ecx, 1
@@ -113,7 +263,7 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrchrSSE2(const wchar_t *bu
 		xor     ecx, 14
 		shr     edi, cl
 		and     edx, edi
-		jnz     has_char_at_last_xmmword
+		jnz     has_char_at_last
 		sub     esi, ecx
 		xor     ecx, 14
 		shr     ecx, 1
@@ -138,13 +288,13 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrchrSSE2(const wchar_t *bu
 		ret
 
 		align   16
-	has_char_at_last_xmmword:
+	has_char_at_last:
 		xor     ecx, 14
 		lea     edi, [eax + eax]
 		sub     ecx, edi
 		jbe     found
 		or      edi, -1
-		jmp     mask_result
+		jmp     mask_xmmword
 
 		align   16
 	has_char:
@@ -154,7 +304,7 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrchrSSE2(const wchar_t *bu
 		or      edi, -1
 		and     ecx, 14
 		jz      found
-	mask_result:
+	mask_xmmword:
 		shl     edi, cl
 		and     edx, edi
 		jz      retnull
@@ -172,6 +322,7 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrchrSSE2(const wchar_t *bu
 	}
 }
 
+// 80386 version
 __declspec(naked) static wchar_t * __cdecl wmemrchr386(const wchar_t *buffer, wchar_t c, size_t count)
 {
 	__asm
@@ -212,24 +363,31 @@ __declspec(naked) static wchar_t * __cdecl wmemrchr386(const wchar_t *buffer, wc
 
 __declspec(naked) static wchar_t * __cdecl wmemrchrCPUDispatch(const wchar_t *buffer, wchar_t c, size_t count)
 {
-	#define __ISA_AVAILABLE_X86  0
-	#define __ISA_AVAILABLE_SSE2 1
+	#define __ISA_AVAILABLE_X86   0
+	#define __ISA_AVAILABLE_SSE2  1
+	#define __ISA_AVAILABLE_SSE42 2
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
-		jne     L1
-		mov     dword ptr [wmemrchrDispatch], offset wmemrchr386
-		jmp     wmemrchr386
+		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
+		jbe     L1
+		mov     dword ptr [wmemrchrDispatch], offset wmemrchrSSE42
+		jmp     wmemrchrSSE42
 
 	L1:
 		mov     dword ptr [wmemrchrDispatch], offset wmemrchrSSE2
+		jb      L2
 		jmp     wmemrchrSSE2
+
+	L2:
+		mov     dword ptr [wmemrchrDispatch], offset wmemrchr386
+		jmp     wmemrchr386
 	}
 
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
+	#undef __ISA_AVAILABLE_SSE42
 }
 #endif

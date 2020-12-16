@@ -40,14 +40,14 @@ __declspec(naked) char * __cdecl strchrSSE42(const char *string, int c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     edx, dword ptr [c]
+		movzx   edx, byte ptr [c]
 		mov     ecx, dword ptr [string]
-		test    dl, dl
+		test    edx, edx
 		jz      char_is_null
 		movd    xmm1, edx
 		push    esi
 		mov     esi, ecx
-		mov     eax, 1
+		mov     eax, 2
 		sub     esi, 16
 		and     ecx, 15
 		jz      loop_entry

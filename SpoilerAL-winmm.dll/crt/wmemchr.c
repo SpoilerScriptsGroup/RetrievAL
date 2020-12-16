@@ -78,59 +78,40 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrSSE42(const wchar_t *bu
 		test    eax, 1
 		jnz     unaligned
 		and     ecx, 15
-		jz      aligned_loop_entry
+		jz      loop_entry
 		sub     eax, ecx
 		movdqa  xmm0, xmmword ptr [eax]
-		shr     ecx, 1
-		mov     eax, 1
-		pcmpestrm xmm1, xmm0, 00000001B
-		jnc     aligned_increment
-		movd    eax, xmm0
-		shr     eax, cl
-		jnz     found_at_first
-	aligned_increment:
-		sub     ecx, 8
-		sub     edi, ecx
-		jae     retnull
-	aligned_loop_entry:
-		mov     eax, 1
-
-		align   16
-	aligned_loop:
-		pcmpestri xmm1, xmmword ptr [esi + edi * 2], 00000001B
-		jc      found
-		add     edi, 8
-		jnc     aligned_loop
-		jmp     retnull
+		jmp     first_xmmword
 
 		align   16
 	unaligned:
 		inc     ecx
 		and     eax, -16
 		and     ecx, 15
-		jz      unaligned_loop_entry
+		jz      loop_entry
 		movdqa  xmm0, xmmword ptr [eax]
 		pslldq  xmm0, 1
+	first_xmmword:
 		shr     ecx, 1
 		mov     eax, 1
 		pcmpestrm xmm1, xmm0, 00000001B
-		jnc     aligned_increment
+		jnc     increment
 		movd    eax, xmm0
 		shr     eax, cl
 		jnz     found_at_first
-	unaligned_increment:
+	increment:
 		sub     ecx, 8
 		sub     edi, ecx
 		jae     retnull
-	unaligned_loop_entry:
+	loop_entry:
 		mov     eax, 1
 
 		align   16
-	unaligned_loop:
+	loop_begin:
 		pcmpestri xmm1, xmmword ptr [esi + edi * 2], 00000001B
 		jc      found
 		add     edi, 8
-		jnc     unaligned_loop
+		jnc     loop_begin
 	retnull:
 		xor     eax, eax
 		pop     edi                                         // restore edi

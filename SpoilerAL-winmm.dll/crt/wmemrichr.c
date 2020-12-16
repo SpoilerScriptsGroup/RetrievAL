@@ -100,47 +100,28 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrichrSSE42(const wchar_t *
 		mov     eax, 2
 		mov     edx, 8
 		and     ecx, 15
-		jz      aligned_loop
+		jz      loop_begin
 		shr     ecx, 1
 		jc      unaligned
 		xor     ecx, 7
-		pcmpestrm xmm1, xmmword ptr [esi + edi * 2], 00000001B
-		mov     eax, 7FH
-		jnc     aligned_increment
-		movd    ebx, xmm0
-		shr     eax, cl
-		and     ebx, eax
-		jnz     has_char_at_last
-	aligned_increment:
-		lea     eax, [ecx * 2 + 2]
-		xor     ecx, 7
-		sub     esi, eax
-		mov     eax, 2
-		sub     edi, ecx
-		jbe     retnull
-
-		align   16
-	aligned_loop:
-		pcmpestrm xmm1, xmmword ptr [esi + edi * 2], 00000001B
-		jc      has_char
-		sub     edi, 8
-		ja      aligned_loop
-		jmp     retnull
+		movdqa  xmm0, xmmword ptr [esi + edi * 2]
+		jmp     first_xmmword
 
 		align   16
 	unaligned:
-		jz      unaligned_loop
+		jz      loop_begin
 		xor     ecx, 7
 		movdqa  xmm0, xmmword ptr [esi + edi * 2 - 1]
 		psrldq  xmm0, 1
+	first_xmmword:
 		pcmpestrm xmm1, xmm0, 00000001B
 		mov     eax, 7FH
-		jnc     unaligned_increment
+		jnc     increment
 		movd    ebx, xmm0
 		shr     eax, cl
 		and     ebx, eax
 		jnz     has_char_at_last
-	unaligned_increment:
+	increment:
 		lea     eax, [ecx * 2 + 2]
 		xor     ecx, 7
 		sub     esi, eax
@@ -149,11 +130,11 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrichrSSE42(const wchar_t *
 		jbe     retnull
 
 		align   16
-	unaligned_loop:
+	loop_begin:
 		pcmpestrm xmm1, xmmword ptr [esi + edi * 2], 00000001B
 		jc      has_char
 		sub     edi, 8
-		ja      unaligned_loop
+		ja      loop_begin
 	retnull:
 		xor     eax, eax
 		pop     edi                                         // restore edi

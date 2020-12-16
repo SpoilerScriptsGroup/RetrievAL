@@ -47,7 +47,7 @@ __declspec(naked) char * __cdecl strchrSSE42(const char *string, int c)
 		movd    xmm1, edx
 		push    esi
 		mov     esi, ecx
-		mov     eax, 2
+		mov     eax, 1
 		sub     esi, 16
 		and     ecx, 15
 		jz      loop_entry
@@ -66,7 +66,7 @@ __declspec(naked) char * __cdecl strchrSSE42(const char *string, int c)
 		add     eax, -1
 		jmp     epilog
 
-		align   8
+		align   16
 	char_is_null:
 		push    ecx
 		push    ecx

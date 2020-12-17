@@ -54,40 +54,41 @@ __declspec(naked) static char * __cdecl strstrSSE42(const char *string1, const c
 		or      ecx, edx                                    // is needle empty?
 		jz      empty_needle                                // if so, return haystack (ANSI mandated)
 		push    edi                                         // preserve edi
-		movd    xmm2, ecx                                   // set all bytes of xmm2 to first char
-		pshuflw xmm2, xmm2, 0
-		movlhps xmm2, xmm2
+		movd    xmm1, ecx                                   // set all bytes of xmm1 to first char
+		movd    xmm2, edx
+		pshuflw xmm1, xmm1, 0
+		movlhps xmm1, xmm1
 
 		// find the first character of needle in the haystack by doing linear scan
 		align   16
 	find_first_char:
-		inc     esi
-		or      edx, -1
+		sub     esi, 15
+		mov     eax, 2
 		mov     ecx, esi
 		and     esi, -16
 		and     ecx, 15
-		jz      xmmword_find_loop_entry
-		shl     edx, cl
-		jmp     xmmword_find_loop_entry
+		jz      xmmword_find_loop
+		mov     edx, 16
+		pcmpestrm xmm2, xmmword ptr [esi + 16], 00000000B
+		lea     esi, [esi + 16]
+		jnc     xmmword_find_loop
+		movd    eax, xmm0
+		shr     eax, cl
+		jz      xmmword_find_loop
+		bsf     eax, eax
+		add     ecx, eax
+		cmp     byte ptr [esi + ecx], 0
+		jne     match_first_char
+		jmp     not_found
 
 		align   16
 	xmmword_find_loop:
-		add     esi, 16
-		or      edx, -1
-	xmmword_find_loop_entry:
-		movdqa  xmm0, xmmword ptr [esi]
-		pxor    xmm1, xmm1
-		pcmpeqb xmm1, xmm0
-		pcmpeqb xmm0, xmm2
-		por     xmm0, xmm1
-		pmovmskb eax, xmm0
-		and     eax, edx
-		jz      xmmword_find_loop
-		bsf     eax, eax
-		mov     cl, byte ptr [esi + eax]                    // cl is char from haystack
-		add     esi, eax                                    // increment pointer into haystack
-		test    cl, cl                                      // end of haystack?
-		jz      not_found                                   // yes, and no match has been found
+		pcmpistri xmm1, xmmword ptr [esi + 16], 00000000B
+		lea     esi, [esi + 16]
+		jnbe    xmmword_find_loop
+		jnc     not_found                                   // no match has been found
+	match_first_char:
+		add     esi, ecx                                    // increment pointer into haystack
 
 		// check if remaining consecutive characters match continuously
 		mov     eax, dword ptr [needle + 8]

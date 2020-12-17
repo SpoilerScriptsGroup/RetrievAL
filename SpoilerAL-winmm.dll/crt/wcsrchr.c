@@ -17,6 +17,10 @@ wchar_t * __cdecl wcsrchr(const wchar_t *string, wchar_t c)
 #else
 #pragma function(wcslen)
 
+extern const char xmmconst_maskbit[32];
+#define maskbit xmmconst_maskbit
+
+wchar_t * __cdecl wcsrchrSSE42(const wchar_t *string, wchar_t c);
 wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wchar_t c);
 wchar_t * __cdecl wcsrchr386(const wchar_t *string, wchar_t c);
 static wchar_t * __cdecl wcsrchrCPUDispatch(const wchar_t *string, wchar_t c);
@@ -31,6 +35,92 @@ __declspec(naked) wchar_t * __cdecl wcsrchr(const wchar_t *string, wchar_t c)
 	}
 }
 
+// SSE4.2 version
+__declspec(naked) wchar_t * __cdecl wcsrchrSSE42(const wchar_t *string, wchar_t c)
+{
+	__asm
+	{
+		#define string (esp + 4)
+		#define c      (esp + 8)
+
+		mov     ecx, dword ptr [c]
+		mov     edx, dword ptr [string]
+		test    cx, cx
+		jz      char_is_null
+		movd    xmm0, ecx
+		pshuflw xmm0, xmm0, 0
+		movlhps xmm0, xmm0
+		mov     eax, edx
+		sub     edx, 16
+		and     eax, 15
+		jz      loop_begin
+		test    eax, 1
+		jnz     unaligned
+		sub     edx, eax
+		xor     eax, 15
+		movdqa  xmm1, xmmword ptr [edx + 16]
+		movdqu  xmm2, xmmword ptr [maskbit + eax + 1]
+		add     edx, 16
+		jmp     compare
+
+		align   16
+	char_is_null:
+		push    edx
+		push    edx
+		call    wcslen
+		pop     edx
+		pop     ecx
+		lea     eax, [ecx + eax * 2]
+		ret
+
+		align   16
+	unaligned:
+		xor     eax, 15
+		jz      loop_begin
+		and     edx, -16
+		movdqa  xmm1, xmmword ptr [edx + 16]
+		movdqu  xmm2, xmmword ptr [maskbit + eax]
+		pslldq  xmm1, 1
+		add     edx, 15
+	compare:
+		pcmpeqb xmm3, xmm3
+		movdqa  xmm4, xmm2
+		pxor    xmm3, xmm2
+		pand    xmm4, xmm0
+		pand    xmm1, xmm3
+		por     xmm1, xmm4
+		cmp     cx, 1
+		je      increment
+		paddb   xmm1, xmm2
+		jmp     loop_entry
+
+		align   16
+	increment:
+		psubb   xmm1, xmm2
+	loop_entry:
+		xor     eax, eax
+		xor     ecx, ecx                                    // padding 2 byte
+		pcmpistri xmm0, xmm1, 01000001B
+		jbe     loop_found
+
+		align   16                                          // already aligned
+	loop_begin:
+		pcmpistri xmm0, xmmword ptr [edx + 16], 01000001B
+		lea     edx, [edx + 16]
+		jnbe    loop_begin
+		jnc     epilog
+	loop_found:
+		lea     eax, [edx + ecx * 2]
+		jnz     loop_begin
+	epilog:
+		ret
+
+		#undef string
+		#undef c
+	}
+}
+
+// SSE2 version
 __declspec(naked) wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wchar_t c)
 {
 	__asm
@@ -150,6 +240,7 @@ __declspec(naked) wchar_t * __cdecl wcsrchrSSE2(const wchar_t *string, wchar_t c
 	}
 }
 
+// 80386 version
 __declspec(naked) wchar_t * __cdecl wcsrchr386(const wchar_t *string, wchar_t c)
 {
 	__asm
@@ -199,24 +290,31 @@ __declspec(naked) wchar_t * __cdecl wcsrchr386(const wchar_t *string, wchar_t c)
 
 __declspec(naked) static wchar_t * __cdecl wcsrchrCPUDispatch(const wchar_t *string, wchar_t c)
 {
-	#define __ISA_AVAILABLE_X86  0
-	#define __ISA_AVAILABLE_SSE2 1
+	#define __ISA_AVAILABLE_X86   0
+	#define __ISA_AVAILABLE_SSE2  1
+	#define __ISA_AVAILABLE_SSE42 2
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
-		jne     L1
-		mov     dword ptr [wcsrchrDispatch], offset wcsrchr386
-		jmp     wcsrchr386
+		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
+		jbe     L1
+		mov     dword ptr [wcsrchrDispatch], offset wcsrchrSSE42
+		jmp     wcsrchrSSE42
 
 	L1:
 		mov     dword ptr [wcsrchrDispatch], offset wcsrchrSSE2
+		jb      L2
 		jmp     wcsrchrSSE2
+
+	L2:
+		mov     dword ptr [wcsrchrDispatch], offset wcsrchr386
+		jmp     wcsrchr386
 	}
 
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
+	#undef __ISA_AVAILABLE_SSE42
 }
 #endif

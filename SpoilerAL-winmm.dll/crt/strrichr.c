@@ -52,13 +52,13 @@ __declspec(naked) char * __cdecl strrichrSSE42(const char *string, int c)
 		#define string (esp + 4)
 		#define c      (esp + 8)
 
-		mov     edx, dword ptr [c]
-		mov     eax, dword ptr [string]
-		or      edx, 'a' - 'A'
+		mov     eax, dword ptr [c]
+		mov     edx, dword ptr [string]
+		or      eax, 'a' - 'A'
 		xor     ecx, ecx
-		mov     cl, dl
-		sub     edx, 'a'
-		cmp     dl, 'z' - 'a' + 1
+		mov     cl, al
+		sub     eax, 'a'
+		cmp     al, 'z' - 'a' + 1
 		jae     strrchrSSE42
 		movd    xmm0, ecx
 		movdqa  xmm1, xmmword ptr [insensitive]
@@ -66,12 +66,13 @@ __declspec(naked) char * __cdecl strrichrSSE42(const char *string, int c)
 		pshuflw xmm0, xmm0, 0
 		movlhps xmm0, xmm0
 		pxor    xmm0, xmm1
-		mov     edx, eax
+		mov     eax, edx
+		sub     edx, 16
 		and     eax, 15
-		jz      loop_entry
+		jz      loop_begin
 		sub     edx, eax
 		xor     eax, 15
-		movdqa  xmm1, xmmword ptr [edx]
+		movdqa  xmm1, xmmword ptr [edx + 16]
 		movdqu  xmm2, xmmword ptr [maskbit + eax + 1]
 		pcmpeqb xmm3, xmm3
 		movdqa  xmm4, xmm2
@@ -80,15 +81,15 @@ __declspec(naked) char * __cdecl strrichrSSE42(const char *string, int c)
 		pand    xmm1, xmm3
 		por     xmm1, xmm4
 		paddb   xmm1, xmm2
+		add     edx, 16
 		xor     eax, eax
 		pcmpistri xmm0, xmm1, 01000000B
 		jbe     loop_found
 
 		align   16
 	loop_begin:
-		add     edx, 16
-	loop_entry:
-		pcmpistri xmm0, xmmword ptr [edx], 01000000B
+		pcmpistri xmm0, xmmword ptr [edx + 16], 01000000B
+		lea     edx, [edx + 16]
 		jnbe    loop_begin
 		jnc     epilog
 	loop_found:

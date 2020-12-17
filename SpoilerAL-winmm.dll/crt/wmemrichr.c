@@ -103,17 +103,16 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrichrSSE42(const wchar_t *
 		jz      loop_begin
 		shr     ecx, 1
 		jc      unaligned
-		xor     ecx, 7
 		movdqa  xmm0, xmmword ptr [esi + edi * 2]
-		jmp     first_xmmword
+		jmp     compare
 
 		align   16
 	unaligned:
 		jz      loop_begin
-		xor     ecx, 7
 		movdqa  xmm0, xmmword ptr [esi + edi * 2 - 1]
 		psrldq  xmm0, 1
-	first_xmmword:
+	compare:
+		xor     ecx, 7
 		pcmpestrm xmm1, xmm0, 00000001B
 		mov     eax, 7FH
 		jnc     increment

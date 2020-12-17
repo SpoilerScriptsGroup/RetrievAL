@@ -44,19 +44,20 @@ __declspec(naked) char * __cdecl strrchrSSE42(const char *string, int c)
 		#define c      (esp + 8)
 
 		mov     ecx, dword ptr [c]
-		mov     eax, dword ptr [string]
+		mov     edx, dword ptr [string]
 		test    cl, cl
 		jz      char_is_null
 		movd    xmm0, ecx
 		punpcklbw xmm0, xmm0
 		pshuflw xmm0, xmm0, 0
 		movlhps xmm0, xmm0
-		mov     edx, eax
+		mov     eax, edx
+		sub     edx, 16
 		and     eax, 15
-		jz      loop_entry
+		jz      loop_begin
 		sub     edx, eax
 		xor     eax, 15
-		movdqa  xmm1, xmmword ptr [edx]
+		movdqa  xmm1, xmmword ptr [edx + 16]
 		movdqu  xmm2, xmmword ptr [maskbit + eax + 1]
 		pcmpeqb xmm3, xmm3
 		movdqa  xmm4, xmm2
@@ -64,15 +65,16 @@ __declspec(naked) char * __cdecl strrchrSSE42(const char *string, int c)
 		pand    xmm4, xmm0
 		pand    xmm1, xmm3
 		por     xmm1, xmm4
+		add     edx, 16
 		cmp     cl, 1
 		je      increment
 		paddb   xmm1, xmm2
-		jmp     loop_start
+		jmp     loop_entry
 
 		align   16
 	char_is_null:
-		push    eax
-		push    eax
+		push    edx
+		push    edx
 		call    strlen
 		pop     edx
 		pop     ecx
@@ -82,7 +84,7 @@ __declspec(naked) char * __cdecl strrchrSSE42(const char *string, int c)
 		align   16
 	increment:
 		psubb   xmm1, xmm2
-	loop_start:
+	loop_entry:
 		xor     eax, eax
 		xor     ecx, ecx                                    // padding 2 byte
 		pcmpistri xmm0, xmm1, 01000000B
@@ -90,9 +92,8 @@ __declspec(naked) char * __cdecl strrchrSSE42(const char *string, int c)
 
 		align   16                                          // already aligned
 	loop_begin:
-		add     edx, 16
-	loop_entry:
-		pcmpistri xmm0, xmmword ptr [edx], 01000000B
+		pcmpistri xmm0, xmmword ptr [edx + 16], 01000000B
+		lea     edx, [edx + 16]
 		jnbe    loop_begin
 		jnc     epilog
 	loop_found:

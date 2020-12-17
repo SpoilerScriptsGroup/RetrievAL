@@ -81,7 +81,7 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrSSE42(const wchar_t *bu
 		jz      loop_entry
 		sub     eax, ecx
 		movdqa  xmm0, xmmword ptr [eax]
-		jmp     first_xmmword
+		jmp     compare
 
 		align   16
 	unaligned:
@@ -91,7 +91,7 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrSSE42(const wchar_t *bu
 		jz      loop_entry
 		movdqa  xmm0, xmmword ptr [eax]
 		pslldq  xmm0, 1
-	first_xmmword:
+	compare:
 		shr     ecx, 1
 		mov     eax, 1
 		pcmpestrm xmm1, xmm0, 00000001B

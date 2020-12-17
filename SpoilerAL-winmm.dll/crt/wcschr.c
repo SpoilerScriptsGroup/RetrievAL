@@ -17,6 +17,7 @@ wchar_t * __cdecl wcschr(const wchar_t *string, wchar_t c)
 #else
 #pragma function(wcslen)
 
+wchar_t * __cdecl wcschrSSE42(const wchar_t *string, wchar_t c);
 wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wchar_t c);
 wchar_t * __cdecl wcschr386(const wchar_t *string, wchar_t c);
 static wchar_t * __cdecl wcschrCPUDispatch(const wchar_t *string, wchar_t c);
@@ -31,6 +32,88 @@ __declspec(naked) wchar_t * __cdecl wcschr(const wchar_t *string, wchar_t c)
 	}
 }
 
+// SSE4.2 version
+__declspec(naked) wchar_t * __cdecl wcschrSSE42(const wchar_t *string, wchar_t c)
+{
+	__asm
+	{
+		#define string (esp + 4)
+		#define c      (esp + 8)
+
+		movzx   edx, word ptr [c]
+		mov     ecx, dword ptr [string]
+		test    edx, edx
+		jz      char_is_null
+		movd    xmm1, edx
+		push    esi
+		mov     esi, ecx
+		mov     eax, 2
+		sub     esi, 16
+		and     ecx, 15
+		jz      loop_entry
+		sub     esi, ecx
+		mov     edx, 8
+		shr     ecx, 1
+		jc      unaligned
+		movdqa  xmm0, xmmword ptr [esi + 16]
+		lea     esi, [esi + 16]
+		jmp     compare
+
+		align   16
+	char_is_null:
+		push    ecx
+		push    ecx
+		call    wcslen
+		pop     edx
+		pop     ecx
+		lea     eax, [ecx + eax * 2]
+		ret
+
+		align   16
+	unaligned:
+		inc     ecx
+		add     esi, 15
+		and     ecx, 7
+		jz      loop_entry
+		movdqa  xmm0, xmmword ptr [esi + 1]
+		pslldq  xmm0, 1
+	compare:
+		pcmpestrm xmm1, xmm0, 00000001B
+		jnc     loop_entry
+		movd    eax, xmm0
+		shr     eax, cl
+		jz      loop_entry
+		bsf     eax, eax
+		add     ecx, eax
+		xor     eax, eax
+		mov     al, byte ptr [esi + ecx * 2]
+		add     eax, -1
+		jmp     epilog
+
+		align   16
+	loop_entry:
+		pshuflw xmm1, xmm1, 0
+		movlhps xmm1, xmm1
+
+		align   16
+	loop_begin:
+		pcmpistri xmm1, xmmword ptr [esi + 16], 00000001B
+		lea     esi, [esi + 16]
+		jnbe    loop_begin
+
+	epilog:
+		sbb     edx, edx
+		lea     eax, [esi + ecx * 2]
+		and     eax, edx
+		pop     esi
+		ret
+
+		#undef string
+		#undef c
+	}
+}
+
+// SSE2 version
 __declspec(naked) wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wchar_t c)
 {
 	__asm
@@ -121,6 +204,7 @@ __declspec(naked) wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wchar_t c)
 	}
 }
 
+// 80386 version
 __declspec(naked) wchar_t * __cdecl wcschr386(const wchar_t *string, wchar_t c)
 {
 	__asm
@@ -163,24 +247,31 @@ __declspec(naked) wchar_t * __cdecl wcschr386(const wchar_t *string, wchar_t c)
 
 __declspec(naked) static wchar_t * __cdecl wcschrCPUDispatch(const wchar_t *string, wchar_t c)
 {
-	#define __ISA_AVAILABLE_X86  0
-	#define __ISA_AVAILABLE_SSE2 1
+	#define __ISA_AVAILABLE_X86   0
+	#define __ISA_AVAILABLE_SSE2  1
+	#define __ISA_AVAILABLE_SSE42 2
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
-		jne     L1
-		mov     dword ptr [wcschrDispatch], offset wcschr386
-		jmp     wcschr386
+		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
+		jbe     L1
+		mov     dword ptr [wcschrDispatch], offset wcschrSSE42
+		jmp     wcschrSSE42
 
 	L1:
 		mov     dword ptr [wcschrDispatch], offset wcschrSSE2
+		jb      L2
 		jmp     wcschrSSE2
+
+	L2:
+		mov     dword ptr [wcschrDispatch], offset wcschr386
+		jmp     wcschr386
 	}
 
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
+	#undef __ISA_AVAILABLE_SSE42
 }
 #endif

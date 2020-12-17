@@ -13,6 +13,10 @@ size_t __cdecl wcslen(const wchar_t *string)
 	return length;
 }
 #else
+extern const char xmmconst_maskbit[32];
+#define maskbit xmmconst_maskbit
+
+static size_t __cdecl wcslenSSE42(const wchar_t *string);
 static size_t __cdecl wcslenSSE2(const wchar_t *string);
 static size_t __cdecl wcslen386(const wchar_t *string);
 static size_t __cdecl wcslenCPUDispatch(const wchar_t *string);
@@ -27,13 +31,68 @@ __declspec(naked) size_t __cdecl wcslen(const wchar_t *string)
 	}
 }
 
-__declspec(naked) static size_t __cdecl wcslenSSE2(const wchar_t *string)
+// SSE4.2 version
+__declspec(naked) static size_t __cdecl wcslenSSE42(const wchar_t *string)
 {
 	__asm
 	{
 		#define string (esp + 4)
 
 		mov     eax, dword ptr [string]                     // get pointer to string
+		pxor    xmm0, xmm0                                  // set to zero
+		mov     ecx, eax
+		mov     edx, eax
+		and     eax, 15
+		jz      loop_entry
+		shr     eax, 1
+		jc      unaligned
+		and     ecx, -16
+		xor     eax, 7
+		movdqa  xmm1, xmmword ptr [ecx]                     // read 16 bytes from string
+		movdqu  xmm2, xmmword ptr [(maskbit + 2) + eax * 2] // load the non target bits mask
+		inc     eax
+		jmp     compare
+
+		align   16
+	unaligned:
+		xor     eax, 7
+		jz      loop_entry
+		and     ecx, -16
+		movdqa  xmm1, xmmword ptr [ecx]                     // read 16 bytes from string
+		movdqu  xmm2, xmmword ptr [maskbit + eax * 2]       // load the non target bits mask
+		pslldq  xmm1, 1
+		dec     ecx
+	compare:
+		por     xmm1, xmm2                                  // fill the non target bits to 1
+		pcmpistri xmm0, xmm1, 00001001B                     // find null. returns index in ecx
+		jnz     loop_entry                                  // next 16 bytes
+		sub     ecx, 8
+		jmp     last
+
+		align   16
+	loop_begin:
+		add     eax, 8                                      // increment pointer by 16
+	loop_entry:
+		pcmpistri xmm0, \
+		          xmmword ptr [edx + eax * 2], 00001001B    // find null. returns index in ecx
+		jnz     loop_begin                                  // next 16 bytes
+
+	last:
+		add     eax, ecx
+		ret
+
+		#undef string
+	}
+}
+
+// SSE2 version
+__declspec(naked) static size_t __cdecl wcslenSSE2(const wchar_t *string)
+{
+	__asm
+	{
+		#define string (esp + 4)
+
+		mov     eax, dword ptr [string]                     // edx = string
 		pxor    xmm1, xmm1                                  // set to zero
 		or      edx, -1                                     // fill mask bits
 		mov     ecx, eax                                    // copy pointer
@@ -94,6 +153,7 @@ __declspec(naked) static size_t __cdecl wcslenSSE2(const wchar_t *string)
 	}
 }
 
+// 80386 version
 __declspec(naked) static size_t __cdecl wcslen386(const wchar_t *string)
 {
 	__asm
@@ -118,24 +178,31 @@ __declspec(naked) static size_t __cdecl wcslen386(const wchar_t *string)
 
 __declspec(naked) static size_t __cdecl wcslenCPUDispatch(const wchar_t *string)
 {
-	#define __ISA_AVAILABLE_X86  0
-	#define __ISA_AVAILABLE_SSE2 1
+	#define __ISA_AVAILABLE_X86   0
+	#define __ISA_AVAILABLE_SSE2  1
+	#define __ISA_AVAILABLE_SSE42 2
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
-		jne     L1
-		mov     dword ptr [wcslenDispatch], offset wcslen386
-		jmp     wcslen386
+		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
+		jbe     L1
+		mov     dword ptr [wcslenDispatch], offset wcslenSSE42
+		jmp     wcslenSSE42
 
 	L1:
 		mov     dword ptr [wcslenDispatch], offset wcslenSSE2
+		jb      L2
 		jmp     wcslenSSE2
+
+	L2:
+		mov     dword ptr [wcslenDispatch], offset wcslen386
+		jmp     wcslen386
 	}
 
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
+	#undef __ISA_AVAILABLE_SSE42
 }
 #endif

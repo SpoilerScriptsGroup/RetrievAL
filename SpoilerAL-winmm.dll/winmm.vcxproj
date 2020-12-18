@@ -1020,6 +1020,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="crt\xmmconst.c" />
+    <ClCompile Include="DwmAPI\DwmAPI.c" />
     <ClCompile Include="EnumReadSSG\Attach_EnumReadSSG.c" />
     <ClCompile Include="EnumReadSSG\TSSGCtrl_EnumReadSSG.c" />
     <ClCompile Include="EnumReadSSG\TSSGCtrl_MakeSubjectType.c" />
@@ -1201,6 +1202,7 @@
     <ClCompile Include="IsBadPtr\IsBadStringPtrW.c" />
     <ClCompile Include="IsBadPtr\IsBadWritePtr.c" />
     <ClCompile Include="IsBadPtr\IsBadWritePtrEx.c" />
+    <ClCompile Include="Kernel32\GetOSMajorVersion.c" />
     <ClCompile Include="Kernel32\GetProcessIdCompatible.c" />
     <ClCompile Include="MinMaxParam\Attach_MinMaxParam.c" />
     <ClCompile Include="MinMaxParam\TSSCalc_Setting_CheckSignedSize.c" />
@@ -1477,6 +1479,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
+    <MASM Include="DwmAPI\DwmGetWindowAttribute.asm" />
     <MASM Include="export.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>

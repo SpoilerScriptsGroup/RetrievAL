@@ -23,6 +23,9 @@ void __cdecl bad_alloc();
 	CallWindowProcA((FARPROC)(WNDPROC)(lpPrevWndFunc), hWnd, Msg, wParam, lParam)
 #endif
 
+extern BOOL __stdcall GetWindowRectangle(IN HWND hWnd, OUT LPRECT lpRect);
+extern BOOL __stdcall GetWindowMargin(IN HWND hWnd, OUT LPRECT lprcMargin);
+
 #ifdef _M_IX86
 #pragma pack(push, 1)
 typedef struct {
@@ -84,7 +87,7 @@ static size_t __fastcall GetMaxElementsInPage()
 static void __stdcall OnEnterSizeMove(SNAPINFO *this)
 {
 	*(LPDWORD)&this->EnterSizeMovePos = GetMessagePos();
-	GetWindowRect(this->hWnd, &this->EnterSizeMoveRect);
+	GetWindowRectangle(this->hWnd, &this->EnterSizeMoveRect);
 }
 
 static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
@@ -102,6 +105,7 @@ static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 	page = FirstPage;
 	do
 	{
+		RECT   rcMargin;
 		LPBYTE present;
 		size_t num, index;
 
@@ -111,6 +115,7 @@ static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 		while (index < MaxElementsInPage)
 #else
 	{
+		RECT     rcMargin;
 		SNAPINFO *p, *end;
 
 		for (end = (p = FirstPage) + NumberOfElements; p != end; p++)
@@ -130,13 +135,13 @@ static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 				index += CHAR_BIT;
 				continue;
 			}
-			if (!(c & (1 << (index & (CHAR_BIT - 1)))) || (p = page + index) == this || !IsWindowVisible(p->hWnd) || !GetWindowRect(p->hWnd, &rect))
+			if (!(c & (1 << (index & (CHAR_BIT - 1)))) || (p = page + index) == this || !IsWindowVisible(p->hWnd) || !GetWindowRectangle(p->hWnd, &rect))
 			{
 				index++;
 				continue;
 			}
 #else
-			if (p == this || !IsWindowVisible(p->hWnd) || !GetWindowRect(p->hWnd, &rect))
+			if (p == this || !IsWindowVisible(p->hWnd) || !GetWindowRectangle(p->hWnd, &rect))
 				continue;
 #endif
 			flags = HORZ | VERT;
@@ -192,6 +197,17 @@ static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 			#undef HORZ
 			#undef VERT
 		}
+		if (GetWindowMargin(this->hWnd, &rcMargin))
+		{
+			if (fwSide == WMSZ_LEFT || fwSide == WMSZ_TOPLEFT || fwSide == WMSZ_BOTTOMLEFT)
+				pRect->left -= rcMargin.left;
+			else if (fwSide == WMSZ_RIGHT || fwSide == WMSZ_TOPRIGHT || fwSide == WMSZ_BOTTOMRIGHT)
+				pRect->right += rcMargin.right;
+			if (fwSide >= WMSZ_TOP && fwSide <= WMSZ_TOPRIGHT)
+				pRect->top -= rcMargin.top;
+			else if (fwSide >= WMSZ_BOTTOM && fwSide <= WMSZ_BOTTOMRIGHT)
+				pRect->bottom += rcMargin.bottom;
+		}
 #if !FIXED_ARRAY
 	} while ((page = *NextPage(page)) != FirstPage);
 #else
@@ -238,6 +254,7 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 	SNAPINFO *page;
 #endif
 	HMONITOR hMonitor;
+	RECT     rcMargin;
 
 	if (!this->Enabled)
 		return;
@@ -281,13 +298,13 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 				index += CHAR_BIT;
 				continue;
 			}
-			if (!(c & (1 << (index & (CHAR_BIT - 1)))) || (p = page + index) == this || !IsWindowVisible(p->hWnd) || !GetWindowRect(p->hWnd, &rect))
+			if (!(c & (1 << (index & (CHAR_BIT - 1)))) || (p = page + index) == this || !IsWindowVisible(p->hWnd) || !GetWindowRectangle(p->hWnd, &rect))
 			{
 				index++;
 				continue;
 			}
 #else
-			if (p == this || !IsWindowVisible(p->hWnd) || !GetWindowRect(p->hWnd, &rect))
+			if (p == this || !IsWindowVisible(p->hWnd) || !GetWindowRectangle(p->hWnd, &rect))
 				continue;
 #endif
 			flags = HORZ | VERT;
@@ -389,6 +406,13 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 				pRect->bottom = mi.rcWork.bottom;
 			}
 		}
+	}
+	if (GetWindowMargin(this->hWnd, &rcMargin))
+	{
+		pRect->left   -= rcMargin.left  ;
+		pRect->top    -= rcMargin.top   ;
+		pRect->right  += rcMargin.right ;
+		pRect->bottom += rcMargin.bottom;
 	}
 }
 

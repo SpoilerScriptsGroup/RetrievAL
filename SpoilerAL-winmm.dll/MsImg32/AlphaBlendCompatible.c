@@ -2,7 +2,7 @@
 
 HMODULE hMsImg32 = NULL;
 
-static DWORD dwOSMajorVersion = 0;
+extern DWORD __stdcall GetOSMajorVersion();
 
 typedef struct tagBGRA {
 	BYTE Blue;
@@ -40,25 +40,10 @@ EXTERN_C BOOL __stdcall AlphaBlendCompatible(
 			break;
 		else if (dwFlags != (AC_SRC_OVER | ((DWORD)AC_SRC_ALPHA << 24)))
 			dwErrCode = ERROR_INVALID_PARAMETER;
-		else if (dwOSMajorVersion >= 4)
+		else if (GetOSMajorVersion() >= 4)
 			break;
-		else if (dwOSMajorVersion)
-			dwErrCode = ERROR_OLD_WIN_VERSION;
 		else
-		{
-			OSVERSIONINFOW OSVersionInfo;
-
-			OSVersionInfo.dwOSVersionInfoSize = sizeof(OSVersionInfo);
-#pragma warning(push)
-#pragma warning(disable:4996)
-			if (!GetVersionExW(&OSVersionInfo))
-#pragma warning(pop)
-				return FALSE;
-			dwOSMajorVersion = OSVersionInfo.dwMajorVersion;
-			if (dwOSMajorVersion >= 4)
-				break;
 			dwErrCode = ERROR_OLD_WIN_VERSION;
-		}
 		SetLastError(dwErrCode);
 		return FALSE;
 	} while (0);

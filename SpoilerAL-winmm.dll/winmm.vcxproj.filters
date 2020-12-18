@@ -58,6 +58,9 @@
     <Filter Include="crt\uitot">
       <UniqueIdentifier>{9d33f3e8-d27c-48e7-8b36-16fdeeef65c1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="DwmAPI">
+      <UniqueIdentifier>{d69f9d96-8d4b-446f-9e77-37e53452a871}</UniqueIdentifier>
+    </Filter>
     <Filter Include="EnumReadSSG">
       <UniqueIdentifier>{f60cf8c0-9521-4161-a638-ef28e2f73053}</UniqueIdentifier>
     </Filter>
@@ -1107,6 +1110,9 @@
     <ClCompile Include="crt\xmmconst.c">
       <Filter>crt</Filter>
     </ClCompile>
+    <ClCompile Include="DwmAPI\DwmAPI.c">
+      <Filter>DwmAPI</Filter>
+    </ClCompile>
     <ClCompile Include="EnumReadSSG\Attach_EnumReadSSG.c">
       <Filter>EnumReadSSG</Filter>
     </ClCompile>
@@ -1626,6 +1632,9 @@
     <ClCompile Include="IsBadPtr\IsBadWritePtrEx.c">
       <Filter>IsBadPtr</Filter>
     </ClCompile>
+    <ClCompile Include="Kernel32\GetOSMajorVersion.c">
+      <Filter>Kernel32</Filter>
+    </ClCompile>
     <ClCompile Include="Kernel32\GetProcessIdCompatible.c">
       <Filter>Kernel32</Filter>
     </ClCompile>
@@ -2106,6 +2115,9 @@
     </MASM>
     <MASM Include="crt\msvc\memset.asm">
       <Filter>crt\msvc</Filter>
+    </MASM>
+    <MASM Include="DwmAPI\DwmGetWindowAttribute.asm">
+      <Filter>DwmAPI</Filter>
     </MASM>
     <MASM Include="export.asm">
       <Filter>ソース ファイル</Filter>

@@ -81,6 +81,7 @@ static BOOL __cdecl Attach()
 	EXTERN_C BOOL __cdecl LoadComCtl32();
 
 	EXTERN_C wchar_t lpMenuProfileName[MAX_PATH];
+	EXTERN_C HMODULE hDwmAPI;
 	EXTERN_C HMODULE hMsImg32;
 
 	static __inline void InitializeExportFunctions();
@@ -160,6 +161,7 @@ static BOOL __cdecl Attach()
 		if (!SetThreadLocale(MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_JAPANESE_XJIS)))
 			goto LAST_ERROR;
 		LoadComCtl32();
+		hDwmAPI = LoadLibraryW(L"dwmapi.dll");
 #if !defined(_WIN32_WINNT) || _WIN32_WINNT < _WIN32_WINNT_NT4
 		hMsImg32 = LoadLibraryW(L"msimg32.dll");
 #endif
@@ -445,6 +447,7 @@ static __inline BOOL ModifyResourceSection()
 static __inline void Detach()
 {
 	EXTERN_C HMODULE hComCtl32;
+	EXTERN_C HMODULE hDwmAPI;
 	EXTERN_C HMODULE hMsImg32;
 
 	if (hWinMM)
@@ -460,6 +463,8 @@ static __inline void Detach()
 			if (hMsImg32)
 				FreeLibrary(hMsImg32);
 #endif
+			if (hDwmAPI)
+				FreeLibrary(hDwmAPI);
 			if (hComCtl32)
 				FreeLibrary(hComCtl32);
 			HeapDestroy(pHeap);

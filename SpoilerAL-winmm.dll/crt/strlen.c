@@ -49,13 +49,12 @@ __declspec(naked) static size_t __cdecl strlenSSE42(const char *string)
 		movdqu  xmm2, xmmword ptr [maskbit + eax + 32]      // load the non target bits mask
 		por     xmm1, xmm2                                  // fill the non target bits to 1
 		pcmpistri xmm0, xmm1, 00001000B                     // find null. returns index in ecx
-		lea     eax, [eax + 16]                             // increment pointer by 16
-		jnz     loop_begin                                  // next 16 bytes
-		jmp     last
+		jmp     loop_increment
 
 		align   16
 	loop_begin:
 		pcmpistri xmm0, xmmword ptr [edx + eax], 00001000B  // find null. returns index in ecx
+	loop_increment:
 		lea     eax, [eax + 16]                             // increment pointer by 16
 		jnz     loop_begin                                  // next 16 bytes
 

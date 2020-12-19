@@ -38,28 +38,25 @@ __declspec(naked) static size_t __cdecl strlenSSE42(const char *string)
 	{
 		#define string (esp + 4)
 
-		mov     eax, dword ptr [string]                     // get pointer to string
+		mov     ecx, dword ptr [string]                     // get pointer to string
 		pxor    xmm0, xmm0                                  // set to zero
-		mov     ecx, eax
-		mov     edx, eax
-		and     eax, 15
-		jz      loop_entry
-		sub     ecx, eax
-		xor     eax, 15
-		movdqa  xmm1, xmmword ptr [ecx]                     // read 16 bytes from string
-		movdqu  xmm2, xmmword ptr [maskbit + eax + 1]       // load the non target bits mask
+		mov     eax, -16
+		lea     edx, [ecx + 16]
+		and     ecx, 15
+		jz      loop_begin
+		sub     eax, ecx
+		movdqa  xmm1, xmmword ptr [edx + eax]               // read 16 bytes from string
+		movdqu  xmm2, xmmword ptr [maskbit + eax + 32]      // load the non target bits mask
 		por     xmm1, xmm2                                  // fill the non target bits to 1
 		pcmpistri xmm0, xmm1, 00001000B                     // find null. returns index in ecx
-		lea     eax, [eax + 1]
-		jnz     loop_entry                                  // next 16 bytes
-		sub     eax, 16
+		lea     eax, [eax + 16]                             // increment pointer by 16
+		jnz     loop_begin                                  // next 16 bytes
 		jmp     last
 
 		align   16
 	loop_begin:
-		add     eax, 16                                     // increment pointer by 16
-	loop_entry:
 		pcmpistri xmm0, xmmword ptr [edx + eax], 00001000B  // find null. returns index in ecx
+		lea     eax, [eax + 16]                             // increment pointer by 16
 		jnz     loop_begin                                  // next 16 bytes
 
 	last:

@@ -5,7 +5,8 @@
 #ifdef __BORLANDC__
 EXTERN_C DWORD __stdcall GetProcessId(IN HANDLE Process);
 #endif
-EXTERN_C BOOL __stdcall IsBadStringPtrCompatibleW(IN LPCWSTR lpsz, IN UINT_PTR ucchMax);
+#define IsBadStringPtrW IsBadStringPtrCompatibleW
+EXTERN_C BOOL __stdcall IsBadStringPtrW(IN LPCWSTR lpsz, IN UINT_PTR ucchMax);
 
 #define IsReadableProtect(Protect) ( \
     ((Protect) & (                   \
@@ -31,7 +32,7 @@ BOOL __stdcall IsBadStringPtrExW(
 	assert(PAGE_SIZE % sizeof(wchar_t) == 0);
 
 	if (GetProcessId(hProcess) == GetCurrentProcessId())
-		return IsBadStringPtrCompatibleW(lpsz, ucchMax);
+		return IsBadStringPtrW(lpsz, ucchMax);
 	if (!ucchMax)
 		return FALSE;
 	if (count = -(ptrdiff_t)lpsz & (PAGE_SIZE - sizeof(wchar_t)))

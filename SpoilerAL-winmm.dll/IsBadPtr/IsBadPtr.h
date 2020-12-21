@@ -11,22 +11,22 @@
 extern "C" {
 #endif
 
-BOOL __stdcall IsBadReadPtrCompatible(IN LPCVOID lp, IN UINT_PTR ucb);
-BOOL __stdcall IsBadWritePtrCompatible(IN LPVOID lp, IN UINT_PTR ucb);
-BOOL __stdcall IsBadStringPtrCompatibleA(IN LPCSTR lpsz, IN UINT_PTR ucchMax);
-BOOL __stdcall IsBadStringPtrCompatibleW(IN LPCWSTR lpsz, IN UINT_PTR ucchMax);
-BOOL __stdcall IsBadCodePtrCompatible(IN FARPROC lpfn);
-BOOL __stdcall IsBadReadPtrEx(IN HANDLE hProcess, IN LPCVOID lp, IN UINT_PTR ucb);
-BOOL __stdcall IsBadWritePtrEx(IN HANDLE hProcess, IN LPVOID lp, IN UINT_PTR ucb);
-BOOL __stdcall IsBadStringPtrExA(IN HANDLE hProcess, IN LPCSTR lpsz, IN UINT_PTR ucchMax);
-BOOL __stdcall IsBadStringPtrExW(IN HANDLE hProcess, IN LPCWSTR lpsz, IN UINT_PTR ucchMax);
-BOOL __stdcall IsBadCodePtrEx(IN HANDLE hProcess, IN FARPROC lpfn);
-
 #define IsBadReadPtr    IsBadReadPtrCompatible
 #define IsBadWritePtr   IsBadWritePtrCompatible
 #define IsBadStringPtrA IsBadStringPtrCompatibleA
 #define IsBadStringPtrW IsBadStringPtrCompatibleW
 #define IsBadCodePtr    IsBadCodePtrCompatible
+
+BOOL __stdcall IsBadReadPtr(IN LPCVOID lp, IN UINT_PTR ucb);
+BOOL __stdcall IsBadWritePtr(IN LPVOID lp, IN UINT_PTR ucb);
+BOOL __stdcall IsBadStringPtrA(IN LPCSTR lpsz, IN UINT_PTR ucchMax);
+BOOL __stdcall IsBadStringPtrW(IN LPCWSTR lpsz, IN UINT_PTR ucchMax);
+BOOL __stdcall IsBadCodePtr(IN FARPROC lpfn);
+BOOL __stdcall IsBadReadPtrEx(IN HANDLE hProcess, IN LPCVOID lp, IN UINT_PTR ucb);
+BOOL __stdcall IsBadWritePtrEx(IN HANDLE hProcess, IN LPVOID lp, IN UINT_PTR ucb);
+BOOL __stdcall IsBadStringPtrExA(IN HANDLE hProcess, IN LPCSTR lpsz, IN UINT_PTR ucchMax);
+BOOL __stdcall IsBadStringPtrExW(IN HANDLE hProcess, IN LPCWSTR lpsz, IN UINT_PTR ucchMax);
+BOOL __stdcall IsBadCodePtrEx(IN HANDLE hProcess, IN FARPROC lpfn);
 
 #ifdef __cplusplus
 }

@@ -58,7 +58,6 @@ __declspec(naked) static size_t __cdecl strlenSSE42(const char *string)
 		lea     eax, [eax + 16]                             // increment pointer by 16
 		jnz     loop_begin                                  // next 16 bytes
 
-	last:
 		add     eax, ecx
 		ret
 

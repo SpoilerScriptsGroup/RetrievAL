@@ -42,7 +42,6 @@ __declspec(naked) int __cdecl _memicmp(const void *buffer1, const void *buffer2,
 // AVX2 version
 __declspec(naked) static int __cdecl memicmpAVX2(const void *buffer1, const void *buffer2, size_t count)
 {
-#if 1
 	__asm
 	{
 		#define buffer1 (esp + 4)
@@ -62,125 +61,6 @@ __declspec(naked) static int __cdecl memicmpAVX2(const void *buffer1, const void
 		add     edi, ebx                                    // edi = end of buffer2
 		xor     ebx, -1                                     // ebx = -count - 1
 		and     ebp, 31                                     // ebp = -buffer2 & 31
-		xor     eax, eax                                    // eax = 0
-		jmp     byte_loop_entry
-
-		align   16
-	byte_loop:
-		movzx   eax, byte ptr [esi + ebx]
-		movzx   edx, byte ptr [edi + ebx]
-		sub     eax, 'A'
-		sub     edx, 'A'
-		cmp     eax, 'Z' - 'A' + 1
-		lea     ecx, [eax + 'a' - 'A']
-		cmovb   eax, ecx
-		cmp     edx, 'Z' - 'A' + 1
-		lea     ecx, [edx + 'a' - 'A']
-		cmovb   edx, ecx
-		sub     eax, edx
-		jnz     epilog
-	byte_loop_entry:
-		inc     ebx
-		jz      epilog
-		dec     ebp
-		jns     byte_loop
-		vmovdqa ymm4, ymmword ptr [upper]
-		vmovdqa ymm5, ymmword ptr [azrange]
-		vmovdqa ymm6, ymmword ptr [casebit]                 // bit to change
-		mov     edx, 31
-		sub     esi, 31
-		sub     edi, 31
-		add     ebx, 31
-		jnc     ymmword_loop
-		sub     ebx, 31
-
-		align   16
-	ymmword_loop_last:
-		mov     ecx, ebx
-		add     esi, 31
-		add     ecx, esi
-		add     edi, 31
-		shl     ecx, 32 - PAGE_SHIFT
-		xor     edx, edx
-		cmp     ecx, -31 shl (32 - PAGE_SHIFT)
-		jae     byte_loop                                   // jump if cross pages
-
-		align   16
-	ymmword_loop:
-		vmovdqu ymm0, ymmword ptr [esi + ebx]               // load 32 byte
-		vmovdqa ymm1, ymmword ptr [edi + ebx]               //
-		vmovdqa ymm2, ymm0                                  // copy
-		vmovdqa ymm3, ymm1                                  //
-		vpaddb  ymm0, ymm0, ymm4                            // all bytes greater than 'Z' if negative
-		vpaddb  ymm1, ymm1, ymm4                            //
-		vpcmpgtb ymm0, ymm0, ymm5                           // ymm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
-		vpcmpgtb ymm1, ymm1, ymm5                           //
-		vpand   ymm0, ymm0, ymm6                            // assign a mask for the appropriate bytes
-		vpand   ymm1, ymm1, ymm6                            //
-		vpor    ymm0, ymm0, ymm2                            // negation of the 5th bit - lowercase letters
-		vpor    ymm1, ymm1, ymm3                            //
-		vpcmpeqb ymm0, ymm0, ymm1                           // compare
-		vpmovmskb ecx, ymm0                                 // get one bit for each byte result
-		xor     ecx, -1
-		jnz     ymmword_not_equal
-		add     ebx, 32
-		jnc     ymmword_loop
-		sub     ebx, edx
-		jb      ymmword_loop_last
-		jmp     epilog
-
-		align   16
-	ymmword_not_equal:
-		bsf     ecx, ecx
-		sub     ebx, edx
-		add     esi, edx
-		add     ebx, ecx
-		jc      epilog
-		add     edi, edx
-		xor     edx, edx
-		mov     al, byte ptr [esi + ebx]
-		mov     dl, byte ptr [edi + ebx]
-		sub     eax, 'A'
-		sub     edx, 'A'
-		cmp     eax, 'Z' - 'A' + 1
-		lea     ecx, [eax + 'a' - 'A']
-		cmovb   eax, ecx
-		cmp     edx, 'Z' - 'A' + 1
-		lea     ecx, [edx + 'a' - 'A']
-		cmovb   edx, ecx
-		sub     eax, edx
-	epilog:
-		pop     edi
-		pop     esi
-		pop     ebp
-		pop     ebx
-		vzeroupper
-		ret
-
-		#undef buffer1
-		#undef buffer2
-		#undef count
-	}
-#else
-	__asm
-	{
-		#define buffer1 (esp + 4)
-		#define buffer2 (esp + 8)
-		#define count   (esp + 12)
-
-		push    ebx
-		push    ebp
-		push    esi
-		push    edi
-		xor     ebp, ebp                                    // ebp = 0
-		mov     esi, dword ptr [buffer1 + 16]               // esi = buffer1
-		mov     edi, dword ptr [buffer2 + 16]               // edi = buffer2
-		mov     ebx, dword ptr [count + 16]                 // ebx = count
-		sub     ebp, edi                                    // ebp = -buffer2
-		add     esi, ebx                                    // esi = end of buffer1
-		add     edi, ebx                                    // edi = end of buffer2
-		xor     ebx, -1                                     // ebx = -count - 1
-		and     ebp, 15                                     // ebp = -buffer2 & 15
 		xor     eax, eax                                    // eax = 0
 		jmp     byte_loop_entry
 
@@ -230,20 +110,20 @@ __declspec(naked) static int __cdecl memicmpAVX2(const void *buffer1, const void
 		shl     ecx, 32 - PAGE_SHIFT
 		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
 		jae     byte_loop                                   // jump if cross pages
-		movdqu  xmm0, xmmword ptr [esi + ebx]               // load 16 byte
-		movdqa  xmm1, xmmword ptr [edi + ebx]               //
-		movdqa  xmm2, xmm0                                  // copy
-		movdqa  xmm3, xmm1                                  //
-		paddb   xmm0, xmm4                                  // all bytes greater than 'Z' if negative
-		paddb   xmm1, xmm4                                  //
-		pcmpgtb xmm0, xmm5                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
-		pcmpgtb xmm1, xmm5                                  //
-		pand    xmm0, xmm6                                  // assign a mask for the appropriate bytes
-		pand    xmm1, xmm6                                  //
-		por     xmm0, xmm2                                  // negation of the 5th bit - lowercase letters
-		por     xmm1, xmm3                                  //
-		pcmpeqb xmm0, xmm1                                  // compare
-		pmovmskb ecx, xmm0                                  // get one bit for each byte result
+		vmovdqu xmm0, xmmword ptr [esi + ebx]               // load 16 byte
+		vmovdqa xmm1, xmmword ptr [edi + ebx]               //
+		vmovdqa xmm2, xmm0                                  // copy
+		vmovdqa xmm3, xmm1                                  //
+		vpaddb  xmm0, xmm0, xmm4                            // all words greater than 'Z' if negative
+		vpaddb  xmm1, xmm1, xmm4                            //
+		vpcmpgtb xmm0, xmm0, xmm5                           // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
+		vpcmpgtb xmm1, xmm1, xmm5                           //
+		vpand   xmm0, xmm0, xmm6                            // assign a mask for the appropriate words
+		vpand   xmm1, xmm1, xmm6                            //
+		vpor    xmm0, xmm0, xmm2                            // negation of the 5th bit - lowercase letters
+		vpor    xmm1, xmm1, xmm3                            //
+		vpcmpeqb xmm0, xmm0, xmm1                           // compare
+		vpmovmskb ecx, xmm0                                 // get one bit for each byte result
 		xor     ecx, 0FFFFH
 		jnz     ymmword_not_equal
 		add     ebx, 16
@@ -256,11 +136,11 @@ __declspec(naked) static int __cdecl memicmpAVX2(const void *buffer1, const void
 		vmovdqa ymm1, ymmword ptr [edi + ebx]               //
 		vmovdqa ymm2, ymm0                                  // copy
 		vmovdqa ymm3, ymm1                                  //
-		vpaddb  ymm0, ymm0, ymm4                            // all bytes greater than 'Z' if negative
+		vpaddb  ymm0, ymm0, ymm4                            // all words greater than 'Z' if negative
 		vpaddb  ymm1, ymm1, ymm4                            //
-		vpcmpgtb ymm0, ymm0, ymm5                           // ymm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
+		vpcmpgtb ymm0, ymm0, ymm5                           // ymm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
 		vpcmpgtb ymm1, ymm1, ymm5                           //
-		vpand   ymm0, ymm0, ymm6                            // assign a mask for the appropriate bytes
+		vpand   ymm0, ymm0, ymm6                            // assign a mask for the appropriate words
 		vpand   ymm1, ymm1, ymm6                            //
 		vpor    ymm0, ymm0, ymm2                            // negation of the 5th bit - lowercase letters
 		vpor    ymm1, ymm1, ymm3                            //
@@ -306,7 +186,6 @@ __declspec(naked) static int __cdecl memicmpAVX2(const void *buffer1, const void
 		#undef buffer2
 		#undef count
 	}
-#endif
 }
 
 // SSE2 version

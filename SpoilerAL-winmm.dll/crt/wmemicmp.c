@@ -112,20 +112,20 @@ __declspec(naked) static int __cdecl wmemicmpAVX2(const wchar_t *buffer1, const 
 		shl     ecx, 32 - PAGE_SHIFT
 		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
 		jae     word_loop                                   // jump if cross pages
-		movdqu  xmm0, xmmword ptr [esi + ebx * 2]           // load 16 byte
-		movdqa  xmm1, xmmword ptr [edi + ebx * 2]           //
-		movdqa  xmm2, xmm0                                  // copy
-		movdqa  xmm3, xmm1                                  //
-		paddw   xmm0, xmm4                                  // all words greater than 'Z' if negative
-		paddw   xmm1, xmm4                                  //
-		pcmpgtw xmm0, xmm5                                  // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
-		pcmpgtw xmm1, xmm5                                  //
-		pand    xmm0, xmm6                                  // assign a mask for the appropriate words
-		pand    xmm1, xmm6                                  //
-		por     xmm0, xmm2                                  // negation of the 5th bit - lowercase letters
-		por     xmm1, xmm3                                  //
-		pcmpeqw xmm0, xmm1                                  // compare
-		pmovmskb ecx, xmm0                                  // get one bit for each byte result
+		vmovdqu xmm0, xmmword ptr [esi + ebx * 2]           // load 16 byte
+		vmovdqa xmm1, xmmword ptr [edi + ebx * 2]           //
+		vmovdqa xmm2, xmm0                                  // copy
+		vmovdqa xmm3, xmm1                                  //
+		vpaddw  xmm0, xmm0, xmm4                            // all words greater than 'Z' if negative
+		vpaddw  xmm1, xmm1, xmm4                            //
+		vpcmpgtw xmm0, xmm0, xmm5                           // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
+		vpcmpgtw xmm1, xmm1, xmm5                           //
+		vpand   xmm0, xmm0, xmm6                            // assign a mask for the appropriate words
+		vpand   xmm1, xmm1, xmm6                            //
+		vpor    xmm0, xmm0, xmm2                            // negation of the 5th bit - lowercase letters
+		vpor    xmm1, xmm1, xmm3                            //
+		vpcmpeqw xmm0, xmm0, xmm1                           // compare
+		vpmovmskb ecx, xmm0                                 // get one bit for each byte result
 		xor     ecx, 0FFFFH
 		jnz     ymmword_not_equal
 		add     ebx, 8
@@ -181,20 +181,20 @@ __declspec(naked) static int __cdecl wmemicmpAVX2(const wchar_t *buffer1, const 
 		shl     ecx, 32 - PAGE_SHIFT
 		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
 		jae     word_loop                                   // jump if cross pages
-		movdqu  xmm0, xmmword ptr [esi + ebx * 2]           // load 16 byte
-		movdqu  xmm1, xmmword ptr [edi + ebx * 2]           //
-		movdqa  xmm2, xmm0                                  // copy
-		movdqa  xmm3, xmm1                                  //
-		paddw   xmm0, xmm4                                  // all words greater than 'Z' if negative
-		paddw   xmm1, xmm4                                  //
-		pcmpgtw xmm0, xmm5                                  // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
-		pcmpgtw xmm1, xmm5                                  //
-		pand    xmm0, xmm6                                  // assign a mask for the appropriate words
-		pand    xmm1, xmm6                                  //
-		por     xmm0, xmm2                                  // negation of the 5th bit - lowercase letters
-		por     xmm1, xmm3                                  //
-		pcmpeqw xmm0, xmm1                                  // compare
-		pmovmskb ecx, xmm0                                  // get one bit for each byte result
+		vmovdqu xmm0, xmmword ptr [esi + ebx * 2]           // load 16 byte
+		vmovdqu xmm1, xmmword ptr [edi + ebx * 2]           //
+		vmovdqa xmm2, xmm0                                  // copy
+		vmovdqa xmm3, xmm1                                  //
+		vpaddw  xmm0, xmm0, xmm4                            // all words greater than 'Z' if negative
+		vpaddw  xmm1, xmm1, xmm4                            //
+		vpcmpgtw xmm0, xmm0, xmm5                           // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
+		vpcmpgtw xmm1, xmm1, xmm5                           //
+		vpand   xmm0, xmm0, xmm6                            // assign a mask for the appropriate words
+		vpand   xmm1, xmm1, xmm6                            //
+		vpor    xmm0, xmm0, xmm2                            // negation of the 5th bit - lowercase letters
+		vpor    xmm1, xmm1, xmm3                            //
+		vpcmpeqw xmm0, xmm0, xmm1                           // compare
+		vpmovmskb ecx, xmm0                                 // get one bit for each byte result
 		xor     ecx, 0FFFFH
 		jnz     ymmword_not_equal
 		add     ebx, 8

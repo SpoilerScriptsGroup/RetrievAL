@@ -46,7 +46,7 @@ __declspec(naked) static int __cdecl strcmpAVX2(const char *string1, const char 
 		mov     esi, dword ptr [string1 + 8]                // esi = string1
 		mov     eax, dword ptr [string2 + 8]                // eax = string2
 		sub     esi, eax                                    // esi = string1 - string2
-		pxor    xmm2, xmm2
+		vpxor   xmm2, xmm2, xmm2
 		jmp     byte_loop_entry
 
 		align   16
@@ -106,12 +106,12 @@ __declspec(naked) static int __cdecl strcmpAVX2(const char *string1, const char 
 	xmmword_check_cross_pages:
 		cmp     edi, PAGE_SIZE - 15
 		jae     dword_check_cross_pages                     // jump if cross pages
-		movdqu  xmm0, xmmword ptr [eax + esi]
-		movdqa  xmm1, xmmword ptr [eax]
-		pcmpeqb xmm0, xmm1
-		pcmpeqb xmm1, xmm2
-		pmovmskb edx, xmm0
-		pmovmskb ecx, xmm1
+		vmovdqu xmm0, xmmword ptr [eax + esi]
+		vmovdqa xmm1, xmmword ptr [eax]
+		vpcmpeqb xmm0, xmm0, xmm1
+		vpcmpeqb xmm1, xmm1, xmm2
+		vpmovmskb edx, xmm0
+		vpmovmskb ecx, xmm1
 		xor     edx, 0FFFFH
 		jnz     xmmword_not_equal
 		test    ecx, ecx

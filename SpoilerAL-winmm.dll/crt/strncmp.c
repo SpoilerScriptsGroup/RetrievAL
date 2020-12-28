@@ -111,12 +111,12 @@ __declspec(naked) static int __cdecl strncmpAVX2(const char *string1, const char
 	xmmword_check_cross_pages:
 		cmp     ebx, PAGE_SIZE - 15
 		jae     dword_check_cross_pages                     // jump if cross pages
-		movdqu  xmm0, xmmword ptr [esi + ebp]
-		movdqa  xmm1, xmmword ptr [edi + ebp]
-		pcmpeqb xmm0, xmm1
-		pcmpeqb xmm1, xmm2
-		pmovmskb edx, xmm0
-		pmovmskb ecx, xmm1
+		vmovdqu xmm0, xmmword ptr [esi + ebp]
+		vmovdqa xmm1, xmmword ptr [edi + ebp]
+		vpcmpeqb xmm0, xmm0, xmm1
+		vpcmpeqb xmm1, xmm1, xmm2
+		vpmovmskb edx, xmm0
+		vpmovmskb ecx, xmm1
 		xor     eax, eax
 		xor     edx, 0FFFFH
 		jnz     xmmword_not_equal

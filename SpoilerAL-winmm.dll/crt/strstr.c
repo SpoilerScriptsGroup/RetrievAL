@@ -73,12 +73,12 @@ __declspec(naked) static char * __cdecl strstrAVX2(const char *string1, const ch
 		add     esi, 16
 		or      edx, -1
 	xmmword_find_loop_entry:
-		movdqa  xmm0, xmmword ptr [esi]
-		pxor    xmm1, xmm1
-		pcmpeqb xmm1, xmm0
-		pcmpeqb xmm0, xmm2
-		por     xmm0, xmm1
-		pmovmskb eax, xmm0
+		vmovdqa xmm0, xmmword ptr [esi]
+		vpxor   xmm1, xmm1, xmm1
+		vpcmpeqb xmm1, xmm1, xmm0
+		vpcmpeqb xmm0, xmm0, xmm2
+		vpor    xmm0, xmm0, xmm1
+		vpmovmskb eax, xmm0
 		and     eax, edx
 		jz      xmmword_find_loop
 		bsf     eax, eax
@@ -117,12 +117,12 @@ __declspec(naked) static char * __cdecl strstrAVX2(const char *string1, const ch
 	xmmword_check_cross_pages:
 		cmp     ecx, PAGE_SIZE - 15
 		jae     byte_compare_loop_entry                     // jump if cross pages
-		movdqu  xmm0, xmmword ptr [edi]
-		movdqa  xmm1, xmmword ptr [eax]
-		pcmpeqb xmm0, xmm1
-		pcmpeqb xmm1, xmm3
-		pmovmskb ecx, xmm0
-		pmovmskb edx, xmm1
+		vmovdqu xmm0, xmmword ptr [edi]
+		vmovdqa xmm1, xmmword ptr [eax]
+		vpcmpeqb xmm0, xmm0, xmm1
+		vpcmpeqb xmm1, xmm1, xmm3
+		vpmovmskb ecx, xmm0
+		vpmovmskb edx, xmm1
 		xor     ecx, 0FFFFH
 		or      ecx, edx
 		jnz     ymmword_found

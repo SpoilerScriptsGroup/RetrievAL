@@ -81,12 +81,12 @@ __declspec(naked) static int __cdecl wcsncmpAVX2(const wchar_t *string1, const w
 	aligned_xmmword_check_cross_pages:
 		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
 		jae     word_loop                                   // jump if cross pages
-		movdqu  xmm0, xmmword ptr [esi + ebx * 2]
-		movdqa  xmm1, xmmword ptr [edi + ebx * 2]
-		pcmpeqw xmm0, xmm1
-		pcmpeqw xmm1, xmm2
-		pmovmskb edx, xmm0
-		pmovmskb ecx, xmm1
+		vmovdqu xmm0, xmmword ptr [esi + ebx * 2]
+		vmovdqa xmm1, xmmword ptr [edi + ebx * 2]
+		vpcmpeqw xmm0, xmm0, xmm1
+		vpcmpeqw xmm1, xmm1, xmm2
+		vpmovmskb edx, xmm0
+		vpmovmskb ecx, xmm1
 		xor     edx, 0FFFFH
 		jnz     xmmword_not_equal
 		test    ecx, ecx
@@ -124,12 +124,12 @@ __declspec(naked) static int __cdecl wcsncmpAVX2(const wchar_t *string1, const w
 	unaligned_xmmword_check_cross_pages:
 		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
 		jae     word_loop                                   // jump if cross pages
-		movdqu  xmm0, xmmword ptr [esi + ebx * 2]
-		movdqu  xmm1, xmmword ptr [edi + ebx * 2]
-		pcmpeqw xmm0, xmm1
-		pcmpeqw xmm1, xmm2
-		pmovmskb edx, xmm0
-		pmovmskb ecx, xmm1
+		vmovdqu xmm0, xmmword ptr [esi + ebx * 2]
+		vmovdqu xmm1, xmmword ptr [edi + ebx * 2]
+		vpcmpeqw xmm0, xmm0, xmm1
+		vpcmpeqw xmm1, xmm1, xmm2
+		vpmovmskb edx, xmm0
+		vpmovmskb ecx, xmm1
 		xor     edx, 0FFFFH
 		jnz     xmmword_not_equal
 		test    ecx, ecx

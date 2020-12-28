@@ -45,7 +45,7 @@ __declspec(naked) static int __cdecl wcscmpAVX2(const wchar_t *string1, const wc
 		mov     edi, dword ptr [string2 + 8]                // edi = string2
 		lea     edx, [edi + 1]                              // edx = (size_t)string2 + 1
 		sub     esi, edi                                    // edi = (size_t)string1 - (size_t)string2
-		pxor    xmm2, xmm2
+		vpxor   xmm2, xmm2, xmm2
 		jmp     word_loop_entry
 
 		align   16
@@ -74,12 +74,12 @@ __declspec(naked) static int __cdecl wcscmpAVX2(const wchar_t *string1, const wc
 	aligned_xmmword_check_cross_pages:
 		cmp     edx, PAGE_SIZE - 15
 		jae     word_loop                                   // jump if cross pages
-		movdqu  xmm0, xmmword ptr [esi + edi]
-		movdqa  xmm1, xmmword ptr [edi]
-		pcmpeqw xmm0, xmm1
-		pcmpeqw xmm1, xmm2
-		pmovmskb eax, xmm0
-		pmovmskb ecx, xmm1
+		vmovdqu xmm0, xmmword ptr [esi + edi]
+		vmovdqa xmm1, xmmword ptr [edi]
+		vpcmpeqw xmm0, xmm0, xmm1
+		vpcmpeqw xmm1, xmm1, xmm2
+		vpmovmskb eax, xmm0
+		vpmovmskb ecx, xmm1
 		xor     eax, 0FFFFH
 		jnz     xmmword_not_equal
 		test    ecx, ecx
@@ -116,12 +116,12 @@ __declspec(naked) static int __cdecl wcscmpAVX2(const wchar_t *string1, const wc
 	unaligned_xmmword_check_cross_pages:
 		cmp     edx, PAGE_SIZE - 15
 		jae     word_loop                                   // jump if cross pages
-		movdqu  xmm0, xmmword ptr [esi + edi]
-		movdqu  xmm1, xmmword ptr [edi]
-		pcmpeqw xmm0, xmm1
-		pcmpeqw xmm1, xmm2
-		pmovmskb eax, xmm0
-		pmovmskb ecx, xmm1
+		vmovdqu xmm0, xmmword ptr [esi + edi]
+		vmovdqu xmm1, xmmword ptr [edi]
+		vpcmpeqw xmm0, xmm0, xmm1
+		vpcmpeqw xmm1, xmm1, xmm2
+		vpmovmskb eax, xmm0
+		vpmovmskb ecx, xmm1
 		xor     eax, 0FFFFH
 		jnz     xmmword_not_equal
 		test    ecx, ecx

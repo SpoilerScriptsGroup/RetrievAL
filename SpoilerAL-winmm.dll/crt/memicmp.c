@@ -110,15 +110,13 @@ __declspec(naked) static int __cdecl memicmpAVX2(const void *buffer1, const void
 		shl     ecx, 32 - PAGE_SHIFT
 		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
 		jae     byte_loop                                   // jump if cross pages
-		vmovdqu xmm0, xmmword ptr [esi + ebx]               // load 16 byte
-		vmovdqa xmm1, xmmword ptr [edi + ebx]               //
-		vmovdqa xmm2, xmm0                                  // copy
-		vmovdqa xmm3, xmm1                                  //
-		vpaddb  xmm0, xmm0, xmm4                            // all words greater than 'Z' if negative
-		vpaddb  xmm1, xmm1, xmm4                            //
-		vpcmpgtb xmm0, xmm0, xmm5                           // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
+		vmovdqu xmm2, xmmword ptr [esi + ebx]               // load 16 byte
+		vmovdqa xmm3, xmmword ptr [edi + ebx]               //
+		vpaddb  xmm0, xmm2, xmm4                            // all bytes greater than 'Z' if negative
+		vpaddb  xmm1, xmm3, xmm4                            //
+		vpcmpgtb xmm0, xmm0, xmm5                           // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
 		vpcmpgtb xmm1, xmm1, xmm5                           //
-		vpand   xmm0, xmm0, xmm6                            // assign a mask for the appropriate words
+		vpand   xmm0, xmm0, xmm6                            // assign a mask for the appropriate bytes
 		vpand   xmm1, xmm1, xmm6                            //
 		vpor    xmm0, xmm0, xmm2                            // negation of the 5th bit - lowercase letters
 		vpor    xmm1, xmm1, xmm3                            //
@@ -132,15 +130,13 @@ __declspec(naked) static int __cdecl memicmpAVX2(const void *buffer1, const void
 
 		align   16
 	ymmword_loop:
-		vmovdqu ymm0, ymmword ptr [esi + ebx]               // load 32 byte
-		vmovdqa ymm1, ymmword ptr [edi + ebx]               //
-		vmovdqa ymm2, ymm0                                  // copy
-		vmovdqa ymm3, ymm1                                  //
-		vpaddb  ymm0, ymm0, ymm4                            // all words greater than 'Z' if negative
-		vpaddb  ymm1, ymm1, ymm4                            //
-		vpcmpgtb ymm0, ymm0, ymm5                           // ymm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
+		vmovdqu ymm2, ymmword ptr [esi + ebx]               // load 32 byte
+		vmovdqa ymm3, ymmword ptr [edi + ebx]               //
+		vpaddb  ymm0, ymm2, ymm4                            // all bytes greater than 'Z' if negative
+		vpaddb  ymm1, ymm3, ymm4                            //
+		vpcmpgtb ymm0, ymm0, ymm5                           // ymm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
 		vpcmpgtb ymm1, ymm1, ymm5                           //
-		vpand   ymm0, ymm0, ymm6                            // assign a mask for the appropriate words
+		vpand   ymm0, ymm0, ymm6                            // assign a mask for the appropriate bytes
 		vpand   ymm1, ymm1, ymm6                            //
 		vpor    ymm0, ymm0, ymm2                            // negation of the 5th bit - lowercase letters
 		vpor    ymm1, ymm1, ymm3                            //

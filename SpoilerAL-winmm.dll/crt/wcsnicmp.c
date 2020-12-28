@@ -99,12 +99,10 @@ __declspec(naked) static int __cdecl wcsnicmpAVX2(const wchar_t *string1, const 
 	aligned_xmmword_check_cross_pages:
 		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
 		jae     word_loop                                   // jump if cross pages
-		vmovdqu xmm0, xmmword ptr [esi + ebx * 2]           // load 16 byte
-		vmovdqa xmm1, xmmword ptr [edi + ebx * 2]           //
-		vmovdqa xmm2, xmm0                                  // copy
-		vmovdqa xmm3, xmm1                                  //
-		vpaddw  xmm0, xmm0, xmm4                            // all words greater than 'Z' if negative
-		vpaddw  xmm1, xmm1, xmm4                            //
+		vmovdqu xmm2, xmmword ptr [esi + ebx * 2]           // load 16 byte
+		vmovdqa xmm3, xmmword ptr [edi + ebx * 2]           //
+		vpaddw  xmm0, xmm2, xmm4                            // all words greater than 'Z' if negative
+		vpaddw  xmm1, xmm3, xmm4                            //
 		vpcmpgtw xmm0, xmm0, xmm5                           // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
 		vpcmpgtw xmm1, xmm1, xmm5                           //
 		vpand   xmm0, xmm0, xmm6                            // assign a mask for the appropriate words
@@ -128,12 +126,10 @@ __declspec(naked) static int __cdecl wcsnicmpAVX2(const wchar_t *string1, const 
 	aligned_ymmword_loop:
 		cmp     ecx, -31 shl (32 - PAGE_SHIFT)
 		jae     aligned_xmmword_check_cross_pages           // jump if cross pages
-		vmovdqu ymm0, ymmword ptr [esi + ebx * 2]           // load 32 byte
-		vmovdqa ymm1, ymmword ptr [edi + ebx * 2]           //
-		vmovdqa ymm2, ymm0                                  // copy
-		vmovdqa ymm3, ymm1                                  //
-		vpaddw  ymm0, ymm0, ymm4                            // all words greater than 'Z' if negative
-		vpaddw  ymm1, ymm1, ymm4                            //
+		vmovdqu ymm2, ymmword ptr [esi + ebx * 2]           // load 32 byte
+		vmovdqa ymm3, ymmword ptr [edi + ebx * 2]           //
+		vpaddw  ymm0, ymm2, ymm4                            // all words greater than 'Z' if negative
+		vpaddw  ymm1, ymm3, ymm4                            //
 		vpcmpgtw ymm0, ymm0, ymm5                           // ymm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
 		vpcmpgtw ymm1, ymm1, ymm5                           //
 		vpand   ymm0, ymm0, ymm6                            // assign a mask for the appropriate words
@@ -162,12 +158,10 @@ __declspec(naked) static int __cdecl wcsnicmpAVX2(const wchar_t *string1, const 
 	unaligned_xmmword_check_cross_pages:
 		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
 		jae     word_loop                                   // jump if cross pages
-		vmovdqu xmm0, xmmword ptr [esi + ebx * 2]           // load 16 byte
-		vmovdqu xmm1, xmmword ptr [edi + ebx * 2]           //
-		vmovdqa xmm2, xmm0                                  // copy
-		vmovdqa xmm3, xmm1                                  //
-		vpaddw  xmm0, xmm0, xmm4                            // all words greater than 'Z' if negative
-		vpaddw  xmm1, xmm1, xmm4                            //
+		vmovdqu xmm2, xmmword ptr [esi + ebx * 2]           // load 16 byte
+		vmovdqu xmm3, xmmword ptr [edi + ebx * 2]           //
+		vpaddw  xmm0, xmm2, xmm4                            // all words greater than 'Z' if negative
+		vpaddw  xmm1, xmm3, xmm4                            //
 		vpcmpgtw xmm0, xmm0, xmm5                           // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
 		vpcmpgtw xmm1, xmm1, xmm5                           //
 		vpand   xmm0, xmm0, xmm6                            // assign a mask for the appropriate words
@@ -191,12 +185,10 @@ __declspec(naked) static int __cdecl wcsnicmpAVX2(const wchar_t *string1, const 
 	unaligned_ymmword_loop:
 		cmp     ecx, -31 shl (32 - PAGE_SHIFT)
 		jae     unaligned_xmmword_check_cross_pages         // jump if cross pages
-		vmovdqu ymm0, ymmword ptr [esi + ebx * 2]           // load 32 byte
-		vmovdqu ymm1, ymmword ptr [edi + ebx * 2]           //
-		vmovdqa ymm2, ymm0                                  // copy
-		vmovdqa ymm3, ymm1                                  //
-		vpaddw  ymm0, ymm0, ymm4                            // all words greater than 'Z' if negative
-		vpaddw  ymm1, ymm1, ymm4                            //
+		vmovdqu ymm2, ymmword ptr [esi + ebx * 2]           // load 32 byte
+		vmovdqu ymm3, ymmword ptr [edi + ebx * 2]           //
+		vpaddw  ymm0, ymm2, ymm4                            // all words greater than 'Z' if negative
+		vpaddw  ymm1, ymm3, ymm4                            //
 		vpcmpgtw ymm0, ymm0, ymm5                           // ymm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
 		vpcmpgtw ymm1, ymm1, ymm5                           //
 		vpand   ymm0, ymm0, ymm6                            // assign a mask for the appropriate words

@@ -20,12 +20,12 @@ static int __cdecl wcsicmpCPUDispatch(const wchar_t *string1, const wchar_t *str
 
 static int(__cdecl * wcsicmpDispatch)(const wchar_t *string1, const wchar_t *string2) = wcsicmpCPUDispatch;
 
-extern const wchar_t xmmconst_upperW[8];
-extern const wchar_t xmmconst_azrangeW[8];
-extern const wchar_t xmmconst_casebitW[8];
-#define upper   xmmconst_upperW
-#define azrange xmmconst_azrangeW
-#define casebit xmmconst_casebitW
+extern const wchar_t ymmconst_upperW[16];
+extern const wchar_t ymmconst_azrangeW[16];
+extern const wchar_t ymmconst_casebitW[16];
+#define upper   ymmconst_upperW
+#define azrange ymmconst_azrangeW
+#define casebit ymmconst_casebitW
 
 __declspec(naked) int __cdecl _wcsicmp(const wchar_t *string1, const wchar_t *string2)
 {

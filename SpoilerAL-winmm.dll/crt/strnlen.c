@@ -13,9 +13,10 @@ size_t __cdecl strnlen(const char *string, size_t maxlen)
 	return length;
 }
 #else
-extern const char xmmconst_maskbit[32];
-#define maskbit xmmconst_maskbit
+extern const char ymmconst_maskbit[64];
+#define maskbit (ymmconst_maskbit + 16)
 
+static size_t __cdecl strnlenAVX2(const char *string, size_t maxlen);
 static size_t __cdecl strnlenSSE42(const char *string, size_t maxlen);
 static size_t __cdecl strnlenSSE2(const char *string, size_t maxlen);
 static size_t __cdecl strnlen386(const char *string, size_t maxlen);
@@ -28,6 +29,71 @@ __declspec(naked) size_t __cdecl strnlen(const char *string, size_t maxlen)
 	__asm
 	{
 		jmp     dword ptr [strnlenDispatch]
+	}
+}
+
+// AVX2 version
+__declspec(naked) static size_t __cdecl strnlenAVX2(const char *string, size_t maxlen)
+{
+	__asm
+	{
+		#define string (esp + 4)
+		#define maxlen (esp + 8)
+
+		mov     eax, dword ptr [maxlen]                     // eax = maxlen
+		mov     edx, dword ptr [string]                     // edx = string
+		test    eax, eax                                    // check if maxlen=0
+		jz      retzero                                     // if maxlen=0, leave
+		vpxor   ymm1, ymm1, ymm1                            // ymm1 = zero clear
+		push    esi                                         // preserve esi
+		lea     esi, [edx + eax]                            // esi = end of string
+		mov     ecx, edx
+		and     edx, -32
+		and     ecx, 31
+		jz      negate_count
+		vpcmpeqb ymm0, ymm1, ymmword ptr [edx]
+		vpmovmskb edx, ymm0
+		shr     edx, cl
+		xor     ecx, 31
+		test    edx, edx
+		lea     ecx, [ecx + 1]
+		jz      negate_count
+		xor     ecx, ecx
+		sub     ecx, eax                                    // ecx = negative count
+		jmp     found
+
+		align   8
+		nop __asm nop __asm nop __asm nop                   // padding 4 byte
+	negate_count:
+		sub     ecx, eax                                    // ecx = negative count
+		jae     epilog
+
+		align   16                                          // already aligned
+	loop_begin:
+		vpcmpeqb ymm0, ymm1, ymmword ptr [esi + ecx]
+		vpmovmskb edx, ymm0
+		test    edx, edx
+		jnz     found
+		add     ecx, 32
+		jnc     loop_begin
+		pop     esi                                         // restore esi
+		vzeroupper
+	retzero:
+		ret
+
+		align   16
+	found:
+		bsf     edx, edx
+		add     ecx, edx
+		jc      epilog
+		add     eax, ecx
+	epilog:
+		pop     esi                                         // restore esi
+		vzeroupper
+		ret
+
+		#undef string
+		#undef maxlen
 	}
 }
 
@@ -266,25 +332,35 @@ __declspec(naked) static size_t __cdecl strnlen386(const char *string, size_t ma
 
 __declspec(naked) static size_t __cdecl strnlenCPUDispatch(const char *string, size_t maxlen)
 {
-	#define __ISA_AVAILABLE_X86   0
-	#define __ISA_AVAILABLE_SSE2  1
-	#define __ISA_AVAILABLE_SSE42 2
+	#define __ISA_AVAILABLE_X86     0
+	#define __ISA_AVAILABLE_SSE2    1
+	#define __ISA_AVAILABLE_SSE42   2
+	#define __ISA_AVAILABLE_AVX     3
+	#define __ISA_AVAILABLE_ENFSTRG 4
+	#define __ISA_AVAILABLE_AVX2    5
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
-		jbe     L1
+		mov     eax, dword ptr [__isa_available]
+		cmp     eax, __ISA_AVAILABLE_AVX2
+		jb      L1
+		mov     dword ptr [strnlenDispatch], offset strnlenAVX2
+		jmp     strnlenAVX2
+
+	L1:
+		cmp     eax, __ISA_AVAILABLE_SSE2
+		jbe     L2
 		mov     dword ptr [strnlenDispatch], offset strnlenSSE42
 		jmp     strnlenSSE42
 
-	L1:
+	L2:
 		mov     dword ptr [strnlenDispatch], offset strnlenSSE2
-		jb      L2
+		jb      L3
 		jmp     strnlenSSE2
 
-	L2:
+	L3:
 		mov     dword ptr [strnlenDispatch], offset strnlen386
 		jmp     strnlen386
 	}
@@ -292,5 +368,8 @@ __declspec(naked) static size_t __cdecl strnlenCPUDispatch(const char *string, s
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
 	#undef __ISA_AVAILABLE_SSE42
+	#undef __ISA_AVAILABLE_AVX
+	#undef __ISA_AVAILABLE_ENFSTRG
+	#undef __ISA_AVAILABLE_AVX2
 }
 #endif

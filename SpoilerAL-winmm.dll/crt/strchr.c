@@ -17,6 +17,7 @@ char * __cdecl strchr(const char *string, int c)
 #else
 #pragma function(strlen)
 
+char * __cdecl strchrAVX2(const char *string, int c);
 char * __cdecl strchrSSE42(const char *string, int c);
 char * __cdecl strchrSSE2(const char *string, int c);
 char * __cdecl strchr386(const char *string, int c);
@@ -29,6 +30,64 @@ __declspec(naked) char * __cdecl strchr(const char *string, int c)
 	__asm
 	{
 		jmp     dword ptr [strchrDispatch]
+	}
+}
+
+// AVX2 version
+__declspec(naked) char * __cdecl strchrAVX2(const char *string, int c)
+{
+	__asm
+	{
+		#define string (esp + 4)
+		#define c      (esp + 8)
+
+		mov     edx, dword ptr [c]
+		mov     eax, dword ptr [string]
+		test    dl, dl
+		jnz     char_is_not_null
+		push    eax
+		push    eax
+		call    strlen
+		pop     edx
+		pop     ecx
+		add     eax, ecx
+		ret
+
+		align   16
+	char_is_not_null:
+		vpbroadcastb ymm2, byte ptr [c]
+		mov     ecx, eax
+		or      edx, -1
+		and     ecx, 31
+		jz      loop_entry
+		shl     edx, cl
+		sub     eax, ecx
+		jmp     loop_entry
+
+		align   16
+	loop_begin:
+		add     eax, 32
+		or      edx, -1
+	loop_entry:
+		vmovdqa ymm0, ymmword ptr [eax]
+		vpxor   ymm1, ymm1, ymm1
+		vpcmpeqb ymm1, ymm1, ymm0
+		vpcmpeqb ymm0, ymm0, ymm2
+		vpor    ymm0, ymm0, ymm1
+		vpmovmskb ecx, ymm0
+		and     ecx, edx
+		jz      loop_begin
+		bsf     ecx, ecx
+		mov     dl, byte ptr [eax + ecx]
+		add     eax, ecx
+		xor     ecx, ecx
+		test    dl, dl
+		cmovz   eax, ecx
+		vzeroupper
+		ret
+
+		#undef string
+		#undef c
 	}
 }
 
@@ -122,7 +181,6 @@ __declspec(naked) char * __cdecl strchrSSE2(const char *string, int c)
 
 		align   16
 	char_is_not_null:
-		pxor    xmm1, xmm1
 		movd    xmm2, edx
 		punpcklbw xmm2, xmm2
 		pshuflw xmm2, xmm2, 0
@@ -141,6 +199,7 @@ __declspec(naked) char * __cdecl strchrSSE2(const char *string, int c)
 		or      edx, -1
 	loop_entry:
 		movdqa  xmm0, xmmword ptr [eax]
+		pxor    xmm1, xmm1
 		pcmpeqb xmm1, xmm0
 		pcmpeqb xmm0, xmm2
 		por     xmm0, xmm1
@@ -320,25 +379,35 @@ __declspec(naked) char * __cdecl strchr386(const char *string, int c)
 
 __declspec(naked) static char * __cdecl strchrCPUDispatch(const char *string, int c)
 {
-	#define __ISA_AVAILABLE_X86   0
-	#define __ISA_AVAILABLE_SSE2  1
-	#define __ISA_AVAILABLE_SSE42 2
+	#define __ISA_AVAILABLE_X86     0
+	#define __ISA_AVAILABLE_SSE2    1
+	#define __ISA_AVAILABLE_SSE42   2
+	#define __ISA_AVAILABLE_AVX     3
+	#define __ISA_AVAILABLE_ENFSTRG 4
+	#define __ISA_AVAILABLE_AVX2    5
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
-		jbe     L1
+		mov     eax, dword ptr [__isa_available]
+		cmp     eax, __ISA_AVAILABLE_AVX2
+		jb      L1
+		mov     dword ptr [strchrDispatch], offset strchrAVX2
+		jmp     strchrAVX2
+
+	L1:
+		cmp     eax, __ISA_AVAILABLE_SSE2
+		jbe     L2
 		mov     dword ptr [strchrDispatch], offset strchrSSE42
 		jmp     strchrSSE42
 
-	L1:
+	L2:
 		mov     dword ptr [strchrDispatch], offset strchrSSE2
-		jb      L2
+		jb      L3
 		jmp     strchrSSE2
 
-	L2:
+	L3:
 		mov     dword ptr [strchrDispatch], offset strchr386
 		jmp     strchr386
 	}
@@ -346,5 +415,8 @@ __declspec(naked) static char * __cdecl strchrCPUDispatch(const char *string, in
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
 	#undef __ISA_AVAILABLE_SSE42
+	#undef __ISA_AVAILABLE_AVX
+	#undef __ISA_AVAILABLE_ENFSTRG
+	#undef __ISA_AVAILABLE_AVX2
 }
 #endif

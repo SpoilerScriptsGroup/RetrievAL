@@ -14,6 +14,8 @@ void * __cdecl memchr(const void *buffer, int c, size_t count)
 #else
 #include <xmmintrin.h>
 
+void * __cdecl memchrAVX2(const void *buffer, int c, size_t count);
+void * __vectorcall internal_memchrAVX2(const void *buffer, __m128 c, size_t count);
 void * __cdecl memchrSSE42(const void *buffer, int c, size_t count);
 void * __vectorcall internal_memchrSSE42(const void *buffer, __m128 reserved, __m128 c, size_t count);
 void * __cdecl memchrSSE2(const void *buffer, int c, size_t count);
@@ -33,6 +35,90 @@ __declspec(naked) void * __cdecl memchr(const void *buffer, int c, size_t count)
 	}
 }
 #endif
+
+// AVX2 version
+__declspec(naked) void * __cdecl memchrAVX2(const void *buffer, int c, size_t count)
+{
+	__asm
+	{
+		#define buffer (esp + 4)
+		#define c      (esp + 8)
+		#define count  (esp + 12)
+
+		mov     edx, dword ptr [count]                      // edx = count
+		mov     ecx, dword ptr [buffer]                     // ecx = buffer
+		test    edx, edx                                    // check if count == 0
+		jz      retnull                                     // if count == 0, leave
+		vpbroadcastb ymm0, byte ptr [c]                     // ymm0 = search char
+		jmp     internal_memchrAVX2
+
+		align   16
+	retnull:
+		xor     eax, eax
+		vzeroupper
+		ret
+
+		#undef buffer
+		#undef c
+		#undef count
+	}
+}
+
+__declspec(naked) void * __vectorcall internal_memchrAVX2(const void *buffer, __m128 c, size_t count)
+{
+	__asm
+	{
+		#define buffer ecx
+		#define c      ymm0
+		#define count  edx
+
+		push    esi                                         // preserve esi
+		lea     esi, [ecx + edx]                            // esi = end of buffer
+		mov     eax, -32
+		xor     edx, -1
+		and     eax, ecx
+		add     edx, 1                                      // edx = -count
+		and     ecx, 31
+		jz      loop_begin
+		vpcmpeqb ymm1, ymm0, ymmword ptr [eax]
+		vpmovmskb eax, ymm1
+		shr     eax, cl
+		test    eax, eax
+		jnz     found
+		sub     ecx, 32
+		nop
+		sub     edx, ecx
+		jae     retnull
+
+		align   16                                          // already aligned
+	loop_begin:
+		vpcmpeqb ymm1, ymm0, ymmword ptr [esi + edx]
+		vpmovmskb eax, ymm1
+		test    eax, eax
+		jnz     found
+		add     edx, 32
+		jnc     loop_begin
+	retnull:
+		xor     eax, eax
+		pop     esi                                         // restore esi
+		vzeroupper
+		ret
+
+		align   16
+	found:
+		bsf     eax, eax
+		add     eax, edx
+		jc      retnull
+		add     eax, esi
+		pop     esi                                         // restore esi
+		vzeroupper
+		ret
+
+		#undef buffer
+		#undef c
+		#undef count
+	}
+}
 
 // SSE4.2 version
 __declspec(naked) void * __cdecl memchrSSE42(const void *buffer, int c, size_t count)
@@ -350,25 +436,35 @@ __declspec(naked) void * __fastcall internal_memchr386(const void *buffer, unsig
 
 __declspec(naked) static void * __cdecl memchrCPUDispatch(const void *buffer, int c, size_t count)
 {
-	#define __ISA_AVAILABLE_X86   0
-	#define __ISA_AVAILABLE_SSE2  1
-	#define __ISA_AVAILABLE_SSE42 2
+	#define __ISA_AVAILABLE_X86     0
+	#define __ISA_AVAILABLE_SSE2    1
+	#define __ISA_AVAILABLE_SSE42   2
+	#define __ISA_AVAILABLE_AVX     3
+	#define __ISA_AVAILABLE_ENFSTRG 4
+	#define __ISA_AVAILABLE_AVX2    5
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
-		jbe     L1
+		mov     eax, dword ptr [__isa_available]
+		cmp     eax, __ISA_AVAILABLE_AVX2
+		jb      L1
+		mov     dword ptr [memchrDispatch], offset memchrAVX2
+		jmp     memchrAVX2
+
+	L1:
+		cmp     eax, __ISA_AVAILABLE_SSE2
+		jbe     L2
 		mov     dword ptr [memchrDispatch], offset memchrSSE42
 		jmp     memchrSSE42
 
-	L1:
+	L2:
 		mov     dword ptr [memchrDispatch], offset memchrSSE2
-		jb      L2
+		jb      L3
 		jmp     memchrSSE2
 
-	L2:
+	L3:
 		mov     dword ptr [memchrDispatch], offset memchr386
 		jmp     memchr386
 	}
@@ -376,6 +472,9 @@ __declspec(naked) static void * __cdecl memchrCPUDispatch(const void *buffer, in
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
 	#undef __ISA_AVAILABLE_SSE42
+	#undef __ISA_AVAILABLE_AVX
+	#undef __ISA_AVAILABLE_ENFSTRG
+	#undef __ISA_AVAILABLE_AVX2
 }
 #endif
 #endif

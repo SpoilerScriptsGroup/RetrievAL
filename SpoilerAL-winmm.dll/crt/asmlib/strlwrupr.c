@@ -3,16 +3,16 @@
 #define INVALID_PAGE 0
 
 #if INVALID_PAGE
-extern const char xmmconst_upperA[16];
-extern const char xmmconst_lowerA[16];
-extern const char xmmconst_azrangeA[16];
-extern const char xmmconst_casebitA[16];
-extern const char xmmconst_maskbit[32];
-#define upper   xmmconst_upperA
-#define lower   xmmconst_lowerA
-#define azrange xmmconst_azrangeA
-#define casebit xmmconst_casebitA
-#define maskbit xmmconst_maskbit
+extern const char ymmconst_upperA[32];
+extern const char ymmconst_lowerA[32];
+extern const char ymmconst_azrangeA[32];
+extern const char ymmconst_casebitA[32];
+extern const char ymmconst_maskbit[64];
+#define upper   ymmconst_upperA
+#define lower   ymmconst_lowerA
+#define azrange ymmconst_azrangeA
+#define casebit ymmconst_casebitA
+#define maskbit (ymmconst_maskbit + 16)
 
 extern int __cdecl InstructionSet();
 

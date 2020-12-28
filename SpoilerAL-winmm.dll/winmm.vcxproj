@@ -1019,7 +1019,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="crt\xmmconst.c" />
+    <ClCompile Include="crt\ymmconst.c" />
     <ClCompile Include="DwmAPI\DwmAPI.c" />
     <ClCompile Include="EnumReadSSG\Attach_EnumReadSSG.c" />
     <ClCompile Include="EnumReadSSG\TSSGCtrl_EnumReadSSG.c" />

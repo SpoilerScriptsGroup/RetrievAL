@@ -17,6 +17,7 @@ wchar_t * __cdecl wcschr(const wchar_t *string, wchar_t c)
 #else
 #pragma function(wcslen)
 
+wchar_t * __cdecl wcschrAVX2(const wchar_t *string, wchar_t c);
 wchar_t * __cdecl wcschrSSE42(const wchar_t *string, wchar_t c);
 wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wchar_t c);
 wchar_t * __cdecl wcschr386(const wchar_t *string, wchar_t c);
@@ -29,6 +30,100 @@ __declspec(naked) wchar_t * __cdecl wcschr(const wchar_t *string, wchar_t c)
 	__asm
 	{
 		jmp     dword ptr [wcschrDispatch]
+	}
+}
+
+// AVX2 version
+__declspec(naked) wchar_t * __cdecl wcschrAVX2(const wchar_t *string, wchar_t c)
+{
+	__asm
+	{
+		#define string (esp + 4)
+		#define c      (esp + 8)
+
+		mov     edx, dword ptr [c]
+		mov     eax, dword ptr [string]
+		test    dx, dx
+		jnz     char_is_not_null
+		push    eax
+		push    eax
+		call    wcslen
+		pop     edx
+		pop     ecx
+		lea     eax, [ecx + eax * 2]
+		ret
+
+		align   16
+	char_is_not_null:
+		vpbroadcastw ymm2, word ptr [c]
+		or      edx, -1
+		mov     ecx, eax
+		test    eax, 1
+		jnz     unaligned
+		and     ecx, 31
+		jz      aligned_loop_entry
+		shl     edx, cl
+		sub     eax, ecx
+		jmp     aligned_loop_entry
+
+		align   16
+	aligned_loop:
+		add     eax, 32
+		or      edx, -1
+	aligned_loop_entry:
+		vmovdqa ymm0, ymmword ptr [eax]
+		vpxor   ymm1, ymm1, ymm1
+		vpcmpeqw ymm1, ymm1, ymm0
+		vpcmpeqw ymm0, ymm0, ymm2
+		vpor    ymm0, ymm0, ymm1
+		vpmovmskb ecx, ymm0
+		and     ecx, edx
+		jz      aligned_loop
+		jmp     found
+
+		align   16
+	unaligned:
+		inc     ecx
+		or      eax, 31
+		and     ecx, 31
+		jz      unaligned_loop_entry1
+		vmovdqa ymm0, ymmword ptr [eax - 31]
+		vperm2i128 ymm3, ymm0, ymm0, 00001000B
+		vpslldq ymm0, ymm0, 1
+		vpsrldq ymm3, ymm3, 15
+		vpor    ymm0, ymm0, ymm3
+		shl     edx, cl
+		sub     eax, 32
+		jmp     unaligned_loop_entry2
+
+		align   16
+	unaligned_loop:
+		add     eax, 32
+		or      edx, -1
+	unaligned_loop_entry1:
+		vmovdqu ymm0, ymmword ptr [eax]
+	unaligned_loop_entry2:
+		vpxor   ymm1, ymm1, ymm1
+		vpcmpeqw ymm1, ymm1, ymm0
+		vpcmpeqw ymm0, ymm0, ymm2
+		vpor    ymm0, ymm0, ymm1
+		vpmovmskb ecx, ymm0
+		and     ecx, edx
+		jz      unaligned_loop
+
+		align   16
+	found:
+		bsf     ecx, ecx
+		mov     dx, word ptr [eax + ecx]
+		add     eax, ecx
+		xor     ecx, ecx
+		test    dx, dx
+		cmovz   eax, ecx
+		vzeroupper
+		ret
+
+		#undef string
+		#undef c
 	}
 }
 
@@ -135,7 +230,6 @@ __declspec(naked) wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wchar_t c)
 
 		align   16
 	char_is_not_null:
-		pxor    xmm1, xmm1
 		movd    xmm2, edx
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
@@ -155,6 +249,7 @@ __declspec(naked) wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wchar_t c)
 		or      edx, -1
 	aligned_loop_entry:
 		movdqa  xmm0, xmmword ptr [eax]
+		pxor    xmm1, xmm1
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
@@ -182,6 +277,7 @@ __declspec(naked) wchar_t * __cdecl wcschrSSE2(const wchar_t *string, wchar_t c)
 	unaligned_loop_entry1:
 		movdqu  xmm0, xmmword ptr [eax]
 	unaligned_loop_entry2:
+		pxor    xmm1, xmm1
 		pcmpeqw xmm1, xmm0
 		pcmpeqw xmm0, xmm2
 		por     xmm0, xmm1
@@ -247,25 +343,35 @@ __declspec(naked) wchar_t * __cdecl wcschr386(const wchar_t *string, wchar_t c)
 
 __declspec(naked) static wchar_t * __cdecl wcschrCPUDispatch(const wchar_t *string, wchar_t c)
 {
-	#define __ISA_AVAILABLE_X86   0
-	#define __ISA_AVAILABLE_SSE2  1
-	#define __ISA_AVAILABLE_SSE42 2
+	#define __ISA_AVAILABLE_X86     0
+	#define __ISA_AVAILABLE_SSE2    1
+	#define __ISA_AVAILABLE_SSE42   2
+	#define __ISA_AVAILABLE_AVX     3
+	#define __ISA_AVAILABLE_ENFSTRG 4
+	#define __ISA_AVAILABLE_AVX2    5
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
-		jbe     L1
+		mov     eax, dword ptr [__isa_available]
+		cmp     eax, __ISA_AVAILABLE_AVX2
+		jb      L1
+		mov     dword ptr [wcschrDispatch], offset wcschrAVX2
+		jmp     wcschrAVX2
+
+	L1:
+		cmp     eax, __ISA_AVAILABLE_SSE2
+		jbe     L2
 		mov     dword ptr [wcschrDispatch], offset wcschrSSE42
 		jmp     wcschrSSE42
 
-	L1:
+	L2:
 		mov     dword ptr [wcschrDispatch], offset wcschrSSE2
-		jb      L2
+		jb      L3
 		jmp     wcschrSSE2
 
-	L2:
+	L3:
 		mov     dword ptr [wcschrDispatch], offset wcschr386
 		jmp     wcschr386
 	}
@@ -273,5 +379,8 @@ __declspec(naked) static wchar_t * __cdecl wcschrCPUDispatch(const wchar_t *stri
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
 	#undef __ISA_AVAILABLE_SSE42
+	#undef __ISA_AVAILABLE_AVX
+	#undef __ISA_AVAILABLE_ENFSTRG
+	#undef __ISA_AVAILABLE_AVX2
 }
 #endif

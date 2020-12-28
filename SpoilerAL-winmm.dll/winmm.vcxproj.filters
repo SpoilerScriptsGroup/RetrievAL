@@ -1107,7 +1107,7 @@
     <ClCompile Include="crt\wtoi64.c">
       <Filter>crt</Filter>
     </ClCompile>
-    <ClCompile Include="crt\xmmconst.c">
+    <ClCompile Include="crt\ymmconst.c">
       <Filter>crt</Filter>
     </ClCompile>
     <ClCompile Include="DwmAPI\DwmAPI.c">

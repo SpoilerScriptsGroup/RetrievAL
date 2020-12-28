@@ -13,9 +13,10 @@ size_t __cdecl wcslen(const wchar_t *string)
 	return length;
 }
 #else
-extern const char xmmconst_maskbit[32];
-#define maskbit xmmconst_maskbit
+extern const char ymmconst_maskbit[64];
+#define maskbit (ymmconst_maskbit + 16)
 
+static size_t __cdecl wcslenAVX2(const wchar_t *string);
 static size_t __cdecl wcslenSSE42(const wchar_t *string);
 static size_t __cdecl wcslenSSE2(const wchar_t *string);
 static size_t __cdecl wcslen386(const wchar_t *string);
@@ -28,6 +29,77 @@ __declspec(naked) size_t __cdecl wcslen(const wchar_t *string)
 	__asm
 	{
 		jmp     dword ptr [wcslenDispatch]
+	}
+}
+
+// AVX2 version
+__declspec(naked) static size_t __cdecl wcslenAVX2(const wchar_t *string)
+{
+	__asm
+	{
+		#define string (esp + 4)
+
+		mov     eax, dword ptr [string]                     // edx = string
+		vpxor   ymm1, ymm1, ymm1                            // set to zero
+		or      edx, -1                                     // fill mask bits
+		mov     ecx, eax                                    // copy pointer
+		test    eax, 1                                      // is aligned to word?
+		jnz     unaligned                                   // jump if not aligned to word
+		and     ecx, 31                                     // get lower 8 bits indicate misalignment
+		jz      aligned_loop_entry                          // jump if aligned to wmmword
+		shl     edx, cl                                     // shift out false bits
+		sub     eax, ecx                                    // align pointer by 32
+		jmp     aligned_loop_entry
+
+		align   16
+	aligned_loop:
+		add     eax, 32                                     // increment pointer by 32
+		or      edx, -1                                     // fill mask bits
+	aligned_loop_entry:
+		vpcmpeqw ymm0, ymm1, ymmword ptr [eax]              // compare 16 words with zero
+		vpmovmskb ecx, ymm0                                 // get one bit for each byte result
+		and     ecx, edx                                    // mask result
+		jz      aligned_loop                                // loop if not found
+		jmp     found
+
+		align   16
+	unaligned:
+		inc     ecx                                         // add 1 byte
+		or      eax, 31                                     // (align pointer by 32) + 31 byte
+		and     ecx, 31                                     // compute (pointer + 1 byte) % 32
+		jz      unaligned_loop_entry1                       // jump if pointer % 32 == 31
+		vmovdqa ymm0, ymmword ptr [eax - 31]                // read 32 bytes aligned
+		vperm2i128 ymm2, ymm0, ymm0, 00001000B              // shift 1 byte for words compare
+		vpslldq ymm0, ymm0, 1
+		vpsrldq ymm2, ymm2, 15
+		vpor    ymm0, ymm0, ymm2
+		shl     edx, cl                                     // shift out false bits
+		sub     eax, 32                                     // decrement pointer by 32
+		vpcmpeqw ymm0, ymm0, ymm1                           // compare 16 words with zero
+		jmp     unaligned_loop_entry2
+
+		align   16
+	unaligned_loop:
+		add     eax, 32                                     // increment pointer by 32
+		or      edx, -1                                     // fill mask bits
+	unaligned_loop_entry1:
+		vpcmpeqw ymm0, ymm1, ymmword ptr [eax]              // compare 16 words with zero
+	unaligned_loop_entry2:
+		vpmovmskb ecx, ymm0                                 // get one bit for each byte result
+		and     ecx, edx                                    // mask result
+		jz      unaligned_loop                              // loop if not found
+
+		align   16
+	found:
+		bsf     ecx, ecx                                    // get first bit index of result
+		mov     edx, dword ptr [string]                     // get pointer to string
+		add     eax, ecx                                    // add byte index
+		sub     eax, edx                                    // subtract start address
+		shr     eax, 1                                      // get number of words
+		vzeroupper
+		ret
+
+		#undef string
 	}
 }
 
@@ -178,25 +250,35 @@ __declspec(naked) static size_t __cdecl wcslen386(const wchar_t *string)
 
 __declspec(naked) static size_t __cdecl wcslenCPUDispatch(const wchar_t *string)
 {
-	#define __ISA_AVAILABLE_X86   0
-	#define __ISA_AVAILABLE_SSE2  1
-	#define __ISA_AVAILABLE_SSE42 2
+	#define __ISA_AVAILABLE_X86     0
+	#define __ISA_AVAILABLE_SSE2    1
+	#define __ISA_AVAILABLE_SSE42   2
+	#define __ISA_AVAILABLE_AVX     3
+	#define __ISA_AVAILABLE_ENFSTRG 4
+	#define __ISA_AVAILABLE_AVX2    5
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
-		jbe     L1
+		mov     eax, dword ptr [__isa_available]
+		cmp     eax, __ISA_AVAILABLE_AVX2
+		jb      L1
+		mov     dword ptr [wcslenDispatch], offset wcslenAVX2
+		jmp     wcslenAVX2
+
+	L1:
+		cmp     eax, __ISA_AVAILABLE_SSE2
+		jbe     L2
 		mov     dword ptr [wcslenDispatch], offset wcslenSSE42
 		jmp     wcslenSSE42
 
-	L1:
+	L2:
 		mov     dword ptr [wcslenDispatch], offset wcslenSSE2
-		jb      L2
+		jb      L3
 		jmp     wcslenSSE2
 
-	L2:
+	L3:
 		mov     dword ptr [wcslenDispatch], offset wcslen386
 		jmp     wcslen386
 	}
@@ -204,5 +286,8 @@ __declspec(naked) static size_t __cdecl wcslenCPUDispatch(const wchar_t *string)
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
 	#undef __ISA_AVAILABLE_SSE42
+	#undef __ISA_AVAILABLE_AVX
+	#undef __ISA_AVAILABLE_ENFSTRG
+	#undef __ISA_AVAILABLE_AVX2
 }
 #endif

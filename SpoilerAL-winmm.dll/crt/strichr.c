@@ -20,9 +20,10 @@ char * __cdecl _strichr(const char *string, int c)
 
 #pragma warning(disable:4414)
 
-extern const char xmmconst_casebitA[16];
-#define casebit xmmconst_casebitA
+extern const char ymmconst_casebitA[32];
+#define casebit ymmconst_casebitA
 
+char * __cdecl strichrAVX2(const char *string, int c);
 char * __cdecl strichrSSE42(const char *string, int c);
 char * __cdecl strichrSSE2(const char *string, int c);
 char * __cdecl strichr386(const char *string, int c);
@@ -35,6 +36,63 @@ __declspec(naked) char * __cdecl _strichr(const char *string, int c)
 	__asm
 	{
 		jmp     dword ptr [strichrDispatch]
+	}
+}
+
+// AVX2 version
+__declspec(naked) char * __cdecl strichrAVX2(const char *string, int c)
+{
+	extern char * __cdecl strchrAVX2(const char *string, int c);
+
+	__asm
+	{
+		#define string (esp + 4)
+		#define c      (esp + 8)
+
+		mov     ecx, dword ptr [c]
+		mov     eax, dword ptr [string]
+		or      ecx, 'a' - 'A'
+		xor     edx, edx
+		mov     dl, cl
+		sub     ecx, 'a'
+		cmp     cl, 'z' - 'a' + 1
+		jae     strchrAVX2
+		mov     dword ptr [esp - 4], edx
+		vpbroadcastb ymm2, byte ptr [esp - 4]
+		vmovdqa ymm3, ymmword ptr [casebit]
+		mov     ecx, eax
+		or      edx, -1
+		and     ecx, 31
+		jz      loop_entry
+		shl     edx, cl
+		sub     eax, ecx
+		jmp     loop_entry
+
+		align   16
+	loop_begin:
+		add     eax, 32
+		or      edx, -1
+	loop_entry:
+		vmovdqa ymm0, ymmword ptr [eax]
+		vpxor   ymm1, ymm1, ymm1
+		vpcmpeqb ymm1, ymm1, ymm0
+		vpor    ymm0, ymm0, ymm3
+		vpcmpeqb ymm0, ymm0, ymm2
+		vpor    ymm0, ymm0, ymm1
+		vpmovmskb ecx, ymm0
+		and     ecx, edx
+		jz      loop_begin
+		bsf     ecx, ecx
+		mov     dl, byte ptr [eax + ecx]
+		add     eax, ecx
+		xor     ecx, ecx
+		test    dl, dl
+		cmovz   eax, ecx
+		vzeroupper
+		ret
+
+		#undef string
+		#undef c
 	}
 }
 
@@ -123,7 +181,6 @@ __declspec(naked) char * __cdecl strichrSSE2(const char *string, int c)
 		sub     ecx, 'a'
 		cmp     cl, 'z' - 'a' + 1
 		jae     strchrSSE2
-		pxor    xmm1, xmm1
 		movd    xmm2, edx
 		punpcklbw xmm2, xmm2
 		pshuflw xmm2, xmm2, 0
@@ -143,6 +200,7 @@ __declspec(naked) char * __cdecl strichrSSE2(const char *string, int c)
 		or      edx, -1
 	loop_entry:
 		movdqa  xmm0, xmmword ptr [eax]
+		pxor    xmm1, xmm1
 		pcmpeqb xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqb xmm0, xmm2
@@ -326,25 +384,35 @@ __declspec(naked) char * __cdecl strichr386(const char *string, int c)
 
 __declspec(naked) static char * __cdecl strichrCPUDispatch(const char *string, int c)
 {
-	#define __ISA_AVAILABLE_X86   0
-	#define __ISA_AVAILABLE_SSE2  1
-	#define __ISA_AVAILABLE_SSE42 2
+	#define __ISA_AVAILABLE_X86     0
+	#define __ISA_AVAILABLE_SSE2    1
+	#define __ISA_AVAILABLE_SSE42   2
+	#define __ISA_AVAILABLE_AVX     3
+	#define __ISA_AVAILABLE_ENFSTRG 4
+	#define __ISA_AVAILABLE_AVX2    5
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
-		jbe     L1
+		mov     eax, dword ptr [__isa_available]
+		cmp     eax, __ISA_AVAILABLE_AVX2
+		jb      L1
+		mov     dword ptr [strichrDispatch], offset strichrAVX2
+		jmp     strichrAVX2
+
+	L1:
+		cmp     eax, __ISA_AVAILABLE_SSE2
+		jbe     L2
 		mov     dword ptr [strichrDispatch], offset strichrSSE42
 		jmp     strichrSSE42
 
-	L1:
+	L2:
 		mov     dword ptr [strichrDispatch], offset strichrSSE2
-		jb      L2
+		jb      L3
 		jmp     strichrSSE2
 
-	L2:
+	L3:
 		mov     dword ptr [strichrDispatch], offset strichr386
 		jmp     strichr386
 	}
@@ -352,5 +420,8 @@ __declspec(naked) static char * __cdecl strichrCPUDispatch(const char *string, i
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
 	#undef __ISA_AVAILABLE_SSE42
+	#undef __ISA_AVAILABLE_AVX
+	#undef __ISA_AVAILABLE_ENFSTRG
+	#undef __ISA_AVAILABLE_AVX2
 }
 #endif

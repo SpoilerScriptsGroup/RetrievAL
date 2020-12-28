@@ -26,12 +26,12 @@ static int __cdecl strnicmpCPUDispatch(const char *string1, const char *string2,
 
 static int(__cdecl * strnicmpDispatch)(const char *string1, const char *string2, size_t count) = strnicmpCPUDispatch;
 
-extern const char xmmconst_upperA[16];
-extern const char xmmconst_azrangeA[16];
-extern const char xmmconst_casebitA[16];
-#define upper   xmmconst_upperA
-#define azrange xmmconst_azrangeA
-#define casebit xmmconst_casebitA
+extern const char ymmconst_upperA[32];
+extern const char ymmconst_azrangeA[32];
+extern const char ymmconst_casebitA[32];
+#define upper   ymmconst_upperA
+#define azrange ymmconst_azrangeA
+#define casebit ymmconst_casebitA
 
 __declspec(naked) int __cdecl _strnicmp(const char *string1, const char *string2, size_t count)
 {

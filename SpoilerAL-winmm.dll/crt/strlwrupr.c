@@ -23,16 +23,15 @@ char * __cdecl _strupr(char *string)
 	return string;
 }
 #else
-extern const char xmmconst_upperA[16];
-extern const char xmmconst_lowerA[16];
-extern const char xmmconst_azrangeA[16];
-extern const char xmmconst_casebitA[16];
-extern const char xmmconst_maskbit[32];
-#define upper   xmmconst_upperA
-#define lower   xmmconst_lowerA
-#define azrange xmmconst_azrangeA
-#define casebit xmmconst_casebitA
-#define maskbit xmmconst_maskbit
+extern const char ymmconst_upperA[32];
+extern const char ymmconst_lowerA[32];
+extern const char ymmconst_azrangeA[32];
+extern const char ymmconst_casebitA[32];
+extern const char ymmconst_maskbit[64];
+#define upper   ymmconst_upperA
+#define lower   ymmconst_lowerA
+#define azrange ymmconst_azrangeA
+#define casebit ymmconst_casebitA
 
 __declspec(align(16)) static const char azhigh[16] = {      // define range for upper case
 	'A', 'Z', 'A', 'Z', 'A', 'Z', 'A', 'Z', 'A', 'Z', 'A', 'Z', 'A', 'Z', 'A', 'Z'
@@ -41,6 +40,9 @@ __declspec(align(16)) static const char azlow[16] = {       // define range for 
 	'a', 'z', 'a', 'z', 'a', 'z', 'a', 'z', 'a', 'z', 'a', 'z', 'a', 'z', 'a', 'z'
 };
 
+static char * __cdecl strlwrAVX2(char *string);
+static char * __cdecl struprAVX2(char *string);
+static char * __cdecl strlwruprAVX2(char *string);
 static char * __cdecl strlwrSSE42(char *string);
 static char * __cdecl struprSSE42(char *string);
 static char * __cdecl strlwruprSSE42(char *string);
@@ -75,6 +77,79 @@ __declspec(naked) char * __cdecl _strupr(char *string)
 	}
 }
 
+// AVX2 version
+__declspec(naked) static char * __cdecl strlwrAVX2(char *string)
+{
+	__asm
+	{
+		vmovdqa ymm2, ymmword ptr [upper]
+		jmp     strlwruprAVX2
+	}
+}
+
+// AVX2 version
+__declspec(naked) static char * __cdecl struprAVX2(char *string)
+{
+	__asm
+	{
+		vmovdqa ymm2, ymmword ptr [lower]
+		jmp     strlwruprAVX2
+	}
+}
+
+__declspec(naked) static char * __cdecl strlwruprAVX2(char *string)
+{
+	#define maskbit ymmconst_maskbit
+
+	__asm
+	{
+		mov     ecx, dword ptr [esp + 4]                    // string
+		vpxor   ymm3, ymm3, ymm3                            // set to zero
+		vmovdqa ymm4, ymmword ptr [azrange]
+		vmovdqa ymm5, ymmword ptr [casebit]                 // bit to change
+		mov     eax, ecx
+		mov     edx, ecx
+		and     ecx, 31
+		jz      loop_entry1
+		xor     ecx, 31
+		and     edx, -32
+		vmovdqu ymm0, ymmword ptr [maskbit + ecx + 1]       // load the non target bits mask
+		vmovdqa ymm1, ymmword ptr [edx]                     // load 32 bytes
+		vpor    ymm0, ymm0, ymm1                            // fill the non target bits to 1
+		jmp     loop_entry2
+
+		align   16
+	loop_begin:
+		vpxor   ymm0, ymm0, ymm1                            // negation of the 5th bit - lowercase letters
+		vmovdqa ymmword ptr [edx], ymm0                     // store 32 bytes
+		add     edx, 32
+	loop_entry1:
+		vmovdqa ymm0, ymmword ptr [edx]                     // load 32 bytes
+		vmovdqa ymm1, ymm0                                  // copy
+	loop_entry2:
+		vpcmpeqb ymm3, ymm3, ymm0                           // compare 32 bytes with zero
+		vpaddb  ymm0, ymm0, ymm2                            // all bytes greater than 'Z' if negative
+		vpmovmskb ecx, ymm3                                 // get one bit for each byte result
+		vpcmpgtb ymm0, ymm0, ymm4                           // ymm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
+		vpand   ymm0, ymm0, ymm5                            // assign a mask for the appropriate bytes
+		test    ecx, ecx
+		jz      loop_begin                                  // next 32 bytes
+
+		shr     ecx, 1
+		jc      epilog
+		bsf     ecx, ecx
+		xor     ecx, 31
+		vpand   ymm0, ymm0, ymmword ptr [maskbit + ecx]     // assign a mask for casebit
+		vpxor   ymm0, ymm0, ymm1                            // negation of the 5th bit - lowercase letters
+		vmovdqa ymmword ptr [edx], ymm0                     // store 32 bytes
+	epilog:
+		vzeroupper
+		ret
+	}
+
+	#undef maskbit
+}
+
 // SSE4.2 version
 __declspec(naked) static char * __cdecl strlwrSSE42(char *string)
 {
@@ -97,6 +172,8 @@ __declspec(naked) static char * __cdecl struprSSE42(char *string)
 
 __declspec(naked) static char * __cdecl strlwruprSSE42(char *string)
 {
+	#define maskbit (ymmconst_maskbit + 16)
+
 	__asm
 	{
 		// common code for strupr and strlwr
@@ -138,6 +215,8 @@ __declspec(naked) static char * __cdecl strlwruprSSE42(char *string)
 	finish:
 		ret
 	}
+
+	#undef maskbit
 }
 
 // SSE2 version
@@ -162,6 +241,8 @@ __declspec(naked) static char * __cdecl struprSSE2(char *string)
 
 __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 {
+	#define maskbit (ymmconst_maskbit + 16)
+
 	__asm
 	{
 		mov     ecx, dword ptr [esp + 4]                    // string
@@ -207,6 +288,8 @@ __declspec(naked) static char * __cdecl strlwruprSSE2(char *string)
 	epilog:
 		ret
 	}
+
+	#undef maskbit
 }
 
 // 386 version
@@ -268,25 +351,35 @@ __declspec(naked) static char * __cdecl strlwruprGeneric(char *string)
 // CPU dispatching for _strlwr. This is executed only once
 __declspec(naked) static char * __cdecl strlwrCPUDispatch(char *string)
 {
-	#define __ISA_AVAILABLE_X86   0
-	#define __ISA_AVAILABLE_SSE2  1
-	#define __ISA_AVAILABLE_SSE42 2
+	#define __ISA_AVAILABLE_X86     0
+	#define __ISA_AVAILABLE_SSE2    1
+	#define __ISA_AVAILABLE_SSE42   2
+	#define __ISA_AVAILABLE_AVX     3
+	#define __ISA_AVAILABLE_ENFSTRG 4
+	#define __ISA_AVAILABLE_AVX2    5
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
-		jbe     L1
+		mov     eax, dword ptr [__isa_available]
+		cmp     eax, __ISA_AVAILABLE_AVX2
+		jb      L1
+		mov     dword ptr [strlwrDispatch], offset strlwrAVX2
+		jmp     strlwrAVX2
+
+	L1:
+		cmp     eax, __ISA_AVAILABLE_SSE2
+		jbe     L2
 		mov     dword ptr [strlwrDispatch], offset strlwrSSE42
 		jmp     strlwrSSE42
 
-	L1:
+	L2:
 		mov     dword ptr [strlwrDispatch], offset strlwrSSE2
-		jb      L2
+		jb      L3
 		jmp     strlwrSSE2
 
-	L2:
+	L3:
 		mov     dword ptr [strlwrDispatch], offset strlwrGeneric
 		jmp     strlwrGeneric
 	}
@@ -294,30 +387,43 @@ __declspec(naked) static char * __cdecl strlwrCPUDispatch(char *string)
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
 	#undef __ISA_AVAILABLE_SSE42
+	#undef __ISA_AVAILABLE_AVX
+	#undef __ISA_AVAILABLE_ENFSTRG
+	#undef __ISA_AVAILABLE_AVX2
 }
 
 // CPU dispatching for _strupr. This is executed only once
 __declspec(naked) static char * __cdecl struprCPUDispatch(char *string)
 {
-	#define __ISA_AVAILABLE_X86   0
-	#define __ISA_AVAILABLE_SSE2  1
-	#define __ISA_AVAILABLE_SSE42 2
+	#define __ISA_AVAILABLE_X86     0
+	#define __ISA_AVAILABLE_SSE2    1
+	#define __ISA_AVAILABLE_SSE42   2
+	#define __ISA_AVAILABLE_AVX     3
+	#define __ISA_AVAILABLE_ENFSTRG 4
+	#define __ISA_AVAILABLE_AVX2    5
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
-		jbe     L1
+		mov     eax, dword ptr [__isa_available]
+		cmp     eax, __ISA_AVAILABLE_AVX2
+		jb      L1
+		mov     dword ptr [struprDispatch], offset struprAVX2
+		jmp     struprAVX2
+
+	L1:
+		cmp     eax, __ISA_AVAILABLE_SSE2
+		jbe     L2
 		mov     dword ptr [struprDispatch], offset struprSSE42
 		jmp     struprSSE42
 
-	L1:
+	L2:
 		mov     dword ptr [struprDispatch], offset struprSSE2
-		jb      L2
+		jb      L3
 		jmp     struprSSE2
 
-	L2:
+	L3:
 		mov     dword ptr [struprDispatch], offset struprGeneric
 		jmp     struprGeneric
 	}
@@ -325,5 +431,8 @@ __declspec(naked) static char * __cdecl struprCPUDispatch(char *string)
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
 	#undef __ISA_AVAILABLE_SSE42
+	#undef __ISA_AVAILABLE_AVX
+	#undef __ISA_AVAILABLE_ENFSTRG
+	#undef __ISA_AVAILABLE_AVX2
 }
 #endif

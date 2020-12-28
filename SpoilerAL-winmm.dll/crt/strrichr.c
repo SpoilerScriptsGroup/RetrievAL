@@ -20,13 +20,13 @@ char * __cdecl _strrichr(const char *string, int c)
 
 #pragma warning(disable:4414)
 
-extern const char    xmmconst_casebitA[16];
-extern const wchar_t xmmconst_casebitW[8];
-extern const char    xmmconst_maskbit[32];
-#define casebit     xmmconst_casebitA
-#define insensitive xmmconst_casebitW
-#define maskbit     xmmconst_maskbit
+extern const char    ymmconst_casebitA[32];
+extern const wchar_t ymmconst_casebitW[16];
+extern const char    ymmconst_maskbit[64];
+#define casebit     ymmconst_casebitA
+#define insensitive ymmconst_casebitW
 
+static char * __cdecl strrichrAVX2(const char *string, int c);
 static char * __cdecl strrichrSSE42(const char *string, int c);
 static char * __cdecl strrichrSSE2(const char *string, int c);
 static char * __cdecl strrichr386(const char *string, int c);
@@ -42,9 +42,92 @@ __declspec(naked) char * __cdecl _strrichr(const char *string, int c)
 	}
 }
 
+// AVX2 version
+__declspec(naked) static char * __cdecl strrichrAVX2(const char *string, int c)
+{
+	extern char * __cdecl strrchrAVX2(const char *string, int c);
+
+	__asm
+	{
+		#define string (esp + 4)
+		#define c      (esp + 8)
+
+		mov     eax, dword ptr [c]
+		mov     edx, dword ptr [string]
+		or      eax, 'a' - 'A'
+		xor     ecx, ecx
+		mov     cl, al
+		sub     eax, 'a'
+		cmp     al, 'z' - 'a' + 1
+		jae     strrchrAVX2
+		push    ebx
+		push    esi
+		push    edi
+		xor     eax, eax
+		mov     dword ptr [esp - 4], ecx
+		vpbroadcastb ymm2, byte ptr [esp - 4]
+		vmovdqa ymm3, ymmword ptr [casebit]
+		mov     ecx, edx
+		or      edi, -1
+		and     ecx, 31
+		jz      loop_entry
+		shl     edi, cl
+		sub     edx, ecx
+		jmp     loop_entry
+
+		align   16
+	loop_begin:
+		and     ebx, edi
+		jz      loop_increment
+		mov     eax, edx
+		mov     esi, ebx
+	loop_increment:
+		add     edx, 32
+		or      edi, -1
+	loop_entry:
+		vmovdqa ymm0, ymmword ptr [edx]
+		vpxor   ymm1, ymm1, ymm1
+		vpcmpeqb ymm1, ymm1, ymm0
+		vpor    ymm0, ymm0, ymm3
+		vpcmpeqb ymm0, ymm0, ymm2
+		vpmovmskb ecx, ymm1
+		vpmovmskb ebx, ymm0
+		and     ecx, edi
+		jz      loop_begin
+		bsf     ecx, ecx
+		and     ebx, edi
+		xor     ecx, 31
+		shl     ebx, cl
+		and     ebx, 7FFFFFFFH
+		jz      process_stored_pointer
+		bsr     eax, ebx
+		sub     edx, ecx
+		jmp     return_pointer
+
+		align   16
+	process_stored_pointer:
+		test    eax, eax
+		jz      epilog
+		bsr     edx, esi
+	return_pointer:
+		add     eax, edx
+	epilog:
+		pop     edi
+		pop     esi
+		pop     ebx
+		vzeroupper
+		ret
+
+		#undef string
+		#undef c
+	}
+}
+
 // SSE4.2 version
 __declspec(naked) char * __cdecl strrichrSSE42(const char *string, int c)
 {
+	#define maskbit (ymmconst_maskbit + 16)
+
 	extern char * __cdecl strrchrSSE42(const char *string, int c);
 
 	__asm
@@ -101,6 +184,8 @@ __declspec(naked) char * __cdecl strrichrSSE42(const char *string, int c)
 		#undef string
 		#undef c
 	}
+
+	#undef maskbit
 }
 
 // SSE2 version
@@ -125,7 +210,6 @@ __declspec(naked) static char * __cdecl strrichrSSE2(const char *string, int c)
 		push    esi
 		push    edi
 		xor     eax, eax
-		pxor    xmm1, xmm1
 		movd    xmm2, ecx
 		punpcklbw xmm2, xmm2
 		pshuflw xmm2, xmm2, 0
@@ -150,6 +234,7 @@ __declspec(naked) static char * __cdecl strrichrSSE2(const char *string, int c)
 		or      edi, -1
 	loop_entry:
 		movdqa  xmm0, xmmword ptr [edx]
+		pxor    xmm1, xmm1
 		pcmpeqb xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqb xmm0, xmm2
@@ -354,25 +439,35 @@ __declspec(naked) static char * __cdecl strrichr386(const char *string, int c)
 
 __declspec(naked) static char * __cdecl strrichrCPUDispatch(const char *string, int c)
 {
-	#define __ISA_AVAILABLE_X86   0
-	#define __ISA_AVAILABLE_SSE2  1
-	#define __ISA_AVAILABLE_SSE42 2
+	#define __ISA_AVAILABLE_X86     0
+	#define __ISA_AVAILABLE_SSE2    1
+	#define __ISA_AVAILABLE_SSE42   2
+	#define __ISA_AVAILABLE_AVX     3
+	#define __ISA_AVAILABLE_ENFSTRG 4
+	#define __ISA_AVAILABLE_AVX2    5
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
-		jbe     L1
+		mov     eax, dword ptr [__isa_available]
+		cmp     eax, __ISA_AVAILABLE_AVX2
+		jb      L1
+		mov     dword ptr [strrichrDispatch], offset strrichrAVX2
+		jmp     strrichrAVX2
+
+	L1:
+		cmp     eax, __ISA_AVAILABLE_SSE2
+		jbe     L2
 		mov     dword ptr [strrichrDispatch], offset strrichrSSE42
 		jmp     strrichrSSE42
 
-	L1:
+	L2:
 		mov     dword ptr [strrichrDispatch], offset strrichrSSE2
-		jb      L2
+		jb      L3
 		jmp     strrichrSSE2
 
-	L2:
+	L3:
 		mov     dword ptr [strrichrDispatch], offset strrichr386
 		jmp     strrichr386
 	}
@@ -380,5 +475,8 @@ __declspec(naked) static char * __cdecl strrichrCPUDispatch(const char *string, 
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
 	#undef __ISA_AVAILABLE_SSE42
+	#undef __ISA_AVAILABLE_AVX
+	#undef __ISA_AVAILABLE_ENFSTRG
+	#undef __ISA_AVAILABLE_AVX2
 }
 #endif

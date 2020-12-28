@@ -18,11 +18,11 @@ wchar_t * __cdecl _wcsrichr(const wchar_t *string, wchar_t c)
 #else
 #pragma warning(disable:4414)
 
-extern const wchar_t xmmconst_casebitW[8];
-extern const char    xmmconst_maskbit[32];
-#define casebit xmmconst_casebitW
-#define maskbit xmmconst_maskbit
+extern const wchar_t ymmconst_casebitW[16];
+extern const char    ymmconst_maskbit[64];
+#define casebit ymmconst_casebitW
 
+static wchar_t * __cdecl wcsrichrAVX2(const wchar_t *string, wchar_t c);
 static wchar_t * __cdecl wcsrichrSSE42(const wchar_t *string, wchar_t c);
 static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, wchar_t c);
 static wchar_t * __cdecl wcsrichr386(const wchar_t *string, wchar_t c);
@@ -38,9 +38,135 @@ __declspec(naked) wchar_t * __cdecl _wcsrichr(const wchar_t *string, wchar_t c)
 	}
 }
 
+// AVX2 version
+__declspec(naked) static wchar_t * __cdecl wcsrichrAVX2(const wchar_t *string, wchar_t c)
+{
+	extern wchar_t * __cdecl wcsrchrAVX2(const wchar_t *string, wchar_t c);
+
+	__asm
+	{
+		#define string (esp + 4)
+		#define c      (esp + 8)
+
+		mov     edx, dword ptr [c]
+		mov     eax, dword ptr [string]
+		or      edx, 'a' - 'A'
+		xor     ecx, ecx
+		mov     cx, dx
+		sub     edx, 'a'
+		cmp     dx, 'z' - 'a' + 1
+		jae     wcsrchrAVX2
+		push    ebx
+		push    esi
+		push    edi
+		mov     edx, eax
+		or      edi, -1
+		mov     dword ptr [esp - 4], ecx
+		vpbroadcastw ymm2, word ptr [esp - 4]
+		vmovdqa ymm3, ymmword ptr [casebit]
+		mov     ecx, eax
+		or      edi, -1
+		and     eax, 1
+		jnz     unaligned
+		and     ecx, 31
+		jz      aligned_loop_entry
+		shl     edi, cl
+		sub     edx, ecx
+		jmp     aligned_loop_entry
+
+		align   16
+	aligned_loop:
+		and     ebx, edi
+		jz      aligned_loop_increment
+		mov     eax, edx
+		mov     esi, ebx
+	aligned_loop_increment:
+		add     edx, 32
+		or      edi, -1
+	aligned_loop_entry:
+		vmovdqa ymm0, ymmword ptr [edx]
+		vpxor   ymm1, ymm1, ymm1
+		vpcmpeqw ymm1, ymm1, ymm0
+		vpor    ymm0, ymm0, ymm3
+		vpcmpeqw ymm0, ymm0, ymm2
+		vpmovmskb ecx, ymm1
+		vpmovmskb ebx, ymm0
+		and     ecx, edi
+		jz      aligned_loop
+		jmp     null_is_found
+
+		align   16
+	unaligned:
+		inc     ecx
+		and     edx, -32
+		dec     eax
+		dec     edx
+		and     ecx, 31
+		jz      unaligned_loop_increment
+		vmovdqa ymm0, ymmword ptr [edx + 1]
+		vperm2i128 ymm4, ymm0, ymm0, 00001000B
+		vpslldq ymm0, ymm0, 1
+		vpsrldq ymm4, ymm4, 15
+		vpor    ymm0, ymm0, ymm4
+		shl     edi, cl
+		jmp     unaligned_loop_entry
+
+		align   16
+	unaligned_loop:
+		and     ebx, edi
+		jz      unaligned_loop_increment
+		mov     eax, edx
+		mov     esi, ebx
+	unaligned_loop_increment:
+		add     edx, 32
+		or      edi, -1
+		vmovdqu ymm0, ymmword ptr [edx]
+	unaligned_loop_entry:
+		vpxor   ymm1, ymm1, ymm1
+		vpcmpeqw ymm1, ymm1, ymm0
+		vpor    ymm0, ymm0, ymm3
+		vpcmpeqw ymm0, ymm0, ymm2
+		vpmovmskb ecx, ymm1
+		vpmovmskb ebx, ymm0
+		and     ecx, edi
+		jz      unaligned_loop
+
+		align   16
+	null_is_found:
+		bsf     ecx, ecx
+		and     ebx, edi
+		xor     ecx, 31
+		shl     ebx, cl
+		and     ebx, 7FFFFFFFH
+		jz      process_stored_pointer
+		bsr     eax, ebx
+		sub     edx, ecx
+		jmp     return_pointer
+
+		align   16
+	process_stored_pointer:
+		test    eax, eax
+		jz      epilog
+		bsr     edx, esi
+	return_pointer:
+		lea     eax, [eax + edx - 1]
+	epilog:
+		pop     edi
+		pop     esi
+		pop     ebx
+		vzeroupper
+		ret
+
+		#undef string
+		#undef c
+	}
+}
+
 // SSE4.2 version
 __declspec(naked) static wchar_t * __cdecl wcsrichrSSE42(const wchar_t *string, wchar_t c)
 {
+	#define maskbit (ymmconst_maskbit + 16)
+
 	extern wchar_t * __cdecl wcsrchrSSE42(const wchar_t *string, wchar_t c);
 
 	__asm
@@ -108,6 +234,8 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrSSE42(const wchar_t *string, 
 		#undef string
 		#undef c
 	}
+
+	#undef maskbit
 }
 
 // SSE2 version
@@ -133,7 +261,6 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, w
 		push    edi
 		mov     edx, eax
 		or      edi, -1
-		pxor    xmm1, xmm1
 		movd    xmm2, ecx
 		pshuflw xmm2, xmm2, 0
 		movlhps xmm2, xmm2
@@ -159,6 +286,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, w
 		or      edi, -1
 	aligned_loop_entry:
 		movdqa  xmm0, xmmword ptr [edx]
+		pxor    xmm1, xmm1
 		pcmpeqw xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqw xmm0, xmm2
@@ -192,6 +320,7 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrSSE2(const wchar_t *string, w
 		or      edi, -1
 		movdqu  xmm0, xmmword ptr [edx]
 	unaligned_loop_entry:
+		pxor    xmm1, xmm1
 		pcmpeqw xmm1, xmm0
 		por     xmm0, xmm3
 		pcmpeqw xmm0, xmm2
@@ -276,25 +405,35 @@ __declspec(naked) static wchar_t * __cdecl wcsrichr386(const wchar_t *string, wc
 
 __declspec(naked) static wchar_t * __cdecl wcsrichrCPUDispatch(const wchar_t *string, wchar_t c)
 {
-	#define __ISA_AVAILABLE_X86   0
-	#define __ISA_AVAILABLE_SSE2  1
-	#define __ISA_AVAILABLE_SSE42 2
+	#define __ISA_AVAILABLE_X86     0
+	#define __ISA_AVAILABLE_SSE2    1
+	#define __ISA_AVAILABLE_SSE42   2
+	#define __ISA_AVAILABLE_AVX     3
+	#define __ISA_AVAILABLE_ENFSTRG 4
+	#define __ISA_AVAILABLE_AVX2    5
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
-		jbe     L1
+		mov     eax, dword ptr [__isa_available]
+		cmp     eax, __ISA_AVAILABLE_AVX2
+		jb      L1
+		mov     dword ptr [wcsrichrDispatch], offset wcsrichrAVX2
+		jmp     wcsrichrAVX2
+
+	L1:
+		cmp     eax, __ISA_AVAILABLE_SSE2
+		jbe     L2
 		mov     dword ptr [wcsrichrDispatch], offset wcsrichrSSE42
 		jmp     wcsrichrSSE42
 
-	L1:
+	L2:
 		mov     dword ptr [wcsrichrDispatch], offset wcsrichrSSE2
-		jb      L2
+		jb      L3
 		jmp     wcsrichrSSE2
 
-	L2:
+	L3:
 		mov     dword ptr [wcsrichrDispatch], offset wcsrichr386
 		jmp     wcsrichr386
 	}
@@ -302,5 +441,8 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrCPUDispatch(const wchar_t *st
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
 	#undef __ISA_AVAILABLE_SSE42
+	#undef __ISA_AVAILABLE_AVX
+	#undef __ISA_AVAILABLE_ENFSTRG
+	#undef __ISA_AVAILABLE_AVX2
 }
 #endif

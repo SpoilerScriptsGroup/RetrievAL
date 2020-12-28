@@ -25,16 +25,15 @@ wchar_t * __cdecl _wcsupr(wchar_t *string)
 	return string;
 }
 #else
-extern const wchar_t xmmconst_upperW[8];
-extern const wchar_t xmmconst_lowerW[8];
-extern const wchar_t xmmconst_azrangeW[8];
-extern const wchar_t xmmconst_casebitW[8];
-extern const char xmmconst_maskbit[32];
-#define upper   xmmconst_upperW
-#define lower   xmmconst_lowerW
-#define azrange xmmconst_azrangeW
-#define casebit xmmconst_casebitW
-#define maskbit xmmconst_maskbit
+extern const wchar_t ymmconst_upperW[16];
+extern const wchar_t ymmconst_lowerW[16];
+extern const wchar_t ymmconst_azrangeW[16];
+extern const wchar_t ymmconst_casebitW[16];
+extern const char ymmconst_maskbit[64];
+#define upper   ymmconst_upperW
+#define lower   ymmconst_lowerW
+#define azrange ymmconst_azrangeW
+#define casebit ymmconst_casebitW
 
 __declspec(align(16)) static const wchar_t azhigh[8] = {    // define range for upper case
 	L'A', L'Z', L'A', L'Z', L'A', L'Z', L'A', L'Z'
@@ -43,6 +42,9 @@ __declspec(align(16)) static const wchar_t azlow[8] = {     // define range for 
 	L'a', L'z', L'a', L'z', L'a', L'z', L'a', L'z'
 };
 
+static wchar_t * __cdecl wcslwrAVX2(wchar_t *string);
+static wchar_t * __cdecl wcsuprAVX2(wchar_t *string);
+static wchar_t * __cdecl wcslwruprAVX2(wchar_t *string);
 static wchar_t * __cdecl wcslwrSSE42(wchar_t *string);
 static wchar_t * __cdecl wcsuprSSE42(wchar_t *string);
 static wchar_t * __cdecl wcslwruprSSE42(wchar_t *string);
@@ -77,6 +79,139 @@ __declspec(naked) wchar_t * __cdecl _wcsupr(wchar_t *string)
 	}
 }
 
+// AVX2 version
+__declspec(naked) static wchar_t * __cdecl wcslwrAVX2(wchar_t *string)
+{
+	__asm
+	{
+		vmovdqa ymm2, ymmword ptr [upper]
+		jmp     wcslwruprAVX2
+	}
+}
+
+// AVX2 version
+__declspec(naked) static wchar_t * __cdecl wcsuprAVX2(wchar_t *string)
+{
+	__asm
+	{
+		vmovdqa ymm2, ymmword ptr [lower]
+		jmp     wcslwruprAVX2
+	}
+}
+
+__declspec(naked) static wchar_t * __cdecl wcslwruprAVX2(wchar_t *string)
+{
+	#define maskbit ymmconst_maskbit
+
+	__asm
+	{
+		mov     ecx, dword ptr [esp + 4]                    // string
+		vpxor   ymm3, ymm3, ymm3                            // set to zero
+		vmovdqa ymm4, ymmword ptr [azrange]
+		vmovdqa ymm5, ymmword ptr [casebit]                 // bit to change
+		mov     eax, ecx
+		mov     edx, ecx
+		and     ecx, 31
+		jz      aligned_loop_entry1
+		test    eax, 1
+		jnz     unaligned
+		xor     ecx, 31
+		and     edx, -32
+		vmovdqu ymm0, ymmword ptr [maskbit + ecx + 1]       // load the non target bits mask
+		vmovdqa ymm1, ymmword ptr [edx]                     // load 32 bytes
+		vpor    ymm0, ymm0, ymm1                            // fill the non target bits to 1
+		jmp     aligned_loop_entry2
+
+		align   16
+	aligned_loop:
+		vpxor   ymm0, ymm0, ymm1                            // negation of the 5th bit - lowercase letters
+		vmovdqa ymmword ptr [edx], ymm0                     // store 32 bytes
+		add     edx, 32
+	aligned_loop_entry1:
+		vmovdqa ymm0, ymmword ptr [edx]                     // load 32 bytes
+		vmovdqa ymm1, ymm0                                  // copy
+	aligned_loop_entry2:
+		vpcmpeqw ymm3, ymm3, ymm0                           // compare 16 words with zero
+		vpaddw  ymm0, ymm0, ymm2                            // all words greater than 'Z' if negative
+		vpmovmskb ecx, ymm3                                 // get one bit for each byte result
+		vpcmpgtw ymm0, ymm0, ymm4                           // ymm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
+		vpand   ymm0, ymm0, ymm5                            // assign a mask for the appropriate words
+		test    ecx, ecx
+		jz      aligned_loop                                // next 32 bytes
+
+	aligned_last:
+		shr     ecx, 1
+		jc      aligned_epilog
+		bsf     ecx, ecx
+		xor     ecx, 31
+		vmovdqu ymm2, ymmword ptr [maskbit + ecx]           // load the target bits mask
+		vpand   ymm0, ymm0, ymm2                            // assign a mask for casebit
+		vpxor   ymm0, ymm0, ymm1                            // negation of the 5th bit - lowercase letters
+		vmovdqa ymmword ptr [edx], ymm0                     // store 32 bytes
+	aligned_epilog:
+		vzeroupper
+		ret
+
+		align   16
+	unaligned:
+		xor     ecx, 31
+		jz      unaligned_loop_entry
+		and     edx, -32
+		vmovdqa ymm6, ymmword ptr [edx]                     // load 32 bytes
+		vmovdqu ymm0, ymmword ptr [maskbit + ecx]           // load the non target bits mask
+		vmovdqa ymm1, ymm6                                  // copy
+		vperm2i128 ymm7, ymm6, ymm6, 00001000B              // adjust ymm value for compare
+		vpslldq ymm6, ymm6, 1
+		vpsrldq ymm7, ymm7, 15
+		vpor    ymm6, ymm6, ymm7
+		vpor    ymm0, ymm0, ymm6                            // fill the non target bits to 1
+		vpcmpeqw ymm3, ymm3, ymm0                           // compare 16 words with zero
+		vpaddw  ymm0, ymm0, ymm2                            // all words greater than 'Z' if negative
+		vpmovmskb ecx, ymm3                                 // get one bit for each byte result
+		vpcmpgtw ymm0, ymm0, ymm4                           // ymm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
+		vpand   ymm0, ymm0, ymm5                            // assign a mask for the appropriate words
+		vperm2i128 ymm6, ymm0, ymm0, 10000001B              // adjust mask value to 32 bytes alignment
+		vpsrldq ymm0, ymm0, 1
+		vpslldq ymm6, ymm6, 15
+		vpor    ymm0, ymm0, ymm6
+		shr     ecx, 1
+		jnz     aligned_last
+		vpxor   ymm0, ymm0, ymm1                            // negation of the 5th bit - lowercase letters
+		vmovdqa ymmword ptr [edx], ymm0                     // store 32 bytes
+		add     edx, 31
+		jmp     unaligned_loop_entry
+
+		align   16
+	unaligned_loop:
+		vpxor   ymm0, ymm0, ymm1                            // negation of the 5th bit - lowercase letters
+		vmovdqu ymmword ptr [edx], ymm0                     // store 32 bytes
+		add     edx, 32
+	unaligned_loop_entry:
+		vmovdqu ymm0, ymmword ptr [edx]                     // load 32 bytes
+		vmovdqa ymm1, ymm0                                  // copy
+		vpcmpeqw ymm3, ymm3, ymm0                           // compare 16 words with zero
+		vpaddw  ymm0, ymm0, ymm2                            // all words greater than 'Z' if negative
+		vpmovmskb ecx, ymm3                                 // get one bit for each byte result
+		vpcmpgtw ymm0, ymm0, ymm4                           // ymm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
+		vpand   ymm0, ymm0, ymm5                            // assign a mask for the appropriate words
+		test    ecx, ecx
+		jz      unaligned_loop                              // next 32 bytes
+
+		shr     ecx, 1
+		jc      unaligned_epilog
+		bsf     ecx, ecx
+		xor     ecx, 31
+		vpand   ymm0, ymm0, ymmword ptr [maskbit + ecx]     // assign a mask for casebit
+		vpxor   ymm0, ymm0, ymm1                            // negation of the 5th bit - lowercase letters
+		vmovdqu ymmword ptr [edx], ymm0                     // store 32 bytes
+	unaligned_epilog:
+		vzeroupper
+		ret
+	}
+
+	#undef maskbit
+}
+
 // SSE4.2 version
 __declspec(naked) static wchar_t * __cdecl wcslwrSSE42(wchar_t *string)
 {
@@ -99,6 +234,8 @@ __declspec(naked) static wchar_t * __cdecl wcsuprSSE42(wchar_t *string)
 
 __declspec(naked) static wchar_t * __cdecl wcslwruprSSE42(wchar_t *string)
 {
+	#define maskbit (ymmconst_maskbit + 16)
+
 	__asm
 	{
 		// common code for wcsupr and wcslwr
@@ -193,6 +330,8 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE42(wchar_t *string)
 	unaligned_finish:
 		ret
 	}
+
+	#undef maskbit
 }
 
 // SSE2 version
@@ -217,6 +356,8 @@ __declspec(naked) static wchar_t * __cdecl wcsuprSSE2(wchar_t *string)
 
 __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 {
+	#define maskbit (ymmconst_maskbit + 16)
+
 	__asm
 	{
 		mov     ecx, dword ptr [esp + 4]                    // string
@@ -315,6 +456,8 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprSSE2(wchar_t *string)
 	unaligned_epilog:
 		ret
 	}
+
+	#undef maskbit
 }
 
 // 386 version
@@ -376,25 +519,35 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprGeneric(wchar_t *string)
 // CPU dispatching for _wcslwr. This is executed only once
 __declspec(naked) static wchar_t * __cdecl wcslwrCPUDispatch(wchar_t *string)
 {
-	#define __ISA_AVAILABLE_X86   0
-	#define __ISA_AVAILABLE_SSE2  1
-	#define __ISA_AVAILABLE_SSE42 2
+	#define __ISA_AVAILABLE_X86     0
+	#define __ISA_AVAILABLE_SSE2    1
+	#define __ISA_AVAILABLE_SSE42   2
+	#define __ISA_AVAILABLE_AVX     3
+	#define __ISA_AVAILABLE_ENFSTRG 4
+	#define __ISA_AVAILABLE_AVX2    5
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
-		jbe     L1
+		mov     eax, dword ptr [__isa_available]
+		cmp     eax, __ISA_AVAILABLE_AVX2
+		jb      L1
+		mov     dword ptr [wcslwrDispatch], offset wcslwrAVX2
+		jmp     wcslwrAVX2
+
+	L1:
+		cmp     eax, __ISA_AVAILABLE_SSE2
+		jbe     L2
 		mov     dword ptr [wcslwrDispatch], offset wcslwrSSE42
 		jmp     wcslwrSSE42
 
-	L1:
+	L2:
 		mov     dword ptr [wcslwrDispatch], offset wcslwrSSE2
-		jb      L2
+		jb      L3
 		jmp     wcslwrSSE2
 
-	L2:
+	L3:
 		mov     dword ptr [wcslwrDispatch], offset wcslwrGeneric
 		jmp     wcslwrGeneric
 	}
@@ -402,30 +555,43 @@ __declspec(naked) static wchar_t * __cdecl wcslwrCPUDispatch(wchar_t *string)
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
 	#undef __ISA_AVAILABLE_SSE42
+	#undef __ISA_AVAILABLE_AVX
+	#undef __ISA_AVAILABLE_ENFSTRG
+	#undef __ISA_AVAILABLE_AVX2
 }
 
 // CPU dispatching for _wcsupr. This is executed only once
 __declspec(naked) static wchar_t * __cdecl wcsuprCPUDispatch(wchar_t *string)
 {
-	#define __ISA_AVAILABLE_X86   0
-	#define __ISA_AVAILABLE_SSE2  1
-	#define __ISA_AVAILABLE_SSE42 2
+	#define __ISA_AVAILABLE_X86     0
+	#define __ISA_AVAILABLE_SSE2    1
+	#define __ISA_AVAILABLE_SSE42   2
+	#define __ISA_AVAILABLE_AVX     3
+	#define __ISA_AVAILABLE_ENFSTRG 4
+	#define __ISA_AVAILABLE_AVX2    5
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
-		jbe     L1
+		mov     eax, dword ptr [__isa_available]
+		cmp     eax, __ISA_AVAILABLE_AVX2
+		jb      L1
+		mov     dword ptr [wcsuprDispatch], offset wcsuprAVX2
+		jmp     wcsuprAVX2
+
+	L1:
+		cmp     eax, __ISA_AVAILABLE_SSE2
+		jbe     L2
 		mov     dword ptr [wcsuprDispatch], offset wcsuprSSE42
 		jmp     wcsuprSSE42
 
-	L1:
+	L2:
 		mov     dword ptr [wcsuprDispatch], offset wcsuprSSE2
-		jb      L2
+		jb      L3
 		jmp     wcsuprSSE2
 
-	L2:
+	L3:
 		mov     dword ptr [wcsuprDispatch], offset wcsuprGeneric
 		jmp     wcsuprGeneric
 	}
@@ -433,5 +599,8 @@ __declspec(naked) static wchar_t * __cdecl wcsuprCPUDispatch(wchar_t *string)
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
 	#undef __ISA_AVAILABLE_SSE42
+	#undef __ISA_AVAILABLE_AVX
+	#undef __ISA_AVAILABLE_ENFSTRG
+	#undef __ISA_AVAILABLE_AVX2
 }
 #endif

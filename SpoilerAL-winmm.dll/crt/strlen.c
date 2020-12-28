@@ -13,9 +13,10 @@ size_t __cdecl strlen(const char *string)
 	return length;
 }
 #else
-extern const char xmmconst_maskbit[32];
-#define maskbit xmmconst_maskbit
+extern const char ymmconst_maskbit[64];
+#define maskbit (ymmconst_maskbit + 16)
 
+static size_t __cdecl strlenAVX2(const char *string);
 static size_t __cdecl strlenSSE42(const char *string);
 static size_t __cdecl strlenSSE2(const char *string);
 static size_t __cdecl strlen386(const char *string);
@@ -28,6 +29,46 @@ __declspec(naked) size_t __cdecl strlen(const char *string)
 	__asm
 	{
 		jmp     dword ptr [strlenDispatch]                  // Go to appropriate version, depending on instruction set
+	}
+}
+
+// AVX2 version
+__declspec(naked) static size_t __cdecl strlenAVX2(const char *string)
+{
+	__asm
+	{
+		#define string (esp + 4)
+
+		mov     ecx, dword ptr [string]                     // get pointer to string
+		vpxor   ymm1, ymm1, ymm1                            // set to zero
+		or      edx, -1                                     // fill mask bits
+		mov     eax, ecx                                    // copy pointer
+		and     ecx, 31                                     // get lower 8 bits indicate misalignment
+		jz      loop_entry                                  // jump if aligned
+		shl     edx, cl                                     // shift out false bits
+		sub     eax, ecx                                    // align pointer by 32
+		jmp     loop_entry
+
+		// Main loop, search 32 bytes at a time
+		align   16
+	loop_begin:
+		add     eax, 32                                     // increment pointer by 32
+		or      edx, -1                                     // fill mask bits
+	loop_entry:
+		vpcmpeqb ymm0, ymm1, ymmword ptr [eax]              // compare 32 bytes with zero
+		vpmovmskb ecx, ymm0                                 // get one bit for each byte result
+		and     ecx, edx                                    // mask result
+		jz      loop_begin                                  // loop if not found
+
+		// Zero-byte found. Compute string length
+		bsf     ecx, ecx                                    // get first bit index of result
+		mov     edx, dword ptr [string]                     // get pointer to string
+		add     eax, ecx                                    // add byte index
+		sub     eax, edx                                    // subtract start address
+		vzeroupper
+		ret
+
+		#undef string
 	}
 }
 
@@ -189,25 +230,35 @@ __declspec(naked) static size_t __cdecl strlen386(const char *string)
 
 __declspec(naked) static size_t __cdecl strlenCPUDispatch(const char *string)
 {
-	#define __ISA_AVAILABLE_X86   0
-	#define __ISA_AVAILABLE_SSE2  1
-	#define __ISA_AVAILABLE_SSE42 2
+	#define __ISA_AVAILABLE_X86     0
+	#define __ISA_AVAILABLE_SSE2    1
+	#define __ISA_AVAILABLE_SSE42   2
+	#define __ISA_AVAILABLE_AVX     3
+	#define __ISA_AVAILABLE_ENFSTRG 4
+	#define __ISA_AVAILABLE_AVX2    5
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
-		jbe     L1
+		mov     eax, dword ptr [__isa_available]
+		cmp     eax, __ISA_AVAILABLE_AVX2
+		jb      L1
+		mov     dword ptr [strlenDispatch], offset strlenAVX2
+		jmp     strlenAVX2
+
+	L1:
+		cmp     eax, __ISA_AVAILABLE_SSE2
+		jbe     L2
 		mov     dword ptr [strlenDispatch], offset strlenSSE42
 		jmp     strlenSSE42
 
-	L1:
+	L2:
 		mov     dword ptr [strlenDispatch], offset strlenSSE2
-		jb      L2
+		jb      L3
 		jmp     strlenSSE2
 
-	L2:
+	L3:
 		mov     dword ptr [strlenDispatch], offset strlen386
 		jmp     strlen386
 	}
@@ -215,5 +266,8 @@ __declspec(naked) static size_t __cdecl strlenCPUDispatch(const char *string)
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
 	#undef __ISA_AVAILABLE_SSE42
+	#undef __ISA_AVAILABLE_AVX
+	#undef __ISA_AVAILABLE_ENFSTRG
+	#undef __ISA_AVAILABLE_AVX2
 }
 #endif

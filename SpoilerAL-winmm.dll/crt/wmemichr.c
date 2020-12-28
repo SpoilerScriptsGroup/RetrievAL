@@ -21,9 +21,11 @@ wchar_t * __cdecl _wmemichr(const wchar_t *buffer, wchar_t c, size_t count)
 
 #pragma warning(disable:4414)
 
-extern const wchar_t xmmconst_casebitW[8];
-#define casebit xmmconst_casebitW
+extern const wchar_t ymmconst_casebitW[16];
+#define casebit ymmconst_casebitW
 
+static wchar_t * __cdecl wmemichrAVX2(const wchar_t *buffer, wchar_t c, size_t count);
+wchar_t * __vectorcall internal_wmemichrAVX2(const wchar_t *buffer, __m128 c, size_t count);
 static wchar_t * __cdecl wmemichrSSE42(const wchar_t *buffer, wchar_t c, size_t count);
 wchar_t * __vectorcall internal_wmemichrSSE42(const wchar_t *buffer, __m128 reserved, __m128 c, size_t count);
 static wchar_t * __cdecl wmemichrSSE2(const wchar_t *buffer, wchar_t c, size_t count);
@@ -38,6 +40,154 @@ __declspec(naked) wchar_t * __cdecl _wmemichr(const wchar_t *buffer, wchar_t c, 
 	__asm
 	{
 		jmp     dword ptr [wmemichrDispatch]
+	}
+}
+
+// AVX2 version
+__declspec(naked) static wchar_t * __cdecl wmemichrAVX2(const wchar_t *buffer, wchar_t c, size_t count)
+{
+	extern wchar_t * __cdecl wmemchrAVX2(const wchar_t *buffer, wchar_t c, size_t count);
+
+	__asm
+	{
+		#define buffer (esp + 4)
+		#define c      (esp + 8)
+		#define count  (esp + 12)
+
+		mov     edx, dword ptr [count]                      // edx = count
+		mov     ecx, dword ptr [c]
+		test    edx, edx                                    // check if count == 0
+		jz      retnull                                     // if count == 0, leave
+		or      ecx, 'a' - 'A'
+		xor     eax, eax
+		mov     ax, cx
+		sub     ecx, 'a'
+		cmp     cx, 'z' - 'a' + 1
+		jae     wmemchrAVX2
+		mov     dword ptr [esp - 4], eax
+		mov     ecx, dword ptr [buffer]                     // ecx = buffer
+		vpbroadcastw ymm0, word ptr [esp - 4]               // ymm0 = search char
+		jmp     internal_wmemichrAVX2
+
+		align   16
+	retnull:
+		xor     eax, eax
+		vzeroupper
+		ret
+
+		#undef buffer
+		#undef c
+		#undef count
+	}
+}
+
+__declspec(naked) wchar_t * __vectorcall internal_wmemichrAVX2(const wchar_t *buffer, __m128 c, size_t count)
+{
+	__asm
+	{
+		#define buffer ecx
+		#define c      ymm0
+		#define count  edx
+
+		push    esi                                         // preserve esi
+		lea     esi, [ecx + edx * 2]                        // esi = end of buffer
+		mov     eax, ecx                                    // eax = buffer
+		neg     edx                                         // edx = -count
+		vmovdqa ymm2, ymmword ptr [casebit]
+		test    eax, 1
+		jnz     unaligned
+		and     ecx, 31
+		jz      aligned_loop
+		sub     eax, ecx
+		vmovdqa ymm1, ymmword ptr [eax]
+		vpor    ymm1, ymm1, ymm2
+		vpcmpeqw ymm1, ymm1, ymm0
+		vpmovmskb eax, ymm1
+		shr     eax, cl
+		shr     ecx, 1
+		test    eax, eax
+		lea     ecx, [ecx - 16]
+		jnz     found
+		sub     edx, ecx
+		jb      aligned_loop
+		pop     esi                                         // restore esi
+		vzeroupper
+		ret                                                 // __cdecl return
+
+		align   16
+	aligned_loop:
+		vmovdqa ymm1, ymmword ptr [esi + edx * 2]
+		vpor    ymm1, ymm1, ymm2
+		vpcmpeqw ymm1, ymm1, ymm0
+		vpmovmskb eax, ymm1
+		test    eax, eax
+		jnz     found
+		add     edx, 16
+		jnc     aligned_loop
+		pop     esi                                         // restore esi
+		vzeroupper
+		ret                                                 // __cdecl return
+
+		align   16
+	unaligned:
+		inc     ecx
+		and     eax, -32
+		and     ecx, 31
+		jz      unaligned_loop
+		vmovdqa ymm1, ymmword ptr [eax]
+		vperm2i128 ymm3, ymm1, ymm1, 00001000B
+		vpslldq ymm1, ymm1, 1
+		vpsrldq ymm3, ymm3, 15
+		vpor    ymm1, ymm1, ymm3
+		vpor    ymm1, ymm1, ymm2
+		vpcmpeqw ymm1, ymm1, ymm0
+		vpmovmskb eax, ymm1
+		shr     eax, cl
+		shr     ecx, 1
+		test    eax, eax
+		lea     ecx, [ecx - 16]
+		jnz     found
+		sub     edx, ecx
+		jb      unaligned_loop
+		pop     esi                                         // restore esi
+		vzeroupper
+		ret                                                 // __cdecl return
+
+		align   16
+	unaligned_loop:
+		vmovdqu ymm1, ymmword ptr [esi + edx * 2]
+		vpor    ymm1, ymm1, ymm2
+		vpcmpeqw ymm1, ymm1, ymm0
+		vpmovmskb eax, ymm1
+		test    eax, eax
+		jnz     found
+		add     edx, 16
+		jnc     unaligned_loop
+		pop     esi                                         // restore esi
+		vzeroupper
+		ret                                                 // __cdecl return
+
+		align   16
+	found:
+		bsf     eax, eax
+		shr     eax, 1
+		add     eax, edx
+		jc      retnull
+		lea     eax, [esi + eax * 2]
+		pop     esi                                         // restore esi
+		vzeroupper
+		ret                                                 // __cdecl return
+
+		align   16
+	retnull:
+		xor     eax, eax
+		pop     esi                                         // restore esi
+		vzeroupper
+		ret                                                 // __cdecl return
+
+		#undef buffer
+		#undef c
+		#undef count
 	}
 }
 

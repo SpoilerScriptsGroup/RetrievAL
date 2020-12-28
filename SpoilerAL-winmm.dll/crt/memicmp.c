@@ -17,18 +17,19 @@ int __cdecl _memicmp(const void *buffer1, const void *buffer2, size_t count)
 #else
 #include "page.h"
 
+static int __cdecl memicmpAVX2(const void *buffer1, const void *buffer2, size_t count);
 static int __cdecl memicmpSSE2(const void *buffer1, const void *buffer2, size_t count);
 static int __cdecl memicmp386(const void *buffer1, const void *buffer2, size_t count);
 static int __cdecl memicmpCPUDispatch(const void *buffer1, const void *buffer2, size_t count);
 
 static int(__cdecl * memicmpDispatch)(const void *buffer1, const void *buffer2, size_t count) = memicmpCPUDispatch;
 
-extern const char xmmconst_upperA[16];
-extern const char xmmconst_azrangeA[16];
-extern const char xmmconst_casebitA[16];
-#define upper   xmmconst_upperA
-#define azrange xmmconst_azrangeA
-#define casebit xmmconst_casebitA
+extern const char ymmconst_upperA[32];
+extern const char ymmconst_azrangeA[32];
+extern const char ymmconst_casebitA[32];
+#define upper   ymmconst_upperA
+#define azrange ymmconst_azrangeA
+#define casebit ymmconst_casebitA
 
 __declspec(naked) int __cdecl _memicmp(const void *buffer1, const void *buffer2, size_t count)
 {
@@ -38,6 +39,277 @@ __declspec(naked) int __cdecl _memicmp(const void *buffer1, const void *buffer2,
 	}
 }
 
+// AVX2 version
+__declspec(naked) static int __cdecl memicmpAVX2(const void *buffer1, const void *buffer2, size_t count)
+{
+#if 1
+	__asm
+	{
+		#define buffer1 (esp + 4)
+		#define buffer2 (esp + 8)
+		#define count   (esp + 12)
+
+		push    ebx
+		push    ebp
+		push    esi
+		push    edi
+		xor     ebp, ebp                                    // ebp = 0
+		mov     esi, dword ptr [buffer1 + 16]               // esi = buffer1
+		mov     edi, dword ptr [buffer2 + 16]               // edi = buffer2
+		mov     ebx, dword ptr [count + 16]                 // ebx = count
+		sub     ebp, edi                                    // ebp = -buffer2
+		add     esi, ebx                                    // esi = end of buffer1
+		add     edi, ebx                                    // edi = end of buffer2
+		xor     ebx, -1                                     // ebx = -count - 1
+		and     ebp, 31                                     // ebp = -buffer2 & 31
+		xor     eax, eax                                    // eax = 0
+		jmp     byte_loop_entry
+
+		align   16
+	byte_loop:
+		movzx   eax, byte ptr [esi + ebx]
+		movzx   edx, byte ptr [edi + ebx]
+		sub     eax, 'A'
+		sub     edx, 'A'
+		cmp     eax, 'Z' - 'A' + 1
+		lea     ecx, [eax + 'a' - 'A']
+		cmovb   eax, ecx
+		cmp     edx, 'Z' - 'A' + 1
+		lea     ecx, [edx + 'a' - 'A']
+		cmovb   edx, ecx
+		sub     eax, edx
+		jnz     epilog
+	byte_loop_entry:
+		inc     ebx
+		jz      epilog
+		dec     ebp
+		jns     byte_loop
+		vmovdqa ymm4, ymmword ptr [upper]
+		vmovdqa ymm5, ymmword ptr [azrange]
+		vmovdqa ymm6, ymmword ptr [casebit]                 // bit to change
+		mov     edx, 31
+		sub     esi, 31
+		sub     edi, 31
+		add     ebx, 31
+		jnc     ymmword_loop
+		sub     ebx, 31
+
+		align   16
+	ymmword_loop_last:
+		mov     ecx, ebx
+		add     esi, 31
+		add     ecx, esi
+		add     edi, 31
+		shl     ecx, 32 - PAGE_SHIFT
+		xor     edx, edx
+		cmp     ecx, -31 shl (32 - PAGE_SHIFT)
+		jae     byte_loop                                   // jump if cross pages
+
+		align   16
+	ymmword_loop:
+		vmovdqu ymm0, ymmword ptr [esi + ebx]               // load 32 byte
+		vmovdqa ymm1, ymmword ptr [edi + ebx]               //
+		vmovdqa ymm2, ymm0                                  // copy
+		vmovdqa ymm3, ymm1                                  //
+		vpaddb  ymm0, ymm0, ymm4                            // all bytes greater than 'Z' if negative
+		vpaddb  ymm1, ymm1, ymm4                            //
+		vpcmpgtb ymm0, ymm0, ymm5                           // ymm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
+		vpcmpgtb ymm1, ymm1, ymm5                           //
+		vpand   ymm0, ymm0, ymm6                            // assign a mask for the appropriate bytes
+		vpand   ymm1, ymm1, ymm6                            //
+		vpor    ymm0, ymm0, ymm2                            // negation of the 5th bit - lowercase letters
+		vpor    ymm1, ymm1, ymm3                            //
+		vpcmpeqb ymm0, ymm0, ymm1                           // compare
+		vpmovmskb ecx, ymm0                                 // get one bit for each byte result
+		xor     ecx, -1
+		jnz     ymmword_not_equal
+		add     ebx, 32
+		jnc     ymmword_loop
+		sub     ebx, edx
+		jb      ymmword_loop_last
+		jmp     epilog
+
+		align   16
+	ymmword_not_equal:
+		bsf     ecx, ecx
+		sub     ebx, edx
+		add     esi, edx
+		add     ebx, ecx
+		jc      epilog
+		add     edi, edx
+		xor     edx, edx
+		mov     al, byte ptr [esi + ebx]
+		mov     dl, byte ptr [edi + ebx]
+		sub     eax, 'A'
+		sub     edx, 'A'
+		cmp     eax, 'Z' - 'A' + 1
+		lea     ecx, [eax + 'a' - 'A']
+		cmovb   eax, ecx
+		cmp     edx, 'Z' - 'A' + 1
+		lea     ecx, [edx + 'a' - 'A']
+		cmovb   edx, ecx
+		sub     eax, edx
+	epilog:
+		pop     edi
+		pop     esi
+		pop     ebp
+		pop     ebx
+		vzeroupper
+		ret
+
+		#undef buffer1
+		#undef buffer2
+		#undef count
+	}
+#else
+	__asm
+	{
+		#define buffer1 (esp + 4)
+		#define buffer2 (esp + 8)
+		#define count   (esp + 12)
+
+		push    ebx
+		push    ebp
+		push    esi
+		push    edi
+		xor     ebp, ebp                                    // ebp = 0
+		mov     esi, dword ptr [buffer1 + 16]               // esi = buffer1
+		mov     edi, dword ptr [buffer2 + 16]               // edi = buffer2
+		mov     ebx, dword ptr [count + 16]                 // ebx = count
+		sub     ebp, edi                                    // ebp = -buffer2
+		add     esi, ebx                                    // esi = end of buffer1
+		add     edi, ebx                                    // edi = end of buffer2
+		xor     ebx, -1                                     // ebx = -count - 1
+		and     ebp, 15                                     // ebp = -buffer2 & 15
+		xor     eax, eax                                    // eax = 0
+		jmp     byte_loop_entry
+
+		align   16
+	byte_loop:
+		movzx   eax, byte ptr [esi + ebx]
+		movzx   edx, byte ptr [edi + ebx]
+		sub     eax, 'A'
+		sub     edx, 'A'
+		cmp     eax, 'Z' - 'A' + 1
+		lea     ecx, [eax + 'a' - 'A']
+		cmovb   eax, ecx
+		cmp     edx, 'Z' - 'A' + 1
+		lea     ecx, [edx + 'a' - 'A']
+		cmovb   edx, ecx
+		sub     eax, edx
+		jnz     epilog
+	byte_loop_entry:
+		inc     ebx
+		jz      epilog
+		dec     ebp
+		jns     byte_loop
+		vmovdqa ymm4, ymmword ptr [upper]
+		vmovdqa ymm5, ymmword ptr [azrange]
+		vmovdqa ymm6, ymmword ptr [casebit]                 // bit to change
+		lea     ecx, [edi + ebx]
+		and     ecx, 16
+		jnz     xmmword_entry
+	ymmword_entry:
+		mov     edx, 31
+		sub     esi, 31
+		sub     edi, 31
+		add     ebx, 31
+		jnc     ymmword_loop
+		sub     ebx, 31
+	ymmword_loop_last:
+		mov     ecx, ebx
+		add     esi, 31
+		add     ecx, esi
+		add     edi, 31
+		shl     ecx, 32 - PAGE_SHIFT
+		xor     edx, edx
+		cmp     ecx, -31 shl (32 - PAGE_SHIFT)
+		jb      ymmword_loop                                // jump if not cross pages
+	xmmword_entry:
+		lea     ecx, [esi + ebx]
+		shl     ecx, 32 - PAGE_SHIFT
+		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
+		jae     byte_loop                                   // jump if cross pages
+		movdqu  xmm0, xmmword ptr [esi + ebx]               // load 16 byte
+		movdqa  xmm1, xmmword ptr [edi + ebx]               //
+		movdqa  xmm2, xmm0                                  // copy
+		movdqa  xmm3, xmm1                                  //
+		paddb   xmm0, xmm4                                  // all bytes greater than 'Z' if negative
+		paddb   xmm1, xmm4                                  //
+		pcmpgtb xmm0, xmm5                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
+		pcmpgtb xmm1, xmm5                                  //
+		pand    xmm0, xmm6                                  // assign a mask for the appropriate bytes
+		pand    xmm1, xmm6                                  //
+		por     xmm0, xmm2                                  // negation of the 5th bit - lowercase letters
+		por     xmm1, xmm3                                  //
+		pcmpeqb xmm0, xmm1                                  // compare
+		pmovmskb ecx, xmm0                                  // get one bit for each byte result
+		xor     ecx, 0FFFFH
+		jnz     ymmword_not_equal
+		add     ebx, 16
+		jnc     ymmword_entry
+		jmp     epilog
+
+		align   16
+	ymmword_loop:
+		vmovdqu ymm0, ymmword ptr [esi + ebx]               // load 32 byte
+		vmovdqa ymm1, ymmword ptr [edi + ebx]               //
+		vmovdqa ymm2, ymm0                                  // copy
+		vmovdqa ymm3, ymm1                                  //
+		vpaddb  ymm0, ymm0, ymm4                            // all bytes greater than 'Z' if negative
+		vpaddb  ymm1, ymm1, ymm4                            //
+		vpcmpgtb ymm0, ymm0, ymm5                           // ymm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
+		vpcmpgtb ymm1, ymm1, ymm5                           //
+		vpand   ymm0, ymm0, ymm6                            // assign a mask for the appropriate bytes
+		vpand   ymm1, ymm1, ymm6                            //
+		vpor    ymm0, ymm0, ymm2                            // negation of the 5th bit - lowercase letters
+		vpor    ymm1, ymm1, ymm3                            //
+		vpcmpeqb ymm0, ymm0, ymm1                           // compare
+		vpmovmskb ecx, ymm0                                 // get one bit for each byte result
+		xor     ecx, -1
+		jnz     ymmword_not_equal
+		add     ebx, 32
+		jnc     ymmword_loop
+		sub     ebx, edx
+		jb      ymmword_loop_last
+		jmp     epilog
+
+		align   16
+	ymmword_not_equal:
+		bsf     ecx, ecx
+		sub     ebx, edx
+		add     esi, edx
+		add     ebx, ecx
+		jc      epilog
+		add     edi, edx
+		xor     edx, edx
+		mov     al, byte ptr [esi + ebx]
+		mov     dl, byte ptr [edi + ebx]
+		sub     eax, 'A'
+		sub     edx, 'A'
+		cmp     eax, 'Z' - 'A' + 1
+		lea     ecx, [eax + 'a' - 'A']
+		cmovb   eax, ecx
+		cmp     edx, 'Z' - 'A' + 1
+		lea     ecx, [edx + 'a' - 'A']
+		cmovb   edx, ecx
+		sub     eax, edx
+	epilog:
+		pop     edi
+		pop     esi
+		pop     ebp
+		pop     ebx
+		vzeroupper
+		ret
+
+		#undef buffer1
+		#undef buffer2
+		#undef count
+	}
+#endif
+}
+
+// SSE2 version
 __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void *buffer2, size_t count)
 {
 	__asm
@@ -159,6 +431,7 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 	}
 }
 
+// 80386 version
 __declspec(naked) static int __cdecl memicmp386(const void *buffer1, const void *buffer2, size_t count)
 {
 	__asm
@@ -234,24 +507,39 @@ __declspec(naked) static int __cdecl memicmp386(const void *buffer1, const void 
 
 __declspec(naked) static int __cdecl memicmpCPUDispatch(const void *buffer1, const void *buffer2, size_t count)
 {
-	#define __ISA_AVAILABLE_X86  0
-	#define __ISA_AVAILABLE_SSE2 1
+	#define __ISA_AVAILABLE_X86     0
+	#define __ISA_AVAILABLE_SSE2    1
+	#define __ISA_AVAILABLE_SSE42   2
+	#define __ISA_AVAILABLE_AVX     3
+	#define __ISA_AVAILABLE_ENFSTRG 4
+	#define __ISA_AVAILABLE_AVX2    5
 
 	extern unsigned int __isa_available;
 
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
-		jne     L1
-		mov     dword ptr [memicmpDispatch], offset memicmp386
-		jmp     memicmp386
+		mov     eax, dword ptr [__isa_available]
+		cmp     eax, __ISA_AVAILABLE_AVX2
+		jb      L1
+		mov     dword ptr [memicmpDispatch], offset memicmpAVX2
+		jmp     memicmpAVX2
 
 	L1:
+		test    eax, eax
+		jz      L2
 		mov     dword ptr [memicmpDispatch], offset memicmpSSE2
 		jmp     memicmpSSE2
+
+	L2:
+		mov     dword ptr [memicmpDispatch], offset memicmp386
+		jmp     memicmp386
 	}
 
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
+	#undef __ISA_AVAILABLE_SSE42
+	#undef __ISA_AVAILABLE_AVX
+	#undef __ISA_AVAILABLE_ENFSTRG
+	#undef __ISA_AVAILABLE_AVX2
 }
 #endif

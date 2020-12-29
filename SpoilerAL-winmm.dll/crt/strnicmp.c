@@ -64,7 +64,7 @@ __declspec(naked) static int __cdecl strnicmpAVX2(const char *string1, const cha
 		vmovdqa ymm4, ymmword ptr [upper]
 		vmovdqa ymm5, ymmword ptr [azrange]
 		vmovdqa ymm6, ymmword ptr [casebit]                 // bit to change
-		vpxor   xmm7, xmm7, xmm7                            // set to zero
+		vpxor   ymm7, ymm7, ymm7                            // set to zero
 		jmp     byte_loop_increment
 
 		align   16

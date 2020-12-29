@@ -45,7 +45,7 @@ __declspec(naked) static int __cdecl wcscmpAVX2(const wchar_t *string1, const wc
 		mov     edi, dword ptr [string2 + 8]                // edi = string2
 		lea     edx, [edi + 1]                              // edx = (size_t)string2 + 1
 		sub     esi, edi                                    // edi = (size_t)string1 - (size_t)string2
-		vpxor   xmm2, xmm2, xmm2
+		vpxor   ymm2, ymm2, ymm2
 		jmp     word_loop_entry
 
 		align   16
@@ -95,8 +95,8 @@ __declspec(naked) static int __cdecl wcscmpAVX2(const wchar_t *string1, const wc
 		jae     aligned_xmmword_check_cross_pages           // jump if cross pages
 		vmovdqu ymm0, ymmword ptr [esi + edi]
 		vmovdqa ymm1, ymmword ptr [edi]
-		vpcmpeqw ymm0, ymm0, ymm1
-		vpcmpeqw ymm1, ymm1, ymm2
+		vpcmpeqw ymm0, ymm1, ymm0
+		vpcmpeqw ymm1, ymm2, ymm1
 		vpmovmskb eax, ymm0
 		vpmovmskb ecx, ymm1
 		xor     eax, -1

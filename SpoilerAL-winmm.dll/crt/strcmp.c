@@ -46,7 +46,7 @@ __declspec(naked) static int __cdecl strcmpAVX2(const char *string1, const char 
 		mov     esi, dword ptr [string1 + 8]                // esi = string1
 		mov     eax, dword ptr [string2 + 8]                // eax = string2
 		sub     esi, eax                                    // esi = string1 - string2
-		vpxor   xmm2, xmm2, xmm2
+		vpxor   ymm2, ymm2, ymm2
 		jmp     byte_loop_entry
 
 		align   16

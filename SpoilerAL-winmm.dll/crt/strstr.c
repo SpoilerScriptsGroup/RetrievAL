@@ -74,8 +74,7 @@ __declspec(naked) static char * __cdecl strstrAVX2(const char *string1, const ch
 		or      edx, -1
 	xmmword_find_loop_entry:
 		vmovdqa xmm0, xmmword ptr [esi]
-		vpxor   xmm1, xmm1, xmm1
-		vpcmpeqb xmm1, xmm1, xmm0
+		vpcmpeqb xmm1, xmm0, xmm3
 		vpcmpeqb xmm0, xmm0, xmm2
 		vpor    xmm0, xmm0, xmm1
 		vpmovmskb eax, xmm0
@@ -84,8 +83,8 @@ __declspec(naked) static char * __cdecl strstrAVX2(const char *string1, const ch
 		bsf     eax, eax
 		mov     cl, byte ptr [esi + eax]                    // cl is char from haystack
 		add     esi, eax                                    // increment pointer into haystack
-		cmp     cl, 0                                       // end of haystack?
-		je      not_found                                   // yes, and no match has been found
+		test    cl, cl                                      // end of haystack?
+		jz      not_found                                   // yes, and no match has been found
 
 		// check if remaining consecutive characters match continuously
 		mov     eax, dword ptr [needle + 8]
@@ -93,7 +92,7 @@ __declspec(naked) static char * __cdecl strstrAVX2(const char *string1, const ch
 		test    eax, 15
 		jz      xmmword_compare
 
-		align   16                                          // already aligned
+		align   16
 	byte_compare_loop:
 		inc     eax
 		inc     edi

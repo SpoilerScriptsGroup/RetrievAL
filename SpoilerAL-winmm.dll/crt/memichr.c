@@ -96,8 +96,7 @@ __declspec(naked) void * __vectorcall internal_memichrAVX2(const void *buffer, _
 		vmovdqa ymm2, ymmword ptr [casebit]
 		and     ecx, 31
 		jz      loop_begin
-		vmovdqa ymm1, ymmword ptr [eax]
-		vpor    ymm1, ymm1, ymm2
+		vpor    ymm1, ymm2, ymmword ptr [eax]
 		vpcmpeqb ymm1, ymm1, ymm0
 		vpmovmskb eax, ymm1
 		shr     eax, cl
@@ -112,8 +111,7 @@ __declspec(naked) void * __vectorcall internal_memichrAVX2(const void *buffer, _
 
 		align   16
 	loop_begin:
-		vmovdqa ymm1, ymmword ptr [esi + edx]
-		vpor    ymm1, ymm1, ymm2
+		vpor    ymm1, ymm2, ymmword ptr [esi + edx]
 		vpcmpeqb ymm1, ymm1, ymm0
 		vpmovmskb eax, ymm1
 		test    eax, eax

@@ -90,7 +90,7 @@ __declspec(naked) void * __vectorcall internal_memchrAVX2(const void *buffer, __
 		sub     edx, ecx
 		jae     retnull
 
-		align   16                                          // already aligned
+		align   16
 	loop_begin:
 		vpcmpeqb ymm1, ymm0, ymmword ptr [esi + edx]
 		vpmovmskb eax, ymm1

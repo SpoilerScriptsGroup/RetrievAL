@@ -100,8 +100,7 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrichrAVX2(const wchar_t *b
 		jz      aligned_loop
 		test    ecx, 1
 		jnz     unaligned
-		vmovdqa ymm1, ymmword ptr [esi + eax * 2]
-		vpor    ymm1, ymm1, ymm2
+		vpor    ymm1, ymm2, ymmword ptr [esi + eax * 2]
 		vpcmpeqw ymm1, ymm1, ymm0
 		vpmovmskb edx, ymm1
 		mov     edi, 3FFFFFFFH
@@ -119,8 +118,7 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrichrAVX2(const wchar_t *b
 
 		align   16
 	aligned_loop:
-		vmovdqa ymm1, ymmword ptr [esi + eax * 2]
-		vpor    ymm1, ymm1, ymm2
+		vpor    ymm1, ymm2, ymmword ptr [esi + eax * 2]
 		vpcmpeqw ymm1, ymm1, ymm0
 		vpmovmskb edx, ymm1
 		test    edx, edx
@@ -156,8 +154,7 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrichrAVX2(const wchar_t *b
 
 		align   16
 	unaligned_loop:
-		vmovdqu ymm1, ymmword ptr [esi + eax * 2]
-		vpor    ymm1, ymm1, ymm2
+		vpor    ymm1, ymm2, ymmword ptr [esi + eax * 2]
 		vpcmpeqw ymm1, ymm1, ymm0
 		vpmovmskb edx, ymm1
 		test    edx, edx

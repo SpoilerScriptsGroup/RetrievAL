@@ -79,8 +79,7 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrAVX2(const wchar_t *buf
 		and     ecx, 31
 		jz      aligned_loop
 		sub     eax, ecx
-		vmovdqa ymm1, ymmword ptr [eax]
-		vpcmpeqw ymm1, ymm1, ymm0
+		vpcmpeqw ymm1, ymm0, ymmword ptr [eax]
 		vpmovmskb eax, ymm1
 		shr     eax, cl
 		shr     ecx, 1
@@ -95,8 +94,7 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrAVX2(const wchar_t *buf
 
 		align   16
 	aligned_loop:
-		vmovdqa ymm1, ymmword ptr [esi + edx * 2]
-		vpcmpeqw ymm1, ymm1, ymm0
+		vpcmpeqw ymm1, ymm0, ymmword ptr [esi + edx * 2]
 		vpmovmskb eax, ymm1
 		test    eax, eax
 		jnz     found
@@ -132,8 +130,7 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrAVX2(const wchar_t *buf
 
 		align   16
 	unaligned_loop:
-		vmovdqu ymm1, ymmword ptr [esi + edx * 2]
-		vpcmpeqw ymm1, ymm1, ymm0
+		vpcmpeqw ymm1, ymm0, ymmword ptr [esi + edx * 2]
 		vpmovmskb eax, ymm1
 		test    eax, eax
 		jnz     found

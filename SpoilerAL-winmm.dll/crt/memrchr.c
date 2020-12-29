@@ -75,8 +75,7 @@ __declspec(naked) void * __vectorcall internal_memrchrAVX2(const void *buffer, _
 		sub     esi, edx                                    // esi = last ymmword of buffer - count
 		and     ecx, 31
 		jz      loop_begin
-		vmovdqa ymm1, ymmword ptr [esi + edx]
-		vpcmpeqb ymm1, ymm1, ymm0
+		vpcmpeqb ymm1, ymm0, ymmword ptr [esi + edx]
 		vpmovmskb eax, ymm1
 		mov     edi, 7FFFFFFFH
 		xor     ecx, 31
@@ -91,8 +90,7 @@ __declspec(naked) void * __vectorcall internal_memrchrAVX2(const void *buffer, _
 
 		align   16
 	loop_begin:
-		vmovdqa ymm1, ymmword ptr [esi + edx]
-		vpcmpeqb ymm1, ymm1, ymm0
+		vpcmpeqb ymm1, ymm0, ymmword ptr [esi + edx]
 		vpmovmskb eax, ymm1
 		test    eax, eax
 		jnz     has_char

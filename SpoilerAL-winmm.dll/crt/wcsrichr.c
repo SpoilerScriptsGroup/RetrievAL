@@ -61,9 +61,9 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrAVX2(const wchar_t *string, w
 		push    edi
 		mov     edx, eax
 		or      edi, -1
-		mov     dword ptr [esp - 4], ecx
-		vpbroadcastw ymm2, word ptr [esp - 4]
+		movd    xmm2, ecx
 		vmovdqa ymm3, ymmword ptr [casebit]
+		vpbroadcastw ymm2, xmm2
 		mov     ecx, eax
 		or      edi, -1
 		and     eax, 1

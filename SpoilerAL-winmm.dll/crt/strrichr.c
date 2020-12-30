@@ -64,9 +64,9 @@ __declspec(naked) static char * __cdecl strrichrAVX2(const char *string, int c)
 		push    esi
 		push    edi
 		xor     eax, eax
-		mov     dword ptr [esp - 4], ecx
-		vpbroadcastb ymm2, byte ptr [esp - 4]
+		movd    xmm2, ecx
 		vmovdqa ymm3, ymmword ptr [casebit]
+		vpbroadcastb ymm2, xmm2
 		mov     ecx, edx
 		or      edi, -1
 		and     ecx, 31

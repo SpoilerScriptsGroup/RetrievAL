@@ -57,9 +57,9 @@ __declspec(naked) char * __cdecl strichrAVX2(const char *string, int c)
 		sub     ecx, 'a'
 		cmp     cl, 'z' - 'a' + 1
 		jae     strchrAVX2
-		mov     dword ptr [esp - 4], edx
-		vpbroadcastb ymm2, byte ptr [esp - 4]
+		movd    xmm2, edx
 		vmovdqa ymm3, ymmword ptr [casebit]
+		vpbroadcastb ymm2, xmm2
 		mov     ecx, eax
 		or      edx, -1
 		and     ecx, 31

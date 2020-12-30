@@ -64,9 +64,9 @@ __declspec(naked) static void * __cdecl memrichrAVX2(const void *buffer, int c, 
 		sub     ecx, 'a'
 		cmp     cl, 'z' - 'a' + 1
 		jae     memrchrAVX2
-		mov     dword ptr [esp - 4], eax
+		movd    xmm0, eax
 		mov     ecx, dword ptr [buffer]                     // ecx = buffer
-		vpbroadcastb ymm0, byte ptr [esp - 4]               // ymm0 = search char
+		vpbroadcastb ymm0, xmm0                             // ymm0 = search char
 		jmp     internal_memrichrAVX2
 
 		align   16

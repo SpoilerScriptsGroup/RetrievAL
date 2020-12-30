@@ -64,9 +64,9 @@ __declspec(naked) static wchar_t * __cdecl wmemichrAVX2(const wchar_t *buffer, w
 		sub     ecx, 'a'
 		cmp     cx, 'z' - 'a' + 1
 		jae     wmemchrAVX2
-		mov     dword ptr [esp - 4], eax
+		movd    xmm0, eax
 		mov     ecx, dword ptr [buffer]                     // ecx = buffer
-		vpbroadcastw ymm0, word ptr [esp - 4]               // ymm0 = search char
+		vpbroadcastw ymm0, xmm0                             // ymm0 = search char
 		jmp     internal_wmemichrAVX2
 
 		align   16

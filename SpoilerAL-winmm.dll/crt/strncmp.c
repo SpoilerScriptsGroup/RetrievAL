@@ -400,7 +400,9 @@ __declspec(naked) static int __cdecl strncmpCPUDispatch(const char *string1, con
 	static void *table[] = {
 		(void *)strncmp386,
 		(void *)strncmpSSE2,
-		(void *)strncmpSSE2
+		(void *)strncmpSSE2,
+		(void *)strncmpSSE2,
+		(void *)strncmpSSE2,
 	};
 
 	__asm

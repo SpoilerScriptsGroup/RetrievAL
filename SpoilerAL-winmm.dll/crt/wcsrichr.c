@@ -417,7 +417,9 @@ __declspec(naked) static wchar_t * __cdecl wcsrichrCPUDispatch(const wchar_t *st
 	static void *table[] = {
 		(void *)wcsrichr386,
 		(void *)wcsrichrSSE2,
-		(void *)wcsrichrSSE42
+		(void *)wcsrichrSSE42,
+		(void *)wcsrichrSSE42,
+		(void *)wcsrichrSSE42,
 	};
 
 	__asm

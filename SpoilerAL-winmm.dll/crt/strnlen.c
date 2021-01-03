@@ -344,7 +344,9 @@ __declspec(naked) static size_t __cdecl strnlenCPUDispatch(const char *string, s
 	static void *table[] = {
 		(void *)strnlen386,
 		(void *)strnlenSSE2,
-		(void *)strnlenSSE42
+		(void *)strnlenSSE42,
+		(void *)strnlenSSE42,
+		(void *)strnlenSSE42,
 	};
 
 	__asm

@@ -509,7 +509,9 @@ __declspec(naked) static int __cdecl wmemicmpCPUDispatch(const wchar_t *buffer1,
 	static void *table[] = {
 		(void *)wmemicmp386,
 		(void *)wmemicmpSSE2,
-		(void *)wmemicmpSSE2
+		(void *)wmemicmpSSE2,
+		(void *)wmemicmpSSE2,
+		(void *)wmemicmpSSE2,
 	};
 
 	__asm

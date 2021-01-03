@@ -531,7 +531,9 @@ __declspec(naked) static wchar_t * __cdecl wcslwrCPUDispatch(wchar_t *string)
 	static void *table[] = {
 		(void *)wcslwrGeneric,
 		(void *)wcslwrSSE2,
-		(void *)wcslwrSSE42
+		(void *)wcslwrSSE42,
+		(void *)wcslwrSSE42,
+		(void *)wcslwrSSE42,
 	};
 
 	__asm
@@ -569,7 +571,9 @@ __declspec(naked) static wchar_t * __cdecl wcsuprCPUDispatch(wchar_t *string)
 	static void *table[] = {
 		(void *)wcsuprGeneric,
 		(void *)wcsuprSSE2,
-		(void *)wcsuprSSE42
+		(void *)wcsuprSSE42,
+		(void *)wcsuprSSE42,
+		(void *)wcsuprSSE42,
 	};
 
 	__asm

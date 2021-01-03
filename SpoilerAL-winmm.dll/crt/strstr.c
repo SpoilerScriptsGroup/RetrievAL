@@ -479,7 +479,9 @@ __declspec(naked) static char * __cdecl strstrCPUDispatch(const char *string1, c
 	static void *table[] = {
 		(void *)strstr386,
 		(void *)strstrSSE2,
-		(void *)strstrSSE42
+		(void *)strstrSSE42,
+		(void *)strstrSSE42,
+		(void *)strstrSSE42,
 	};
 
 	__asm

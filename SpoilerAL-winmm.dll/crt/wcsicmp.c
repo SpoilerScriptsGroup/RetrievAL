@@ -464,7 +464,9 @@ __declspec(naked) static int __cdecl wcsicmpCPUDispatch(const wchar_t *string1, 
 	static void *table[] = {
 		(void *)wcsicmp386,
 		(void *)wcsicmpSSE2,
-		(void *)wcsicmpSSE2
+		(void *)wcsicmpSSE2,
+		(void *)wcsicmpSSE2,
+		(void *)wcsicmpSSE2,
 	};
 
 	__asm

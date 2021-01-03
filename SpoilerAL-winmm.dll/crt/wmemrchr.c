@@ -505,7 +505,9 @@ __declspec(naked) static wchar_t * __cdecl wmemrchrCPUDispatch(const wchar_t *bu
 	static void *table[] = {
 		(void *)wmemrchr386,
 		(void *)wmemrchrSSE2,
-		(void *)wmemrchrSSE42
+		(void *)wmemrchrSSE42,
+		(void *)wmemrchrSSE42,
+		(void *)wmemrchrSSE42,
 	};
 
 	__asm

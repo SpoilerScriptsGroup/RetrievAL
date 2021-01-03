@@ -363,7 +363,9 @@ __declspec(naked) static char * __cdecl strlwrCPUDispatch(char *string)
 	static void *table[] = {
 		(void *)strlwrGeneric,
 		(void *)strlwrSSE2,
-		(void *)strlwrSSE42
+		(void *)strlwrSSE42,
+		(void *)strlwrSSE42,
+		(void *)strlwrSSE42,
 	};
 
 	__asm
@@ -401,7 +403,9 @@ __declspec(naked) static char * __cdecl struprCPUDispatch(char *string)
 	static void *table[] = {
 		(void *)struprGeneric,
 		(void *)struprSSE2,
-		(void *)struprSSE42
+		(void *)struprSSE42,
+		(void *)struprSSE42,
+		(void *)struprSSE42,
 	};
 
 	__asm

@@ -463,7 +463,9 @@ __declspec(naked) static int __cdecl strcmpCPUDispatch(const char *string1, cons
 	static void *table[] = {
 		(void *)strcmp386,
 		(void *)strcmpSSE2,
-		(void *)strcmpSSE42
+		(void *)strcmpSSE42,
+		(void *)strcmpSSE42,
+		(void *)strcmpSSE42,
 	};
 
 	__asm

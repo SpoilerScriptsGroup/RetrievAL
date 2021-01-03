@@ -504,7 +504,9 @@ __declspec(naked) static void * __cdecl memichrCPUDispatch(const void *buffer, i
 	static void *table[] = {
 		(void *)memichr386,
 		(void *)memichrSSE2,
-		(void *)memichrSSE42
+		(void *)memichrSSE42,
+		(void *)memichrSSE42,
+		(void *)memichrSSE42,
 	};
 
 	__asm

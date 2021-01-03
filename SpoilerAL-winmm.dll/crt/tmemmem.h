@@ -1190,7 +1190,9 @@ __declspec(naked) static TYPE * __cdecl MEMMEM_CPU_DISPATCH(const TYPE *haystack
 	static void *table[] = {
 		(void *)MEMMEM_386,
 		(void *)MEMMEM_SSE2,
-		(void *)MEMMEM_SSE42
+		(void *)MEMMEM_SSE42,
+		(void *)MEMMEM_SSE42,
+		(void *)MEMMEM_SSE42,
 	};
 
 	__asm
@@ -1227,7 +1229,9 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_CPU_DISPATCH(const TYPE *haystac
 	static void *table[] = {
 		(void *)MEMIMEM_386,
 		(void *)MEMIMEM_SSE2,
-		(void *)MEMIMEM_SSE42
+		(void *)MEMIMEM_SSE42,
+		(void *)MEMIMEM_SSE42,
+		(void *)MEMIMEM_SSE42,
 	};
 
 	__asm

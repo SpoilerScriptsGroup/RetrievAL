@@ -448,7 +448,9 @@ __declspec(naked) static void * __cdecl memchrCPUDispatch(const void *buffer, in
 	static void *table[] = {
 		(void *)memchr386,
 		(void *)memchrSSE2,
-		(void *)memchrSSE42
+		(void *)memchrSSE42,
+		(void *)memchrSSE42,
+		(void *)memchrSSE42,
 	};
 
 	__asm

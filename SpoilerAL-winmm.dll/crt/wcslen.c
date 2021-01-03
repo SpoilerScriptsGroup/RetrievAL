@@ -262,7 +262,9 @@ __declspec(naked) static size_t __cdecl wcslenCPUDispatch(const wchar_t *string)
 	static void *table[] = {
 		(void *)wcslen386,
 		(void *)wcslenSSE2,
-		(void *)wcslenSSE42
+		(void *)wcslenSSE42,
+		(void *)wcslenSSE42,
+		(void *)wcslenSSE42,
 	};
 
 	__asm

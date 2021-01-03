@@ -394,7 +394,9 @@ __declspec(naked) static int __cdecl memicmpCPUDispatch(const void *buffer1, con
 	static void *table[] = {
 		(void *)memicmp386,
 		(void *)memicmpSSE2,
-		(void *)memicmpSSE2
+		(void *)memicmpSSE2,
+		(void *)memicmpSSE2,
+		(void *)memicmpSSE2,
 	};
 
 	__asm

@@ -239,28 +239,22 @@ __declspec(naked) static size_t __cdecl strlenCPUDispatch(const char *string)
 
 	extern unsigned int __isa_available;
 
+	static void *table[] = {
+		(void *)strlen386,
+		(void *)strlenSSE2,
+		(void *)strlenSSE42
+	};
+
 	__asm
 	{
-		mov     eax, dword ptr [__isa_available]
-		cmp     eax, __ISA_AVAILABLE_AVX2
-		jb      L1
-		mov     dword ptr [strlenDispatch], offset strlenAVX2
-		jmp     strlenAVX2
-
+		mov     ecx, dword ptr [__isa_available]
+		mov     eax, offset strlenAVX2
+		cmp     ecx, __ISA_AVAILABLE_AVX2
+		jae     L1
+		mov     eax, dword ptr [table + ecx * 4]
 	L1:
-		cmp     eax, __ISA_AVAILABLE_SSE2
-		jbe     L2
-		mov     dword ptr [strlenDispatch], offset strlenSSE42
-		jmp     strlenSSE42
-
-	L2:
-		mov     dword ptr [strlenDispatch], offset strlenSSE2
-		jb      L3
-		jmp     strlenSSE2
-
-	L3:
-		mov     dword ptr [strlenDispatch], offset strlen386
-		jmp     strlen386
+		mov     dword ptr [strlenDispatch], eax
+		jmp     eax
 	}
 
 	#undef __ISA_AVAILABLE_X86

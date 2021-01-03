@@ -1187,28 +1187,22 @@ __declspec(naked) static TYPE * __cdecl MEMMEM_CPU_DISPATCH(const TYPE *haystack
 
 	extern unsigned int __isa_available;
 
+	static void *table[] = {
+		(void *)MEMMEM_386,
+		(void *)MEMMEM_SSE2,
+		(void *)MEMMEM_SSE42
+	};
+
 	__asm
 	{
-		mov     eax, dword ptr [__isa_available]
-		cmp     eax, __ISA_AVAILABLE_AVX2
-		jb      L1
-		mov     dword ptr [MEMMEM_DISPATCH], offset MEMMEM_AVX2
-		jmp     MEMMEM_AVX2
-
+		mov     ecx, dword ptr [__isa_available]
+		mov     eax, offset MEMMEM_AVX2
+		cmp     ecx, __ISA_AVAILABLE_AVX2
+		jae     L1
+		mov     eax, dword ptr [table + ecx * 4]
 	L1:
-		cmp     eax, __ISA_AVAILABLE_SSE2
-		jbe     L2
-		mov     dword ptr [MEMMEM_DISPATCH], offset MEMMEM_SSE42
-		jmp     MEMMEM_SSE42
-
-	L2:
-		mov     dword ptr [MEMMEM_DISPATCH], offset MEMMEM_SSE2
-		jb      L3
-		jmp     MEMMEM_SSE2
-
-	L3:
-		mov     dword ptr [MEMMEM_DISPATCH], offset MEMMEM_386
-		jmp     MEMMEM_386
+		mov     dword ptr [MEMMEM_DISPATCH], eax
+		jmp     eax
 	}
 
 	#undef __ISA_AVAILABLE_X86
@@ -1230,28 +1224,22 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_CPU_DISPATCH(const TYPE *haystac
 
 	extern unsigned int __isa_available;
 
+	static void *table[] = {
+		(void *)MEMIMEM_386,
+		(void *)MEMIMEM_SSE2,
+		(void *)MEMIMEM_SSE42
+	};
+
 	__asm
 	{
-		mov     eax, dword ptr [__isa_available]
-		cmp     eax, __ISA_AVAILABLE_AVX2
-		jb      L1
-		mov     dword ptr [MEMIMEM_DISPATCH], offset MEMIMEM_AVX2
-		jmp     MEMIMEM_AVX2
-
+		mov     ecx, dword ptr [__isa_available]
+		mov     eax, offset MEMIMEM_AVX2
+		cmp     ecx, __ISA_AVAILABLE_AVX2
+		jae     L1
+		mov     eax, dword ptr [table + ecx * 4]
 	L1:
-		cmp     eax, __ISA_AVAILABLE_SSE2
-		jbe     L2
-		mov     dword ptr [MEMIMEM_DISPATCH], offset MEMIMEM_SSE42
-		jmp     MEMIMEM_SSE42
-
-	L2:
-		mov     dword ptr [MEMIMEM_DISPATCH], offset MEMIMEM_SSE2
-		jb      L3
-		jmp     MEMIMEM_SSE2
-
-	L3:
-		mov     dword ptr [MEMIMEM_DISPATCH], offset MEMIMEM_386
-		jmp     MEMIMEM_386
+		mov     dword ptr [MEMIMEM_DISPATCH], eax
+		jmp     eax
 	}
 
 	#undef __ISA_AVAILABLE_X86

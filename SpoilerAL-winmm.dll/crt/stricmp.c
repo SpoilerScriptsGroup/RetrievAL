@@ -370,23 +370,22 @@ __declspec(naked) static int __cdecl stricmpCPUDispatch(const char *string1, con
 
 	extern unsigned int __isa_available;
 
+	static void *table[] = {
+		(void *)stricmp386,
+		(void *)stricmpSSE2,
+		(void *)stricmpSSE2
+	};
+
 	__asm
 	{
-		mov     eax, dword ptr [__isa_available]
-		cmp     eax, __ISA_AVAILABLE_AVX2
-		jb      L1
-		mov     dword ptr [stricmpDispatch], offset stricmpAVX2
-		jmp     stricmpAVX2
-
+		mov     ecx, dword ptr [__isa_available]
+		mov     eax, offset stricmpAVX2
+		cmp     ecx, __ISA_AVAILABLE_AVX2
+		jae     L1
+		mov     eax, dword ptr [table + ecx * 4]
 	L1:
-		test    eax, eax
-		jz      L2
-		mov     dword ptr [stricmpDispatch], offset stricmpSSE2
-		jmp     stricmpSSE2
-
-	L2:
-		mov     dword ptr [stricmpDispatch], offset stricmp386
-		jmp     stricmp386
+		mov     dword ptr [stricmpDispatch], eax
+		jmp     eax
 	}
 
 	#undef __ISA_AVAILABLE_X86

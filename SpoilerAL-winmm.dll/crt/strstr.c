@@ -476,28 +476,22 @@ __declspec(naked) static char * __cdecl strstrCPUDispatch(const char *string1, c
 
 	extern unsigned int __isa_available;
 
+	static void *table[] = {
+		(void *)strstr386,
+		(void *)strstrSSE2,
+		(void *)strstrSSE42
+	};
+
 	__asm
 	{
-		mov     eax, dword ptr [__isa_available]
-		cmp     eax, __ISA_AVAILABLE_AVX2
-		jb      L1
-		mov     dword ptr [strstrDispatch], offset strstrAVX2
-		jmp     strstrAVX2
-
+		mov     ecx, dword ptr [__isa_available]
+		mov     eax, offset strstrAVX2
+		cmp     ecx, __ISA_AVAILABLE_AVX2
+		jae     L1
+		mov     eax, dword ptr [table + ecx * 4]
 	L1:
-		cmp     eax, __ISA_AVAILABLE_SSE2
-		jbe     L2
-		mov     dword ptr [strstrDispatch], offset strstrSSE42
-		jmp     strstrSSE42
-
-	L2:
-		mov     dword ptr [strstrDispatch], offset strstrSSE2
-		jb      L3
-		jmp     strstrSSE2
-
-	L3:
-		mov     dword ptr [strstrDispatch], offset strstr386
-		jmp     strstr386
+		mov     dword ptr [strstrDispatch], eax
+		jmp     eax
 	}
 
 	#undef __ISA_AVAILABLE_X86

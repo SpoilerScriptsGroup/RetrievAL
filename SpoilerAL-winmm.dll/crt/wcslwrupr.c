@@ -528,28 +528,22 @@ __declspec(naked) static wchar_t * __cdecl wcslwrCPUDispatch(wchar_t *string)
 
 	extern unsigned int __isa_available;
 
+	static void *table[] = {
+		(void *)wcslwrGeneric,
+		(void *)wcslwrSSE2,
+		(void *)wcslwrSSE42
+	};
+
 	__asm
 	{
-		mov     eax, dword ptr [__isa_available]
-		cmp     eax, __ISA_AVAILABLE_AVX2
-		jb      L1
-		mov     dword ptr [wcslwrDispatch], offset wcslwrAVX2
-		jmp     wcslwrAVX2
-
+		mov     ecx, dword ptr [__isa_available]
+		mov     eax, offset wcslwrAVX2
+		cmp     ecx, __ISA_AVAILABLE_AVX2
+		jae     L1
+		mov     eax, dword ptr [table + ecx * 4]
 	L1:
-		cmp     eax, __ISA_AVAILABLE_SSE2
-		jbe     L2
-		mov     dword ptr [wcslwrDispatch], offset wcslwrSSE42
-		jmp     wcslwrSSE42
-
-	L2:
-		mov     dword ptr [wcslwrDispatch], offset wcslwrSSE2
-		jb      L3
-		jmp     wcslwrSSE2
-
-	L3:
-		mov     dword ptr [wcslwrDispatch], offset wcslwrGeneric
-		jmp     wcslwrGeneric
+		mov     dword ptr [wcslwrDispatch], eax
+		jmp     eax
 	}
 
 	#undef __ISA_AVAILABLE_X86
@@ -572,28 +566,22 @@ __declspec(naked) static wchar_t * __cdecl wcsuprCPUDispatch(wchar_t *string)
 
 	extern unsigned int __isa_available;
 
+	static void *table[] = {
+		(void *)wcsuprGeneric,
+		(void *)wcsuprSSE2,
+		(void *)wcsuprSSE42
+	};
+
 	__asm
 	{
-		mov     eax, dword ptr [__isa_available]
-		cmp     eax, __ISA_AVAILABLE_AVX2
-		jb      L1
-		mov     dword ptr [wcsuprDispatch], offset wcsuprAVX2
-		jmp     wcsuprAVX2
-
+		mov     ecx, dword ptr [__isa_available]
+		mov     eax, offset wcsuprAVX2
+		cmp     ecx, __ISA_AVAILABLE_AVX2
+		jae     L1
+		mov     eax, dword ptr [table + ecx * 4]
 	L1:
-		cmp     eax, __ISA_AVAILABLE_SSE2
-		jbe     L2
-		mov     dword ptr [wcsuprDispatch], offset wcsuprSSE42
-		jmp     wcsuprSSE42
-
-	L2:
-		mov     dword ptr [wcsuprDispatch], offset wcsuprSSE2
-		jb      L3
-		jmp     wcsuprSSE2
-
-	L3:
-		mov     dword ptr [wcsuprDispatch], offset wcsuprGeneric
-		jmp     wcsuprGeneric
+		mov     dword ptr [wcsuprDispatch], eax
+		jmp     eax
 	}
 
 	#undef __ISA_AVAILABLE_X86

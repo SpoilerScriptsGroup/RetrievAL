@@ -490,31 +490,38 @@ __declspec(naked) static wchar_t * __cdecl wmemichr386(const wchar_t *buffer, wc
 
 __declspec(naked) static wchar_t * __cdecl wmemichrCPUDispatch(const wchar_t *buffer, wchar_t c, size_t count)
 {
-	#define __ISA_AVAILABLE_X86   0
-	#define __ISA_AVAILABLE_SSE2  1
-	#define __ISA_AVAILABLE_SSE42 2
+	#define __ISA_AVAILABLE_X86     0
+	#define __ISA_AVAILABLE_SSE2    1
+	#define __ISA_AVAILABLE_SSE42   2
+	#define __ISA_AVAILABLE_AVX     3
+	#define __ISA_AVAILABLE_ENFSTRG 4
+	#define __ISA_AVAILABLE_AVX2    5
 
 	extern unsigned int __isa_available;
 
+	static void *table[] = {
+		(void *)wmemichr386,
+		(void *)wmemichrSSE2,
+		(void *)wmemichrSSE42
+	};
+
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_SSE2
-		jbe     L1
-		mov     dword ptr [wmemichrDispatch], offset wmemichrSSE42
-		jmp     wmemichrSSE42
-
+		mov     ecx, dword ptr [__isa_available]
+		mov     eax, offset wmemichrAVX2
+		cmp     ecx, __ISA_AVAILABLE_AVX2
+		jae     L1
+		mov     eax, dword ptr [table + ecx * 4]
 	L1:
-		mov     dword ptr [wmemichrDispatch], offset wmemichrSSE2
-		jb      L2
-		jmp     wmemichrSSE2
-
-	L2:
-		mov     dword ptr [wmemichrDispatch], offset wmemichr386
-		jmp     wmemichr386
+		mov     dword ptr [wmemichrDispatch], eax
+		jmp     eax
 	}
 
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
 	#undef __ISA_AVAILABLE_SSE42
+	#undef __ISA_AVAILABLE_AVX
+	#undef __ISA_AVAILABLE_ENFSTRG
+	#undef __ISA_AVAILABLE_AVX2
 }
 #endif

@@ -372,23 +372,22 @@ __declspec(naked) static int __cdecl wcsncmpCPUDispatch(const wchar_t *string1, 
 
 	extern unsigned int __isa_available;
 
+	static void *table[] = {
+		(void *)wcsncmp386,
+		(void *)wcsncmpSSE2,
+		(void *)wcsncmpSSE2
+	};
+
 	__asm
 	{
-		mov     eax, dword ptr [__isa_available]
-		cmp     eax, __ISA_AVAILABLE_AVX2
-		jb      L1
-		mov     dword ptr [wcsncmpDispatch], offset wcsncmpAVX2
-		jmp     wcsncmpAVX2
-
+		mov     ecx, dword ptr [__isa_available]
+		mov     eax, offset wcsncmpAVX2
+		cmp     ecx, __ISA_AVAILABLE_AVX2
+		jae     L1
+		mov     eax, dword ptr [table + ecx * 4]
 	L1:
-		test    eax, eax
-		jz      L2
-		mov     dword ptr [wcsncmpDispatch], offset wcsncmpSSE2
-		jmp     wcsncmpSSE2
-
-	L2:
-		mov     dword ptr [wcsncmpDispatch], offset wcsncmp386
-		jmp     wcsncmp386
+		mov     dword ptr [wcsncmpDispatch], eax
+		jmp     eax
 	}
 
 	#undef __ISA_AVAILABLE_X86

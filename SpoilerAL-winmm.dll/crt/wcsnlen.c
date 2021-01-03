@@ -366,28 +366,22 @@ __declspec(naked) static size_t __cdecl wcsnlenCPUDispatch(const wchar_t *string
 
 	extern unsigned int __isa_available;
 
+	static void *table[] = {
+		(void *)wcsnlen386,
+		(void *)wcsnlenSSE2,
+		(void *)wcsnlenSSE42
+	};
+
 	__asm
 	{
-		mov     eax, dword ptr [__isa_available]
-		cmp     eax, __ISA_AVAILABLE_AVX2
-		jb      L1
-		mov     dword ptr [wcsnlenDispatch], offset wcsnlenAVX2
-		jmp     wcsnlenAVX2
-
+		mov     ecx, dword ptr [__isa_available]
+		mov     eax, offset wcsnlenAVX2
+		cmp     ecx, __ISA_AVAILABLE_AVX2
+		jae     L1
+		mov     eax, dword ptr [table + ecx * 4]
 	L1:
-		cmp     eax, __ISA_AVAILABLE_SSE2
-		jbe     L2
-		mov     dword ptr [wcsnlenDispatch], offset wcsnlenSSE42
-		jmp     wcsnlenSSE42
-
-	L2:
-		mov     dword ptr [wcsnlenDispatch], offset wcsnlenSSE2
-		jb      L3
-		jmp     wcsnlenSSE2
-
-	L3:
-		mov     dword ptr [wcsnlenDispatch], offset wcsnlen386
-		jmp     wcsnlen386
+		mov     dword ptr [wcsnlenDispatch], eax
+		jmp     eax
 	}
 
 	#undef __ISA_AVAILABLE_X86

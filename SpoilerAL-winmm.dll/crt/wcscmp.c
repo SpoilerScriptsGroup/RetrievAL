@@ -333,23 +333,22 @@ __declspec(naked) static int __cdecl wcscmpCPUDispatch(const wchar_t *string1, c
 
 	extern unsigned int __isa_available;
 
+	static void *table[] = {
+		(void *)wcscmp386,
+		(void *)wcscmpSSE2,
+		(void *)wcscmpSSE2
+	};
+
 	__asm
 	{
-		mov     eax, dword ptr [__isa_available]
-		cmp     eax, __ISA_AVAILABLE_AVX2
-		jb      L1
-		mov     dword ptr [wcscmpDispatch], offset wcscmpAVX2
-		jmp     wcscmpAVX2
-
+		mov     ecx, dword ptr [__isa_available]
+		mov     eax, offset wcscmpAVX2
+		cmp     ecx, __ISA_AVAILABLE_AVX2
+		jae     L1
+		mov     eax, dword ptr [table + ecx * 4]
 	L1:
-		test    eax, eax
-		jz      L2
-		mov     dword ptr [wcscmpDispatch], offset wcscmpSSE2
-		jmp     wcscmpSSE2
-
-	L2:
-		mov     dword ptr [wcscmpDispatch], offset wcscmp386
-		jmp     wcscmp386
+		mov     dword ptr [wcscmpDispatch], eax
+		jmp     eax
 	}
 
 	#undef __ISA_AVAILABLE_X86

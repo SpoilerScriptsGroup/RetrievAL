@@ -360,28 +360,22 @@ __declspec(naked) static char * __cdecl strlwrCPUDispatch(char *string)
 
 	extern unsigned int __isa_available;
 
+	static void *table[] = {
+		(void *)strlwrGeneric,
+		(void *)strlwrSSE2,
+		(void *)strlwrSSE42
+	};
+
 	__asm
 	{
-		mov     eax, dword ptr [__isa_available]
-		cmp     eax, __ISA_AVAILABLE_AVX2
-		jb      L1
-		mov     dword ptr [strlwrDispatch], offset strlwrAVX2
-		jmp     strlwrAVX2
-
+		mov     ecx, dword ptr [__isa_available]
+		mov     eax, offset strlwrAVX2
+		cmp     ecx, __ISA_AVAILABLE_AVX2
+		jae     L1
+		mov     eax, dword ptr [table + ecx * 4]
 	L1:
-		cmp     eax, __ISA_AVAILABLE_SSE2
-		jbe     L2
-		mov     dword ptr [strlwrDispatch], offset strlwrSSE42
-		jmp     strlwrSSE42
-
-	L2:
-		mov     dword ptr [strlwrDispatch], offset strlwrSSE2
-		jb      L3
-		jmp     strlwrSSE2
-
-	L3:
-		mov     dword ptr [strlwrDispatch], offset strlwrGeneric
-		jmp     strlwrGeneric
+		mov     dword ptr [strlwrDispatch], eax
+		jmp     eax
 	}
 
 	#undef __ISA_AVAILABLE_X86
@@ -404,28 +398,22 @@ __declspec(naked) static char * __cdecl struprCPUDispatch(char *string)
 
 	extern unsigned int __isa_available;
 
+	static void *table[] = {
+		(void *)struprGeneric,
+		(void *)struprSSE2,
+		(void *)struprSSE42
+	};
+
 	__asm
 	{
-		mov     eax, dword ptr [__isa_available]
-		cmp     eax, __ISA_AVAILABLE_AVX2
-		jb      L1
-		mov     dword ptr [struprDispatch], offset struprAVX2
-		jmp     struprAVX2
-
+		mov     ecx, dword ptr [__isa_available]
+		mov     eax, offset struprAVX2
+		cmp     ecx, __ISA_AVAILABLE_AVX2
+		jae     L1
+		mov     eax, dword ptr [table + ecx * 4]
 	L1:
-		cmp     eax, __ISA_AVAILABLE_SSE2
-		jbe     L2
-		mov     dword ptr [struprDispatch], offset struprSSE42
-		jmp     struprSSE42
-
-	L2:
-		mov     dword ptr [struprDispatch], offset struprSSE2
-		jb      L3
-		jmp     struprSSE2
-
-	L3:
-		mov     dword ptr [struprDispatch], offset struprGeneric
-		jmp     struprGeneric
+		mov     dword ptr [struprDispatch], eax
+		jmp     eax
 	}
 
 	#undef __ISA_AVAILABLE_X86

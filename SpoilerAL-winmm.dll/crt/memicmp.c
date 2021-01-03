@@ -391,23 +391,22 @@ __declspec(naked) static int __cdecl memicmpCPUDispatch(const void *buffer1, con
 
 	extern unsigned int __isa_available;
 
+	static void *table[] = {
+		(void *)memicmp386,
+		(void *)memicmpSSE2,
+		(void *)memicmpSSE2
+	};
+
 	__asm
 	{
-		mov     eax, dword ptr [__isa_available]
-		cmp     eax, __ISA_AVAILABLE_AVX2
-		jb      L1
-		mov     dword ptr [memicmpDispatch], offset memicmpAVX2
-		jmp     memicmpAVX2
-
+		mov     ecx, dword ptr [__isa_available]
+		mov     eax, offset memicmpAVX2
+		cmp     ecx, __ISA_AVAILABLE_AVX2
+		jae     L1
+		mov     eax, dword ptr [table + ecx * 4]
 	L1:
-		test    eax, eax
-		jz      L2
-		mov     dword ptr [memicmpDispatch], offset memicmpSSE2
-		jmp     memicmpSSE2
-
-	L2:
-		mov     dword ptr [memicmpDispatch], offset memicmp386
-		jmp     memicmp386
+		mov     dword ptr [memicmpDispatch], eax
+		jmp     eax
 	}
 
 	#undef __ISA_AVAILABLE_X86

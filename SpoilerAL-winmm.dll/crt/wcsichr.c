@@ -353,28 +353,22 @@ __declspec(naked) static wchar_t * __cdecl wcsichrCPUDispatch(const wchar_t *str
 
 	extern unsigned int __isa_available;
 
+	static void *table[] = {
+		(void *)wcsichr386,
+		(void *)wcsichrSSE2,
+		(void *)wcsichrSSE42
+	};
+
 	__asm
 	{
-		mov     eax, dword ptr [__isa_available]
-		cmp     eax, __ISA_AVAILABLE_AVX2
-		jb      L1
-		mov     dword ptr [wcsichrDispatch], offset wcsichrAVX2
-		jmp     wcsichrAVX2
-
+		mov     ecx, dword ptr [__isa_available]
+		mov     eax, offset wcsichrAVX2
+		cmp     ecx, __ISA_AVAILABLE_AVX2
+		jae     L1
+		mov     eax, dword ptr [table + ecx * 4]
 	L1:
-		cmp     eax, __ISA_AVAILABLE_SSE2
-		jbe     L2
-		mov     dword ptr [wcsichrDispatch], offset wcsichrSSE42
-		jmp     wcsichrSSE42
-
-	L2:
-		mov     dword ptr [wcsichrDispatch], offset wcsichrSSE2
-		jb      L3
-		jmp     wcsichrSSE2
-
-	L3:
-		mov     dword ptr [wcsichrDispatch], offset wcsichr386
-		jmp     wcsichr386
+		mov     dword ptr [wcsichrDispatch], eax
+		jmp     eax
 	}
 
 	#undef __ISA_AVAILABLE_X86

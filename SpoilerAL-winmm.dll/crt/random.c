@@ -248,7 +248,7 @@ static void sfmt_gen_rand_all_avx2(sfmt_t *sfmt)
 	assert((size_t)&sse2_param_mask % 32 == 0);
 
 	r5 = _mm256_broadcastsi128_si256(sse2_param_mask.si);
-	r4 = _mm256_loadu_si256((__m256i *)(sfmt + SFMT_N - 2));
+	r4 = _mm256_loadu_si256((__m256i *)(sfmt + SFMT_N) - 1);
 	offset = LE_MINUS(SFMT_N - SFMT_POS1) * 16;
 	do
 		mm256_recursion(r4, r5,
@@ -271,8 +271,8 @@ do {                                        \
     r1 = _mm_load_si128(p1);                \
     r0 = r2;                                \
     r3 = _mm_srli_si128(r3, SFMT_SR2);      \
-    r3 = _mm_xor_si128(r3, r1);             \
     r0 = _mm_slli_epi32(r0, SFMT_SL1);      \
+    r3 = _mm_xor_si128(r3, r1);             \
     r1 = _mm_slli_si128(r1, SFMT_SL2);      \
     r0 = _mm_xor_si128(r0, r3);             \
     r3 = r2;                                \
@@ -413,8 +413,8 @@ __declspec(naked) static void __cdecl sfmt_gen_rand_all_sse2()
 		movdqa  xmm1, xmmword ptr [state + IDX128(SFMT_N - SFMT_POS1) * 16 + eax]
 		movdqa  xmm0, xmm2
 		psrldq  xmm3, SFMT_SR2
-		pxor    xmm3, xmm1
 		pslld   xmm0, SFMT_SL1
+		pxor    xmm3, xmm1
 		pslldq  xmm1, SFMT_SL2
 		pxor    xmm0, xmm3
 		movdqa  xmm3, xmm2
@@ -434,8 +434,8 @@ __declspec(naked) static void __cdecl sfmt_gen_rand_all_sse2()
 		movdqa  xmm1, xmmword ptr [state + IDX128(SFMT_N) * 16 + eax]
 		movdqa  xmm0, xmm2
 		psrldq  xmm3, SFMT_SR2
-		pxor    xmm3, xmm1
 		pslld   xmm0, SFMT_SL1
+		pxor    xmm3, xmm1
 		pslldq  xmm1, SFMT_SL2
 		pxor    xmm0, xmm3
 		movdqa  xmm3, xmm2

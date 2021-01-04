@@ -43,6 +43,7 @@
 #include "random.h"
 #if defined(_M_IX86) || defined(_M_X64)
 #include <emmintrin.h>
+#include <immintrin.h>
 #endif
 #include <assert.h>
 #include "endianness.h"
@@ -108,8 +109,8 @@ typedef __declspec(align(16)) union {
   VARIABLES
   ---------*/
 /* SFMT internal state */
-static w128_t   state[SFMT_N];                  // the 128-bit internal state array
-static size_t   idx;                            // index counter to the 32-bit internal state array
+static w128_t __declspec(align(32)) state[SFMT_N];  // the 128-bit internal state array
+static size_t                       idx;            // index counter to the 32-bit internal state array
 
 #define sfmt   ((__m128i *)state)
 #define sfmt32 ((uint32_t *)state)
@@ -193,6 +194,7 @@ static size_t   idx;                            // index counter to the 32-bit i
   STATIC FUNCTIONS
   ----------------*/
 #if defined(_M_IX86)
+static void sfmt_gen_rand_all_avx2();
 static void sfmt_gen_rand_all_sse2();
 static void sfmt_gen_rand_all_generic();
 static void sfmt_gen_rand_all_cpu_dispatch();
@@ -200,7 +202,67 @@ static void sfmt_gen_rand_all_cpu_dispatch();
 static void (*sfmt_gen_rand_all)() = sfmt_gen_rand_all_cpu_dispatch;
 #endif
 
+/**
+ * parameters used by sse2.
+ */
+static const w128_t __declspec(align(32)) sse2_param_mask = { {
+	SFMT_MSK(0) & (UINT32_MAX >> SFMT_SR1),
+	SFMT_MSK(1) & (UINT32_MAX >> SFMT_SR1),
+	SFMT_MSK(2) & (UINT32_MAX >> SFMT_SR1),
+	SFMT_MSK(3) & (UINT32_MAX >> SFMT_SR1) } };
+
 #if defined(_M_X64)
+/* This function represents the recursion formula. */
+#define mm256_recursion(r4, r5, p1, p2)             \
+do {                                                \
+    __m256i r0, r1, r2, r3;                         \
+                                                    \
+    r0 = _mm256_load_si256(p2);                     \
+    r2 = _mm256_load_si256(p1);                     \
+    r0 = _mm256_srli_epi32(r0, SFMT_SR1);           \
+    r0 = _mm256_and_si256(r0, r5);                  \
+    r1 = _mm256_slli_si256(r2, SFMT_SL2);           \
+    r0 = _mm256_xor_si256(r0, r1);                  \
+    r0 = _mm256_xor_si256(r0, r2);                  \
+    r3 = _mm256_srli_si256(r4, SFMT_SR2);           \
+    r1 = _mm256_xor_si256(r0, r3);                  \
+    r0 = _mm256_permute2f128_si256(r4, r1, 0x21);   \
+    r0 = _mm256_slli_epi32(r0, SFMT_SL1);           \
+    r4 = _mm256_xor_si256(r0, r1);                  \
+    _mm256_store_si256(p1, r4);                     \
+} while (0)
+
+/**
+ * This function fills the internal state array with pseudorandom
+ * integers.
+ * @param sfmt SFMT internal state
+ */
+static void sfmt_gen_rand_all_avx2(sfmt_t *sfmt)
+{
+	__m256i r4, r5;
+	ptrdiff_t offset;
+
+	assert(SFMT_N % 2 == 0);
+	assert(SFMT_POS1 % 2 == 0);
+	assert((size_t)sfmt % 32 == 0);
+	assert((size_t)&sse2_param_mask % 32 == 0);
+
+	r5 = _mm256_broadcastsi128_si256(sse2_param_mask.si);
+	r4 = _mm256_loadu_si256((__m256i *)(sfmt + SFMT_N - 2));
+	offset = LE_MINUS(SFMT_N - SFMT_POS1) * 16;
+	do
+		mm256_recursion(r4, r5,
+			(__m256i *)((char *)(sfmt + IDX128(SFMT_N - SFMT_POS1)) + offset),
+			(__m256i *)((char *)(sfmt + IDX128(SFMT_N)) + offset));
+	while (offset += LE_PLUS(32));
+	offset = LE_MINUS(SFMT_POS1) * 16;
+	do
+		mm256_recursion(r4, r5,
+			(__m256i *)((char *)(sfmt + IDX128(SFMT_N)) + offset),
+			(__m256i *)((char *)(sfmt + IDX128(SFMT_POS1)) + offset));
+	while (offset += LE_PLUS(32));
+}
+
 /* This function represents the recursion formula. */
 #define mm_recursion(r2, r3, r4, p1, p2)    \
 do {                                        \
@@ -224,23 +286,17 @@ do {                                        \
 
 /* This function fills the internal state array with pseudorandom
    integers. */
-static void sfmt_gen_rand_all()
+static void sfmt_gen_rand_all_sse2()
 {
-	static const w128_t mask = { {
-		SFMT_MSK(0) & (UINT32_MAX >> SFMT_SR1),
-		SFMT_MSK(1) & (UINT32_MAX >> SFMT_SR1),
-		SFMT_MSK(2) & (UINT32_MAX >> SFMT_SR1),
-		SFMT_MSK(3) & (UINT32_MAX >> SFMT_SR1) } };
-
 	__m128i r2, r3, r4;
 	ptrdiff_t offset;
 
 	assert((size_t)sfmt % 16 == 0);
-	assert((size_t)&mask % 16 == 0);
+	assert((size_t)&sse2_param_mask % 16 == 0);
 
 	r2 = _mm_load_si128(sfmt + IDX128(SFMT_N - 1));
 	r3 = _mm_load_si128(sfmt + IDX128(SFMT_N - 2));
-	r4 = _mm_load_si128(&mask.si);
+	r4 = _mm_load_si128(&sse2_param_mask.si);
 	offset = LE_MINUS(SFMT_N - SFMT_POS1) * 16;
 	do
 		mm_recursion(r2, r3, r4,
@@ -254,22 +310,102 @@ static void sfmt_gen_rand_all()
 			(__m128i *)((char *)(sfmt + IDX128(SFMT_POS1)) + offset));
 	while (offset += LE_PLUS(16));
 }
+
+static void sfmt_gen_rand_all()
+{
+	#define __ISA_AVAILABLE_X86     0
+	#define __ISA_AVAILABLE_SSE2    1
+	#define __ISA_AVAILABLE_SSE42   2
+	#define __ISA_AVAILABLE_AVX     3
+	#define __ISA_AVAILABLE_ENFSTRG 4
+	#define __ISA_AVAILABLE_AVX2    5
+
+	extern unsigned int __isa_available;
+
+	switch (__isa_available)
+	{
+	default:
+		sfmt_gen_rand_all_avx2();
+		break;
+	case __ISA_AVAILABLE_X86:
+	case __ISA_AVAILABLE_SSE2:
+	case __ISA_AVAILABLE_SSE42:
+	case __ISA_AVAILABLE_AVX:
+	case __ISA_AVAILABLE_ENFSTRG:
+		sfmt_gen_rand_all_sse2();
+		break;
+	}
+
+	#undef __ISA_AVAILABLE_X86
+	#undef __ISA_AVAILABLE_SSE2
+	#undef __ISA_AVAILABLE_SSE42
+	#undef __ISA_AVAILABLE_AVX
+	#undef __ISA_AVAILABLE_ENFSTRG
+	#undef __ISA_AVAILABLE_AVX2
+}
 #elif defined(_M_IX86)
+/* This function fills the internal state array with pseudorandom
+   integers. */
+__declspec(naked) static void __cdecl sfmt_gen_rand_all_avx2()
+{
+	__asm
+	{
+		vbroadcasti128 ymm5, xmmword ptr [sse2_param_mask]
+		vmovdqa ymm4, ymmword ptr [state + IDX128(SFMT_N - 2) * 16]
+		mov     eax, LE_MINUS(SFMT_N - SFMT_POS1) * 16
+
+		align   16
+	loop1:
+		vmovdqa ymm0, ymmword ptr [state + IDX128(SFMT_N) * 16 + eax]
+		vmovdqa ymm2, ymmword ptr [state + IDX128(SFMT_N - SFMT_POS1) * 16 + eax]
+		vpsrld  ymm0, ymm0, SFMT_SR1
+		vpand   ymm0, ymm0, ymm5
+		vpslldq ymm1, ymm2, SFMT_SL2
+		vpxor   ymm0, ymm0, ymm1
+		vpxor   ymm0, ymm0, ymm2
+		vpsrldq ymm3, ymm4, SFMT_SR2
+		vpxor   ymm1, ymm0, ymm3
+		vperm2f128 ymm0, ymm4, ymm1, 21H
+		vpslld  ymm0, ymm0, SFMT_SL1
+		vpxor   ymm4, ymm0, ymm1
+		vmovdqa ymmword ptr [state + IDX128(SFMT_N - SFMT_POS1) * 16 + eax], ymm4
+		LE_ADD  eax, 32
+		jnz     loop1
+
+		mov     eax, LE_MINUS(SFMT_POS1) * 16
+
+		align   16
+	loop2:
+		vmovdqa ymm0, ymmword ptr [state + IDX128(SFMT_POS1) * 16 + eax]
+		vmovdqa ymm2, ymmword ptr [state + IDX128(SFMT_N) * 16 + eax]
+		vpsrld  ymm0, ymm0, SFMT_SR1
+		vpand   ymm0, ymm0, ymm5
+		vpslldq ymm1, ymm2, SFMT_SL2
+		vpxor   ymm0, ymm0, ymm1
+		vpxor   ymm0, ymm0, ymm2
+		vpsrldq ymm3, ymm4, SFMT_SR2
+		vpxor   ymm1, ymm0, ymm3
+		vperm2f128 ymm0, ymm4, ymm1, 21H
+		vpslld  ymm0, ymm0, SFMT_SL1
+		vpxor   ymm4, ymm0, ymm1
+		vmovdqa ymmword ptr [state + IDX128(SFMT_N) * 16 + eax], ymm4
+		LE_ADD  eax, 32
+		jnz     loop2
+
+		vzeroupper
+		ret
+	}
+}
+
 /* This function fills the internal state array with pseudorandom
    integers. */
 __declspec(naked) static void __cdecl sfmt_gen_rand_all_sse2()
 {
-	static const w128_t mask = { {
-		SFMT_MSK(0) & (UINT32_MAX >> SFMT_SR1),
-		SFMT_MSK(1) & (UINT32_MAX >> SFMT_SR1),
-		SFMT_MSK(2) & (UINT32_MAX >> SFMT_SR1),
-		SFMT_MSK(3) & (UINT32_MAX >> SFMT_SR1) } };
-
 	__asm
 	{
 		movdqa  xmm2, xmmword ptr [state + IDX128(SFMT_N - 1) * 16]
 		movdqa  xmm3, xmmword ptr [state + IDX128(SFMT_N - 2) * 16]
-		movdqa  xmm4, xmmword ptr [mask]
+		movdqa  xmm4, xmmword ptr [sse2_param_mask]
 		mov     eax, LE_MINUS(SFMT_N - SFMT_POS1) * 16
 
 		align   16
@@ -571,25 +707,41 @@ __declspec(naked) static void sfmt_gen_rand_all_generic()
 #if defined(_M_IX86)
 __declspec(naked) static void sfmt_gen_rand_all_cpu_dispatch()
 {
-	#define __ISA_AVAILABLE_X86  0
-	#define __ISA_AVAILABLE_SSE2 1
+	#define __ISA_AVAILABLE_X86     0
+	#define __ISA_AVAILABLE_SSE2    1
+	#define __ISA_AVAILABLE_SSE42   2
+	#define __ISA_AVAILABLE_AVX     3
+	#define __ISA_AVAILABLE_ENFSTRG 4
+	#define __ISA_AVAILABLE_AVX2    5
 
 	extern unsigned int __isa_available;
 
+	static void *table[] = {
+		(void *)sfmt_gen_rand_all_generic,
+		(void *)sfmt_gen_rand_all_sse2,
+		(void *)sfmt_gen_rand_all_sse2,
+		(void *)sfmt_gen_rand_all_sse2,
+		(void *)sfmt_gen_rand_all_sse2,
+	};
+
 	__asm
 	{
-		cmp     dword ptr [__isa_available], __ISA_AVAILABLE_X86
-		jne     L1
-		mov     dword ptr [sfmt_gen_rand_all], offset sfmt_gen_rand_all_generic
-		jmp     sfmt_gen_rand_all_generic
-
+		mov     ecx, dword ptr [__isa_available]
+		mov     eax, offset sfmt_gen_rand_all_avx2
+		cmp     ecx, __ISA_AVAILABLE_AVX2
+		jae     L1
+		mov     eax, dword ptr [table + ecx * 4]
 	L1:
-		mov     dword ptr [sfmt_gen_rand_all], offset sfmt_gen_rand_all_sse2
-		jmp     sfmt_gen_rand_all_sse2
+		mov     dword ptr [sfmt_gen_rand_all], eax
+		jmp     eax
 	}
 
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2
+	#undef __ISA_AVAILABLE_SSE42
+	#undef __ISA_AVAILABLE_AVX
+	#undef __ISA_AVAILABLE_ENFSTRG
+	#undef __ISA_AVAILABLE_AVX2
 }
 #endif
 

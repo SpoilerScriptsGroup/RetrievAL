@@ -157,11 +157,10 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprAVX2(wchar_t *string)
 		xor     ecx, 31
 		jz      unaligned_loop_entry
 		and     edx, -32
-		vmovdqa ymm6, ymmword ptr [edx]                     // load 32 bytes
+		vmovdqa ymm1, ymmword ptr [edx]                     // load 32 bytes
 		vmovdqu ymm0, ymmword ptr [maskbit + ecx]           // load the non target bits mask
-		vmovdqa ymm1, ymm6                                  // copy
-		vperm2i128 ymm7, ymm6, ymm6, 00001000B              // adjust ymm value for compare
-		vpslldq ymm6, ymm6, 1
+		vperm2i128 ymm7, ymm1, ymm1, 00001000B              // adjust ymm value for compare
+		vpslldq ymm6, ymm1, 1
 		vpsrldq ymm7, ymm7, 15
 		vpor    ymm6, ymm6, ymm7
 		vpor    ymm0, ymm0, ymm6                            // fill the non target bits to 1

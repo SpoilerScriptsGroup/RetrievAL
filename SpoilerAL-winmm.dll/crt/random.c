@@ -226,7 +226,7 @@ do {                                                \
     r0 = _mm256_xor_si256(r0, r2);                  \
     r3 = _mm256_srli_si256(r4, SFMT_SR2);           \
     r1 = _mm256_xor_si256(r0, r3);                  \
-    r0 = _mm256_permute2f128_si256(r4, r1, 0x21);   \
+    r0 = _mm256_permute2x128_si256(r4, r1, 0x21);   \
     r0 = _mm256_slli_epi32(r0, SFMT_SL1);           \
     r4 = _mm256_xor_si256(r0, r1);                  \
     _mm256_store_si256(p1, r4);                     \
@@ -365,7 +365,7 @@ __declspec(naked) static void __cdecl sfmt_gen_rand_all_avx2()
 		vpxor   ymm0, ymm0, ymm2
 		vpsrldq ymm3, ymm4, SFMT_SR2
 		vpxor   ymm1, ymm0, ymm3
-		vperm2f128 ymm0, ymm4, ymm1, 21H
+		vperm2i128 ymm0, ymm4, ymm1, 21H
 		vpslld  ymm0, ymm0, SFMT_SL1
 		vpxor   ymm4, ymm0, ymm1
 		vmovdqa ymmword ptr [state + IDX128(SFMT_N - SFMT_POS1) * 16 + eax], ymm4

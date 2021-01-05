@@ -14,7 +14,6 @@ size_t __cdecl strlen(const char *string)
 }
 #else
 extern const char ymmconst_maskbit[64];
-#define maskbit (ymmconst_maskbit + 16)
 
 static size_t __cdecl strlenAVX2(const char *string);
 static size_t __cdecl strlenSSE42(const char *string);
@@ -75,6 +74,8 @@ __declspec(naked) static size_t __cdecl strlenAVX2(const char *string)
 // SSE4.2 version
 __declspec(naked) static size_t __cdecl strlenSSE42(const char *string)
 {
+	#define maskbit (ymmconst_maskbit + 16)
+
 	__asm
 	{
 		#define string (esp + 4)
@@ -104,6 +105,8 @@ __declspec(naked) static size_t __cdecl strlenSSE42(const char *string)
 
 		#undef string
 	}
+
+	#undef maskbit
 }
 
 // SSE2 version

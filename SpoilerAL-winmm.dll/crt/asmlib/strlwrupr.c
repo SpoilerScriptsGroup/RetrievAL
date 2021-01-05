@@ -3,16 +3,8 @@
 #define INVALID_PAGE 0
 
 #if INVALID_PAGE
-extern const char ymmconst_upperA[32];
-extern const char ymmconst_lowerA[32];
-extern const char ymmconst_azrangeA[32];
 extern const char ymmconst_casebitA[32];
-extern const char ymmconst_maskbit[64];
-#define upper   ymmconst_upperA
-#define lower   ymmconst_lowerA
-#define azrange ymmconst_azrangeA
 #define casebit ymmconst_casebitA
-#define maskbit (ymmconst_maskbit + 16)
 
 extern int __cdecl InstructionSet();
 

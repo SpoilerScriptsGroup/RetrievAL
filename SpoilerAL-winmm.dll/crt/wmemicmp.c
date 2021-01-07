@@ -59,7 +59,7 @@ __declspec(naked) static int __cdecl wmemicmpAVX2(const wchar_t *buffer1, const 
 		lea     esi, [esi + ebx * 2]                        // esi = end of buffer1
 		lea     edi, [edi + ebx * 2]                        // edi = end of buffer2
 		xor     ebx, -1                                     // ebx = -count - 1
-		and     ebp, 30                                     // ebp = -buffer2 & 30
+		and     ebp, 14                                     // ebp = -buffer2 & 14
 		xor     eax, eax                                    // eax = 0
 		jmp     word_loop_entry
 
@@ -85,35 +85,22 @@ __declspec(naked) static int __cdecl wmemicmpAVX2(const wchar_t *buffer1, const 
 		vmovdqa ymm4, ymmword ptr [upper]
 		vmovdqa ymm5, ymmword ptr [azrange]
 		vmovdqa ymm6, ymmword ptr [casebit]                 // bit to change
-		mov     edx, edi
-		lea     ecx, [edi + ebx * 2 + 1]
-		and     edx, 1
-		jnz     unaligned
-		and     ecx, 16
-		jnz     aligned_xmmword_entry
-	aligned_ymmword_entry:
-		mov     edx, 15
-		sub     esi, 30
-		sub     edi, 30
-		add     ebx, 15
-		jnc     aligned_ymmword_loop
-		sub     ebx, 15
-	aligned_ymmword_loop_last:
-		lea     ecx, [ebx + ebx]
-		add     esi, 30
-		add     ecx, esi
-		add     edi, 30
+		or      ebp, -1
+		lea     edx, [edi + ebx * 2]
+		inc     edx
+		lea     ecx, [esi + ebx * 2]
+		and     edx, 30
+		jz      ymmword_entry
 		shl     ecx, 32 - PAGE_SHIFT
 		xor     edx, edx
-		cmp     ecx, -31 shl (32 - PAGE_SHIFT)
-		jb      aligned_ymmword_loop                        // jump if not cross pages
-	aligned_xmmword_entry:
-		lea     ecx, [esi + ebx * 2]
-		shl     ecx, 32 - PAGE_SHIFT
+	xmmword_check_cross_pages:
+		cmp     ebx, -8
+		jae     xmmword_compare
 		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
 		jae     word_loop                                   // jump if cross pages
+	xmmword_compare:
 		vmovdqu xmm2, xmmword ptr [esi + ebx * 2]           // load 16 byte
-		vmovdqa xmm3, xmmword ptr [edi + ebx * 2]           //
+		vmovdqu xmm3, xmmword ptr [edi + ebx * 2]           //
 		vpaddw  xmm0, xmm2, xmm4                            // all words greater than 'Z' if negative
 		vpaddw  xmm1, xmm3, xmm4                            //
 		vpcmpgtw xmm0, xmm0, xmm5                           // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
@@ -127,8 +114,28 @@ __declspec(naked) static int __cdecl wmemicmpAVX2(const wchar_t *buffer1, const 
 		xor     ecx, 0FFFFH
 		jnz     ymmword_not_equal
 		add     ebx, 8
-		jnc     aligned_ymmword_entry
-		jmp     epilog
+		jc      epilog
+	ymmword_entry:
+		mov     ecx, edi
+		add     edx, 15
+		sub     esi, 30
+		sub     edi, 30
+		and     ecx, 1
+		jnz     unaligned
+		add     ebx, 15
+		jnc     aligned_ymmword_loop
+		sub     ebx, 15
+
+		align   16
+	aligned_ymmword_loop_last:
+		lea     ecx, [ebx + ebx]
+		add     esi, 30
+		add     ecx, esi
+		add     edi, 30
+		shl     ecx, 32 - PAGE_SHIFT
+		xor     edx, edx
+		cmp     ecx, -31 shl (32 - PAGE_SHIFT)
+		jae     xmmword_check_cross_pages                   // jump if cross pages
 
 		align   16
 	aligned_ymmword_loop:
@@ -154,15 +161,11 @@ __declspec(naked) static int __cdecl wmemicmpAVX2(const wchar_t *buffer1, const 
 
 		align   8
 	unaligned:
-		and     ecx, 16
-		jnz     unaligned_xmmword_entry
-	unaligned_ymmword_entry:
-		mov     edx, 15
-		sub     esi, 30
-		sub     edi, 30
 		add     ebx, 15
 		jnc     unaligned_ymmword_loop
 		sub     ebx, 15
+
+		align   16
 	unaligned_ymmword_loop_last:
 		lea     ecx, [ebx + ebx]
 		add     esi, 30
@@ -171,29 +174,7 @@ __declspec(naked) static int __cdecl wmemicmpAVX2(const wchar_t *buffer1, const 
 		shl     ecx, 32 - PAGE_SHIFT
 		xor     edx, edx
 		cmp     ecx, -31 shl (32 - PAGE_SHIFT)
-		jb      unaligned_ymmword_loop                      // jump if not cross pages
-	unaligned_xmmword_entry:
-		lea     ecx, [esi + ebx * 2]
-		shl     ecx, 32 - PAGE_SHIFT
-		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
-		jae     word_loop                                   // jump if cross pages
-		vmovdqu xmm2, xmmword ptr [esi + ebx * 2]           // load 16 byte
-		vmovdqu xmm3, xmmword ptr [edi + ebx * 2]           //
-		vpaddw  xmm0, xmm2, xmm4                            // all words greater than 'Z' if negative
-		vpaddw  xmm1, xmm3, xmm4                            //
-		vpcmpgtw xmm0, xmm0, xmm5                           // xmm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
-		vpcmpgtw xmm1, xmm1, xmm5                           //
-		vpand   xmm0, xmm0, xmm6                            // assign a mask for the appropriate words
-		vpand   xmm1, xmm1, xmm6                            //
-		vpor    xmm0, xmm0, xmm2                            // negation of the 5th bit - lowercase letters
-		vpor    xmm1, xmm1, xmm3                            //
-		vpcmpeqw xmm0, xmm0, xmm1                           // compare
-		vpmovmskb ecx, xmm0                                 // get one bit for each byte result
-		xor     ecx, 0FFFFH
-		jnz     ymmword_not_equal
-		add     ebx, 8
-		jnc     unaligned_ymmword_entry
-		jmp     epilog
+		jae     xmmword_check_cross_pages                   // jump if cross pages
 
 		align   16
 	unaligned_ymmword_loop:
@@ -300,12 +281,13 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		movdqa  xmm4, xmmword ptr [upper]
 		movdqa  xmm5, xmmword ptr [azrange]
 		movdqa  xmm6, xmmword ptr [casebit]                 // bit to change
+		or      ebp, -1
 		mov     ecx, edi
 		mov     edx, 7
 		sub     esi, 14
 		sub     edi, 14
 		and     ecx, 1
-		jnz     unaligned_xmmword_loop_entry
+		jnz     unaligned
 		add     ebx, 7
 		jnc     aligned_xmmword_loop
 		sub     ebx, 7
@@ -346,7 +328,7 @@ __declspec(naked) static int __cdecl wmemicmpSSE2(const wchar_t *buffer1, const 
 		jmp     epilog
 
 		align   8
-	unaligned_xmmword_loop_entry:
+	unaligned:
 		add     ebx, 7
 		jnc     unaligned_xmmword_loop
 		sub     ebx, 7

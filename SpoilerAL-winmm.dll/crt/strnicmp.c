@@ -88,15 +88,45 @@ __declspec(naked) static int __cdecl strnicmpAVX2(const char *string1, const cha
 		jz      epilog
 		lea     edx, [edi + ebx]
 		lea     ecx, [esi + ebx]
-		and     edx, 15
+		and     edx, 7
 		jnz     byte_loop
 		shl     ecx, 32 - PAGE_SHIFT
 		lea     edx, [edi + ebx]
 		and     edx, 31
 		jz      ymmword_loop
+		and     edx, 15
+		jz      xmmword_check_cross_pages
+	qword_check_cross_pages:
+		cmp     ecx, -7 shl (32 - PAGE_SHIFT)
+		jae     byte_loop                                   // jump if cross pages
+		vmovq   xmm2, qword ptr [esi + ebx]                 // load 8 byte
+		vmovq   xmm3, qword ptr [edi + ebx]                 //
+		vpaddb  xmm0, xmm2, xmm4                            // all bytes greater than 'Z' if negative
+		vpaddb  xmm1, xmm3, xmm4                            //
+		vpcmpgtb xmm0, xmm0, xmm5                           // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
+		vpcmpgtb xmm1, xmm1, xmm5                           //
+		vpand   xmm0, xmm0, xmm6                            // assign a mask for the appropriate bytes
+		vpand   xmm1, xmm1, xmm6                            //
+		vpor    xmm0, xmm0, xmm2                            // negation of the 5th bit - lowercase letters
+		vpor    xmm1, xmm1, xmm3                            //
+		vpcmpeqb xmm0, xmm0, xmm1                           // compare
+		vpcmpeqb xmm2, xmm2, xmm7                           //
+		vpmovmskb edx, xmm0                                 // get one bit for each byte result
+		vpmovmskb ecx, xmm2                                 //
+		xor     edx, 0FFFFH
+		jnz     xmmword_not_equal
+		add     ebx, 8
+		jc      epilog
+		and     ecx, 0FFH
+		jnz     epilog
+		lea     ecx, [esi + ebx]
+		lea     edx, [edi + ebx]
+		shl     ecx, 32 - PAGE_SHIFT
+		and     edx, 16
+		jz      ymmword_loop
 	xmmword_check_cross_pages:
 		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
-		jae     byte_loop                                   // jump if cross pages
+		jae     qword_check_cross_pages                     // jump if cross pages
 		vmovdqu xmm2, xmmword ptr [esi + ebx]               // load 16 byte
 		vmovdqa xmm3, xmmword ptr [edi + ebx]               //
 		vpaddb  xmm0, xmm2, xmm4                            // all bytes greater than 'Z' if negative
@@ -248,8 +278,38 @@ __declspec(naked) static int __cdecl strnicmpSSE2(const char *string1, const cha
 		jz      epilog
 		lea     edx, [edi + ebx]
 		lea     ecx, [esi + ebx]
-		and     edx, 15
+		and     edx, 7
 		jnz     byte_loop
+		shl     ecx, 32 - PAGE_SHIFT
+		lea     edx, [edi + ebx]
+		and     edx, 15
+		jz      xmmword_loop
+		cmp     ecx, -7 shl (32 - PAGE_SHIFT)
+		jae     byte_loop                                   // jump if cross pages
+		movq    xmm0, qword ptr [esi + ebx]                 // load 8 byte
+		movq    xmm1, qword ptr [edi + ebx]                 //
+		movdqa  xmm2, xmm0                                  // copy
+		movdqa  xmm3, xmm1                                  //
+		paddb   xmm0, xmm4                                  // all bytes greater than 'Z' if negative
+		paddb   xmm1, xmm4                                  //
+		pcmpgtb xmm0, xmm5                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
+		pcmpgtb xmm1, xmm5                                  //
+		pand    xmm0, xmm6                                  // assign a mask for the appropriate bytes
+		pand    xmm1, xmm6                                  //
+		por     xmm0, xmm2                                  // negation of the 5th bit - lowercase letters
+		por     xmm1, xmm3                                  //
+		pcmpeqb xmm2, xmm7                                  // compare
+		pcmpeqb xmm0, xmm1                                  //
+		pmovmskb ecx, xmm2                                  // get one bit for each byte result
+		pmovmskb edx, xmm0                                  //
+		and     ecx, 0FFH
+		xor     edx, 0FFFFH
+		jnz     xmmword_not_equal
+		add     ebx, 8
+		jc      epilog
+		test    ecx, ecx
+		jnz     epilog
+		lea     ecx, [esi + ebx]
 		shl     ecx, 32 - PAGE_SHIFT
 
 		align   16

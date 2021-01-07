@@ -60,7 +60,7 @@ __declspec(naked) static int __cdecl memicmpAVX2(const void *buffer1, const void
 		add     esi, ebx                                    // esi = end of buffer1
 		add     edi, ebx                                    // edi = end of buffer2
 		xor     ebx, -1                                     // ebx = -count - 1
-		and     ebp, 31                                     // ebp = -buffer2 & 31
+		and     ebp, 15                                     // ebp = -buffer2 & 15
 		xor     eax, eax                                    // eax = 0
 		jmp     byte_loop_entry
 
@@ -86,30 +86,50 @@ __declspec(naked) static int __cdecl memicmpAVX2(const void *buffer1, const void
 		vmovdqa ymm4, ymmword ptr [upper]
 		vmovdqa ymm5, ymmword ptr [azrange]
 		vmovdqa ymm6, ymmword ptr [casebit]                 // bit to change
-		lea     ecx, [edi + ebx]
-		and     ecx, 16
-		jnz     xmmword_entry
-	ymmword_entry:
-		mov     edx, 31
-		sub     esi, 31
-		sub     edi, 31
-		add     ebx, 31
-		jnc     ymmword_loop
-		sub     ebx, 31
-	ymmword_loop_last:
-		mov     ecx, ebx
-		add     esi, 31
-		add     ecx, esi
-		add     edi, 31
-		shl     ecx, 32 - PAGE_SHIFT
+		shr     ebp, 1
+		lea     edx, [edi + ebx]
+		and     edx, 31
+		jz      ymmword_entry
+		and     edx, 15
+		jz      xmmword_entry
 		xor     edx, edx
-		cmp     ecx, -31 shl (32 - PAGE_SHIFT)
-		jb      ymmword_loop                                // jump if not cross pages
-	xmmword_entry:
 		lea     ecx, [esi + ebx]
 		shl     ecx, 32 - PAGE_SHIFT
-		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
+	qword_check_cross_pages:
+		cmp     ebx, -8
+		jae     qword_compare
+		cmp     ecx, -7 shl (32 - PAGE_SHIFT)
 		jae     byte_loop                                   // jump if cross pages
+	qword_compare:
+		vmovq   xmm2, qword ptr [esi + ebx]                 // load 8 byte
+		vmovq   xmm3, qword ptr [edi + ebx]                 //
+		vpaddb  xmm0, xmm2, xmm4                            // all bytes greater than 'Z' if negative
+		vpaddb  xmm1, xmm3, xmm4                            //
+		vpcmpgtb xmm0, xmm0, xmm5                           // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
+		vpcmpgtb xmm1, xmm1, xmm5                           //
+		vpand   xmm0, xmm0, xmm6                            // assign a mask for the appropriate bytes
+		vpand   xmm1, xmm1, xmm6                            //
+		vpor    xmm0, xmm0, xmm2                            // negation of the 5th bit - lowercase letters
+		vpor    xmm1, xmm1, xmm3                            //
+		vpcmpeqb xmm0, xmm0, xmm1                           // compare
+		vpmovmskb ecx, xmm0                                 // get one bit for each byte result
+		xor     ecx, 0FFFFH
+		jnz     ymmword_not_equal
+		add     ebx, 8
+		jc      epilog
+		lea     ecx, [edi + ebx]
+		and     ecx, 31
+		jz      ymmword_entry
+	xmmword_entry:
+		xor     edx, edx
+		lea     ecx, [esi + ebx]
+		shl     ecx, 32 - PAGE_SHIFT
+	xmmword_check_cross_pages:
+		cmp     ebx, -16
+		jae     xmmword_compare
+		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
+		jae     qword_check_cross_pages                     // jump if cross pages
+	xmmword_compare:
 		vmovdqu xmm2, xmmword ptr [esi + ebx]               // load 16 byte
 		vmovdqa xmm3, xmmword ptr [edi + ebx]               //
 		vpaddb  xmm0, xmm2, xmm4                            // all bytes greater than 'Z' if negative
@@ -125,8 +145,25 @@ __declspec(naked) static int __cdecl memicmpAVX2(const void *buffer1, const void
 		xor     ecx, 0FFFFH
 		jnz     ymmword_not_equal
 		add     ebx, 16
-		jnc     ymmword_entry
-		jmp     epilog
+		jc      epilog
+	ymmword_entry:
+		add     edx, 31
+		sub     esi, 31
+		sub     edi, 31
+		add     ebx, 31
+		jnc     ymmword_loop
+		sub     ebx, 31
+
+		align   16
+	ymmword_loop_last:
+		mov     ecx, ebx
+		add     esi, 31
+		add     ecx, esi
+		add     edi, 31
+		shl     ecx, 32 - PAGE_SHIFT
+		xor     edx, edx
+		cmp     ecx, -31 shl (32 - PAGE_SHIFT)
+		jae     xmmword_check_cross_pages                   // jump if cross pages
 
 		align   16
 	ymmword_loop:
@@ -205,7 +242,7 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		add     esi, ebx                                    // esi = end of buffer1
 		add     edi, ebx                                    // edi = end of buffer2
 		xor     ebx, -1                                     // ebx = -count - 1
-		and     ebp, 15                                     // ebp = -buffer2 & 15
+		and     ebp, 7                                      // ebp = -buffer2 & 7
 		xor     eax, eax                                    // eax = 0
 		jmp     byte_loop_entry
 
@@ -231,7 +268,39 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		movdqa  xmm4, xmmword ptr [upper]
 		movdqa  xmm5, xmmword ptr [azrange]
 		movdqa  xmm6, xmmword ptr [casebit]                 // bit to change
-		mov     edx, 15
+		shr     ebp, 1
+		lea     edx, [edi + ebx]
+		and     edx, 15
+		jz      xmmword_entry
+		xor     edx, edx
+		lea     ecx, [esi + ebx]
+		shl     ecx, 32 - PAGE_SHIFT
+	qword_check_cross_pages:
+		cmp     ebx, -8
+		jae     qword_compare
+		cmp     ecx, -7 shl (32 - PAGE_SHIFT)
+		jae     byte_loop                                   // jump if cross pages
+	qword_compare:
+		movq    xmm0, qword ptr [esi + ebx]                 // load 8 byte
+		movq    xmm1, qword ptr [edi + ebx]                 //
+		movdqa  xmm2, xmm0                                  // copy
+		movdqa  xmm3, xmm1                                  //
+		paddb   xmm0, xmm4                                  // all bytes greater than 'Z' if negative
+		paddb   xmm1, xmm4                                  //
+		pcmpgtb xmm0, xmm5                                  // xmm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
+		pcmpgtb xmm1, xmm5                                  //
+		pand    xmm0, xmm6                                  // assign a mask for the appropriate bytes
+		pand    xmm1, xmm6                                  //
+		por     xmm0, xmm2                                  // negation of the 5th bit - lowercase letters
+		por     xmm1, xmm3                                  //
+		pcmpeqb xmm0, xmm1                                  // compare
+		pmovmskb ecx, xmm0                                  // get one bit for each byte result
+		xor     ecx, 0FFFFH
+		jnz     xmmword_not_equal
+		add     ebx, 8
+		jc      epilog
+	xmmword_entry:
+		add     edx, 15
 		sub     esi, 15
 		sub     edi, 15
 		add     ebx, 15
@@ -247,7 +316,7 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		shl     ecx, 32 - PAGE_SHIFT
 		xor     edx, edx
 		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
-		jae     byte_loop                                   // jump if cross pages
+		jae     qword_check_cross_pages                     // jump if cross pages
 
 		align   16
 	xmmword_loop:

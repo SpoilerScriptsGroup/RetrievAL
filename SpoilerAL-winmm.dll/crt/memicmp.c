@@ -83,6 +83,7 @@ __declspec(naked) static int __cdecl memicmpAVX2(const void *buffer1, const void
 		jz      epilog
 		dec     ebp
 		jns     byte_loop
+
 		vmovdqa ymm4, ymmword ptr [upper]
 		vmovdqa ymm5, ymmword ptr [azrange]
 		vmovdqa ymm6, ymmword ptr [casebit]                 // bit to change
@@ -147,23 +148,12 @@ __declspec(naked) static int __cdecl memicmpAVX2(const void *buffer1, const void
 		add     ebx, 16
 		jc      epilog
 	ymmword_entry:
-		add     edx, 31
+		cmp     ebx, -31
+		jae     ymmword_last
 		sub     esi, 31
 		sub     edi, 31
 		add     ebx, 31
-		jnc     ymmword_loop
-		sub     ebx, 31
-
-		align   16
-	ymmword_loop_last:
-		mov     ecx, ebx
-		add     esi, 31
-		add     ecx, esi
-		add     edi, 31
-		shl     ecx, 32 - PAGE_SHIFT
-		xor     edx, edx
-		cmp     ecx, -31 shl (32 - PAGE_SHIFT)
-		jae     xmmword_check_cross_pages                   // jump if cross pages
+		add     edx, 31
 
 		align   16
 	ymmword_loop:
@@ -184,8 +174,16 @@ __declspec(naked) static int __cdecl memicmpAVX2(const void *buffer1, const void
 		add     ebx, 32
 		jnc     ymmword_loop
 		sub     ebx, edx
-		jb      ymmword_loop_last
-		jmp     epilog
+		jae     epilog
+		add     esi, edx
+		add     edi, edx
+		xor     edx, edx
+	ymmword_last:
+		lea     ecx, [esi + ebx]
+		shl     ecx, 32 - PAGE_SHIFT
+		cmp     ecx, -31 shl (32 - PAGE_SHIFT)
+		jb      ymmword_loop                                // jump if not cross pages
+		jmp     xmmword_check_cross_pages
 
 		align   16
 	ymmword_not_equal:
@@ -265,6 +263,7 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		jz      epilog
 		dec     ebp
 		jns     byte_loop
+
 		movdqa  xmm4, xmmword ptr [upper]
 		movdqa  xmm5, xmmword ptr [azrange]
 		movdqa  xmm6, xmmword ptr [casebit]                 // bit to change
@@ -300,23 +299,12 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		add     ebx, 8
 		jc      epilog
 	xmmword_entry:
-		add     edx, 15
+		cmp     ebx, -15
+		jae     xmmword_last
 		sub     esi, 15
 		sub     edi, 15
 		add     ebx, 15
-		jnc     xmmword_loop
-		sub     ebx, 15
-
-		align   16
-	xmmword_loop_last:
-		mov     ecx, ebx
-		add     esi, 15
-		add     ecx, esi
-		add     edi, 15
-		shl     ecx, 32 - PAGE_SHIFT
-		xor     edx, edx
-		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
-		jae     qword_check_cross_pages                     // jump if cross pages
+		add     edx, 15
 
 		align   16
 	xmmword_loop:
@@ -339,8 +327,16 @@ __declspec(naked) static int __cdecl memicmpSSE2(const void *buffer1, const void
 		add     ebx, 16
 		jnc     xmmword_loop
 		sub     ebx, edx
-		jb      xmmword_loop_last
-		jmp     epilog
+		jae     epilog
+		add     esi, edx
+		add     edi, edx
+		xor     edx, edx
+	xmmword_last:
+		lea     ecx, [esi + ebx]
+		shl     ecx, 32 - PAGE_SHIFT
+		cmp     ecx, -15 shl (32 - PAGE_SHIFT)
+		jb      xmmword_loop                                // jump if not cross pages
+		jmp     qword_check_cross_pages
 
 		align   16
 	xmmword_not_equal:

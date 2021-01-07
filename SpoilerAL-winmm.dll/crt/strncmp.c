@@ -72,6 +72,7 @@ __declspec(naked) static int __cdecl strncmpAVX2(const char *string1, const char
 		lea     ebx, [esi + ebp]
 		test    eax, 3                                      // use only eax for 'test reg, imm'
 		jnz     byte_loop
+
 		and     ebx, PAGE_SIZE - 1
 
 		align   16
@@ -228,6 +229,7 @@ __declspec(naked) static int __cdecl strncmpSSE2(const char *string1, const char
 		lea     ebx, [esi + ebp]
 		test    eax, 3                                      // use only eax for 'test reg, imm'
 		jnz     byte_loop
+
 		and     ebx, PAGE_SIZE - 1
 
 		align   16
@@ -344,6 +346,7 @@ __declspec(naked) static int __cdecl strncmp386(const char *string1, const char 
 		lea     ecx, [esi + ebx]
 		and     eax, 3
 		jnz     byte_loop
+
 		shl     ecx, 16 - PAGE_SHIFT
 
 		align   16

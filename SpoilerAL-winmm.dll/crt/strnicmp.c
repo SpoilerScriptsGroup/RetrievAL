@@ -90,6 +90,7 @@ __declspec(naked) static int __cdecl strnicmpAVX2(const char *string1, const cha
 		lea     ecx, [esi + ebx]
 		and     edx, 7
 		jnz     byte_loop
+
 		shl     ecx, 32 - PAGE_SHIFT
 		lea     edx, [edi + ebx]
 		and     edx, 31
@@ -109,15 +110,16 @@ __declspec(naked) static int __cdecl strnicmpAVX2(const char *string1, const cha
 		vpand   xmm1, xmm1, xmm6                            //
 		vpor    xmm0, xmm0, xmm2                            // negation of the 5th bit - lowercase letters
 		vpor    xmm1, xmm1, xmm3                            //
-		vpcmpeqb xmm0, xmm0, xmm1                           // compare
-		vpcmpeqb xmm2, xmm2, xmm7                           //
-		vpmovmskb edx, xmm0                                 // get one bit for each byte result
-		vpmovmskb ecx, xmm2                                 //
+		vpcmpeqb xmm2, xmm2, xmm7                           // compare
+		vpcmpeqb xmm0, xmm0, xmm1                           //
+		vpmovmskb ecx, xmm2                                 // get one bit for each byte result
+		vpmovmskb edx, xmm0                                 //
+		and     ecx, 0FFH
 		xor     edx, 0FFFFH
-		jnz     xmmword_not_equal
+		jnz     ymmword_not_equal
 		add     ebx, 8
 		jc      epilog
-		and     ecx, 0FFH
+		test    ecx, ecx
 		jnz     epilog
 		lea     ecx, [esi + ebx]
 		lea     edx, [edi + ebx]
@@ -142,7 +144,7 @@ __declspec(naked) static int __cdecl strnicmpAVX2(const char *string1, const cha
 		vpmovmskb edx, xmm0                                 // get one bit for each byte result
 		vpmovmskb ecx, xmm2                                 //
 		xor     edx, 0FFFFH
-		jnz     xmmword_not_equal
+		jnz     ymmword_not_equal
 		add     ebx, 16
 		jc      epilog
 		test    ecx, ecx
@@ -177,20 +179,6 @@ __declspec(naked) static int __cdecl strnicmpAVX2(const char *string1, const cha
 		lea     ecx, [esi + ebx]
 		shl     ecx, 32 - PAGE_SHIFT
 		jmp     ymmword_loop
-
-		align   16
-	xmmword_not_equal:
-		test    ecx, ecx
-		jz      ymmword_has_not_null
-		bsf     ecx, ecx
-		mov     eax, 0FFFFH
-		xor     ecx, 15
-		shr     eax, cl
-		and     eax, edx
-		jz      epilog
-		mov     edx, eax
-		xor     eax, eax
-		jmp     ymmword_has_not_null
 
 		align   16
 	ymmword_not_equal:
@@ -280,6 +268,7 @@ __declspec(naked) static int __cdecl strnicmpSSE2(const char *string1, const cha
 		lea     ecx, [esi + ebx]
 		and     edx, 7
 		jnz     byte_loop
+
 		shl     ecx, 32 - PAGE_SHIFT
 		lea     edx, [edi + ebx]
 		and     edx, 15
@@ -347,8 +336,8 @@ __declspec(naked) static int __cdecl strnicmpSSE2(const char *string1, const cha
 		test    ecx, ecx
 		jz      xmmword_has_not_null
 		bsf     ecx, ecx
-		mov     eax, 0FFFFH
-		xor     ecx, 15
+		or      eax, -1
+		xor     ecx, 31
 		shr     eax, cl
 		and     eax, edx
 		jz      epilog

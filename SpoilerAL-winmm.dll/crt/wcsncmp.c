@@ -71,6 +71,7 @@ __declspec(naked) static int __cdecl wcsncmpAVX2(const wchar_t *string1, const w
 		lea     ecx, [esi + ebx * 2]
 		and     edx, 14
 		jnz     word_loop
+
 		shl     ecx, 32 - PAGE_SHIFT
 		mov     edx, edi
 		and     edx, 1
@@ -243,6 +244,7 @@ __declspec(naked) static int __cdecl wcsncmpSSE2(const wchar_t *string1, const w
 		lea     ecx, [esi + ebx * 2]
 		and     edx, 14
 		jnz     word_loop
+
 		shl     ecx, 32 - PAGE_SHIFT
 		mov     edx, edi
 		and     edx, 1

@@ -89,6 +89,7 @@ __declspec(naked) static int __cdecl wcsnicmpAVX2(const wchar_t *string1, const 
 		lea     ecx, [esi + ebx * 2]
 		and     edx, 14
 		jnz     word_loop
+
 		shl     ecx, 32 - PAGE_SHIFT
 		mov     edx, edi
 		and     edx, 1
@@ -114,7 +115,7 @@ __declspec(naked) static int __cdecl wcsnicmpAVX2(const wchar_t *string1, const 
 		vpmovmskb edx, xmm0                                 // get one bit for each byte result
 		vpmovmskb ecx, xmm2                                 //
 		xor     edx, 0FFFFH
-		jnz     xmmword_not_equal
+		jnz     ymmword_not_equal
 		add     ebx, 8
 		jc      epilog
 		test    ecx, ecx
@@ -173,7 +174,7 @@ __declspec(naked) static int __cdecl wcsnicmpAVX2(const wchar_t *string1, const 
 		vpmovmskb edx, xmm0                                 // get one bit for each byte result
 		vpmovmskb ecx, xmm2                                 //
 		xor     edx, 0FFFFH
-		jnz     xmmword_not_equal
+		jnz     ymmword_not_equal
 		add     ebx, 8
 		jc      epilog
 		test    ecx, ecx
@@ -208,20 +209,6 @@ __declspec(naked) static int __cdecl wcsnicmpAVX2(const wchar_t *string1, const 
 		lea     ecx, [esi + ebx * 2]
 		shl     ecx, 32 - PAGE_SHIFT
 		jmp     unaligned_ymmword_loop
-
-		align   16
-	xmmword_not_equal:
-		test    ecx, ecx
-		jz      ymmword_has_not_null
-		bsf     ecx, ecx
-		mov     eax, 0FFFFH
-		xor     ecx, 15
-		shr     eax, cl
-		and     eax, edx
-		jz      epilog
-		mov     edx, eax
-		xor     eax, eax
-		jmp     ymmword_has_not_null
 
 		align   16
 	ymmword_not_equal:
@@ -312,6 +299,7 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 		lea     ecx, [esi + ebx * 2]
 		and     edx, 14
 		jnz     word_loop
+
 		shl     ecx, 32 - PAGE_SHIFT
 		mov     edx, edi
 		and     edx, 1
@@ -382,8 +370,8 @@ __declspec(naked) static int __cdecl wcsnicmpSSE2(const wchar_t *string1, const 
 		test    ecx, ecx
 		jz      xmmword_has_not_null
 		bsf     ecx, ecx
-		mov     eax, 0FFFFH
-		xor     ecx, 15
+		or      eax, -1
+		xor     ecx, 31
 		shr     eax, cl
 		and     eax, edx
 		jz      epilog

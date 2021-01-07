@@ -77,6 +77,7 @@ __declspec(naked) static int __cdecl wcsicmpAVX2(const wchar_t *string1, const w
 	word_loop_entry:
 		and     edx, 14
 		jnz     word_loop
+
 		lea     edx, [esi + edi]
 		mov     ecx, edi
 		and     edx, PAGE_SIZE - 1
@@ -102,7 +103,7 @@ __declspec(naked) static int __cdecl wcsicmpAVX2(const wchar_t *string1, const w
 		vpmovmskb eax, xmm0                                 // get one bit for each byte result
 		vpmovmskb ecx, xmm2                                 //
 		xor     eax, 0FFFFH
-		jnz     xmmword_not_equal
+		jnz     ymmword_not_equal
 		test    ecx, ecx
 		jnz     epilog
 		add     edx, 16
@@ -159,7 +160,7 @@ __declspec(naked) static int __cdecl wcsicmpAVX2(const wchar_t *string1, const w
 		vpmovmskb eax, xmm0                                 // get one bit for each byte result
 		vpmovmskb ecx, xmm2                                 //
 		xor     eax, 0FFFFH
-		jnz     xmmword_not_equal
+		jnz     ymmword_not_equal
 		test    ecx, ecx
 		jnz     epilog
 		add     edx, 16
@@ -192,18 +193,6 @@ __declspec(naked) static int __cdecl wcsicmpAVX2(const wchar_t *string1, const w
 		add     edi, 32
 		and     edx, PAGE_SIZE - 1
 		jmp     unaligned_ymmword_loop
-
-		align   16
-	xmmword_not_equal:
-		test    ecx, ecx
-		jz      ymmword_has_not_null
-		bsf     ecx, ecx
-		mov     edx, 0FFFFH
-		xor     ecx, 15
-		shr     edx, cl
-		and     eax, edx
-		jz      epilog
-		jmp     ymmword_has_not_null
 
 		align   16
 	ymmword_not_equal:
@@ -280,6 +269,7 @@ __declspec(naked) static int __cdecl wcsicmpSSE2(const wchar_t *string1, const w
 	word_loop_entry:
 		and     edx, 14
 		jnz     word_loop
+
 		lea     edx, [esi + edi]
 		mov     ecx, edi
 		and     edx, PAGE_SIZE - 1
@@ -349,8 +339,8 @@ __declspec(naked) static int __cdecl wcsicmpSSE2(const wchar_t *string1, const w
 		test    ecx, ecx
 		jz      xmmword_has_not_null
 		bsf     ecx, ecx
-		mov     edx, 0FFFFH
-		xor     ecx, 15
+		or      edx, -1
+		xor     ecx, 31
 		shr     edx, cl
 		and     eax, edx
 		jz      epilog

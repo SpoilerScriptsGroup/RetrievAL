@@ -77,6 +77,7 @@ __declspec(naked) static int __cdecl stricmpAVX2(const char *string1, const char
 	byte_loop_entry:
 		and     ecx, 7
 		jnz     byte_loop
+
 		lea     edx, [esi + edi]
 		mov     ecx, edi
 		and     edx, PAGE_SIZE - 1
@@ -97,13 +98,14 @@ __declspec(naked) static int __cdecl stricmpAVX2(const char *string1, const char
 		vpand   xmm1, xmm1, xmm6                            //
 		vpor    xmm0, xmm0, xmm2                            // negation of the 5th bit - lowercase letters
 		vpor    xmm1, xmm1, xmm3                            //
-		vpcmpeqb xmm0, xmm0, xmm1                           // compare
-		vpcmpeqb xmm2, xmm2, xmm7                           //
-		vpmovmskb eax, xmm0                                 // get one bit for each byte result
-		vpmovmskb ecx, xmm2                                 //
-		xor     eax, 0FFFFH
-		jnz     xmmword_not_equal
+		vpcmpeqb xmm2, xmm2, xmm7                           // compare
+		vpcmpeqb xmm0, xmm0, xmm1                           //
+		vpmovmskb ecx, xmm2                                 // get one bit for each byte result
+		vpmovmskb eax, xmm0                                 //
 		and     ecx, 0FFH
+		xor     eax, 0FFFFH
+		jnz     ymmword_not_equal
+		test    ecx, ecx
 		jnz     epilog
 		add     edi, 8
 		add     edx, 8
@@ -129,7 +131,7 @@ __declspec(naked) static int __cdecl stricmpAVX2(const char *string1, const char
 		vpmovmskb eax, xmm0                                 // get one bit for each byte result
 		vpmovmskb ecx, xmm2                                 //
 		xor     eax, 0FFFFH
-		jnz     xmmword_not_equal
+		jnz     ymmword_not_equal
 		test    ecx, ecx
 		jnz     epilog
 		add     edx, 16
@@ -162,18 +164,6 @@ __declspec(naked) static int __cdecl stricmpAVX2(const char *string1, const char
 		add     edi, 32
 		and     edx, PAGE_SIZE - 1
 		jmp     ymmword_loop
-
-		align   16
-	xmmword_not_equal:
-		test    ecx, ecx
-		jz      ymmword_has_not_null
-		bsf     ecx, ecx
-		mov     edx, 0FFFFH
-		xor     ecx, 15
-		shr     edx, cl
-		and     eax, edx
-		jz      epilog
-		jmp     ymmword_has_not_null
 
 		align   16
 	ymmword_not_equal:
@@ -250,6 +240,7 @@ __declspec(naked) static int __cdecl stricmpSSE2(const char *string1, const char
 	byte_loop_entry:
 		and     ecx, 7
 		jnz     byte_loop
+
 		lea     edx, [esi + edi]
 		mov     ecx, edi
 		and     edx, PAGE_SIZE - 1
@@ -317,8 +308,8 @@ __declspec(naked) static int __cdecl stricmpSSE2(const char *string1, const char
 		test    ecx, ecx
 		jz      xmmword_has_not_null
 		bsf     ecx, ecx
-		mov     edx, 0FFFFH
-		xor     ecx, 15
+		or      edx, -1
+		xor     ecx, 31
 		shr     edx, cl
 		and     eax, edx
 		jz      epilog

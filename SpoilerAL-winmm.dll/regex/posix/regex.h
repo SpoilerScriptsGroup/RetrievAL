@@ -633,7 +633,7 @@ extern int re_exec (const char *);
 # ifdef __restrict_arr
 #  define _Restrict_arr_ __restrict_arr
 # elif ((199901L <= __STDC_VERSION__ || 3 < __GNUC__ + (1 <= __GNUC_MINOR__)) \
-        && !defined __GNUG__)
+        && !defined __GNUG__ && !defined _MSC_VER)
 #  define _Restrict_arr_ _Restrict_
 # else
 #  define _Restrict_arr_

@@ -112,7 +112,7 @@ static BOOL __fastcall TSSGAttributeSelector_EndElementCheck_delete_attributeSet
 				discard++;
 			}
 		}
-		if (MainForm->userMode > 1)
+		if (TMainForm_GetUserMode(MainForm) > 1)
 		{
 			EXTERN_C int __fastcall GuidePrint(const char *format, ...);
 

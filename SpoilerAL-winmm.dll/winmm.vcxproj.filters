@@ -2361,7 +2361,7 @@
     <ClInclude Include="extern\bcb6_std_vector_template.h">
       <Filter>extern</Filter>
     </ClInclude>
-    <ClInclude Include="extern\rtl.h">
+    <ClInclude Include="extern\xx.h">
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\TApplication.h">

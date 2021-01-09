@@ -21,6 +21,7 @@
 #pragma comment(linker, "/nodefaultlib:libc.lib")
 #pragma comment(linker, "/nodefaultlib:libcmt.lib")
 #pragma comment(linker, "/nodefaultlib:msvcrt.lib")
+#pragma comment(linker, "/nodefaultlib:oldnames.lib")
 #endif
 
 static LPCSTR ExportNames[] = {

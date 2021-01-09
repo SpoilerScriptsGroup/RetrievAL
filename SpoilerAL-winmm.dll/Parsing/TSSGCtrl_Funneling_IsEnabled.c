@@ -11,7 +11,7 @@ __declspec(naked) bool __cdecl TSSGCtrl_Funneling_IsEnabled(TSSGCtrl *SSGC, TSSG
 	__asm
 	{
 		mov     eax, FixTheProcedure
-		test    eax, eax
+		test     al, al
 #pragma warning(suppress: 4414)
 		jz      TSSGCtrl_IsEnabled
 		ret

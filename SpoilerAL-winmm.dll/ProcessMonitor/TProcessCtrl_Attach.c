@@ -155,7 +155,7 @@ void __cdecl OnProcessDetach()
 					map *const tmpM = pair_second_aligned(node, string);
 
 					if (tmpM->_M_node_count)
-						tree_string_vecstr_erase(tmpM, tmpM->_M_header->_M_parent);
+						tree_string_vecstr_erase(tmpM, map_end(tmpM)->_M_parent);
 					node_alloc_deallocate(tmpM->_M_header
 #if !OPTIMIZE_ALLOCATOR
 										  , sizeof(bcb6_std_set_node) + sizeof(string) + sizeof(vector_string)

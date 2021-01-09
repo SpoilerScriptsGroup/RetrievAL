@@ -60,7 +60,7 @@ __declspec(naked) static int __cdecl memicmpAVX2(const void *buffer1, const void
 		add     esi, ebx                                    // esi = end of buffer1
 		add     edi, ebx                                    // edi = end of buffer2
 		xor     ebx, -1                                     // ebx = -count - 1
-		and     ebp, 15                                     // ebp = -buffer2 & 15
+		and     ebp, 7                                      // ebp = -buffer2 & 7
 		xor     eax, eax                                    // eax = 0
 		jmp     byte_loop_entry
 

@@ -1,4 +1,4 @@
-#include "rtl.h"
+#include "xx.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "TSSGSubject.h"
 #include "SSGSubjectProperty.h"

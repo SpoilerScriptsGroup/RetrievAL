@@ -1,11 +1,45 @@
 #include <windows.h>
 #include <commctrl.h>
+#include <strsafe.h>
 #include "intrinsic.h"
 #include "ErrorMessage.h"
 #include "ToolTip\ToolTip.h"
 
 EXTERN_C void __cdecl TProcessCtrl_Write_GetLastError();
 EXTERN_C void __cdecl TSSGActionListner_OnSubjectDisabled_SetErrorMessage();
+
+static __declspec(naked) int __stdcall GetExceptionObject_LoadResString(
+	HINSTANCE hInstance,
+	UINT uID,
+	LPSTR lpBuffer,
+	int cchBufferMax)
+{
+	__asm {
+		cmp  dword ptr [esp + 0x041C], 0x005C3109
+		je   GetException
+		jmp  LoadStringA
+
+	GetException:
+		mov  edx, dword ptr [esp + 0x0C]
+		push 0
+		mov  ecx, esp
+		push 0
+		mov  eax, esp
+		push STRSAFE_IGNORE_NULLS | STRSAFE_NULL_ON_FAILURE
+		push ecx
+		push eax
+		push 0x0400
+		mov  ecx, [ebp - 0x04]
+		push [ecx]EXCEPTION_RECORD32.ExceptionInformation
+		push 0x0400
+		push edx
+		call StringCchCopyNExA
+		pop  eax
+		pop  ecx
+		sub  eax, dword ptr [esp + 0x0C]
+		ret  16
+	}
+}
 
 #define MOV_ECX_EAX   (WORD )0xC88B
 #define MOV_EDX_IMM32 (BYTE )0xBA
@@ -82,6 +116,9 @@ EXTERN_C void __cdecl Attach_ShowErrorMessage()
 	*(LPBYTE )0x0052F1CF = 0x0052F1F5 - (0x0052F1CF + sizeof(BYTE));
 	*(LPWORD )0x0052F1D0 = NOP_X2;
 	*(LPBYTE )0x0052F1D2 = NOP;
+
+	// System::LoadResString
+	*(LPDWORD)(0x005D4355 + 1) = (DWORD)GetExceptionObject_LoadResString - (0x005D4355 + 1 + sizeof(DWORD));
 
 	// ::OpenProcess
 	*(LPBYTE )0x00600DE8 = JMP_REL32;

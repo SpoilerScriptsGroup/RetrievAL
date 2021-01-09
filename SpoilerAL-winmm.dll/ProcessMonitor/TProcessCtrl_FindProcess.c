@@ -1,5 +1,3 @@
-#define _CRT_NONSTDC_NO_WARNINGS
-
 #ifdef __BORLANDC__
 #define string_empty(s)             (s)->empty()
 #define string_length(s)            (s)->length()

@@ -13,10 +13,7 @@ LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARA
 LRESULT CALLBACK TMainForm_DGridProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void __cdecl InitializeWaitCursor();
 
-#include "..\SnapWindow\Attach_SnapWindow.h"
-#if SNAP_WINDOW
-#include "..\SnapWindow\SnapWindow.h"
-#endif
+#include "SnapWindow.h"
 
 extern WNDPROC TMainForm_PrevWindowProc;
 extern WNDPROC TMainForm_PrevDGridProc;
@@ -45,7 +42,7 @@ static void __fastcall ctor(TMainForm *this)
 	TMainForm_PrevDGridProc = (WNDPROC)SetWindowLongPtrA(TWinControl_GetHandle(this->DGrid), GWLP_WNDPROC, (LONG_PTR)TMainForm_DGridProc);
 	InitializeWaitCursor();
 
-#if SNAP_WINDOW
+#if SNAPWINDOW
 	AttachSnapWindow(TWinControl_GetHandle(this));
 #endif
 

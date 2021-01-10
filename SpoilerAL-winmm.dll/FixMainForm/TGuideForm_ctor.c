@@ -2,10 +2,7 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TGuideForm.h"
 #include "TWinControl.h"
-#include "..\SnapWindow\Attach_SnapWindow.h"
-#if SNAP_WINDOW
-#include "..\SnapWindow\SnapWindow.h"
-#endif
+#include "SnapWindow.h"
 
 static void __fastcall ctor(TGuideForm *this);
 
@@ -31,7 +28,7 @@ static void __fastcall ctor(TGuideForm *this)
 	hWnd = TWinControl_GetHandle(this);
 	SetWindowLongA(hWnd, GWL_STYLE, GetWindowLongA(hWnd, GWL_STYLE) & ~WS_MINIMIZEBOX);
 
-#if SNAP_WINDOW
+#if SNAPWINDOW
 	AttachSnapWindow(hWnd);
 #endif
 

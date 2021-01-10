@@ -6,8 +6,6 @@
 
 #pragma comment(lib, "ntdll.lib")
 
-extern HANDLE hHeap;
-
 //
 // RTL Debug Queries
 //

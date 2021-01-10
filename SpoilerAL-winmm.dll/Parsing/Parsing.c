@@ -183,8 +183,9 @@ EXTERN_C LPVOID __stdcall GetSectionAddress(HANDLE hProcess, HMODULE hModule, LP
 #include "SubjectProperty\SSGSubjectProperty.h"
 #endif
 extern HANDLE hHeap;
-extern HANDLE pHeap;
 #endif
+extern HANDLE hReadOnlyHeap;
+extern HANDLE hPrivateHeap;
 
 extern BOOL FixTheProcedure;
 
@@ -5082,7 +5083,7 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 		return TRUE;
 	if (lplpConstStringBuffer)
 	{
-		if (!(lpBuffer = VirtualAlloc(NULL, nSizeOfBuffer + 16, MEM_COMMIT, PAGE_READWRITE)))
+		if (!(lpBuffer = VirtualAlloc(NULL, nSizeOfBuffer, MEM_COMMIT, PAGE_READWRITE)))
 			return FALSE;
 		nRegion = 0;
 		lpFirst = *lplpConstStringBuffer = lpBuffer;
@@ -5093,7 +5094,7 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 
 		if (lpConstStringRegion)
 			VirtualProtect(lpConstStringRegion, nSizeOfConstStringRegion, PAGE_READWRITE, &dwProtect);
-		nNewSize = (nOldSize = nSizeOfConstStringRegion + 16 + PAGE_SIZE - 1) + nSizeOfBuffer;
+		nNewSize = (nOldSize = nSizeOfConstStringRegion + PAGE_SIZE - 1) + nSizeOfBuffer;
 		nOldSize &= -PAGE_SIZE;
 		nNewSize &= -PAGE_SIZE;
 		if (nOldSize != nNewSize)
@@ -5101,7 +5102,7 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 			LPBYTE lpMem;
 
 			nNewSize += PAGE_SIZE - 1;
-			if (!(lpMem = (LPBYTE)HeapReAlloc(hHeap, 0, lpReadOnlyBuffer, nNewSize)))
+			if (!(lpMem = (LPBYTE)HeapReAlloc(hReadOnlyHeap, 0, lpReadOnlyBuffer, nNewSize)))
 				goto FAILED;
 			lpConstStringRegion = (LPBYTE)((size_t)((lpReadOnlyBuffer = lpMem) + PAGE_SIZE - 1) & -PAGE_SIZE);
 		}
@@ -5109,7 +5110,7 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 	}
 	else
 	{
-		if (!(lpReadOnlyBuffer = (LPBYTE)HeapAlloc(hHeap, 0, ((nSizeOfBuffer + 16 + PAGE_SIZE - 1) & -PAGE_SIZE) + PAGE_SIZE - 1)))
+		if (!(lpReadOnlyBuffer = (LPBYTE)HeapAlloc(hReadOnlyHeap, 0, ((nSizeOfBuffer + PAGE_SIZE - 1) & -PAGE_SIZE) + PAGE_SIZE - 1)))
 			return FALSE;
 		nRegion = 0;
 		lpFirst = lpBuffer = lpConstStringRegion = (LPBYTE)((size_t)(lpReadOnlyBuffer + PAGE_SIZE - 1) & -PAGE_SIZE);
@@ -5677,7 +5678,7 @@ static LPVOID __fastcall AllocateHeapBuffer(LPVOID **lplpHeapBuffer, size_t *lpn
 			return NULL;
 		*lplpHeapBuffer = lpHeapBuffer;
 	}
-	lpBuffer = HeapAlloc(pHeap, HEAP_ZERO_MEMORY, cbSize);
+	lpBuffer = HeapAlloc(hPrivateHeap, HEAP_ZERO_MEMORY, cbSize);
 	if (!lpBuffer)
 		return NULL;
 	lpHeapBuffer[nNumberOfHeapBuffer] = lpBuffer;
@@ -7890,7 +7891,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						}
 						else
 						{
-							lpProcessMemory[i].Address = lpAddress = HeapAlloc(pHeap, HEAP_ZERO_MEMORY, allocSize);
+							lpProcessMemory[i].Address = lpAddress = HeapAlloc(hPrivateHeap, HEAP_ZERO_MEMORY, allocSize);
 						}
 						break;
 					}
@@ -8795,8 +8796,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 #endif
 							address =
 								lpProcessMemory[i].Address ?
-									HeapReAlloc(pHeap, HEAP_ZERO_MEMORY, lpProcessMemory[i].Address, allocSize) :
-									HeapAlloc(pHeap, HEAP_ZERO_MEMORY, allocSize);
+									HeapReAlloc(hPrivateHeap, HEAP_ZERO_MEMORY, lpProcessMemory[i].Address, allocSize) :
+									HeapAlloc(hPrivateHeap, HEAP_ZERO_MEMORY, allocSize);
 							if (!address)
 								break;
 						}
@@ -13123,7 +13124,7 @@ FAILED:
 	if (hProcess)
 		CloseHandle(hProcess);
 	if (TSSGCtrl_GetSSGActionListner(this) && TMainForm_GetUserMode(MainForm) >= 3 &&
-		(nNumberOfProcessMemory || nNumberOfHeapBuffer) && !HeapValidate(pHeap, 0, NULL)) {
+		(nNumberOfProcessMemory || nNumberOfHeapBuffer) && !HeapValidate(hPrivateHeap, 0, NULL)) {
 #if USE_TOOLTIP
 		extern BOOL bActive;
 		if (!bActive)
@@ -13136,7 +13137,7 @@ FAILED:
 
 		i = nNumberOfHeapBuffer;
 		while (i)
-			HeapFree(pHeap, 0, lpHeapBuffer[--i]);
+			HeapFree(hPrivateHeap, 0, lpHeapBuffer[--i]);
 		HeapFree(hHeap, 0, lpHeapBuffer);
 	}
 #if REPEAT_INDEX

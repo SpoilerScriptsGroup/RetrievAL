@@ -9,6 +9,7 @@
 #include "HintWindow\HintWindow.h"
 #include "ToolTip\ToolTip.h"
 #include "OptimizeAllocator.h"
+#include "SnapWindow.h"
 
 #pragma intrinsic(__rdtsc)
 
@@ -36,9 +37,13 @@ extern FARPROC ExportAddresses[_countof(ExportNames) - 1];
 static FARPROC ExportAddresses[_countof(ExportNames) - 1];
 #endif
 
-HANDLE         hHeap  = NULL;
-HANDLE         pHeap  = NULL;
-static HMODULE hWinMM = NULL;
+static HMODULE hWinMM          = NULL;
+HANDLE         hHeap           = NULL;
+#if SNAPWINDOW
+HANDLE         hExecutableHeap = NULL;
+#endif
+HANDLE         hReadOnlyHeap   = NULL;
+HANDLE         hPrivateHeap    = NULL;
 
 #if DISABLE_CRT
 #define DllMain _DllMainCRTStartup
@@ -157,7 +162,13 @@ static BOOL __cdecl Attach()
 		}
 		if (!(hHeap = GetProcessHeap()))
 			goto LAST_ERROR;
-		if (!(pHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 0, 0)))
+#if SNAPWINDOW
+		if (!(hExecutableHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS | HEAP_CREATE_ALIGN_16 | HEAP_CREATE_ENABLE_EXECUTE, 0, 0)))
+			goto LAST_ERROR;
+#endif
+		if (!(hReadOnlyHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS | HEAP_CREATE_ALIGN_16, 0, 0)))
+			goto LAST_ERROR;
+		if (!(hPrivateHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 0, 0)))
 			goto LAST_ERROR;
 		if (!SetThreadLocale(MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_JAPANESE_XJIS)))
 			goto LAST_ERROR;
@@ -453,23 +464,35 @@ static __inline void Detach()
 
 	if (hWinMM)
 	{
-		if (pHeap)
+#if SNAPWINDOW
+		if (hExecutableHeap)
 		{
-			PluginFinalize();
-			DestroyHintWindow();
+#endif
+			if (hReadOnlyHeap)
+			{
+				if (hPrivateHeap)
+				{
+					PluginFinalize();
+					DestroyHintWindow();
 #if USE_TOOLTIP
-			DestroyToolTip();
+					DestroyToolTip();
 #endif
 #if !defined(_WIN32_WINNT) || _WIN32_WINNT < _WIN32_WINNT_NT4
-			if (hMsImg32)
-				FreeLibrary(hMsImg32);
+					if (hMsImg32)
+						FreeLibrary(hMsImg32);
 #endif
-			if (hDwmAPI)
-				FreeLibrary(hDwmAPI);
-			if (hComCtl32)
-				FreeLibrary(hComCtl32);
-			HeapDestroy(pHeap);
+					if (hDwmAPI)
+						FreeLibrary(hDwmAPI);
+					if (hComCtl32)
+						FreeLibrary(hComCtl32);
+					HeapDestroy(hPrivateHeap);
+				}
+				HeapDestroy(hReadOnlyHeap);
+			}
+#if SNAPWINDOW
+			HeapDestroy(hExecutableHeap);
 		}
+#endif
 		FreeLibrary(hWinMM);
 	}
 }

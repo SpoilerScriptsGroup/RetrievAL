@@ -2604,9 +2604,6 @@
     <ClInclude Include="ShowErrorMessage\ErrorMessage.h">
       <Filter>ShowErrorMessage</Filter>
     </ClInclude>
-    <ClInclude Include="SnapWindow\Attach_SnapWindow.h">
-      <Filter>SnapWindow</Filter>
-    </ClInclude>
     <ClInclude Include="SnapWindow\SnapWindow.h">
       <Filter>SnapWindow</Filter>
     </ClInclude>

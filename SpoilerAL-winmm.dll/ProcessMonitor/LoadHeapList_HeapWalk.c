@@ -8,6 +8,7 @@
 #pragma comment(lib, "psapi.lib")
 
 extern HANDLE hHeap;
+extern HANDLE hExecutableHeap;
 
 typedef HANDLE(WINAPI *LPFN_CREATEREMOTETHREAD)(HANDLE, LPSECURITY_ATTRIBUTES, SIZE_T, LPTHREAD_START_ROUTINE, LPVOID, DWORD, LPDWORD);
 
@@ -25,7 +26,7 @@ __inline HMODULE InitializeKernel32Clone(OUT LPFN_CREATEREMOTETHREAD *lplpfnCrea
 		{
 			HMODULE hKernel32Clone;
 
-			hKernel32Clone = (HMODULE)VirtualAlloc(NULL, modInfo.SizeOfImage, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+			hKernel32Clone = (HMODULE)HeapAlloc(hExecutableHeap, HEAP_ZERO_MEMORY, modInfo.SizeOfImage);
 			if (hKernel32Clone)
 			{
 				size_t diff;
@@ -67,7 +68,7 @@ __inline HMODULE InitializeKernel32Clone(OUT LPFN_CREATEREMOTETHREAD *lplpfnCrea
 }
 
 #define DeleteKernel32Clone(hKernel32Clone) \
-	VirtualFree(hKernel32Clone, 0, MEM_RELEASE)
+	HeapFree(hExecutableHeap, 0, hKernel32Clone)
 
 __inline LPTHREAD_START_ROUTINE InitializeRemoteCode(IN HANDLE hProcess)
 {

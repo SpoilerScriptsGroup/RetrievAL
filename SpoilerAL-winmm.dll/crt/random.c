@@ -202,6 +202,7 @@ static void sfmt_gen_rand_all_cpu_dispatch();
 static void (*sfmt_gen_rand_all)() = sfmt_gen_rand_all_cpu_dispatch;
 #endif
 
+#if defined(_M_IX86) || defined(_M_X64)
 /**
  * parameters used by sse2.
  */
@@ -210,6 +211,7 @@ static const w128_t __declspec(align(32)) sse2_param_mask = { {
 	SFMT_MSK(1) & (UINT32_MAX >> SFMT_SR1),
 	SFMT_MSK(2) & (UINT32_MAX >> SFMT_SR1),
 	SFMT_MSK(3) & (UINT32_MAX >> SFMT_SR1) } };
+#endif
 
 #if defined(_M_X64)
 /* This function represents the recursion formula. */
@@ -908,6 +910,8 @@ __declspec(naked) void __cdecl srand(unsigned int seed)
 		js      epilog
 		mov     dword ptr [state + IDX32(PARITY_INDEX) * 4], edx
 	epilog:
+#elif defined(__BIG_ENDIAN__)
+		pop     esi
 #endif
 		ret
 

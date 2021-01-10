@@ -11,6 +11,7 @@ extern void __cdecl DeleteProcessMonitor();
 extern void __cdecl SubjectStringTable_dtor();
 
 extern HANDLE  hHeap;
+extern HANDLE  hReadOnlyHeap;
 extern WNDPROC TMainForm_PrevWindowProc;
 extern WNDPROC TMainForm_PrevDGridProc;
 extern string  ProcessAttachCode;
@@ -55,7 +56,7 @@ static void __fastcall dtor(TMainForm *this)
 
 		if (lpConstStringRegion)
 			VirtualProtect(lpConstStringRegion, nSizeOfConstStringRegion, PAGE_READWRITE, &dwProtect);
-		HeapFree(hHeap, 0, lpReadOnlyBuffer);
+		HeapFree(hReadOnlyHeap, 0, lpReadOnlyBuffer);
 		lpReadOnlyBuffer = NULL;
 		nSizeOfConstStringRegion = 0;
 		lpConstStringRegion = NULL;

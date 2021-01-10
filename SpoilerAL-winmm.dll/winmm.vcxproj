@@ -52,7 +52,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)crt\longdouble;$(ProjectDir)extern;$(ProjectDir)Verbose;$(ProjectDir)Plugin;$(ProjectDir)TranscodeMultiByte;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)SubjectStringTable;$(ProjectDir)regex;$(ProjectDir)Parsing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)crt\longdouble;$(ProjectDir)extern;$(ProjectDir)Verbose;$(ProjectDir)Plugin;$(ProjectDir)TranscodeMultiByte;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SnapWindow;$(ProjectDir)SubjectProperty;$(ProjectDir)SubjectStringTable;$(ProjectDir)regex;$(ProjectDir)Parsing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <UseStandardPreprocessor>false</UseStandardPreprocessor>
     </ClCompile>
@@ -80,7 +80,7 @@
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)crt\longdouble;$(ProjectDir)extern;$(ProjectDir)Verbose;$(ProjectDir)Plugin;$(ProjectDir)TranscodeMultiByte;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SubjectProperty;$(ProjectDir)SubjectStringTable;$(ProjectDir)regex;$(ProjectDir)Parsing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)crt\longdouble;$(ProjectDir)extern;$(ProjectDir)Verbose;$(ProjectDir)Plugin;$(ProjectDir)TranscodeMultiByte;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SnapWindow;$(ProjectDir)SubjectProperty;$(ProjectDir)SubjectStringTable;$(ProjectDir)regex;$(ProjectDir)Parsing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OmitFramePointers>true</OmitFramePointers>
       <StringPooling>true</StringPooling>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -1748,7 +1748,6 @@
     <ClInclude Include="regex\regex_msvc.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ShowErrorMessage\ErrorMessage.h" />
-    <ClInclude Include="SnapWindow\Attach_SnapWindow.h" />
     <ClInclude Include="SnapWindow\SnapWindow.h" />
     <ClInclude Include="SubjectProperty\SSGSubjectProperty.h" />
     <ClInclude Include="SubjectStringTable\SubjectStringOperator.h" />

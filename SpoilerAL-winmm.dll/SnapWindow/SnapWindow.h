@@ -7,6 +7,13 @@
 
 #include <windows.h>
 
+// referenced at "winmm.c"
+// referenced at "FixMainForm\TMainForm_ctor.c"
+// referenced at "FixMainForm\TFindNameForm_ctor.c"
+// referenced at "FixMainForm\TGuideForm_ctor.c"
+// referenced at "FixMainForm\TSearchForm_ctor.c"
+#define SNAPWINDOW 1
+
 #ifdef __cplusplus
 extern "C" {
 #endif

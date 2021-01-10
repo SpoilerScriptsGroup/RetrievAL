@@ -31,10 +31,10 @@ typedef struct {
 	BYTE      jmp;      // jmp     \                            ; 00000008 _ E9,
 	ptrdiff_t relproc;  //         WindowProc                   ; 00000009 _ ????????
 #elif defined(_M_X64)
-	WORD      mov1;     // mov     rax, WindowProc              ; 00000000 _ 48: B8,
-	WNDPROC   wndproc;  //                                      ; 00000002 _ ????????????????
-	WORD      mov2;     // mov     rcx, this                    ; 0000000A _ 48: B9,
-	LPVOID    this;     //                                      ; 0000000C _ ????????????????
+	WORD      mov1;     // mov     rax, \                       ; 00000000 _ 48: B8,
+	WNDPROC   wndproc;  //              WindowProc              ; 00000002 _ ????????????????
+	WORD      mov2;     // mov     rcx, \                       ; 0000000A _ 48: B9,
+	LPVOID    this;     //              this                    ; 0000000C _ ????????????????
 	DWORD     jmp;      // jmp     rax                          ; 00000014 _ 48: FF. E0
 #endif
 } THUNK;
@@ -95,8 +95,8 @@ static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 		#define HORZ 1
 		#define VERT 2
 
-		RECT     rect;
-		int      flags;
+		RECT rect;
+		int  flags;
 
 #if !FIXED_ARRAY
 		if (*p == this || !IsWindowVisible((*p)->hWnd) || !GetWindowRectangle((*p)->hWnd, &rect))
@@ -221,8 +221,8 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 		#define HORZ 1
 		#define VERT 2
 
-		RECT     rect;
-		int      flags;
+		RECT rect;
+		int  flags;
 
 #if !FIXED_ARRAY
 		if (*p == this || !IsWindowVisible((*p)->hWnd) || !GetWindowRectangle((*p)->hWnd, &rect))

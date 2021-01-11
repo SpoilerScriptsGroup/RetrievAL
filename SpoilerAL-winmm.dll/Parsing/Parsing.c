@@ -5086,8 +5086,6 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 
 		if (!CheckStringOperand(lpMarkup, &nPrefixLength))
 			continue;
-		if ((lpMarkup->Type & OS_DEBUG) && TMainForm_GetUserMode(MainForm) < 2)
-			continue;
 
 		// assert(1 == strlen(  "\""));
 		// assert(2 == strlen( "u\""));
@@ -5149,8 +5147,6 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 		LPCSTR lpMultiByteStr;
 
 		if (!CheckStringOperand(lpMarkup, &nPrefixLength))
-			continue;
-		if ((lpMarkup->Type & OS_DEBUG) && TMainForm_GetUserMode(MainForm) < 2)
 			continue;
 		lpMarkup->UnescapedString = nRegion + (p - lpFirst);
 		lpMultiByteStr = lpMarkup->String + nPrefixLength + 1;
@@ -5518,8 +5514,6 @@ static MARKUP ** __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOf
 	NEST_PUSH(0);
 	for (lpMarkup = lpMarkupArray, lpEndOfMarkup = lpMarkupArray + nNumberOfMarkup; lpMarkup < lpEndOfMarkup; lpMarkup++)
 	{
-		if ((lpMarkup->Type & OS_DEBUG) && TMainForm_GetUserMode(MainForm) < 2)
-			continue;
 		if (lpMarkup->Type & (OS_CLOSE | OS_SPLIT | OS_DELIMITER | OS_LEFT_ASSIGN | OS_TERNARY))
 		{
 			if (lpMarkup->Type & (OS_CLOSE | OS_TERNARY))
@@ -6230,7 +6224,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		LPVOID       lpAddress;
 		size_t       nSize;
 		MARKUP       *lpNext;
-		enum OPT     uFlags = 0;
+		enum OPT     uFlags;
 		FARPROC      lpFunction;
 		HANDLE       *lpStrtokProcess;
 		LPVOID       *lpStrtokContext;
@@ -6245,7 +6239,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		WORD         wCharTypeMask;
 		size_t(__cdecl *lpStrlen)(const void *);
 
-		lpMarkup = *lpPostfix;
+		if (((lpMarkup = *lpPostfix)->Type & OS_DEBUG) && TMainForm_GetUserMode(MainForm) < 2)
+			continue;
+		uFlags = 0;
 		switch (lpMarkup->Tag)
 		{
 		case TAG_IF:

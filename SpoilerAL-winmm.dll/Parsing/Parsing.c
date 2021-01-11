@@ -6241,7 +6241,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 
 		if (((lpMarkup = *lpPostfix)->Type & OS_DEBUG) && TMainForm_GetUserMode(MainForm) < 2)
 			continue;
-		uFlags = 0;
 		switch (lpMarkup->Tag)
 		{
 		case TAG_IF:

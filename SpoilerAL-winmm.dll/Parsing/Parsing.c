@@ -210,6 +210,7 @@ enum OS
 	OS_LOOP_END      = 0x00004000,
 	OS_PASS_OPERAND  = 0x00008000,
 	OS_STRING        = 0x00010000,
+	OS_DEBUG         = 0x00020000,
 };
 
 /*
@@ -237,15 +238,14 @@ enum OS
  127 switch                                                      OS_PUSH | OS_HAS_EXPR
  127 case                                                        OS_PUSH
  127 default                                                     OS_PUSH
+ 127 parse_int       parse_real      parse_reset                 OS_PUSH
   64 (                                                           OS_OPEN | OS_PARENTHESIS
   64 [_                                                          OS_OPEN
   64 [.                                                          OS_OPEN
   64 [~                                                          OS_OPEN
   64 [:                                                          OS_OPEN
   64 ++ --                                                       OS_PUSH | OS_MONADIC | OS_POST 後置インクリメント 後置デクリメント
-  60                                                             OS_PUSH | OS_MONADIC
-  60 parse_int       parse_real      parse_reset                 OS_PUSH | OS_MONADIC
-     MName
+  60 MName                                                       OS_PUSH | OS_MONADIC
      ProcessId
      HNumber
      Memory
@@ -267,6 +267,7 @@ enum OS
      A2U             A2W
      U2A             U2W
      W2A             W2U
+     assert
      wait
      sleep
 #if ALLOCATE_SUPPORT
@@ -462,6 +463,7 @@ typedef enum {
 	TAG_U2W              ,  //  60 U2W             OS_PUSH | OS_MONADIC
 	TAG_W2A              ,  //  60 W2A             OS_PUSH | OS_MONADIC
 	TAG_W2U              ,  //  60 W2U             OS_PUSH | OS_MONADIC
+	TAG_ASSERT           ,  //  60 assert          OS_PUSH | OS_MONADIC
 	TAG_WAIT             ,  //  60 wait            OS_PUSH | OS_MONADIC
 	TAG_SLEEP            ,  //  60 sleep           OS_PUSH | OS_MONADIC
 #if ALLOCATE_SUPPORT
@@ -859,6 +861,7 @@ typedef enum {
 	                                    // U2W             OS_PUSH | OS_MONADIC
 	                                    // W2A             OS_PUSH | OS_MONADIC
 	                                    // W2U             OS_PUSH | OS_MONADIC
+	                                    // assert          OS_PUSH | OS_MONADIC
 	                                    // wait            OS_PUSH | OS_MONADIC
 	                                    // sleep           OS_PUSH | OS_MONADIC
 #if ALLOCATE_SUPPORT
@@ -869,6 +872,7 @@ typedef enum {
 	                                    // wtoi            OS_PUSH | OS_MONADIC
 	                                    // atof            OS_PUSH | OS_MONADIC
 	                                    // wtof            OS_PUSH | OS_MONADIC
+	                                    // tick            OS_PUSH | OS_MONADIC
 	                                    // rand32          OS_PUSH | OS_MONADIC
 	                                    // rand64          OS_PUSH | OS_MONADIC
 	                                    // min             OS_PUSH | OS_MONADIC
@@ -1162,8 +1166,10 @@ typedef struct _MARKUP {
 			struct _MARKUP  **TruePart;
 			struct _MARKUP  **FalsePart;
 		};
-		struct _MARKUP      **Jump;
-		struct _MARKUP      *Close;
+		struct {
+			struct _MARKUP  **Jump;
+			struct _MARKUP  *Close;
+		};
 		struct {
 			size_t          NumberOfOperand;
 #if USE_PLUGIN
@@ -2325,26 +2331,32 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			bNextIsSeparatedLeft = TRUE;
 			APPEND_TAG_WITH_CONTINUE(TAG_ADDR_ADJUST, 2, PRIORITY_ADDR_ADJUST, OS_PUSH | OS_CLOSE);
 		case 'a':
-			// "alloca", "and", "atoi", "atof"
+			// "alloca", "and", "assert", "atoi", "atof"
 			if (!bIsSeparatedLeft)
 				break;
-			switch (*(uint16_t *)(p + 1))
+			switch (p[1])
 			{
-			case BSWAP16('ll'):
+			case 'l':
 				if (*(uint32_t *)(p + 2) != BSWAP32('loca'))
 					break;
 				APPEND_FUNCTION_SINGLE_PARAM(TAG_ALLOCA, 6);
-			case BSWAP16('nd'):
+			case 'n':
+				if (p[2] != 'd')
+					break;
 				iTag = TAG_AND;
 				nLength = 3;
 				bPriority = PRIORITY_AND;
 				goto APPEND_RET_OPERAND_OPERATOR;
-			case BSWAP16('to'):
-				switch (p[3])
+			case 's':
+				if (*(uint32_t *)(p + 2) != BSWAP32('sert'))
+					break;
+				APPEND_FUNCTION_SINGLE_PARAM(TAG_ASSERT, 6);
+			case 't':
+				switch (*(uint16_t *)(p + 2))
 				{
-				case 'i':
+				case BSWAP16('oi'):
 					APPEND_FUNCTION_SINGLE_PARAM(TAG_ATOI, 4);
-				case 'f':
+				case BSWAP16('of'):
 					APPEND_FUNCTION_SINGLE_PARAM(TAG_ATOF, 4);
 				}
 				break;
@@ -4540,6 +4552,20 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				if (CorrectFunction(lpMarkup, lpEndOfMarkup, 0))
 					continue;
 				break;
+			case TAG_ASSERT:          // assert
+				{
+					MARKUP *lpBegin, *lpEnd;
+
+					lpMarkup->Type |= OS_DEBUG;
+					if ((lpBegin = lpMarkup + 1) >= lpEndOfMarkup)
+						break;
+					if ((lpEnd = FindEndOfStructuredStatement(lpBegin, lpEndOfMarkup)) >= lpEndOfMarkup)
+						break;
+					lpMarkup->Close = lpEnd;
+					for (MARKUP *lpElement = lpBegin; lpElement <= lpEnd; lpElement++)
+						lpElement->Type |= OS_DEBUG;
+				}
+				/* FALLTHROUGH */
 			case TAG_MNAME:           // MName
 			case TAG_PROCESSID:       // ProcessId
 			case TAG_HNUMBER:         // HNumber
@@ -4672,9 +4698,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					while (lpParam->Tag == TAG_PARENTHESIS_OPEN);
 					lpMarkup->Param = lpParam;
 					lpMarkup->NumberOfOperand = 1;
-					continue;
 				}
-				break;
+				continue;
 			case TAG_ISBADREADPTR:    // IsBadReadPtr
 			case TAG_ISBADWRITEPTR:   // IsBadWritePtr
 			case TAG_ISBADSTRINGPTRA: // IsBadStringPtrA
@@ -5061,6 +5086,8 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 
 		if (!CheckStringOperand(lpMarkup, &nPrefixLength))
 			continue;
+		if ((lpMarkup->Type & OS_DEBUG) && TMainForm_GetUserMode(MainForm) < 2)
+			continue;
 
 		// assert(1 == strlen(  "\""));
 		// assert(2 == strlen( "u\""));
@@ -5122,6 +5149,8 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 		LPCSTR lpMultiByteStr;
 
 		if (!CheckStringOperand(lpMarkup, &nPrefixLength))
+			continue;
+		if ((lpMarkup->Type & OS_DEBUG) && TMainForm_GetUserMode(MainForm) < 2)
 			continue;
 		lpMarkup->UnescapedString = nRegion + (p - lpFirst);
 		lpMultiByteStr = lpMarkup->String + nPrefixLength + 1;
@@ -5489,6 +5518,8 @@ static MARKUP ** __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOf
 	NEST_PUSH(0);
 	for (lpMarkup = lpMarkupArray, lpEndOfMarkup = lpMarkupArray + nNumberOfMarkup; lpMarkup < lpEndOfMarkup; lpMarkup++)
 	{
+		if ((lpMarkup->Type & OS_DEBUG) && TMainForm_GetUserMode(MainForm) < 2)
+			continue;
 		if (lpMarkup->Type & (OS_CLOSE | OS_SPLIT | OS_DELIMITER | OS_LEFT_ASSIGN | OS_TERNARY))
 		{
 			if (lpMarkup->Type & (OS_CLOSE | OS_TERNARY))
@@ -8643,6 +8674,52 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				break;
 
 				#undef lpBuffer
+			}
+			break;
+		case TAG_ASSERT:
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				goto PARSING_ERROR;
+			lpEndOfOperand = lpOperandTop + 1;
+			if (IsInteger ? !lpOperandTop->Quad : !lpOperandTop->Real)
+			{
+				#define lpApplicationName (LPCSTR)0x006020C4
+
+				char   text[1024], *first, *last, *buffer;
+				size_t length, size;
+
+				last = first = NULL;
+				if (lpMarkup->Close && lpMarkup->Close - 1 >= lpMarkup + 2)
+				{
+					first = lpMarkup[2].String;
+					last = lpMarkup->Close[-1].String + lpMarkup->Close[-1].Length;
+				}
+				_snprintf(text, _countof(text),
+					"Debug Assertion Failed!\n"
+					"\n"
+					"SSG File: %s\n"
+					"Expression: %.*s\n"
+					"Code position: %u / %u bytes",
+					string_c_str(&MainForm->selectScript.filePath),
+					last - first, first,
+					lpMarkup->String - lpszSrc, strlen(lpszSrc));
+				TMainForm_Guide(text, 0);
+				if (buffer = (char *)HeapAlloc(hHeap, 0, size = (length = lpMarkup->String - lpszSrc) + 16))
+				{
+					_snprintf(buffer, size, "Previous code: %.*s", length, lpszSrc);
+					TMainForm_Guide(buffer, 0);
+					HeapFree(hHeap, 0, buffer);
+				}
+				switch (MessageBoxA(TWinControl_GetHandle(MainForm), text, lpApplicationName, MB_ABORTRETRYIGNORE | MB_ICONSTOP))
+				{
+				case IDABORT:
+					ExitProcess(0);
+					break;
+				case IDRETRY:
+					qwResult = InternalParsing(this, SSGS, Src, bInitialIsInteger, ArgPtr);
+					goto RELEASE;
+				}
+
+				#undef lpApplicationName
 			}
 			break;
 		case TAG_WAIT:
@@ -13131,6 +13208,7 @@ FAILED:
 			ShowToolTip("Failed to HeapValidate.", (HICON)TTI_ERROR);
 #endif
 	}
+RELEASE:
 	if (lpHeapBuffer)
 	{
 		size_t i;

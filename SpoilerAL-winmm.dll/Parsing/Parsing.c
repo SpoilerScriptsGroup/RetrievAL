@@ -6306,7 +6306,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						lpPostfix = lpMarkup->FalsePart = lpNext->FalsePart;
 					else// make allowances for come here by go-to LABEL
 					{
-						lpPostfix = !lpMarkup->Next->FalsePart ? lpPostfixBuffer : lpMarkup->Next->FalsePart;
+						lpPostfix = !lpMarkup->Next->Jump ? lpPostfixBuffer : lpMarkup->Next->Jump;
 						while (++lpPostfix < lpEndOfPostfix && *lpPostfix != lpNext);
 						lpMarkup->FalsePart = lpNext->FalsePart = lpPostfix;
 					}
@@ -6333,7 +6333,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				size_t nCount = 0;
 
 				lpBuffer = NULL;
-				(lpNext = lpMarkup)->FalsePart = lpPostfix;
+				(lpNext = lpMarkup)->Jump = lpPostfix;
 				lpMarkup = lpNext->Close;// for error
 				mbstok_context = !bCached ? lpConstStringBuffer : lpConstStringRegion;
 
@@ -7238,7 +7238,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				goto PARSING_ERROR;
 			continue;
 		case TAG_INDIRECTION:
-			nSize = !FixTheProcedure ? sizeof(LPVOID) : IsInteger ? sizeof(DWORD) : sizeof(double);
+			nSize = sizeof(DWORD) << (FixTheProcedure && !IsInteger);
 			goto PROCESS_MEMORY;
 		case TAG_REMOTE1:
 		case TAG_REMOTE2:
@@ -7298,20 +7298,29 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				}
 				switch (lpMarkup->Tag)
 				{
-#ifndef _WIN64
+				case TAG_REMOTE1:
+				case TAG_REMOTE2:
+				case TAG_REMOTE3:
+					if (lpOperandTop->IsQuad = !IsInteger)
+						goto PARSING_ERROR;
+					break;
 				case TAG_INDIRECTION:
 					if (FixTheProcedure)
 					{
 						lpOperandTop->IsQuad = nSize > sizeof(DWORD);
 						break;
 					}
-#endif
-				case TAG_REMOTE1:
-				case TAG_REMOTE2:
-				case TAG_REMOTE3:
+					/* FALLTHROUGH */
 				case TAG_REMOTE4:
 					if (lpOperandTop->IsQuad = !IsInteger)
 						lpOperandTop->Real = lpOperandTop->Float;
+					break;
+				case TAG_REMOTE5:
+				case TAG_REMOTE6:
+				case TAG_REMOTE7:
+					lpOperandTop->IsQuad = TRUE;
+					if (!IsInteger)
+						goto PARSING_ERROR;
 					break;
 				case TAG_REMOTE_INTEGER1:
 				case TAG_REMOTE_INTEGER2:
@@ -7375,9 +7384,28 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				qw = lpOperandTop->Quad;
 				switch (lpMarkup->Tag)
 				{
+				case TAG_REMOTE1:
+				case TAG_REMOTE2:
+				case TAG_REMOTE3:
+				case TAG_REMOTE5:
+				case TAG_REMOTE6:
+				case TAG_REMOTE7:
+					if (!IsInteger)
+						goto PARSING_ERROR;
+					break;
 				case TAG_INDIRECTION:
 					if (FixTheProcedure)
+					{
 						nSize = sizeof(DWORD) << lpOperandTop->IsQuad;
+						break;
+					}
+					/* FALLTHROUGH */
+				case TAG_REMOTE4:
+					if (IsInteger) break;
+					/* FALLTHROUGH */
+				case TAG_REMOTE_FLOAT4:
+					if (lpOperandTop->IsQuad)
+						*(float *)&qw = (float)*(double *)&qw;
 					break;
 				case TAG_REMOTE_INTEGER1:
 				case TAG_REMOTE_INTEGER2:
@@ -7399,10 +7427,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				case TAG_REMOTE_REAL8:
 					if (IsInteger)
 						*(double *)&qw = (double)qw;
-					break;
-				case TAG_REMOTE_FLOAT4:
-					if (!IsInteger)
-						*(float *)&qw = (float)*(double *)&qw;
 					break;
 				}
 				if (!WriteProcessMemory(hProcess, lpAddress, &qw, nSize, NULL))
@@ -7504,9 +7528,19 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					case TAG_LOCAL1:
 					case TAG_LOCAL2:
 					case TAG_LOCAL3:
+						if (lpOperandTop->IsQuad = !IsInteger)
+							goto PARSING_ERROR;
+						break;
 					case TAG_LOCAL4:
 						if (lpOperandTop->IsQuad = !IsInteger)
 							lpOperandTop->Real = lpOperandTop->Float;
+						break;
+					case TAG_LOCAL5:
+					case TAG_LOCAL6:
+					case TAG_LOCAL7:
+						lpOperandTop->IsQuad = TRUE;
+						if (!IsInteger)
+							goto PARSING_ERROR;
 						break;
 					case TAG_LOCAL_INTEGER1:
 					case TAG_LOCAL_INTEGER2:
@@ -7577,6 +7611,22 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				qw = lpOperandTop->Quad;
 				switch (lpMarkup->Tag)
 				{
+				case TAG_LOCAL1:
+				case TAG_LOCAL2:
+				case TAG_LOCAL3:
+				case TAG_LOCAL5:
+				case TAG_LOCAL6:
+				case TAG_LOCAL7:
+					if (!IsInteger)
+						goto PARSING_ERROR;
+					break;
+				case TAG_LOCAL4:
+					if (IsInteger) break;
+					/* FALLTHROUGH */
+				case TAG_LOCAL_FLOAT4:
+					if (lpOperandTop->IsQuad)
+						*(float *)&qw = (float)*(double *)&qw;
+					break;
 				case TAG_LOCAL_INTEGER1:
 				case TAG_LOCAL_INTEGER2:
 				case TAG_LOCAL_INTEGER3:
@@ -7597,10 +7647,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				case TAG_LOCAL_REAL8:
 					if (IsInteger)
 						*(double *)&qw = (double)qw;
-					/* FALLTHROUGH */
-				case TAG_LOCAL_FLOAT4:
-					if (!IsInteger)
-						*(float *)&qw = (float)*(double *)&qw;
 					break;
 				}
 				switch (nSize)
@@ -8677,10 +8723,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			lpEndOfOperand = lpOperandTop + 1;
 			if (IsInteger ? !lpOperandTop->Quad : !lpOperandTop->Real)
 			{
+				#define buffer1 ((LPSTR)lpBuffer1)
+				#define buffer2 ((LPSTR)lpBuffer2)
 				#define lpApplicationName (LPCSTR)0x006020C4
 
-				char   text[1024], *first, *last, *buffer;
+				char   *first, *last;
 				size_t length, size;
+				int    result;
 
 				last = first = NULL;
 				if (lpMarkup->Close && lpMarkup->Close - 1 >= lpMarkup + 2)
@@ -8688,23 +8737,28 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					first = lpMarkup[2].String;
 					last = lpMarkup->Close[-1].String + lpMarkup->Close[-1].Length;
 				}
-				_snprintf(text, _countof(text),
+				size = string_length(&MainForm->selectScript.filePath) + (length = last - first) + 94;
+				if (!(buffer1 = (char *)HeapAlloc(hHeap, 0, size)))
+					goto ALLOC_ERROR;
+				_snprintf(buffer1, size,
 					"Debug Assertion Failed!\n"
 					"\n"
 					"SSG File: %s\n"
 					"Expression: %.*s\n"
 					"Code position: %u / %u bytes",
 					string_c_str(&MainForm->selectScript.filePath),
-					last - first, first,
+					length, first,
 					lpMarkup->String - lpszSrc, strlen(lpszSrc));
-				TMainForm_Guide(text, 0);
-				if (buffer = (char *)HeapAlloc(hHeap, 0, size = (length = lpMarkup->String - lpszSrc) + 16))
-				{
-					_snprintf(buffer, size, "Previous code: %.*s", length, lpszSrc);
-					TMainForm_Guide(buffer, 0);
-					HeapFree(hHeap, 0, buffer);
-				}
-				switch (MessageBoxA(TWinControl_GetHandle(MainForm), text, lpApplicationName, MB_ABORTRETRYIGNORE | MB_ICONSTOP))
+				TMainForm_Guide(buffer1, 0);
+				size = (length = lpMarkup->String - lpszSrc) + 16;
+				if (!(buffer2 = (char *)HeapAlloc(hHeap, 0, size)))
+					goto ALLOC_ERROR_FREE1;
+				_snprintf(buffer2, size, "Previous code: %.*s", length, lpszSrc);
+				TMainForm_Guide(buffer2, 0);
+				HeapFree(hHeap, 0, buffer2);
+				result = MessageBoxA(TWinControl_GetHandle(MainForm), buffer1, lpApplicationName, MB_ABORTRETRYIGNORE | MB_ICONSTOP);
+				HeapFree(hHeap, 0, buffer1);
+				switch (result)
 				{
 				case IDABORT:
 					ExitProcess(0);
@@ -8714,6 +8768,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					goto RELEASE;
 				}
 
+				#undef buffer1
+				#undef buffer2
 				#undef lpApplicationName
 			}
 			break;

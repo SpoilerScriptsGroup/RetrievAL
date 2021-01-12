@@ -387,7 +387,7 @@ __declspec(naked) static void __cdecl sfmt_gen_rand_all_avx2()
 		vpxor   ymm0, ymm0, ymm2
 		vpsrldq ymm3, ymm4, SFMT_SR2
 		vpxor   ymm1, ymm0, ymm3
-		vperm2f128 ymm0, ymm4, ymm1, 21H
+		vperm2i128 ymm0, ymm4, ymm1, 21H
 		vpslld  ymm0, ymm0, SFMT_SL1
 		vpxor   ymm4, ymm0, ymm1
 		vmovdqa ymmword ptr [state + IDX128(SFMT_N) * 16 + eax], ymm4

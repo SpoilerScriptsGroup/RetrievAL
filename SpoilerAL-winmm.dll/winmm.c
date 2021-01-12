@@ -446,6 +446,9 @@ static __inline BOOL ModifyResourceSection()
 	// "所得" -> "取得"
 	*(LPWORD)0x006673D6 = BSWAP16(0xD653);
 
+	// TProcessAddForm::Panel_T.Caption
+	__movsw((wchar_t *)0x0066795D, L"PID等、プロセス記述子を", 13);
+
 	// TProcessAddForm::Panel_T.ReLoadBtn.Caption
 	// "所得" -> "取得"
 	*(LPWORD)0x00667A9C = BSWAP16(0xD653);

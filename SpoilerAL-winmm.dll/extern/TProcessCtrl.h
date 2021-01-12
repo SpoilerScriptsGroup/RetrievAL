@@ -1,25 +1,26 @@
 #pragma once
 
 #include <windows.h>
-#include "tlhelp32fix.h"
-#include "bcb6_std_vector_string.h"
-#include "THeapListData.h"
 #include "TStringDivision.h"
+#include "THeapListData.h"
+#define typename MODULEENTRY32A
+#include "bcb6_std_vector_template.h"
+#undef  typename
 
 typedef struct
 {
-	TStringDivision               strD;
-	bcb6_std_string               attachedProcessName;
-	bcb6_std_vector_string        processNameVec;
-	PROCESSENTRY32A               entry;
-	bcb6_std_vector_THeapListData heapList;
-	bcb6_std_vector               moduleList;
-	bcb6_std_vector               threadList;
+	TStringDivision                strD;
+	bcb6_std_string                attachedProcessName;
+	bcb6_std_vector_string         processNameVec;
+	PROCESSENTRY32A                entry;
+	bcb6_std_vector_THeapListData  heapList;
+	bcb6_std_vector_MODULEENTRY32A moduleList;
+	bcb6_std_vector                threadList;
 } TProcessCtrl;
 
 EXTERN_C void(__cdecl * const TProcessCtrl_Clear)(TProcessCtrl *this);
 EXTERN_C void(__cdecl * const TProcessCtrl_LoadHeapList)(TProcessCtrl *this);
-EXTERN_C void(__cdecl * const TProcessCtrl_LoadModuleList)(TProcessCtrl *this);
+EXTERN_C void __cdecl TProcessCtrl_LoadModuleList(TProcessCtrl *this);
 EXTERN_C THeapListData *(__cdecl * const TProcessCtrl_GetHeapList)(TProcessCtrl *this, unsigned long ListNo);
 
 EXTERN_C BOOLEAN __cdecl TProcessCtrl_AttachByProcessName(TProcessCtrl *this, bcb6_std_string ProcessName);

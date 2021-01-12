@@ -3,18 +3,10 @@
 #define USING_NAMESPACE_BCB6_STD
 #endif
 #include "TProcessCtrl.h"
-#include "tlhelp32fix.h"
 #define PSAPI_VERSION 1
 #include <psapi.h>
 #pragma comment(lib, "psapi.lib")
 #include "intrinsic.h"
-
-#ifdef _MSC_VER
-#define USING_NAMESPACE_BCB6_STD
-#include "bcb6_std_vector.h"
-#define typename MODULEENTRY32A
-#include "bcb6_std_vector_template.h"
-#endif
 
 #if defined(__BORLANDC__)
 static void __fastcall InternalAddEntryModule(vector<MODULEENTRY32A> *moduleList, DWORD th32ProcessID);

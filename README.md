@@ -37,8 +37,8 @@ SpoilerAL 6.1 修正パッチ
 
 ## システム要件
 
-	Microsoft Windows 2000 か、それ以降のオペレーティングシステム
-	Intel Pentium III か、それ以降のＣＰＵ
+	Microsoft Windows XP with SP2 か、それ以降のオペレーティングシステム
+	Intel Pentium 4 か、それ以降の SSE2 をサポートするＣＰＵ
 
 
 ## winmm.dll をロードしてない場合

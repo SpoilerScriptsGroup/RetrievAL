@@ -1,6 +1,10 @@
 #include <windows.h>
 #include <winternl.h>
 
+#define _WIN32_DCOM
+#include <WbemIdl.h>
+#pragma comment(lib, "wbemuuid.lib")
+
 #include <stdlib.h>
 #ifndef _countof
 #define _countof(_Array) (sizeof(_Array) / sizeof((_Array)[0]))
@@ -39,6 +43,7 @@
 #include "GetFileTitlePointer.h"
 #include "ProcessContainsModule.h"
 #include "FindWindowContainsModule.h"
+#include "TMainForm.h"
 
 #pragma warning(disable:4996)
 
@@ -92,7 +97,10 @@ void __cdecl StopProcessMonitor()
 	}
 	LeaveCriticalSection(&cs);
 	if (hThread)
+	{
+		QueueUserAPC(SetLastError, hThread, 0);
 		WaitForSingleObject(hThread, INFINITE);
+	}
 }
 
 static BOOL __cdecl EnumProcessId()
@@ -190,8 +198,159 @@ FAILED1:
 	return FALSE;
 }
 
+struct EventSink
+{
+	const IWbemObjectSink super;
+	volatile LONG m_lRef;
+	volatile BOOL bDone;
+};
+
+static HRESULT STDMETHODCALLTYPE QueryInterface(
+	__RPC__in IWbemObjectSink * This,
+	/* [in] */ __RPC__in REFIID riid,
+	/* [annotation][iid_is][out] */
+	_COM_Outptr_  void **ppvObject)
+{
+	if (InlineIsEqualGUID(riid, &IID_IUnknown) || InlineIsEqualGUID(riid, &IID_IWbemObjectSink))
+	{
+		*ppvObject = This;
+		This->lpVtbl->AddRef(This);
+		return WBEM_S_NO_ERROR;
+	}
+	return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE AddRef( 
+	__RPC__in IWbemObjectSink * This)
+{
+	return _InterlockedIncrement(&((struct EventSink*)This)->m_lRef);
+}
+
+static ULONG STDMETHODCALLTYPE Release( 
+	__RPC__in IWbemObjectSink * This)
+{
+	return _InterlockedDecrement(&((struct EventSink*)This)->m_lRef);
+}
+
+static HRESULT STDMETHODCALLTYPE Indicate( 
+	__RPC__in IWbemObjectSink * This,
+	/* [in] */ long lObjectCount,
+	/* [size_is][in] */ __RPC__in_ecount_full(lObjectCount) IWbemClassObject **apObjArray)
+{
+	if (hMonitorThread)
+	{
+		EnterCriticalSection(&cs);
+		EnumProcessId();
+		LeaveCriticalSection(&cs);
+	}
+	return WBEM_S_NO_ERROR;
+}
+
+static HRESULT STDMETHODCALLTYPE SetStatus(
+	__RPC__in IWbemObjectSink * This,
+	/* [in] */ long lFlags,
+	/* [in] */ HRESULT hResult,
+	/* [unique][in] */ __RPC__in_opt BSTR strParam,
+	/* [unique][in] */ __RPC__in_opt IWbemClassObject *pObjParam)
+{
+	if(lFlags == WBEM_STATUS_COMPLETE)
+		_InterlockedExchange(&((struct EventSink*)This)->bDone, TRUE);
+	return WBEM_S_NO_ERROR;
+}
+
+static IWbemObjectSinkVtbl SinkVtbl = {
+	QueryInterface,
+	AddRef,
+	Release,
+	Indicate,
+	SetStatus
+};
+
 static DWORD WINAPI ProcessMonitor(LPVOID lpParameter)
 {
+#if 1
+	if (SUCCEEDED(CoInitializeEx(0, COINIT_MULTITHREADED)))
+	{
+		IWbemLocator *pLoc = NULL;
+		if (SUCCEEDED(CoInitializeSecurity(
+			NULL,
+			-1,                          // COM negotiates service
+			NULL,                        // Authentication services
+			NULL,                        // Reserved
+			RPC_C_AUTHN_LEVEL_DEFAULT,   // Default authentication 
+			RPC_C_IMP_LEVEL_IMPERSONATE, // Default Impersonation  
+			NULL,                        // Authentication info
+			EOAC_NONE,                   // Additional capabilities 
+			NULL                         // Reserved
+		)) && SUCCEEDED(CoCreateInstance(
+			&CLSID_WbemLocator,
+			0,
+			CLSCTX_INPROC_SERVER,
+			&IID_IWbemLocator,
+			&pLoc
+		)))
+		{
+			IWbemServices *pSvc = NULL;
+			if (SUCCEEDED(pLoc->lpVtbl->ConnectServer(
+				pLoc,
+				OLESTR("ROOT/CIMV2"),
+				NULL,
+				NULL,
+				NULL,
+				0,
+				NULL,
+				NULL,
+				&pSvc
+			)))
+			{
+				struct EventSink Create = { &SinkVtbl, 0, FALSE };
+				struct EventSink Delete = { &SinkVtbl, 0, FALSE };
+				Create.super.lpVtbl->AddRef((void *)&Create);
+				Delete.super.lpVtbl->AddRef((void *)&Create);
+				if (SUCCEEDED(CoSetProxyBlanket(
+					(void *)pSvc,                // Indicates the proxy to set
+					RPC_C_AUTHN_WINNT,           // RPC_C_AUTHN_xxx 
+					RPC_C_AUTHZ_NONE,            // RPC_C_AUTHZ_xxx 
+					NULL,                        // Server principal name 
+					RPC_C_AUTHN_LEVEL_CALL,      // RPC_C_AUTHN_LEVEL_xxx 
+					RPC_C_IMP_LEVEL_IMPERSONATE, // RPC_C_IMP_LEVEL_xxx
+					NULL,                        // client identity
+					EOAC_NONE                    // proxy capabilities 
+				)) && SUCCEEDED(pSvc->lpVtbl->ExecNotificationQueryAsync(
+					pSvc,
+					OLESTR("WQL"),
+					OLESTR("SELECT * "
+						   " FROM __InstanceCreationEvent"
+						   " WITHIN 1"
+						   " WHERE TargetInstance ISA 'Win32_Process'"
+					),
+					WBEM_FLAG_SEND_STATUS,
+					NULL,
+					(void *)&Create
+				)) && SUCCEEDED(pSvc->lpVtbl->ExecNotificationQueryAsync(
+					pSvc,
+					OLESTR("WQL"),
+					OLESTR("SELECT * "
+						   " FROM __InstanceDeletionEvent"
+						   " WITHIN 1"
+						   " WHERE TargetInstance ISA 'Win32_Process'"
+					),
+					WBEM_FLAG_SEND_STATUS,
+					NULL,
+					(void *)&Delete
+				)))
+				{
+					SleepEx(INFINITE, TRUE);
+					pSvc->lpVtbl->CancelAsyncCall(pSvc, (void *)&Delete);
+					pSvc->lpVtbl->CancelAsyncCall(pSvc, (void *)&Create);
+				}
+				pSvc->lpVtbl->Release(pSvc);
+			}
+			pLoc->lpVtbl->Release(pLoc);
+		}
+		CoUninitialize();
+	}
+#else
 	HQUERY hQuery;
 
 	if (PdhOpenQueryW(NULL, 0, &hQuery) == ERROR_SUCCESS)
@@ -298,36 +457,39 @@ static DWORD WINAPI ProcessMonitor(LPVOID lpParameter)
 		} while (++cpe.dwInstanceIndex);
 		PdhCloseQuery(hQuery);
 	}
+#endif
 	hMonitorThread = NULL;
 	return 0;
 }
 
-static BOOL __fastcall ProcessCmdlineInspect(DWORD pid, LPCSTR lpCommandArg) {
+static BOOL __fastcall ProcessCmdlineInspect(DWORD pid, LPCSTR lpCmdLineArg) {
 	BOOL match = FALSE;
-	HANDLE hProcess;
-	if (hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid))
+	HANDLE const hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+	if (hProcess)
 	{
 		PEB peb;
 		RTL_USER_PROCESS_PARAMETERS upp;
 		PROCESS_BASIC_INFORMATION pbi;
-		LPSTR cmdLine;
+		LPSTR szCmd;
 		if (!NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), NULL)
 			&& ReadProcessMemory(hProcess, pbi.PebBaseAddress   , &peb, sizeof(peb), NULL)
 			&& ReadProcessMemory(hProcess, peb.ProcessParameters, &upp, sizeof(upp), NULL)
-			&& (cmdLine = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, upp.CommandLine.MaximumLength << 1))
+			&& (szCmd = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, upp.CommandLine.MaximumLength << 1))
 			)
 		{
-			regex_t cmdArg;
-			if (ReadProcessMemory(hProcess, upp.CommandLine.Buffer, &cmdLine[upp.CommandLine.MaximumLength], upp.CommandLine.Length, NULL)
-				&& WideCharToMultiByte(CP_THREAD_ACP, 0, (LPCWCH)&cmdLine[upp.CommandLine.MaximumLength], upp.CommandLine.Length >> 1,
-									   cmdLine, upp.CommandLine.MaximumLength, NULL, NULL)
-				&& !regcomp(&cmdArg, lpCommandArg, REG_EXTENDED | REG_NEWLINE | REG_NOSUB)
+			regex_t reCmd;
+			if (ReadProcessMemory(hProcess, upp.CommandLine.Buffer, &szCmd[upp.CommandLine.MaximumLength], upp.CommandLine.Length, NULL)
+				&& WideCharToMultiByte(CP_THREAD_ACP, 0, (LPCWCH)&szCmd[upp.CommandLine.MaximumLength], upp.CommandLine.Length >> 1,
+									   szCmd, upp.CommandLine.MaximumLength, NULL, NULL)
+				&& !regcomp(&reCmd, lpCmdLineArg, REG_EXTENDED | REG_NEWLINE | REG_NOSUB)
 				)
 			{
-				match = !regexec(&cmdArg, cmdLine, 0, NULL, 0);
-				regfree(&cmdArg);
+				if (TMainForm_GetUserMode(MainForm) >= 3)
+					TMainForm_Guide(szCmd, 0);
+				match = !regexec(&reCmd, szCmd, 0, NULL, 0);
+				regfree(&reCmd);
 			}
-			HeapFree(hHeap, 0, cmdLine);
+			HeapFree(hHeap, 0, szCmd);
 		}
 		CloseHandle(hProcess);
 	}
@@ -339,7 +501,7 @@ DWORD __stdcall FindProcessId(
 	IN          LPCSTR lpProcessName,
 	IN          size_t nProcessNameLength,
 	IN OPTIONAL LPCSTR lpModuleName,
-	IN OPTIONAL LPCSTR lpCommandArg)
+	IN OPTIONAL LPCSTR lpCmdLineArg)
 {
 	static BOOL InProcessing = FALSE;
 	DWORD       dwProcessId;
@@ -380,7 +542,7 @@ DWORD __stdcall FindProcessId(
 					if (_mbsicmp(lpProcessName, lpBaseName) == 0)
 					{
 						if ((!lpModuleName || ProcessContainsModule(*lpdwProcessId, FALSE, lpWideCharStr)) &&
-							(!lpCommandArg || ProcessCmdlineInspect(*lpdwProcessId, lpCommandArg)))
+							(!lpCmdLineArg || ProcessCmdlineInspect(*lpdwProcessId, lpCmdLineArg)))
 						{
 							dwProcessId = *lpdwProcessId;
 							break;
@@ -448,7 +610,8 @@ DWORD __stdcall FindProcessId(
 						lpBaseName += sizeof(DWORD);
 						if (regexec(&reProcessName, lpBaseName, 0, NULL, 0) == 0)
 						{
-							if (!lpModuleName || ProcessContainsModule(*lpdwProcessId, TRUE, &reModuleName))
+							if ((!lpModuleName || ProcessContainsModule(*lpdwProcessId, TRUE, &reModuleName)) &&
+								(!lpCmdLineArg || ProcessCmdlineInspect(*lpdwProcessId, lpCmdLineArg)))
 							{
 								dwProcessId = *lpdwProcessId;
 								break;
@@ -482,11 +645,9 @@ DWORD __stdcall FindProcessId(
 	{
 		if (!hMonitorThread)
 		{
-#if 0
 			DWORD dwThreadId;
 
 			hMonitorThread = CreateThread(NULL, 0, ProcessMonitor, NULL, 0, &dwThreadId);
-#endif
 		}
 	}
 	else

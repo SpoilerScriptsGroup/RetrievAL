@@ -18,6 +18,7 @@ EXTERN_C HANDLE hHeap;
 EXTERN_C const DWORD F00504284;
 
 void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
+uint64_t __cdecl InternalParsing(TSSGCtrl* SSGCtrl, TSSGSubject* SSGS, const string* Src, BOOL IsInteger, va_list ArgPtr);
 unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 double __cdecl ParsingDouble(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, IN double Val);
 
@@ -352,18 +353,19 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 				break;
 			default:
 				{
-					UINT_PTR param;
+					uint64_t param;
 					string   src;
 					UINT     length;
 					char     *buffer;
 					BOOL     isAllocated;
+					size_t   args[] = { 0 };
 
 					valueEnd = UnescapeParam(valueBegin, valueEnd);
 					string_begin(&src) = valueBegin;
 					string_end_of_storage(&src) = string_end(&src) = valueEnd;
-					param = Parsing(this, SSGS, &src, 0);
+					param = InternalParsing(this, SSGS, &src, TRUE, (va_list)args);
 					if (option & FEP)
-						param = TSSGCtrl_CheckIO_FEP(this, SSGS, param, FALSE);
+						param = TSSGCtrl_CheckIO_FEP(this, SSGS, (unsigned long)param, FALSE);
 					isAllocated = FALSE;
 					if (type == 's' || type == 'S')
 					{
@@ -409,7 +411,7 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 							}
 							else
 							{
-								if ((type == 's' ? (BOOL (WINAPI *)(UINT_PTR, UINT_PTR))IsBadStringPtrA : (BOOL (WINAPI *)(UINT_PTR, UINT_PTR))IsBadStringPtrW)(param, MAXUINT_PTR))
+								if ((type == 's' ? (BOOL (WINAPI *)(UINT_PTR, UINT_PTR))IsBadStringPtrA : (BOOL (WINAPI *)(UINT_PTR, UINT_PTR))IsBadStringPtrW)((UINT_PTR)param, MAXUINT_PTR))
 									param = (UINT_PTR)NULL;
 							}
 						}

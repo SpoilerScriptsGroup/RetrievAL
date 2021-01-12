@@ -49,7 +49,7 @@ static __declspec(naked) uint64_t __cdecl TSSGAttributeSelector_StartElementChec
 		pop  ecx
 #endif
 		mov  [eax]bcb6_std_set_node._M_color, FALSE
-		mov  dword ptr [eax]bcb6_std_set_node._M_parent, 0
+		mov  dword ptr [eax]bcb6_std_set_node._M_parent, 0// Pointer is must specify size?
 		mov  [eax]bcb6_std_set_node._M_left , eax
 		mov  [eax]bcb6_std_set_node._M_right, eax
 		mov  ecx, [esi]TSSGAttributeSelector.AESet

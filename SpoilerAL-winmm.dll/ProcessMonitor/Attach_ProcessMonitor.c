@@ -1,4 +1,8 @@
 #include <windows.h>
+#include <dhcpsapi.h>
+#define _NO_CRT_STDIO_INLINE
+#include <stdio.h>
+#define USING_NAMESPACE_BCB6_STD
 #include "TProcessCtrl.h"
 #include "TMainForm.h"
 #include "TCanvas.h"
@@ -16,6 +20,83 @@ EXTERN_C void __cdecl LoadHeapList(TProcessCtrl *this);
 EXTERN_C BOOL __cdecl VerifyInternalSpecificationOfHeapID();
 #endif
 
+static const char *const _Format = "%d";
+
+static __declspec(naked) LPCVOID /* bcc */__fastcall TMainForm_M_ProcessAddClick_ProcessNameEdit_setText()
+{
+	extern const DWORD F005E0D50;
+	__asm {
+		sub  esp, 0x80
+		mov  ecx, esp
+		push [edi]TMainForm.ssgCtrl.processCtrl.entry.th32ProcessID
+		push _Format
+		push 0x80
+		push ecx
+		call _snprintf
+		add  esp, 0x10
+		mov  edx, esp
+		lea  eax, [ebp - 0x1C]// AnsiString
+		call F005E0D50
+		add  esp, 0x80
+		ret
+	}
+}
+
+static DWORD_DWORD __stdcall TMainForm_M_ProcessAddClick_mrOk(TMainForm *const this)
+{// New process id specified, caches has been dirtied.
+	TProcessCtrl *const ctrl = &this->ssgCtrl.processCtrl;
+	vector_string const proc = ctrl->processNameVec;
+	ctrl->processNameVec = (vector_string) { NULL };
+	TProcessCtrl_Clear(ctrl);
+	ctrl->processNameVec = proc;
+	return (DWORD_DWORD) { 0, (DWORD)&ctrl->processNameVec };
+}
+
+static __declspec(naked) pstring __cdecl TProcessAddForm_ProcessDGridClick_GetBack()
+{
+	__asm {
+		lea  ecx, [esp + 0x10]// Token
+		call string_dtor
+		mov  eax, size PROCESSENTRY32A
+		mul  edi// ProcessNum
+		mov  edx, [ebx + 0x03A0]// processVec._M_start
+		sub  esp, 0x80
+		mov  ecx, esp
+		push [edx + eax]PROCESSENTRY32A.th32ProcessID
+		push _Format
+		push 0x80
+		push ecx
+		call _snprintf
+		add  esp, 0x10
+		mov  ecx, [esp + 0x80 + size LPCVOID]
+		mov  edx, esp
+		push eax
+		call string_ctor_assign_cstr_with_length
+		add  esp, 0x80
+		ret
+	}
+}
+
+static __declspec(naked) uintptr_t TProcessCtrl_GetProcessVec_SkipSystemProcess(void)
+{
+	static uintptr_t const _M_insert_overflow = 0x004A3605;
+	__asm {
+		lea   ecx, [ebp - size bcb6_std_vector]// Vec
+		mov   esi, [ecx]bcb6_std_vector._M_finish
+
+		mov   eax, 0x004A3621
+		cmp   [ebp - 0x01A8]PROCESSENTRY32A.th32ParentProcessID, 0
+		je    SKIP
+
+		mov   eax, 0x004A35E5
+		cmp   esi, [ecx]bcb6_std_vector._M_end_of_storage
+		cmove eax, _M_insert_overflow
+
+	SKIP:
+		ret
+	}
+}
+
 static HANDLE __stdcall TProcessCtrl_Open_OpenProcess(DWORD dwDesiredAccess, BOOL bInheritHandle, long dwProcessId)
 {
 	if (dwProcessId > 0)
@@ -32,12 +113,27 @@ static HANDLE __stdcall TProcessCtrl_Open_OpenProcess(DWORD dwDesiredAccess, BOO
 	return NULL;
 }
 
+#define PUSH_EDI  (BYTE )0x57
+#define CALL_REL  (BYTE )0xE8
 #define JMP_REL32 (BYTE )0xE9
 #define NOP       (BYTE )0x90
 #define NOP_X4    (DWORD)0x00401F0F
 
 EXTERN_C void __cdecl Attach_ProcessMonitor()
 {
+	// TMainForm::M_ProcessAddClick
+	*(LPDWORD)0x0044C6BE = (DWORD)TMainForm_M_ProcessAddClick_ProcessNameEdit_setText - (0x0044C6BE + sizeof(DWORD));
+
+	*(LPBYTE )0x0044C917 = PUSH_EDI;
+	*(LPBYTE )0x0044C918 = CALL_REL;
+	*(LPDWORD)0x0044C919 = (DWORD)TMainForm_M_ProcessAddClick_mrOk - (0x0044C919 + sizeof(DWORD));
+
+	// TProcessAddForm::ReLoadBtnClick
+	*(LPDWORD)0x004874C9 = SHGFI_ICON | SHGFI_USEFILEATTRIBUTES | SHGFI_SMALLICON;
+
+	// TProcessAddForm::ProcessDGridClick
+	*(LPDWORD)0x0048855E = (DWORD)TProcessAddForm_ProcessDGridClick_GetBack - (0x0048855E + sizeof(DWORD));
+
 	// TSearchReportListner::OnReport
 	//	must call from same thread
 	*(LPDWORD)0x00490706 = (DWORD)TSearchReportListner_OnReport_InvokeDrawProgress - (0x00490706 + sizeof(DWORD));
@@ -125,6 +221,12 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 	*(LPWORD)  0x004A34A6      = BSWAP16(NOP << 8 | 0x5F);
 	*(LPWORD )(0x004A34A8 + 0) = BSWAP16(0x838B);
 	*(LPBYTE )(0x004A34A8 + 6) = -1;
+
+	// TProcessCtrl::GetProcessVec
+	*(LPBYTE )0x004A35DD = CALL_REL;
+	*(LPDWORD)0x004A35DE = (DWORD)TProcessCtrl_GetProcessVec_SkipSystemProcess - (0x004A35DE + sizeof(DWORD));
+	*(LPWORD )0x004A35E2 = BSWAP16(0xFFE0);
+	*(LPBYTE )0x004A35E4 = 0xCC;
 
 	// TProcessCtrl::LoadHeapList
 #if USE_INTERNAL_SPECIFICATION_OF_HEAP_ID

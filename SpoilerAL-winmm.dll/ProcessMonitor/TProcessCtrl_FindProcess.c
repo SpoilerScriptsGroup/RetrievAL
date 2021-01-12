@@ -130,7 +130,7 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID this, string *ProcessName,
 	#define CLASSNAME_BRACKET_CLOSE '>'
 	#define WINDOWNAME_PREFIX       '*'
 	#define MODULENAME_PREFIX       ':'
-	#define COMMANDARG_PREFIX       '?'
+	#define CMDLINEARG_PREFIX       '?'
 	#define OPTION_PREFIX           '/'
 
 	do	/* do { ... } while (0); */
@@ -138,10 +138,13 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID this, string *ProcessName,
 		DWORD           dwProcessId;
 		HANDLE          hSnapshot;
 		PROCESSENTRY32A pe;
+		char          * end;
 
 		if (string_empty(ProcessName))
 			break;
-		if (!FindInvalidChar(string_begin(ProcessName)))
+		if ((dwProcessId = strtoul(string_begin(ProcessName), &end, 0), end) == string_end(ProcessName))
+			;
+		else if (!FindInvalidChar(string_begin(ProcessName)))
 		{
 			dwProcessId = FindProcessId(FALSE, string_begin(ProcessName), string_length(ProcessName), NULL, NULL);
 		}
@@ -154,7 +157,7 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID this, string *ProcessName,
 			LPSTR  lpClassName;
 			LPSTR  lpWindowName;
 			LPSTR  lpModuleName;
-			LPSTR  lpCommandArg;
+			LPSTR  lpCmdLineArg;
 			size_t length;
 
 			argv = ParseArgument(string_begin(ProcessName), string_end(ProcessName), &argc);
@@ -166,7 +169,7 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID this, string *ProcessName,
 			lpClassName = NULL;
 			lpWindowName = NULL;
 			lpModuleName = NULL;
-			lpCommandArg = NULL;
+			lpCmdLineArg = NULL;
 			for (size_t i = 0; i < argc; i++)
 			{
 				switch (*argv[i])
@@ -188,9 +191,9 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID this, string *ProcessName,
 					if (!lpModuleName)
 						lpModuleName = argv[i] + 1;
 					break;
-				case COMMANDARG_PREFIX:
-					if (!lpCommandArg)
-						lpCommandArg = argv[i] + 1;
+				case CMDLINEARG_PREFIX:
+					if (!lpCmdLineArg)
+						lpCmdLineArg = argv[i] + 1;
 					break;
 				case OPTION_PREFIX:
 					if (_stricmp(argv[i] + 1, "regex") == 0)
@@ -204,7 +207,7 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID this, string *ProcessName,
 			}
 			if (lpProcessName || (lpModuleName && !lpClassName && !lpWindowName))
 			{
-				dwProcessId = FindProcessId(bIsRegex, lpProcessName, lpProcessName ? strlen(lpProcessName) : 0, lpModuleName, lpCommandArg);
+				dwProcessId = FindProcessId(bIsRegex, lpProcessName, lpProcessName ? strlen(lpProcessName) : 0, lpModuleName, lpCmdLineArg);
 			}
 			else if (lpClassName || lpWindowName)
 			{
@@ -236,7 +239,7 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID this, string *ProcessName,
 	return 1;
 
 	#undef OPTION_PREFIX
-	#undef COMMANDARG_PREFIX
+	#undef CMDLINEARG_PREFIX
 	#undef MODULENAME_PREFIX
 	#undef WINDOWNAME_PREFIX
 	#undef CLASSNAME_BRACKET_CLOSE

@@ -26,16 +26,16 @@ extern BOOL __stdcall GetWindowMargin(IN HWND hWnd, OUT LPRECT lprcMargin);
 #pragma pack(push, 1)
 typedef struct {
 #if defined(_M_IX86)
-	DWORD     mov;      // mov     dword ptr [esp + 4], \       ; 00000000 _ C7. 44 24, 04,
-	LPVOID    this;     //                              this    ; 00000004 _ ????????
-	BYTE      jmp;      // jmp     \                            ; 00000008 _ E9,
-	ptrdiff_t relproc;  //         WindowProc                   ; 00000009 _ ????????
+	DWORD     mov;      //  mov     dword ptr [esp + 4], \      ; 00000000 _ C7. 44 24, 04,
+	LPVOID    this;     //                               this   ; 00000004 _ ????????
+	BYTE      jmp;      //  jmp     \                           ; 00000008 _ E9,
+	ptrdiff_t relproc;  //          WindowProc                  ; 00000009 _ ????????
 #elif defined(_M_X64)
-	WORD      mov1;     // mov     rax, \                       ; 00000000 _ 48: B8,
-	WNDPROC   wndproc;  //              WindowProc              ; 00000002 _ ????????????????
-	WORD      mov2;     // mov     rcx, \                       ; 0000000A _ 48: B9,
-	LPVOID    this;     //              this                    ; 0000000C _ ????????????????
-	DWORD     jmp;      // jmp     rax                          ; 00000014 _ 48: FF. E0
+	WORD      mov1;     //  mov     rax, \                      ; 00000000 _ 48: B8,
+	WNDPROC   wndproc;  //               WindowProc             ; 00000002 _ ????????????????
+	WORD      mov2;     //  mov     rcx, \                      ; 0000000A _ 48: B9,
+	LPVOID    this;     //               this                   ; 0000000C _ ????????????????
+	DWORD     jmp;      //  jmp     rax                         ; 00000014 _ 48: FF. E0
 #endif
 } THUNK;
 #pragma pack(pop)
@@ -399,12 +399,13 @@ static SNAPINFO * __fastcall AppendElement(HWND hWnd)
 	}
 	if (this = (SNAPINFO *)HeapAlloc(hExecutableHeap, 0, sizeof(SNAPINFO)))
 	{
-		if (SnapInfo = SnapInfo ?
-			(SNAPINFO **)HeapReAlloc(hHeap, 0, SnapInfo, sizeof(SNAPINFO *) * (NumberOfElements + 1)) :
-			(SNAPINFO **)HeapAlloc(hHeap, 0, sizeof(SNAPINFO *)))
+		LPVOID lpMem;
+
+		if (lpMem = SnapInfo ?
+			HeapReAlloc(hHeap, 0, SnapInfo, sizeof(SNAPINFO *) * (NumberOfElements + 1)) :
+			HeapAlloc(hHeap, 0, sizeof(SNAPINFO *)))
 		{
-			SnapInfo[NumberOfElements++] = this;
-			return this;
+			return (SnapInfo = (SNAPINFO **)lpMem)[NumberOfElements++] = this;
 		}
 		HeapFree(hExecutableHeap, 0, this);
 	}

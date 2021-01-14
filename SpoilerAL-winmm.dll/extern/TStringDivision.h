@@ -24,7 +24,7 @@ typedef enum Dealt
 #define etTRIM      (etTRIM_L | etTRIM_R )
 #define etSOME_EDIT (etTRIM   | etREPLACE)
 
-typedef struct
+typedef struct _TStringDivision
 {
 	LPVOID          *VTable;
 	bcb6_std_string nestStartTag;

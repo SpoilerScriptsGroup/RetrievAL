@@ -7,7 +7,7 @@
 #include "bcb6_std_vector_template.h"
 #undef  typename
 
-typedef struct
+typedef struct _TProcessCtrl
 {
 	TStringDivision                strD;
 	bcb6_std_string                attachedProcessName;

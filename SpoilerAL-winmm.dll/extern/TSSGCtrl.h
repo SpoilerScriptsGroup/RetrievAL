@@ -51,6 +51,7 @@ typedef struct _TSSGCtrl
 #define TSSGCtrl_GetSSGActionListner(/*IN TSSGCtrl * */this) \
 	(this)->ssgActionListner
 
+EXTERN_C void(__cdecl * const TSSGCtrl_LockClear)(TSSGCtrl *this);
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG(
 	TSSGCtrl *this, bcb6_std_vector_string *SSGFile, bcb6_std_stack *ParentStack, TDialogAdjustmentAttribute *ADJElem, DWORD RepeatIndex, DWORD OuterRepeat);
 EXTERN_C BOOLEAN __cdecl TSSGCtrl_IsEnabled(TSSGCtrl *this, TSSGSubject *SSGS);

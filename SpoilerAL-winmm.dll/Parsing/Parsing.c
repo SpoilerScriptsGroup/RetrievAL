@@ -5752,6 +5752,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	lpszSrc                = NULL;
 	lpMarkupArray          = NULL;
 	lpPostfixBuffer        = NULL;
+	lpEndOfPostfix         = NULL;
 	lpConstStringBuffer    = NULL;
 	lpOperandBuffer        = NULL;
 	lpVariable             = NULL;
@@ -7293,7 +7294,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Quad = 0;
 				if (!ReadProcessMemory(hProcess, lpAddress, &lpOperandTop->Quad, nSize, NULL))
 				{
-					TSSGActionListner_OnSubjectReadError(TSSGCtrl_GetSSGActionListner(this), SSGS, (uint32_t)lpAddress);
+					if (TSSGCtrl_GetSSGActionListner(this))
+						TSSGActionListner_OnSubjectReadError(TSSGCtrl_GetSSGActionListner(this), SSGS, (uint32_t)lpAddress);
 					lpOperandTop->Quad = 0;
 				}
 				switch (lpMarkup->Tag)
@@ -7596,7 +7598,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				}
 				else
 				{
-					TSSGActionListner_OnSubjectReadError(TSSGCtrl_GetSSGActionListner(this), SSGS, (uint32_t)lpAddress);
+					if (TSSGCtrl_GetSSGActionListner(this))
+						TSSGActionListner_OnSubjectReadError(TSSGCtrl_GetSSGActionListner(this), SSGS, (uint32_t)lpAddress);
 					lpOperandTop->Quad = 0;
 					lpOperandTop->IsQuad = nSize > sizeof(uint32_t);
 				}
@@ -7915,16 +7918,17 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (!IsInteger)
 					lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
 				lpAddress = NULL;
-				if (!lpOperandTop->High)
+				if (lpOperandTop->Quad >> sizeof(lpProcessMemory[0].Id) * 8)
+					goto PARSING_ERROR;
+				else
 				{
-					FILETIME creationTime;
+					FILETIME creationTime = { 0, 0 };
 
-					creationTime.dwHighDateTime = creationTime.dwLowDateTime = 0;
 					for (size_t i = 0; i < nNumberOfProcessMemory; i++)
 					{
 						size_t allocSize;
 
-						if (lpOperandTop->Low != lpProcessMemory[i].Id)
+						if (lpOperandTop->Quad != lpProcessMemory[i].Id)
 							continue;
 						if (lpProcessMemory[i].Address)
 						{
@@ -7948,10 +7952,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 									goto FAILED_GET_PROCESS_TIMES;
 								if (ftProcessCreationTime.dwLowDateTime || ftProcessCreationTime.dwHighDateTime)
 								{
-									if (creationTime.dwLowDateTime != ftProcessCreationTime.dwLowDateTime ||
+									if (creationTime.dwLowDateTime  != ftProcessCreationTime.dwLowDateTime ||
 										creationTime.dwHighDateTime != ftProcessCreationTime.dwHighDateTime)
 									{
-										break;
+										goto FAILED_GET_PROCESS_TIMES;
 									}
 								}
 								else
@@ -8803,6 +8807,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
 				id = IsInteger ? (uint64_t)lpOperandTop[0].Quad : (uint64_t)lpOperandTop[0].Real;
+				if (id >> sizeof(lpProcessMemory[0].Id) * 8)
+					goto PARSING_ERROR;
 				element = element->Next;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
@@ -8811,14 +8817,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				address = NULL;
 				if ((sizeof(size_t) > sizeof(uint32_t) || !(size >> 32)) && size && !(id >> 32))
 				{
-					FILETIME creationTime;
+					FILETIME creationTime = { 0, 0 };
 
-					creationTime.dwHighDateTime = creationTime.dwLowDateTime = 0;
 					for (size_t i = 0; i < nNumberOfProcessMemory; i++)
 					{
 						size_t oldSize, newSize, allocSize;
 
-						if ((uint32_t)id != lpProcessMemory[i].Id)
+						if (id != lpProcessMemory[i].Id)
 							continue;
 						address = lpProcessMemory[i].Address;
 						oldSize = lpProcessMemory[i].Size;
@@ -8866,11 +8871,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 									goto FAILED_GET_PROCESS_TIMES;
 								if (ftProcessCreationTime.dwLowDateTime || ftProcessCreationTime.dwHighDateTime)
 								{
-									if (creationTime.dwLowDateTime != ftProcessCreationTime.dwLowDateTime ||
+									if (creationTime.dwLowDateTime  != ftProcessCreationTime.dwLowDateTime ||
 										creationTime.dwHighDateTime != ftProcessCreationTime.dwHighDateTime)
 									{
-										address = NULL;
-										break;
+										goto FAILED_GET_PROCESS_TIMES;
 									}
 								}
 								else
@@ -13184,9 +13188,25 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		if (lpBuffer1)
 			HeapFree(hHeap, 0, lpBuffer1);
 	OPEN_ERROR:
-		if (!vector_empty(&this->processCtrl.processNameVec))
-			TSSGActionListner_OnProcessOpenError(TSSGCtrl_GetSSGActionListner(this), SSGS);
-		goto PARSING_ERROR;
+		if (TMainForm_GetUserMode(MainForm) >= 3 &&
+			!vector_empty(&this->processCtrl.processNameVec) &&
+			FormatMessageA(
+				FORMAT_MESSAGE_MAX_WIDTH_MASK |
+				FORMAT_MESSAGE_ALLOCATE_BUFFER |
+				FORMAT_MESSAGE_IGNORE_INSERTS |
+				FORMAT_MESSAGE_FROM_SYSTEM,
+				NULL,
+				GetLastError(),
+				0,
+				(LPSTR)&lpMessage,
+				sizeof(double),
+				NULL))
+		{
+			TMainForm_Guide(lpMessage, 0);
+			LocalFree((HLOCAL)lpMessage);
+			goto PARSING_ERROR;
+		}
+		goto FAILED;
 
 	READ_ERROR_FREE2:
 		if (lpBuffer2)
@@ -13195,7 +13215,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		if (lpBuffer1)
 			HeapFree(hHeap, 0, lpBuffer1);
 	READ_ERROR:
-		TSSGActionListner_OnSubjectReadError(TSSGCtrl_GetSSGActionListner(this), SSGS, (uint32_t)lpAddress);
+		if (TSSGCtrl_GetSSGActionListner(this))
+			TSSGActionListner_OnSubjectReadError(TSSGCtrl_GetSSGActionListner(this), SSGS, (uint32_t)lpAddress);
 		goto PARSING_ERROR;
 
 	WRITE_ERROR_FREE3:
@@ -13208,7 +13229,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		if (lpBuffer1)
 			HeapFree(hHeap, 0, lpBuffer1);
 	WRITE_ERROR:
-		TSSGActionListner_OnSubjectWriteError(TSSGCtrl_GetSSGActionListner(this), SSGS, (uint32_t)lpAddress);
+		if (TSSGCtrl_GetSSGActionListner(this))
+			TSSGActionListner_OnSubjectWriteError(TSSGCtrl_GetSSGActionListner(this), SSGS, (uint32_t)lpAddress);
 		goto PARSING_ERROR;
 
 	ALLOC_ERROR_FREE2:
@@ -13226,7 +13248,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		goto GUIDE;
 
 	FAILED_GET_PROCESS_TIMES:
-		lpMessage = "プロセスに関する時間情報を取得できませんでした。";
+		lpMessage = "プロセスの同一性検証に失敗しました。";
 		goto GUIDE;
 
 	FAILED_ADDR_REPLACE:
@@ -13240,6 +13262,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	GUIDE:
 		if (TMainForm_GetUserMode(MainForm) != 1)
 			TMainForm_Guide(lpMessage, 0);
+		if (lpEndOfPostfix)
+			goto PARSING_ERROR;
 		goto FAILED;
 	}
 	qwResult = lpOperandTop->Quad;

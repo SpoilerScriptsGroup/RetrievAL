@@ -4,7 +4,7 @@
 #include "bcb6_std_string.h"
 #include "bcb6_std_map.h"
 
-typedef struct
+typedef struct _TSSGScriptStruct
 {
 	bcb6_std_map    distinctionMap;
 	bcb6_std_string filePath;

@@ -16,14 +16,14 @@ __declspec(naked) void __cdecl TSSGCtrl_Write_ErrorSkip()
 		push    atON_ERROR
 		push    ecx
 		push    this
-		call    dword ptr [TSSGCtrl_GetAttribute]
+		call    TSSGCtrl_GetAttribute
 		add     esp, 12
 		test    eax, eax
 		mov     eax, 0051C466H
 		jz      L1
 		mov     ecx, dword ptr ds:[_MainForm]
 		xor     esi, esi
-		cmp     dword ptr [ecx + TMainForm.userMode], 3
+		cmp     [ecx]TMainForm.userMode, 3
 		je      L2
 	L1:
 		mov     eax, 0051C45AH

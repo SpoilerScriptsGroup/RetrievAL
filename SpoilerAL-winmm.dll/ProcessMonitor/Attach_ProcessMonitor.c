@@ -8,6 +8,7 @@
 #include "TCanvas.h"
 #include "TProcessSearchReportListnerBase.h"
 
+EXTERN_C DWORD_DWORD __fastcall TProcessAddForm_ReLoadBtnClick_GetFirstModule(LPVOID, LPVOID, LPVOID);
 EXTERN_C void __cdecl TSearchReportListner_OnReport_InvokeDrawProgress(WPARAM searchForm, unsigned long Pos);
 EXTERN_C void __cdecl TSearchForm_AdjustValToString_GetStart(LPVOID activeElement, LPVOID ssgCtrl);
 EXTERN_C void __fastcall TSearchForm_DrawCanvas(TProcessSearchReportListnerBase *reportListner, long ImageWidth, unsigned long Pos, TCanvas *Canv);
@@ -42,14 +43,22 @@ static __declspec(naked) LPCVOID /* bcc */__fastcall TMainForm_M_ProcessAddClick
 	}
 }
 
-static DWORD_DWORD __stdcall TMainForm_M_ProcessAddClick_mrOk(TMainForm *const this)
-{// New process id specified, caches has been dirtied.
-	TProcessCtrl *const ctrl = &this->ssgCtrl.processCtrl;
-	vector_string const proc = ctrl->processNameVec;
-	ctrl->processNameVec = (vector_string) { NULL };
-	TProcessCtrl_Clear(ctrl);
-	ctrl->processNameVec = proc;
-	return (DWORD_DWORD) { 0, (DWORD)&ctrl->processNameVec };
+static size_t __fastcall TMainForm_M_ProcessAddClick_mrOk(
+	TMainForm *const this,
+	string    *const tmpS,
+	string    *const __position)
+{
+	extern void __cdecl OnProcessDetach(TProcessCtrl * proc);
+	// New process id specified, clear previous information.
+	char *end;
+	vector_string *const tmpV = &this->ssgCtrl.processNameVec;
+	for (string *desc = vector_begin(tmpV); desc < vector_end(tmpV); )
+		if ((strtoul(string_begin(desc), &end, 0), end) == string_end(desc))
+			memmove(desc, desc + 1, (size_t)--vector_end(tmpV) - (size_t)desc);
+		else
+			desc++;
+	OnProcessDetach(&this->ssgCtrl.processCtrl);
+	return __position - vector_begin(tmpV);
 }
 
 static __declspec(naked) pstring __cdecl TProcessAddForm_ProcessDGridClick_GetBack()
@@ -124,11 +133,32 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 	// TMainForm::M_ProcessAddClick
 	*(LPDWORD)0x0044C6BE = (DWORD)TMainForm_M_ProcessAddClick_ProcessNameEdit_setText - (0x0044C6BE + sizeof(DWORD));
 
-	*(LPBYTE )0x0044C917 = PUSH_EDI;
-	*(LPBYTE )0x0044C918 = CALL_REL;
-	*(LPDWORD)0x0044C919 = (DWORD)TMainForm_M_ProcessAddClick_mrOk - (0x0044C919 + sizeof(DWORD));
+	*(LPBYTE )0x0044C76D =         0xFF   ;// push
+	*(LPBYTE )0x0044C76E =         0x75   ;// dword ptr [ebp + ...]
+	*(LPWORD )0x0044C770 = BSWAP16(0x8BCF);// mov   ecx, edi
+	*(LPWORD )0x0044C772 = BSWAP16(0x8D55);// lea   edx,[ebp + ...]
+	*(LPWORD )0x0044C774 = CALL_REL << 8 | 0xE8;
+	*(LPDWORD)0x0044C776 = (DWORD)TMainForm_M_ProcessAddClick_mrOk - (0x0044C776 + sizeof(DWORD));
 
 	// TProcessAddForm::ReLoadBtnClick
+	*(LPBYTE )0x004873B7 = JMP_REL32;
+	*(LPDWORD)0x004873B8 = 0x0048748F - (0x004873B8 + sizeof(DWORD));
+	*(LPBYTE )0x004873BC = NOP;
+
+	*(LPBYTE )0x00487495 = PUSH_EDI;
+	*(LPBYTE )0x00487499 = 0x8B;// mov        eax,
+	*(LPBYTE )0x0048749A = 0x85;// dword ptr [ebp + ...]
+	*(LPDWORD)0x0048749B = -0x000002B8;
+	*(LPBYTE )0x0048749F = 0x8D;// lea        ecx,
+	*(LPBYTE )0x004874A0 = 0x88;// dword ptr [eax + ...]
+	*(LPDWORD)0x004874A1 = +0x000003A0;
+	*(LPBYTE )0x004874A5 = CALL_REL;
+	*(LPDWORD)0x004874A6 = (DWORD)TProcessAddForm_ReLoadBtnClick_GetFirstModule - (0x004874A6 + sizeof(DWORD));
+	*(LPWORD )0x004874AA = BSWAP16(0x85C0);// test eax, eax
+	*(LPWORD )0x004874AC = BSWAP16(0x0F84);// jz   near
+	*(LPDWORD)0x004874AE = 0x004873A5 - (0x004874AE + sizeof(DWORD));
+	*(LPWORD )0x004874B2 = BSWAP16(0xFFC0);// inc  eax
+
 	*(LPDWORD)0x004874C9 = SHGFI_ICON | SHGFI_USEFILEATTRIBUTES | SHGFI_SMALLICON;
 
 	// TProcessAddForm::ProcessDGridClick
@@ -237,6 +267,7 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 		*(LPDWORD)0x004A3981 = (DWORD)LoadHeapList - (0x004A3981 + sizeof(DWORD));
 		*(LPDWORD)0x004A3985 = NOP_X4;
 	}
+	*(LPBYTE )(0x004A39B3 + 6) = (BYTE)INVALID_HANDLE_VALUE;
 
 	// TProcessCtrl::FindProcess
 	*(LPBYTE )0x004A5ACC = JMP_REL32;
@@ -255,6 +286,10 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 
 	// TProcessCtrl::Open
 	*(LPDWORD)(0x004A61A1 + 1) = (DWORD)TProcessCtrl_Open_OpenProcess - (0x04A61A1 + 1 + sizeof(DWORD));
+
+	// TProcessCtrl::LoadHeapList
+	//   (Snapshot==NULL) => (Snapshot==INVALID_HANDLE_VALUE)
+	*(LPWORD )0x004A66D5 = BSWAP16(0xFFC0);
 
 	// TProcessCtrl::SearchFunc
 	//	missing Listner->OnSearchEnd()

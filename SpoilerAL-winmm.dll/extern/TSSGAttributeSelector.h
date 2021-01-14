@@ -5,7 +5,7 @@
 #include "bcb6_std_vector.h"
 #include "bcb6_std_set.h"
 
-typedef struct
+typedef struct _TSSGAttributeSelector
 {
 	bcb6_std_list   allAtteributeVecList;
 	union

@@ -32,7 +32,7 @@ typedef struct {
 	ptrdiff_t relproc;  //          WindowProc                  ; 00000009 _ ????????
 #elif defined(_M_X64)
 	WORD      mov1;     //  mov     rax, \                      ; 00000000 _ 48: B8,
-	WNDPROC   wndproc;  //               WindowProc             ; 00000002 _ ????????????????
+	WNDPROC   wndproc;  //               offset WindowProc      ; 00000002 _ ????????????????
 	WORD      mov2;     //  mov     rcx, \                      ; 0000000A _ 48: B9,
 	LPVOID    this;     //               this                   ; 0000000C _ ????????????????
 	DWORD     jmp;      //  jmp     rax                         ; 00000014 _ 48: FF. E0
@@ -40,6 +40,34 @@ typedef struct {
 } THUNK;
 #pragma pack(pop)
 #endif
+
+__forceinline void InitThunk(THUNK *thunk, LPVOID this, WNDPROC WindowProc)
+{
+#if defined(_M_IX86)
+	/*
+		mov     dword ptr [esp + 4], this   ; 00000000 _ C7. 44 24, 04, ????????(d)
+		jmp     WindowProc                  ; 00000008 _ E9, ????????
+	*/
+	thunk->mov     = 0x042444C7;
+	thunk->this    = this;
+	thunk->jmp     = 0xE9;
+	thunk->relproc = (ptrdiff_t)WindowProc - (ptrdiff_t)(&thunk->relproc + 1);
+#elif defined(_M_X64)
+	/*
+		mov     rax, WindowProc             ; 00000000 _ 48: B8, ????????????????
+		mov     rcx, this                   ; 0000000A _ 48: B9, ????????????????
+		jmp     rax                         ; 00000014 _ 48: FF. E0
+	*/
+	thunk->mov1    = 0xB848;
+	thunk->wndproc = WindowProc;
+	thunk->mov2    = 0xB948;
+	thunk->this    = this;
+	thunk->jmp     = 0x00E0FF48;
+#endif
+#if defined(_M_IX86) || defined(_M_X64)
+	FlushInstructionCache(GetCurrentProcess(), thunk, sizeof(thunk));
+#endif
+}
 
 typedef struct {
 #if defined(_M_IX86) || defined(_M_X64)
@@ -451,29 +479,8 @@ BOOL __fastcall AttachSnapWindow(HWND hWnd)
 		return FALSE;
 	if (!(this = AppendElement(hWnd)))
 		return FALSE;
-#if defined(_M_IX86)
-	/*
-		mov     dword ptr [esp + 4], this   ; 00000000 _ C7. 44 24, 04, ????????(d)
-		jmp     WindowProc                  ; 00000008 _ E9, ????????
-	*/
-	this->Thunk.mov     = 0x042444C7;
-	this->Thunk.this    = this;
-	this->Thunk.jmp     = 0xE9;
-	this->Thunk.relproc = (ptrdiff_t)WindowProc - (ptrdiff_t)(&this->Thunk.relproc + 1);
-#elif defined(_M_X64)
-	/*
-		mov     rax, WindowProc             ; 00000000 _ 48: B8, ????????????????
-		mov     rcx, this                   ; 0000000A _ 48: B9, ????????????????
-		jmp     rax                         ; 00000014 _ 48: FF. E0
-	*/
-	this->Thunk.mov1    = 0xB848;
-	this->Thunk.wndproc = WindowProc;
-	this->Thunk.mov2    = 0xB948;
-	this->Thunk.this    = this;
-	this->Thunk.jmp     = 0x00E0FF48;
-#endif
 #if defined(_M_IX86) || defined(_M_X64)
-	FlushInstructionCache(GetCurrentProcess(), &this->Thunk, sizeof(this->Thunk));
+	InitThunk(&this->Thunk, this, (WNDPROC)WindowProc);
 #endif
 	this->hWnd = hWnd;
 	this->Enabled = TRUE;

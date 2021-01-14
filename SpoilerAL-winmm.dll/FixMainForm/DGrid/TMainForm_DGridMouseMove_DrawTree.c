@@ -8,10 +8,10 @@ __declspec(naked) void __cdecl TMainForm_DGridMouseMove_DrawTree()
 		#define this          ebx
 		#define ReturnAddress 00446C6DH
 
-		mov     ecx, dword ptr [this + TMainForm.userMode]
-		xor     eax, eax
+		mov     ecx, [this]TMainForm.userMode
 		cmp     ecx, 4
 		setae   al
+		movzx   eax, al
 		push    eax
 		push    0
 		push    0

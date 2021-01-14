@@ -38,7 +38,7 @@ static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(
 			LPSTR lpBuffer;
 			*Begin = 0;
 			*End   = 0;
-			if (FormatMessageA(
+			if (TMainForm_GetUserMode(MainForm) != 1 && FormatMessageA(
 				FORMAT_MESSAGE_MAX_WIDTH_MASK |
 				FORMAT_MESSAGE_ALLOCATE_BUFFER |
 				FORMAT_MESSAGE_IGNORE_INSERTS |

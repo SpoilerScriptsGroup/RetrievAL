@@ -32,19 +32,7 @@ extern FILETIME           ftProcessCreationTime;
 extern size_t             nNumberOfCodeCache;
 extern CODECACHE          *lpCodeCache;
 
-__declspec(naked) void __cdecl OnSSGCtrlCleared()
-{
-	static void __cdecl InternalOnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl);
-
-	__asm
-	{
-		pop     ebx
-		pop     ebp
-		jmp     InternalOnSSGCtrlCleared
-	}
-}
-
-static void __cdecl InternalOnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl)
+void __cdecl OnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl)
 {
 	ClearSubjectProperty();
 
@@ -53,34 +41,7 @@ static void __cdecl InternalOnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl)
 	{
 		if (nNumberOfProcessMemory)
 		{
-			size_t i;
-
-			if (ftProcessCreationTime.dwLowDateTime || ftProcessCreationTime.dwHighDateTime)
-			{
-				HANDLE hProcess;
-
-				if (hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION,
-										   FALSE,
-										   SSGCtrl->processCtrl.entry.th32ProcessID))
-				{
-					FILETIME creationTime, exitTime, kernelTime, userTime;
-
-					if (GetProcessTimes(hProcess, &creationTime, &exitTime, &kernelTime, &userTime) &&
-						creationTime.dwLowDateTime == ftProcessCreationTime.dwLowDateTime &&
-						creationTime.dwHighDateTime == ftProcessCreationTime.dwHighDateTime)
-					{
-						i = nNumberOfProcessMemory;
-						do
-							if (lpProcessMemory[--i].Protect && lpProcessMemory[i].Address)
-								VirtualFreeEx(hProcess, lpProcessMemory[i].Address, 0, MEM_RELEASE);
-						while (i);
-					}
-					CloseHandle(hProcess);
-				}
-				ftProcessCreationTime.dwLowDateTime = 0;
-				ftProcessCreationTime.dwHighDateTime = 0;
-			}
-			i = nNumberOfProcessMemory;
+			size_t i = nNumberOfProcessMemory;
 			do
 				if (!lpProcessMemory[--i].Protect && lpProcessMemory[i].Address)
 					HeapFree(hPrivateHeap, 0, lpProcessMemory[i].Address);

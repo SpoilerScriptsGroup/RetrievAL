@@ -1,5 +1,6 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TProcessCtrl.h"
+#include "TMainForm.h"
 
 void(__cdecl * const TProcessCtrl_Clear)(TProcessCtrl *this) = (LPVOID)0x004A3350;
 void(__cdecl * const TProcessCtrl_LoadHeapList)(TProcessCtrl *this) = (LPVOID)0x004A3980;
@@ -25,7 +26,7 @@ __declspec(naked) LPMODULEENTRY32A __fastcall TProcessCtrl_GetModuleFromName(TPr
 }
 
 //---------------------------------------------------------------------
-//対象プロセスのモジュール一覧を所得
+//対象プロセスのモジュール一覧を取得
 //
 //  ・ATOKや各種DLLも引っ張ってくるので、選別は適時/各自行ってください
 //	・すでにAttachを行っていること
@@ -33,13 +34,15 @@ __declspec(naked) LPMODULEENTRY32A __fastcall TProcessCtrl_GetModuleFromName(TPr
 //---------------------------------------------------------------------
 void __cdecl TProcessCtrl_LoadModuleList(TProcessCtrl *const this)
 {
+	DWORD        error;
+	LPSTR        lpBuffer;
 	HANDLE const Snapshot//モジュール列挙用スナップショット
 		= CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, this->entry.th32ProcessID);
 	vector_clear(&this->moduleList);
-	if (Snapshot)
+	if (Snapshot != INVALID_HANDLE_VALUE)
 	{
 		MODULEENTRY32A ME32 = { sizeof(ME32) };
-		//モジュールの所得
+		//モジュールの取得
 		if (Module32FirstA(Snapshot, &ME32))
 		{
 			MODULEENTRY32A const EntryModule = ME32;
@@ -50,5 +53,20 @@ void __cdecl TProcessCtrl_LoadModuleList(TProcessCtrl *const this)
 			vector_push_back(&this->moduleList, EntryModule);
 		}
 		CloseHandle(Snapshot);
+	}
+	else if (TMainForm_GetUserMode(MainForm) != 1 && (error = GetLastError()) != ERROR_INVALID_PARAMETER && FormatMessageA(
+		FORMAT_MESSAGE_MAX_WIDTH_MASK |
+		FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		FORMAT_MESSAGE_IGNORE_INSERTS |
+		FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL,
+		error,
+		0,
+		(LPSTR)&lpBuffer,
+		sizeof(double),
+		NULL))
+	{
+		TMainForm_Guide(lpBuffer, FALSE);
+		LocalFree(lpBuffer);
 	}
 }

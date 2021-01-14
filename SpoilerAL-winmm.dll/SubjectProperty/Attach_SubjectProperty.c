@@ -26,7 +26,9 @@ EXTERN_C void __cdecl Caller_TSSGSubject_ctor21();
 EXTERN_C void __cdecl Caller_TSSGSubject_ctor22();
 #endif
 
+#define XOR_EDX_EDX      (WORD)0xD233
 #define MOV_ECX_EDX      (WORD)0xCA8B
+#define MOV_ECX_EDI      (WORD)0xCF8B
 #define LEA_EAX_EBP_IMM8 (WORD)0x458D
 #define NOP              (BYTE)0x90
 #define NOP_X2           (WORD)0x9066
@@ -38,7 +40,8 @@ EXTERN_C void __cdecl Attach_SubjectProperty()
 {
 	// TSSGCtrl::TSSGCtrl - new TSSDir()
 	*(LPBYTE )0x004DA487 = 0x05;
-	*(LPWORD )0x004DA48E = MOV_ECX_EDX;
+	*(LPBYTE )0x004DA489 = 0x8D;// edx => ecx
+	*(LPWORD )0x004DA48E = XOR_EDX_EDX;
 	*(LPBYTE )0x004DA490 = CALL_REL32;
 	*(LPDWORD)0x004DA491 = (DWORD)TSSGSubject_ctor - (0x004DA491 + sizeof(DWORD));
 
@@ -165,19 +168,20 @@ EXTERN_C void __cdecl Attach_SubjectProperty()
 	*(LPDWORD)0x004ED440 = (DWORD)TSSGSubject_ctor - (0x004ED440 + sizeof(DWORD));
 
 	// TSSGCtrl::ReadADJFile - TSSDir RootSubject;
-	*(LPBYTE )0x004FD505 = 0x05;
+	*(LPBYTE )0x004FD505 = 0x06;
 	*(LPWORD )0x004FD506 = 0x0789;// mov dword ptr [edi], eax
-	*(LPWORD )0x004FD508 = 0xCF8B;// mov ecx, edi 
-	*(LPBYTE )0x004FD50A = CALL_REL32;
-	*(LPDWORD)0x004FD50B = (DWORD)TSSGSubject_ctor - (0x004FD50B + sizeof(DWORD));
+	*(LPWORD )0x004FD508 = XOR_EDX_EDX;
+	*(LPWORD )0x004FD50A = MOV_ECX_EDI;
+	*(LPWORD )0x004FD50C = CALL_REL32 << 8 | NOP;
+	*(LPDWORD)0x004FD50E = (DWORD)TSSGSubject_ctor - (0x004FD50E + sizeof(DWORD));
 
 	// TSSGCtrl::LoopSSRFile - TSSGSubject SSGS;
-	*(LPWORD )0x00501C8A = 0xA04D;
+	*(LPWORD )0x00501C8A = 0xA04D;// eax,[ebp-78h] => ecx,[ebp-60h]
 	*(LPBYTE )0x00501C8F = 0x05;
 	*(LPBYTE )0x00501C90 = MOV_EDX_IMM32;
 	*(LPDWORD)0x00501C91 = FALSE;
 	*(LPBYTE )0x00501C95 = CALL_REL32;
 	*(LPDWORD)0x00501C96 = (DWORD)TSSGSubject_ctor - (0x00501C96 + sizeof(DWORD));
 	*(LPWORD )0x00501C9A = LEA_EAX_EBP_IMM8;
-	*(LPBYTE )0x00501C9C = (char)-0x78;
+	*(LPBYTE )0x00501C9C = (BYTE)-0x78;
 }

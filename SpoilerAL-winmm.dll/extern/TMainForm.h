@@ -11,7 +11,7 @@
 #include "TGuideForm.h"
 #include "TSSGSubject.h"
 
-typedef struct
+typedef struct _TMainForm
 {
 	LPVOID           *VTable;
 	BYTE             padding1[748];

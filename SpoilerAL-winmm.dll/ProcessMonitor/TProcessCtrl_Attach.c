@@ -29,6 +29,61 @@ vector *ProcessAttachAttribute = NULL;
 string ProcessDetachCode = { NULL };
 vector *ProcessDetachAttribute = NULL;
 
+static void __cdecl FreeExternalDependency(TProcessCtrl *const proc)
+{
+#if ALLOCATE_SUPPORT
+	if (lpProcessMemory && nNumberOfProcessMemory && (ftProcessCreationTime.dwLowDateTime || ftProcessCreationTime.dwHighDateTime))
+	{
+		FILETIME creationTime, exitTime, kernelTime, userTime;
+		HANDLE   hProcess = NULL;
+		size_t   i = nNumberOfProcessMemory;
+
+		if ((long)proc->entry.th32ProcessID > 0
+			&& (hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION, FALSE, proc->entry.th32ProcessID))
+			&& GetProcessTimes(hProcess, &creationTime, &exitTime, &kernelTime, &userTime)
+			&& creationTime.dwLowDateTime  == ftProcessCreationTime.dwLowDateTime
+			&& creationTime.dwHighDateTime == ftProcessCreationTime.dwHighDateTime
+			)
+		{
+			do
+				if (lpProcessMemory[--i].Protect && lpProcessMemory[i].Address)
+				{
+					LPSTR lpBuffer;
+					if (!VirtualFreeEx(hProcess, lpProcessMemory[i].Address, 0, MEM_RELEASE) &&
+						TMainForm_GetUserMode(MainForm) != 1 &&
+						FormatMessageA(
+							FORMAT_MESSAGE_MAX_WIDTH_MASK |
+							FORMAT_MESSAGE_ALLOCATE_BUFFER |
+							FORMAT_MESSAGE_IGNORE_INSERTS |
+							FORMAT_MESSAGE_FROM_SYSTEM,
+							NULL,
+							GetLastError(),
+							0,
+							(LPSTR)&lpBuffer,
+							sizeof(double),
+							NULL))
+					{
+						TMainForm_Guide(lpBuffer, FALSE);
+						LocalFree(lpBuffer);
+					}
+					lpProcessMemory[i].Address = NULL;
+				}
+			while (i);
+		}
+		else
+		{
+			do
+				if (lpProcessMemory[--i].Protect)
+					lpProcessMemory[i].Address = NULL;
+			while (i);
+		}
+		if (hProcess) CloseHandle(hProcess);
+
+		ftProcessCreationTime = (const FILETIME) { 0, 0 };
+	}
+#endif
+}
+
 //---------------------------------------------------------------------
 //実行ファイル名を元に、対象プロセスを所得する
 //
@@ -70,34 +125,20 @@ BOOLEAN __cdecl TProcessCtrl_AttachByProcessName(TProcessCtrl *this, string Proc
 //---------------------------------------------------------------------
 BOOLEAN __cdecl TProcessCtrl_Attach(TProcessCtrl *this)
 {
-	void __cdecl OnProcessDetach();
+	void __cdecl OnProcessDetach(TProcessCtrl *proc);
 
-	if ((long)this->entry.th32ProcessID > 0 && (size_t)_ReturnAddress() == 0x004A61B0)// TProcessCtrl::Open
+	if ((long)this->entry.th32ProcessID > 0 && (intptr_t)_ReturnAddress() == 0x004A61B0)// TProcessCtrl::Open
 	{// reset process infomation when lost target
-		vector_string backup = this->processNameVec;
+		vector_string pnames = this->processNameVec;
+		FreeExternalDependency(this);
 		this->processNameVec = (const vector_string) { NULL };
 		TProcessCtrl_Clear(this);
-#if ALLOCATE_SUPPORT
-		if (lpProcessMemory && nNumberOfProcessMemory)
-		{
-			if (ftProcessCreationTime.dwLowDateTime || ftProcessCreationTime.dwHighDateTime)
-			{
-				size_t i = nNumberOfProcessMemory;
-				do
-					if (lpProcessMemory[--i].Protect)
-						lpProcessMemory[i].Address = NULL;
-				while (i);
-			}
-			ftProcessCreationTime.dwLowDateTime = 0;
-			ftProcessCreationTime.dwHighDateTime = 0;
-		}
-#endif
-		OnProcessDetach();// do here for prevent circular attach, pid will be 0
-		this->processNameVec = backup;
+		this->processNameVec = pnames;
+		OnProcessDetach(this);
 	}
 
 	// ベクタに積まれたプロセス名を順々にチェック
-	if (!InProcessDetached) for (string *it = vector_begin(&this->processNameVec); it != vector_end(&this->processNameVec); it++)
+	if (!InProcessDetached) for (const string *it = vector_begin(&this->processNameVec); it < vector_end(&this->processNameVec); it++)
 	{
 		string ProcessName;
 
@@ -107,6 +148,7 @@ BOOLEAN __cdecl TProcessCtrl_Attach(TProcessCtrl *this)
 			return TRUE;
 	}
 
+	SetLastError(ERROR_FLT_INSTANCE_NOT_FOUND);
 	return FALSE;
 }
 //---------------------------------------------------------------------
@@ -126,7 +168,7 @@ static __inline void OnProcessAttach()
 	}
 }
 //---------------------------------------------------------------------
-void __cdecl OnProcessDetach()
+void __cdecl OnProcessDetach(TProcessCtrl *const proc)
 {
 	if (IsProcessAttached)
 	{
@@ -156,7 +198,7 @@ void __cdecl OnProcessDetach()
 
 					if (tmpM->_M_node_count)
 						tree_string_vecstr_erase(tmpM, map_end(tmpM)->_M_parent);
-					node_alloc_deallocate(tmpM->_M_header
+					node_alloc_deallocate(map_end(tmpM)
 #if !OPTIMIZE_ALLOCATOR
 										  , sizeof(bcb6_std_set_node) + sizeof(string) + sizeof(vector_string)
 #endif
@@ -173,6 +215,13 @@ void __cdecl OnProcessDetach()
 				else
 					map_iterator_increment(it);
 			}
+		}
+		FreeExternalDependency(proc);
+		{
+			vector_string pnames = proc->processNameVec;
+			proc->processNameVec = (const vector_string) { NULL };
+			TProcessCtrl_Clear(proc);
+			proc->processNameVec = pnames;
 		}
 	}
 }

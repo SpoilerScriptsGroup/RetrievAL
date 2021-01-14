@@ -2,14 +2,17 @@
 #include "TSSGCtrl.h"
 
 EXTERN_C void __cdecl OnSSGCtrlCleared();
-void __cdecl OnProcessDetach();
+EXTERN_C void __cdecl OnProcessDetach(TProcessCtrl *proc);
 
 static TSSGAttributeSelector* __stdcall TSSGCtrl_Clear_attributeSelector(
-	TSSGCtrl *const SSGC,
-	struct _TFunctionTimer *const funcTimer,
-	MMRESULT *const ID)
+	TSSGCtrl                     *const SSGC,
+	struct _TFunctionTimer const *const funcTimer,
+	MMRESULT               const *const ID)
 {
-	OnProcessDetach();
+	TSSGCtrl_LockClear(SSGC);
+	OnProcessDetach(&SSGC->processCtrl);
+	TSSDir_ClearChild(SSGC->rootSubject);
+	SSGC->rootSubject->super.attribute = NULL;
 	return &SSGC->attributeSelector;
 }
 
@@ -24,6 +27,8 @@ EXTERN_C void __cdecl Attach_OnSSGCtrlCleared()
 	*(LPBYTE )0x004E43B2 = CALL_REL;
 	*(LPDWORD)0x004E43B3 = (DWORD)TSSGCtrl_Clear_attributeSelector - (0x004E43B3 + sizeof(DWORD));
 
-	*(LPBYTE )0x004E4403 = JMP_REL32;
-	*(LPDWORD)0x004E4404 = (DWORD)OnSSGCtrlCleared - (0x004E4404 + sizeof(DWORD));
+	*(LPBYTE )0x004E43C5 = JMP_REL32;
+	*(LPDWORD)0x004E43C6 = 0;// TSSDir::ClearChild
+
+	*(LPDWORD)0x004E43FC = (DWORD)OnSSGCtrlCleared - (0x004E43FC + sizeof(DWORD));
 }

@@ -169,7 +169,7 @@ static void __fastcall InternalAddEntryModule(vector_MODULEENTRY32A *moduleList,
 		return;
 
 	// Microsoft Knowledge Base - kb175030
-	// https://support.microsoft.com/ja-jp/kb/175030
+	// https://support.microsoft.com/kb/175030/ja
 	// >プロセス内の最初のモジュールはそのプロセスの実行可能モジュールになることを覚えておいてください。
 
 	if (!EnumProcessModules(hProcess, &hModule, sizeof(hModule), &cbNeeded))

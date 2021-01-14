@@ -43,12 +43,12 @@ __inline void Attribute_scope_open(TSSGCtrl *this, string *code)
 	scope->super.adjustVal = -(intptr_t)scope;// guarantee unique
 
 	ReplaceDefine(TSSGCtrl_GetAttributeSelector(this), code);
-	TStringDivision_Half_WithoutTokenDtor(&label, &this->strD, code, ":", 1, 0, FALSE);
+	TStringDivision_Half_WithoutTokenDtor(&label, &this->strD, code, ":", 1, 0, etTRIM);
 	if (string_at(&label, 0) != ':')
 	{
 		LPSTR last;
 		ULONG val = strtoul(string_c_str(&label), &last, 0);
-		if (last == string_end(&label)) scope->super.adjustVal = val;
+		scope->super.adjustVal = last != string_end(&label) ? SubjectStringTable_insert(&label) : val;
 	}
 	string_dtor(&label);
 

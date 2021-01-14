@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <dhcpsapi.h>
 #include <mbstring.h>
 #include "intrinsic.h"
 #define USING_NAMESPACE_BCB6_STD
@@ -79,28 +80,34 @@ static __declspec(naked) void __cdecl TFindNameForm_EnumSubjectNameFind_StrD_Get
 	}
 }
 
-typedef struct
+static DWORD_DWORD __fastcall TSSToggle_Setting_GetAddress(
+	TSSGCtrl      *const SSGC,
+	vector_string *const tmpV)
 {
-	string const *AddressStr;
-	unsigned long Mode;
-} GetAddressStack;
+	extern string* __cdecl FixToggleByteArray(
+		string          *Result,
+		TStringDivision *strD,
+		string          *Src,
+		string           Token,
+		unsigned long    Index,
+		unsigned long    Option);
 
-static GetAddressStack __fastcall TSSToggle_Setting_GetAddress(TSSToggle *const this, TSSGCtrl *const SSGC)
-{
-	string const *const addressStr = SubjectStringTable_GetString(&this->addressStr);
-	return (GetAddressStack) { FixTheProcedure
-		&& !TSSGCtrl_GetSSGActionListner(SSGC)
-		&& string_at(addressStr, 0) == '_'
-		&& !_mbschr(string_c_str(SubjectStringTable_GetString(&this->onCode)), '-')
-		? &vector_at(&SubjectStringTable_array, 0) : addressStr
-		, atALL };
+	string AddressStr, Token, *addressStr = &vector_at(tmpV, 0);
+	if (FixTheProcedure && !TSSGCtrl_GetSSGActionListner(SSGC) && string_at(addressStr, 0) == '_')
+	{
+		FixToggleByteArray(&AddressStr, &SSGC->strD, &vector_at(tmpV, 1), *string_ctor_assign_char(&Token, '-'), 0, dtESCAPE);
+		if (string_at(&AddressStr, 0) == '-')
+			addressStr = &vector_at(&SubjectStringTable_array, 0);
+		string_dtor(&AddressStr);
+	}
+	return (DWORD_DWORD) { (DWORD)addressStr, atALL };
 }
 
 static void __declspec(naked) TSSToggle_Setting_GetAddressStub(DWORD OffsetAddress)
 {
 	__asm {
-		mov edx, dword ptr [ebp + 0x0C]
-		mov ecx, ebx
+		mov edx, edi
+		mov ecx, dword ptr [ebp + 0x0C]
 		jmp TSSToggle_Setting_GetAddress
 	}
 }
@@ -1649,6 +1656,12 @@ static __inline void AttachOperator()
 	PUSH_EBX (0x0052BE7E);
 	*(LPBYTE )0x0052BE7F =         0xFF   ;// push 
 	*(LPWORD )0x0052BE80 = BSWAP16(0x750C);// dword ptr [ebp + 0x0C]
+
+	CALL     (0x0052BE8D, TSSToggle_Read_GetOffCode);
+	NPAD1    (0x0052BE92);
+
+	CALL     (0x0052BE9D, TSSToggle_Read_GetOnCode1);
+	*(LPBYTE )0x0052BEA2 = 0x92;// xchg edx, eax
 #else
 	/*
 		push    15                                      ; 0052BE77 _ 6A, 0F
@@ -1656,7 +1669,6 @@ static __inline void AttachOperator()
 		nop                                             ; 0052BE7B _ 90
 	*/
 	*(LPDWORD)0x0052BE78 = BSWAP32(0x0F8B1790);
-#endif
 
 	/*
 		mov     eax, dword ptr [edi]                    ; 0052BE8D _ 8B. 07
@@ -1673,6 +1685,7 @@ static __inline void AttachOperator()
 	*/
 	*(LPDWORD)0x0052BE9D = BSWAP32(0x8B1783C2);
 	*(LPWORD )0x0052BEA1 = BSWAP16(0x1890);
+#endif
 
 	SET_PROC (0x0052C00F, TSSToggle_Setting_GetName);
 

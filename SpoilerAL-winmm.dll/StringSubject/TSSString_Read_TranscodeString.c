@@ -24,7 +24,7 @@ static void __cdecl TSSString_Read_TranscodeString(string* Data, const char* tmp
 			-1,
 			string_begin(Data),
 			string_storage_capacity(Data),
-			"\a",
+			"\x7F",
 			&warn);
 		break;
 	default:
@@ -38,7 +38,7 @@ static void __cdecl TSSString_Read_TranscodeString(string* Data, const char* tmp
 			WC_NO_BEST_FIT_CHARS,
 			string_begin(Data),
 			string_storage_capacity(Data),
-			"\a",
+			"\x7F",
 			&warn);
 	}
 	if (cchMultiByte)

@@ -93,7 +93,7 @@ static DWORD_DWORD __fastcall TSSToggle_Setting_GetAddress(
 		unsigned long    Option);
 
 	string AddressStr, Token, *addressStr = &vector_at(tmpV, 0);
-	if (FixTheProcedure && !TSSGCtrl_GetSSGActionListner(SSGC) && string_at(addressStr, 0) == '_')
+	if (FixTheProcedure && !SSGC->script.ePos && string_at(addressStr, 0) == '_')
 	{
 		FixToggleByteArray(&AddressStr, &SSGC->strD, &vector_at(tmpV, 1), *string_ctor_assign_char(&Token, '-'), 0, dtESCAPE);
 		if (string_at(&AddressStr, 0) == '-')
@@ -352,12 +352,12 @@ do                                      \
 #define NPAD2(addr) \
     *(LPWORD)(addr) = OPCODE_NOP_X2
 
-// db 66H, 66H, 90H
+// db 0FH, 1FH, 00H 
 #define NPAD3(addr)                                                                             \
 do                                                                                              \
 {                                                                                               \
-    if (((addr) & 3) != 3) { *(LPWORD)(addr) = BSWAP16(0x6666); *(LPBYTE)((addr) + 2) = 0x90; } \
-    else                   { *(LPBYTE)(addr) = 0x66; *(LPWORD)((addr) + 1) = BSWAP16(0x6690); } \
+    if (((addr) & 3) != 3) { *(LPWORD)(addr) = BSWAP16(0x0F1F); *(LPBYTE)((addr) + 2) = 0x00; } \
+    else                   { *(LPBYTE)(addr) = 0x0F; *(LPWORD)((addr) + 1) = BSWAP16(0x1F00); } \
 } while (0)
 
 // db 0FH, 1FH, 40H, 00H
@@ -1582,43 +1582,37 @@ static __inline void AttachOperator()
 	// TSSString::Read
 	SET_PROC (0x0052AFA3, TSSString_Read_GetAddressStr);
 
-	CALL     (0x0052B03A, TSSString_Read_GetEndWord);
-	NPAD1    (0x0052B03F);
+	NPAD1    (0x0052B03A);
+	CALL     (0x0052B03B, TSSString_Read_GetEndWord);
 
-	/*
-		mov     edx, dword ptr [edi]                    ; 0052B040 _ 8B. 17
-		cmp     edx, dword ptr [edi+4H]                 ; 0052B042 _ 3B. 57, 04
-	*/
-	*(LPDWORD)0x0052B040 = BSWAP32(0x8B173B57);
+	CALL     (0x0052B053, TSSString_Read_GetEndWord);
+	*(LPBYTE )0x0052B058 = 0x97;// xchg eax, edi
 
-	NPAD6    (0x0052B053);
-
-	NPAD6    (0x0052B0C5);
-	PUSH_EDI (0x0052B0CB);
+	CALL     (0x0052B0C5, TSSString_Read_GetEndWord);
+	*(LPBYTE )0x0052B0CA = 0x91;// xchg eax, ecx
 
 	// TSSString::Write
 	SET_PROC (0x0052B2A8, TSSString_Write_GetAddressStr);
 
 	/*
-		call    TSSString_Write_GetEndWord              ; 0052B33C _ E8, ????????
-		mov     ecx, dword ptr [ebp - 18H]              ; 0052B341 _ 8B. 4D, E8
-		jmp     0052B347H                               ; 0052B344 _ EB, 01
-		nop                                             ; 0052B346 _ 90
+		nop     dword ptr [eax]                         ; 0052B33C _ 0F. 1F, 00
+		call    TSSString_Write_GetEndWord              ; 0052B33F _ E8, ????????
+		mov     ecx, dword ptr [ebp - 18H]              ; 0052B344 _ 8B. 4D, E8
 	*/
-	CALL     (0x0052B33C, TSSString_Write_GetEndWord);
-	*(LPDWORD)0x0052B341 = BSWAP32(0x8B4DE8EB);
-	*(LPWORD )0x0052B345 = BSWAP16(0x0190);
+	NPAD3    (0x0052B33C);
+	CALL     (0x0052B33F, TSSString_Write_GetEndWord);
+	*(LPWORD )0x0052B344 = BSWAP16(0x8B4D);
+	*(LPBYTE )0x0052B346 =        -0x18   ;
 
 	/*
 		call    TSSString_Write_GetEndWord              ; 0052B40D _ E8, ????????
 		lea     ecx, [ebp - 0DCH]                       ; 0052B412 _ 8D. 8D, FFFFFF24
-		jmp     0052B41BH                               ; 0052B418 _ EB, 01
-		nop                                             ; 0052B41A _ 90
+		nop     dword ptr [eax]                         ; 0052B418 _ 0F. 1F, 00
 	*/
 	CALL     (0x0052B40D, TSSString_Write_GetEndWord);
-	*(LPDWORD)0x0052B412 = BSWAP32(0x8D8D24FF);
-	*(LPDWORD)0x0052B416 = BSWAP32(0xFFFFEB01);
-	*(LPBYTE )0x0052B41A = 0x90;
+	*(LPWORD )0x0052B412 = BSWAP16(0x8D8D    );
+	*(LPDWORD)0x0052B414 =        -0x000000DC ;
+	NPAD3    (0x0052B418);
 
 	// TSSToggle::Setting
 	SET_PROC (0x0052BAF7, TSSToggle_Setting_GetCode);

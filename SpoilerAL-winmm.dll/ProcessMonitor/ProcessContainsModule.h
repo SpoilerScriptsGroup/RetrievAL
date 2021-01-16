@@ -11,10 +11,11 @@
 extern "C" {
 #endif
 
-BOOL __stdcall ProcessContainsModule(
+BOOL __stdcall ProcessInfoValidation(
 	IN DWORD   dwProcessId,
 	IN BOOL    bIsRegex,
-	IN LPCVOID lpModuleName);
+	IN LPCVOID lpModuleName,
+	IN LPCVOID lpCmdLineArg);
 
 #ifdef __cplusplus
 }

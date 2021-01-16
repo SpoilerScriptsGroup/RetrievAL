@@ -19,7 +19,7 @@ static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(
 {
 	unsigned long   Step;
 	bcb6_std_string *end = &vector_at(tmpV, 2);
-	if (!TSSGCtrl_GetSSGActionListner(SSGC))
+	if (!SSGC->script.ePos)
 	{
 		*Begin = TStringDivision_ToULongDef(&vector_at(tmpV, 1), 0);
 		*End   = TStringDivision_ToULongDef(&vector_at(tmpV, 2), 0);
@@ -50,7 +50,7 @@ static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(
 				sizeof(double),
 				NULL))
 			{
-				TMainForm_Guide(lpBuffer, FALSE);
+				TMainForm_Guide(lpBuffer, 0);
 				LocalFree(lpBuffer);
 			}
 		} 

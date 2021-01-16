@@ -54,19 +54,23 @@ void __cdecl TProcessCtrl_LoadModuleList(TProcessCtrl *const this)
 		}
 		CloseHandle(Snapshot);
 	}
-	else if (TMainForm_GetUserMode(MainForm) != 1 && (error = GetLastError()) != ERROR_INVALID_PARAMETER && FormatMessageA(
-		FORMAT_MESSAGE_MAX_WIDTH_MASK |
-		FORMAT_MESSAGE_ALLOCATE_BUFFER |
-		FORMAT_MESSAGE_IGNORE_INSERTS |
-		FORMAT_MESSAGE_FROM_SYSTEM,
-		NULL,
-		error,
-		0,
-		(LPSTR)&lpBuffer,
-		sizeof(double),
-		NULL))
+	else if (TMainForm_GetUserMode(MainForm) != 1
+			 && TSSGCtrl_GetSSGActionListner(&MainForm->ssgCtrl)
+			 && (error = GetLastError()) != ERROR_INVALID_PARAMETER
+			 && FormatMessageA(
+				 FORMAT_MESSAGE_MAX_WIDTH_MASK |
+				 FORMAT_MESSAGE_ALLOCATE_BUFFER |
+				 FORMAT_MESSAGE_IGNORE_INSERTS |
+				 FORMAT_MESSAGE_FROM_SYSTEM,
+				 NULL,
+				 error,
+				 0,
+				 (LPSTR)&lpBuffer,
+				 sizeof(double),
+				 NULL)
+			 )
 	{
-		TMainForm_Guide(lpBuffer, FALSE);
+		TMainForm_Guide(lpBuffer, 0);
 		LocalFree(lpBuffer);
 	}
 }

@@ -1,16 +1,18 @@
-#ifdef __BORLANDC__
+#define _CRT_SECURE_NO_WARNINGS
+#include <windows.h>
+#include <mbstring.h>
+
+#ifndef __BORLANDC__
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_string.h"
+#else
 #define string_empty(s)             (s)->empty()
 #define string_length(s)            (s)->length()
 #define string_begin(s)             (s)->begin()
 #define string_end(s)               (s)->end()
 #define string_assign_cstr(s, cstr) *(s) = (cstr);
-#else
-#include <windows.h>
-#define USING_NAMESPACE_BCB6_STD
-#include "bcb6_std_string.h"
 #endif
 
-#include <mbstring.h>
 #include "intrinsic.h"
 #include "tlhelp32fix.h"
 
@@ -205,13 +207,15 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID this, string *ProcessName,
 					break;
 				}
 			}
-			if (lpProcessName || (lpModuleName && !lpClassName && !lpWindowName))
+			if (lpCmdLineArg && !bIsRegex)
+				_mbsupr(lpCmdLineArg);
+			if (lpProcessName || ((lpModuleName || lpCmdLineArg) && !lpClassName && !lpWindowName))
 			{
 				dwProcessId = FindProcessId(bIsRegex, lpProcessName, lpProcessName ? strlen(lpProcessName) : 0, lpModuleName, lpCmdLineArg);
 			}
 			else if (lpClassName || lpWindowName)
 			{
-				if (FindWindowContainsModule(bIsRegex, lpClassName, lpWindowName, lpModuleName, &dwProcessId))
+				if (FindWindowContainsModule(&dwProcessId, bIsRegex, lpClassName, lpWindowName, lpModuleName, lpCmdLineArg))
 					StopProcessMonitor();
 			}
 			HeapFree(hHeap, 0, argv);

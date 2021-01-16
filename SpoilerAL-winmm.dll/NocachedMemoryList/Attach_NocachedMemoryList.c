@@ -45,6 +45,7 @@ static __declspec(naked) void __cdecl TSSGCtrl_SetSSGDataFile_LowerStub(
 	}
 }
 
+#if 0
 static __declspec(naked) map_iterator __cdecl TSSGCtrl_SetSSGDataFile_findStub(map* dataFileMap, string* Path) {
 	__asm {// compatible with __msfastcall
 		mov   eax, [edx]string._M_start
@@ -58,6 +59,7 @@ static __declspec(naked) map_iterator __cdecl TSSGCtrl_SetSSGDataFile_findStub(m
 		ret
 	}
 }
+#endif
 
 #define PUSH_ECX                   (BYTE)0x51
 #define PUSH_IMM8                  (BYTE)0x6A

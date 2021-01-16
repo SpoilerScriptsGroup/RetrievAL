@@ -3,24 +3,24 @@
 #include "bcb6_std_string.h"
 #include "TSSString.h"
 
-static void __fastcall TSSString_Read_terminate_Data(TSSString *this, string *Data, unsigned long Pos)
-{
-	if (!this->codePage)
-		*(string_end(Data) = string_begin(Data) + Pos) = '\0';
-}
-
 void __declspec(naked) Caller_TSSString_Read_terminate_Data()
 {
+	static void __fastcall TSSString_Read_terminate_Data();
+
 	__asm
 	{
-		#define this  ebx
-		#define Data (ebp - 0x1C)
+		#define Pos   edx
 
-		lea     edx, [Data]
-		mov     ecx,  this
-		jmp     TSSString_Read_terminate_Data
+		cmp     Pos, -1
+#pragma warning(suppress: 4414)
+		jne     TSSString_Read_terminate_Data
+		ret     4
 		
-		#undef Data
-		#undef this
+		#undef Pos
 	}
+}
+
+static void __fastcall TSSString_Read_terminate_Data(string *Data, unsigned long Pos, TSSString *this)
+{
+	*(string_end(Data) = string_begin(Data) + Pos) = '\0';
 }

@@ -477,40 +477,6 @@ static DWORD WINAPI ProcessMonitor(LPVOID lpParameter)
 	return 0;
 }
 
-static BOOL __fastcall ProcessCmdlineInspect(DWORD pid, LPCSTR lpCmdLineArg) {
-	BOOL match = FALSE;
-	HANDLE const hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
-	if (hProcess)
-	{
-		PEB peb;
-		RTL_USER_PROCESS_PARAMETERS upp;
-		PROCESS_BASIC_INFORMATION pbi;
-		LPSTR szCmd;
-		if (!NtQueryInformationProcess(hProcess, ProcessBasicInformation, &pbi, sizeof(pbi), NULL)
-			&& ReadProcessMemory(hProcess, pbi.PebBaseAddress   , &peb, sizeof(peb), NULL)
-			&& ReadProcessMemory(hProcess, peb.ProcessParameters, &upp, sizeof(upp), NULL)
-			&& (szCmd = HeapAlloc(hHeap, HEAP_ZERO_MEMORY, upp.CommandLine.MaximumLength << 1))
-			)
-		{
-			regex_t reCmd;
-			if (ReadProcessMemory(hProcess, upp.CommandLine.Buffer, &szCmd[upp.CommandLine.MaximumLength], upp.CommandLine.Length, NULL)
-				&& WideCharToMultiByte(CP_THREAD_ACP, 0, (LPCWCH)&szCmd[upp.CommandLine.MaximumLength], upp.CommandLine.Length >> 1,
-									   szCmd, upp.CommandLine.MaximumLength, NULL, NULL)
-				&& !regcomp(&reCmd, lpCmdLineArg, REG_EXTENDED | REG_NEWLINE | REG_NOSUB)
-				)
-			{
-				if (TMainForm_GetUserMode(MainForm) >= 3)
-					TMainForm_Guide(szCmd, 0);
-				match = !regexec(&reCmd, szCmd, 0, NULL, 0);
-				regfree(&reCmd);
-			}
-			HeapFree(hHeap, 0, szCmd);
-		}
-		CloseHandle(hProcess);
-	}
-	return match;
-}
-
 DWORD __stdcall FindProcessId(
 	IN          BOOL   bIsRegex,
 	IN          LPCSTR lpProcessName,
@@ -532,12 +498,10 @@ DWORD __stdcall FindProcessId(
 	if (!bInitialized || (BOOL)_InterlockedCompareExchange((long *)&InProcessing, TRUE, FALSE))
 		return 0;
 	dwProcessId = 0;
-	if (!hMonitorThread)
-		if (!EnumProcessId())
-			goto FINALLY;
-	if (!bIsRegex && lpModuleName)
-		if (!MultiByteToWideChar(CP_THREAD_ACP, 0, lpModuleName, -1, lpWideCharStr, _countof(lpWideCharStr)))
-			goto FINALLY;
+	if (!hMonitorThread && !EnumProcessId())
+		goto FINALLY;
+	if (!bIsRegex && lpModuleName && !MultiByteToWideChar(CP_THREAD_ACP, 0, lpModuleName, -1, lpWideCharStr, _countof(lpWideCharStr)))
+		goto FINALLY;
 	EnterCriticalSection(&cs);
 	if (!bIsRegex)
 	{
@@ -556,8 +520,7 @@ DWORD __stdcall FindProcessId(
 				{
 					if (_mbsicmp(lpProcessName, lpBaseName) == 0)
 					{
-						if ((!lpModuleName || ProcessContainsModule(*lpdwProcessId, FALSE, lpWideCharStr)) &&
-							(!lpCmdLineArg || ProcessCmdlineInspect(*lpdwProcessId, lpCmdLineArg)))
+						if (ProcessInfoValidation(*lpdwProcessId, FALSE, lpModuleName ? lpWideCharStr : NULL, lpCmdLineArg))
 						{
 							dwProcessId = *lpdwProcessId;
 							break;
@@ -571,7 +534,7 @@ DWORD __stdcall FindProcessId(
 		{
 			for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
 			{
-				if (ProcessContainsModule(*lpdwProcessId, FALSE, lpWideCharStr))
+				if (ProcessInfoValidation(*lpdwProcessId, FALSE, lpModuleName ? lpWideCharStr : NULL, lpCmdLineArg))
 				{
 					dwProcessId = *lpdwProcessId;
 					break;
@@ -586,6 +549,7 @@ DWORD __stdcall FindProcessId(
 	{
 		regex_t reProcessName;
 		regex_t reModuleName;
+		regex_t reCmdLineArg;
 		LPSTR   dest;
 		LPCSTR  src;
 
@@ -612,39 +576,53 @@ DWORD __stdcall FindProcessId(
 			}
 			if (!lpModuleName || regcomp(&reModuleName, lpModuleName, REG_EXTENDED | REG_ICASE | REG_NOSUB) == 0)
 			{
-				if (lpProcessName)
+				if (!lpCmdLineArg || regcomp(&reCmdLineArg, lpCmdLineArg, REG_EXTENDED | REG_NOSUB) == 0)
 				{
-					LPCSTR lpBaseName;
-
-					lpBaseName = (LPCSTR)lpMonitorNames;
-					for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
+					if (lpProcessName)
 					{
-						DWORD dwLength;
+						LPCSTR lpBaseName;
 
-						dwLength = *(LPDWORD)lpBaseName;
-						lpBaseName += sizeof(DWORD);
-						if (regexec(&reProcessName, lpBaseName, 0, NULL, 0) == 0)
+						lpBaseName = (LPCSTR)lpMonitorNames;
+						for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
 						{
-							if ((!lpModuleName || ProcessContainsModule(*lpdwProcessId, TRUE, &reModuleName)) &&
-								(!lpCmdLineArg || ProcessCmdlineInspect(*lpdwProcessId, lpCmdLineArg)))
+							DWORD dwLength;
+
+							dwLength = *(LPDWORD)lpBaseName;
+							lpBaseName += sizeof(DWORD);
+							if (regexec(&reProcessName, lpBaseName, 0, NULL, 0) == 0)
+							{
+								if (ProcessInfoValidation(
+									*lpdwProcessId,
+									TRUE,
+									lpModuleName ? &reModuleName : NULL,
+									lpCmdLineArg ? &reCmdLineArg : NULL
+								))
+								{
+									dwProcessId = *lpdwProcessId;
+									break;
+								}
+							}
+							lpBaseName += dwLength + __alignof(DWORD)/* included \0 */ & -(signed)__alignof(DWORD);
+						}
+					}
+					else
+					{
+						for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
+						{
+							if (ProcessInfoValidation(
+								*lpdwProcessId,
+								TRUE,
+								lpModuleName ? &reModuleName : NULL,
+								lpCmdLineArg ? &reCmdLineArg : NULL
+							))
 							{
 								dwProcessId = *lpdwProcessId;
 								break;
 							}
 						}
-						lpBaseName += dwLength + __alignof(DWORD)/* included \0 */ & -(signed)__alignof(DWORD);
 					}
-				}
-				else
-				{
-					for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
-					{
-						if (ProcessContainsModule(*lpdwProcessId, TRUE, &reModuleName))
-						{
-							dwProcessId = *lpdwProcessId;
-							break;
-						}
-					}
+					if (lpCmdLineArg)
+						regfree(&reCmdLineArg);
 				}
 				if (lpModuleName)
 					regfree(&reModuleName);

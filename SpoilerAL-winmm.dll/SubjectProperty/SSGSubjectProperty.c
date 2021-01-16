@@ -29,14 +29,17 @@ TSSGSubjectProperty * __fastcall GrowSubjectProperty(DWORD *lpdwIndex)
 	{
 		if (SubjectPropertyCount)
 		{
-			if (TSSGCtrl_GetSSGActionListner(&MainForm->ssgCtrl))
-				for (DWORD i = SubjectPropertyCount; --i != MAXDWORD; )
-					if (SubjectProperty[i].RepeatDepth == MAXDWORD)
-					{
-						 prop = &SubjectProperty[index = i];
-						*prop = (const TSSGSubjectProperty) { MAXDWORD };
-						goto RESOLVED;
-					}
+			if (MainForm->ssgCtrl.script.ePos)
+			{
+				DWORD i = SubjectPropertyCount;
+				do if (SubjectProperty[--i].RepeatDepth == -1)
+				{
+					 prop = &SubjectProperty[index = i];
+					*prop = (const TSSGSubjectProperty) { MAXDWORD };
+					goto RESOLVED;
+				}
+				while (i);
+			}
 			if (SubjectPropertyCount < Allocation)
 				prop = SubjectProperty;
 			else

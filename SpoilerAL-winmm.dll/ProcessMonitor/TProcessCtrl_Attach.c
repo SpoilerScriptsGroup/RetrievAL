@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <intrin.h>
+#include "ShowErrorMessage/ErrorMessage.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_operator.h"
 #include "TMainForm.h"
@@ -63,7 +64,7 @@ static void __cdecl FreeExternalDependency(TProcessCtrl *const proc)
 							sizeof(double),
 							NULL))
 					{
-						TMainForm_Guide(lpBuffer, FALSE);
+						TMainForm_Guide(lpBuffer, 0);
 						LocalFree(lpBuffer);
 					}
 					lpProcessMemory[i].Address = NULL;
@@ -101,6 +102,7 @@ BOOLEAN __cdecl TProcessCtrl_AttachByProcessName(TProcessCtrl *this, string Proc
 	if (Result = TProcessCtrl_FindProcess(this, &ProcessName, &PE32) == 0)
 	{
 		this->entry = PE32;
+		ClearErrorMessageId();
 
 		// 取得可能だったファイル名を保持
 		string_assign(&this->attachedProcessName, &ProcessName);
@@ -148,7 +150,7 @@ BOOLEAN __cdecl TProcessCtrl_Attach(TProcessCtrl *this)
 			return TRUE;
 	}
 
-	SetLastError(ERROR_FLT_INSTANCE_NOT_FOUND);
+	if (!vector_empty(&this->processNameVec)) SetErrorMessageId(ERROR_FLT_INSTANCE_NOT_FOUND);
 	return FALSE;
 }
 //---------------------------------------------------------------------

@@ -12,11 +12,12 @@ extern "C" {
 #endif
 
 HWND __stdcall FindWindowContainsModule(
+	OUT OPTIONAL LPDWORD lpdwProcessId,
 	IN           BOOL    bIsRegex,
 	IN  OPTIONAL LPCSTR  lpClassName,
 	IN  OPTIONAL LPCSTR  lpWindowName,
 	IN  OPTIONAL LPCSTR  lpModuleName,
-	OUT OPTIONAL LPDWORD lpdwProcessId);
+	IN  OPTIONAL LPCSTR  lpCmdLineArg);
 
 #ifdef __cplusplus
 }

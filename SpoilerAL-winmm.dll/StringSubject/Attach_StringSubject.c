@@ -53,14 +53,27 @@ EXTERN_C void __cdecl Attach_StringSubject()
 	//   tmpC[size] = (char)NULL; => *(LPWSTR)&tmpC[size] = L'\0';
 	*(LPBYTE )(0x0052AFBA + 1) =         0x53       ;// eax => edx
 	*(LPWORD ) 0x0052AFBE      = BSWAP16(0x66C7    );// mov word ptr 
-	*(LPDWORD) 0x0052AFC0      = BSWAP32(0x043A0000);// [edi + edx], 0
+	*(LPDWORD) 0x0052AFC0      = BSWAP32(0x04170000);// [edi + edx], 0
 	*(LPBYTE ) 0x0052AFC4      =         0x90       ;// nop
 
 	//   string Data(tmpC);
 	*(LPDWORD)(0x0052B01E + 1) = (DWORD)Caller_TSSString_Read_TranscodeString - (0x0052B01E + 1 + sizeof(DWORD));
 
+	//   skip 'SSGC.stD.Find' if specified code page
+	*(LPBYTE )0x0052B045 = 0x74;// je
+	*(LPBYTE )0x0052B046 = 0x0052B04E - (0x0052B046 + sizeof(BYTE));
+	*(LPBYTE )0x0052B047 =         0x66   ;// cmp
+	*(LPWORD )0x0052B048 = BSWAP16(0x837B);// word ptr [ebx + ...], ??
+	*(LPBYTE )0x0052B04A = offsetof(TSSString, codePage);
+	*(LPBYTE )0x0052B04B = CP_ACP;
+	*(LPBYTE )0x0052B04C = 0x74;// je
+	*(LPBYTE )0x0052B04D = 0x0052B053 - (0x0052B04D + sizeof(BYTE));
+	*(LPBYTE )0x0052B04E = 0xE9;// jmp
+
 	//   Data[Pos]=(byte)NULL;
-	*(LPWORD )0x0052B122 = BSWAP16(0x50E8);// push Pos; call ...
+	*(LPBYTE )0x0052B11D =         0x53       ;// push this
+	*(LPWORD )0x0052B11E = BSWAP16(0x8BD0    );// mov  edx, Pos
+	*(LPDWORD)0x0052B120 = BSWAP32(0x8D4DE4E8);// lea  ecx, Data
 	*(LPDWORD)0x0052B124 = (DWORD)Caller_TSSString_Read_terminate_Data - (0x0052B124 + sizeof(DWORD));
 	*(LPBYTE )0x0052B128 =         0x90   ;
 

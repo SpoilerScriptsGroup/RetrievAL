@@ -1,3 +1,4 @@
+#include <assert.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "SubjectStringTable.h"
 #include "TStringDivision.h"
@@ -292,7 +293,8 @@ __declspec(naked) void __cdecl TSSGCtrl_MakeADJFile_GetAddressStr()
 
 static __inline void TSSString_Setting_CheckCodePage(TSSString *this, string *s)
 {
-	this->codePage = CP_ACP;
+	this->codePage = CP_ACP;// must be 0
+	assert(!this->codePage);
 	switch (string_length(s))
 	{
 	case 4:
@@ -327,10 +329,8 @@ __declspec(naked) void __cdecl TSSString_Read_GetEndWord()
 	{
 		#define this ebx
 
-		lea     ecx, [this + 98H]
-		call    SubjectStringTable_GetString
-		mov     edi, eax
-		ret
+		lea     ecx, [this]TSSString.endWord
+		jmp     SubjectStringTable_GetString
 
 		#undef this
 	}
@@ -343,7 +343,7 @@ __declspec(naked) void __cdecl TSSString_Write_GetEndWord()
 		#define this (ebp + 8H)
 
 		mov     ecx, dword ptr [this]
-		add     ecx, 152
+		lea     ecx, [ecx]TSSString.endWord
 		jmp     SubjectStringTable_GetString
 
 		#undef this

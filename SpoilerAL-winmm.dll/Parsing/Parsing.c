@@ -63,6 +63,7 @@ extern wchar_t * _wcsspnp(const wchar_t *string, const wchar_t *control);
 #include "TranscodeMultiByte.h"
 #include "ToolTip/ToolTip.h"
 #include "ToolTip/commctrl.h"
+#include "ShowErrorMessage/ErrorMessage.h"
 
 #ifdef __BORLANDC__
 #define USE_PLUGIN 0
@@ -1180,32 +1181,34 @@ typedef struct _MARKUP {
 	};
 } MARKUP, *PMARKUP;
 
-typedef struct {
-	union {
-		struct {
+// Avoid conflicts with OLE
+typedef struct _VARIAUNT {
+	union VARIANT {
+		struct QUAD {
 			DWORD Low;
 			DWORD High;
 		};
 		uint64_t  Quad;
 		double    Real;
 		float     Float;
-		LPCVOID   VoidP;
+		LPCSTR    AnsiString;
+		LPCWSTR   WideString;
 	};
 	BOOL IsQuad;
-} VARIABLE, *PVARIABLE;
+} VARIAUNT, *PVARIAUNT;
 
-typedef struct {
+typedef struct _VARIABLE {
 	size_t   Length;
 	LPCSTR   String;
-	VARIABLE Value;
+	VARIAUNT Value;
 #if SCOPE_SUPPORT
 	map_iterator Node;
 #endif
-} MARKUP_VARIABLE, *PMARKUP_VARIABLE;
+} VARIABLE, *PVARIABLE;
 
 #ifndef TYPEDEF_PROCESSMEMORYBLOCK
 #define TYPEDEF_PROCESSMEMORYBLOCK
-typedef struct {
+typedef struct _PROCESSMEMORYBLOCK {
 	DWORD  Id;
 	LPVOID Address;
 	size_t Size;
@@ -1417,6 +1420,7 @@ BOOL __fastcall CorrectFunction(MARKUP *lpMarkup, MARKUP *lpEndOfMarkup, size_t 
 				MARKUP *lpParam;
 
 				lpMarkup->Type &= ~OS_PUSH;
+				if (lpMarkup + 1 == lpClose) break;
 				lpList = lpList->Next = lpMarkup;
 			LOOP_ENTRY:
 				lpParam = lpMarkup;
@@ -4157,10 +4161,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		size_t length;
 
 		if ((length = TrimMarkupString(&p, lpTag < lpEndOfTag ? lpTag[0].String : lpSrc + nSrcLength)) ||
-			lpTag > lpTagArray && lpTag < lpEndOfTag && (
-				lpTag[-1].Tag == TAG_DELIMITER ?
-					lpTag[0].Tag == TAG_DELIMITER || lpTag[0].Tag == TAG_PARENTHESIS_CLOSE :
-					lpTag[-1].Tag == TAG_PARENTHESIS_OPEN && lpTag[0].Tag == TAG_DELIMITER))
+			lpTag > lpTagArray && lpTag < lpEndOfTag && lpTag[0].Tag == TAG_DELIMITER && (
+				lpTag[-1].Tag == TAG_PARENTHESIS_OPEN || lpTag[-1].Tag == TAG_DELIMITER))
 		{
 			size_t prefixLength;
 
@@ -4409,6 +4411,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						lpElse->Type = OS_PUSH;
 					lpClose->Tag = TAG_IF_EXPR;
 					lpClose->Type |= OS_PUSH | OS_SPLIT;
+					lpClose->Param = lpMarkup;
 					for (MARKUP *lpElement = lpBegin; lpElement < lpEnd; lpElement++)
 						lpElement->Depth++;
 				}
@@ -4442,8 +4445,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					lpClose->Tag = TAG_SWITCH_EXPR;
 					lpClose->Type |= OS_PUSH | OS_SPLIT;
-					lpClose->Param = lpOpen + 1;
-					lpClose->Close = lpMarkup;
+					lpClose->Param = lpMarkup;
 					lpEnd->Type |= OS_PUSH | OS_SPLIT;
 					lpMarkup->Param = lpClose;
 					lpMarkup->Next  = lpEnd;
@@ -4471,6 +4473,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					lpWhile->Type = OS_PUSH | OS_HAS_EXPR | OS_POST;
 					lpEnd->Tag = TAG_WHILE_EXPR;
 					lpEnd->Type |= OS_PUSH | OS_POST | OS_LOOP_END;
+					lpEnd->Param = lpWhile;
 					if (!lpFirstDoWhileLoop)
 						lpFirstDoWhileLoop = lpMarkup;
 				}
@@ -4494,6 +4497,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						lpElse->Type = OS_PUSH;
 					lpClose->Tag = TAG_WHILE_EXPR;
 					lpClose->Type |= OS_PUSH | OS_SPLIT;
+					lpClose->Param = lpMarkup;
 					lpEnd->Type |= OS_PUSH | OS_SPLIT | OS_LOOP_END;
 				}
 				continue;
@@ -4520,6 +4524,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					lpInitialize->Type |= OS_PUSH;
 					lpCondition->Tag = TAG_FOR_CONDITION;
 					lpCondition->Type |= OS_PUSH | OS_LOOP_BEGIN;
+					lpCondition->Param = lpMarkup;
 					lpUpdate->Tag = TAG_FOR_UPDATE;
 					lpUpdate->Type |= OS_PUSH | OS_SPLIT;
 					lpEnd->Type |= OS_PUSH | OS_SPLIT | OS_LOOP_END;
@@ -5724,8 +5729,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	MARKUP                      *lpMarkupArray;
 	MARKUP                      **lpPostfixBuffer, **lpPostfix, **lpEndOfPostfix;
 	LPBYTE                      lpConstStringBuffer;
-	VARIABLE                    *lpOperandBuffer, *lpOperandTop, *lpEndOfOperand;
-	MARKUP_VARIABLE             *lpVariable;
+	VARIAUNT                    *lpOperandBuffer, *lpOperandTop, *lpEndOfOperand;
+	VARIABLE                    *lpVariable;
 	size_t                      nNumberOfVariable;
 	LPVOID                      *lpHeapBuffer;
 	size_t                      nNumberOfHeapBuffer;
@@ -5736,7 +5741,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	vector_TSSGAttributeElement *attributes;
 #endif
 	BOOL                        bInitialIsInteger;
-	VARIABLE                    operandZero;
+	VARIAUNT                    operandZero;
 	HANDLE                      hProcess;
 	HANDLE                      strtok_process;
 	HANDLE                      wcstok_process;
@@ -6030,18 +6035,18 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			#undef BOM
 		} while (0);
 
-		lpOperandBuffer = (VARIABLE *)HeapAlloc(hHeap, 0, sizeof(VARIABLE) * (nNumberOfPostfix + 1));
+		lpOperandBuffer = (VARIAUNT *)HeapAlloc(hHeap, 0, sizeof(VARIAUNT) * (2 + nNumberOfPostfix));
 		if (!lpOperandBuffer)
 			goto ALLOC_ERROR;
 
-		lpVariable = (MARKUP_VARIABLE *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sizeof(MARKUP_VARIABLE) * 0x10);
+		lpVariable = (VARIABLE *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sizeof(VARIABLE) * 0x10);
 		if (!lpVariable)
 			goto ALLOC_ERROR;
 
 		#define OPERAND_IS_EMPTY()  (lpEndOfOperand == lpOperandBuffer)
 		#define OPERAND_PUSH(value) (*(lpOperandTop = lpEndOfOperand++) = (value))
 		#define OPERAND_POP()       (!OPERAND_IS_EMPTY() ? *(lpEndOfOperand = lpOperandTop != lpOperandBuffer ? lpOperandTop-- : lpOperandTop) : operandZero)
-		#define OPERAND_CLEAR()     (*(lpOperandTop = lpEndOfOperand = lpOperandBuffer) = operandZero)
+		#define OPERAND_CLEAR()     (*(lpOperandTop = lpEndOfOperand = lpOperandBuffer) = operandZero, lpEndOfOperand++)
 
 		bInitialIsInteger = IsInteger;
 		if (nNumberOfMarkup)
@@ -6096,11 +6101,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				LPVOID lpMem;
 				size_t nBytes;
 
-				nBytes = (nNumberOfVariable + 0x10) * sizeof(MARKUP_VARIABLE);
+				nBytes = (nNumberOfVariable + 0x10) * sizeof(VARIABLE);
 				lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
 				if (!lpMem)
 					goto ALLOC_ERROR;
-				lpVariable = (MARKUP_VARIABLE *)lpMem;
+				lpVariable = (VARIABLE *)lpMem;
 			}
 			lpVariable[nNumberOfVariable].Length = length;
 			lpVariable[nNumberOfVariable].String = va_arg(ArgPtr, LPCSTR);
@@ -6152,11 +6157,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					LPVOID lpMem;
 					size_t nBytes;
 
-					nBytes = (nNumberOfVariable + 0x10) * sizeof(MARKUP_VARIABLE);
+					nBytes = (nNumberOfVariable + 0x10) * sizeof(VARIABLE);
 					lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
 					if (!lpMem)
 						goto ALLOC_ERROR;
-					lpVariable = (MARKUP_VARIABLE *)lpMem;
+					lpVariable = (VARIABLE *)lpMem;
 				}
 				lpVariable[nNumberOfVariable].Length = nVariableLength = strlen(p + 3) + 3;
 				nSize += ++nVariableLength;
@@ -6187,11 +6192,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					LPVOID lpMem;
 					size_t nBytes;
 
-					nBytes = (nNumberOfVariable + 0x10) * sizeof(MARKUP_VARIABLE);
+					nBytes = (nNumberOfVariable + 0x10) * sizeof(VARIABLE);
 					lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
 					if (!lpMem)
 						goto ALLOC_ERROR;
-					lpVariable = (MARKUP_VARIABLE *)lpMem;
+					lpVariable = (VARIABLE *)lpMem;
 				}
 				lpVariable[nNumberOfVariable].Length = nVariableLength;
 				nSize += ++nVariableLength;
@@ -6217,7 +6222,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	wcstok_context  = NULL;
 	mbstok_context  = NULL;
 	bCompoundAssign = FALSE;
-	for (; lpPostfix < lpEndOfPostfix; lpPostfix++)
+	for (OPERAND_CLEAR(); lpPostfix < lpEndOfPostfix; lpPostfix++)
 	{
 		MARKUP       *lpMarkup;
 		bool         boolValue;
@@ -6256,7 +6261,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			OPERAND_CLEAR();
 			break;
 		case TAG_IF_EXPR:
-			boolValue = OPERAND_IS_EMPTY() || (IsInteger ? !!lpOperandTop->Quad : !!lpOperandTop->Real);
+			boolValue = IsInteger ? !!lpOperandTop->Quad : !!lpOperandTop->Real;
+			if (OPERAND_POP(), OPERAND_IS_EMPTY())
+			{
+				lpMarkup = lpMarkup->Param;
+				goto PARSING_ERROR;
+			}
 			OPERAND_CLEAR();
 			if (boolValue)
 				continue;
@@ -6323,7 +6333,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 #endif
 			goto OUTPUT_GUIDE;
 		case TAG_SWITCH_EXPR:
-			lpAddress = (boolValue = OPERAND_IS_EMPTY()) ? 0 : IsInteger ? (LPVOID)lpOperandTop[0].Quad : (LPVOID)(uintptr_t)lpOperandTop[0].Real;
+			lpAddress = IsInteger ? (LPVOID)lpOperandTop->Quad : (LPVOID)(uintptr_t)lpOperandTop->Real;
+			if (OPERAND_POP(), OPERAND_IS_EMPTY())
+			{
+				lpMarkup = lpMarkup->Param;
+				goto PARSING_ERROR;
+			}
 			OPERAND_CLEAR();
 			{
 				#define lpBuffer lpBuffer1
@@ -6335,13 +6350,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 
 				lpBuffer = NULL;
 				(lpNext = lpMarkup)->Jump = lpPostfix;
-				lpMarkup = lpNext->Close;// for error
+				lpMarkup = lpNext->Param;// for error
 				mbstok_context = !bCached ? lpConstStringBuffer : lpConstStringRegion;
 
 				if (uFlags = lpNext->Next->Tag == TAG_CASE && lpNext->Next->Param
 					? NULL_TERMINATED | UNICODE_FUNCTION & lpNext->Next->UnescapedString : 0)
 				{
-					if (lpNext->Param->Tag == TAG_PARAM_LOCAL || IsStringOperand(lpNext->Param))
+					if (lpNext->Param[2].Tag == TAG_PARAM_LOCAL || IsStringOperand(&lpNext->Param[2]))
 						hSrcProcess = NULL;
 					else if (hProcess || (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 						hSrcProcess = hProcess;
@@ -6361,14 +6376,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						hSrcProcess = NULL;
 					}
 				}
-				else if (CheckStringOperand(lpNext->Param, &nSize))
+				else if (CheckStringOperand(&lpNext->Param[2], &nSize))
 				{
 					uFlags = NULL_TERMINATED | UNICODE_FUNCTION & nSize;
 					goto GET_LENGTH;
 				}
 
 				lpMarkup = lpNext->Next;// get case chain
-				while (lpMarkup->Next && (boolValue || lpMarkup->Tag == TAG_CASE && lpMarkup->Type == OS_PUSH && (
+				while (lpMarkup->Next && (lpMarkup->Tag == TAG_CASE && lpMarkup->Type == OS_PUSH && (
 					lpMarkup->Param ? !NT_SUCCESS(CompareProcessMemory(
 						&iResult,
 						pSrc ? hSrcProcess : hProcess ? hProcess : (hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)),
@@ -6404,7 +6419,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				goto LOOP_CHECK;
 			break;
 		case TAG_WHILE_EXPR:
-			boolValue = OPERAND_IS_EMPTY() || (IsInteger ? !!lpOperandTop->Quad : !!lpOperandTop->Real);
+			boolValue = IsInteger ? !!lpOperandTop->Quad : !!lpOperandTop->Real;
+			if (OPERAND_POP(), OPERAND_IS_EMPTY())
+			{
+				lpMarkup = lpMarkup->Param;
+				goto PARSING_ERROR;
+			}
 			OPERAND_CLEAR();
 			if (boolValue)
 			{
@@ -6454,7 +6474,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			OPERAND_CLEAR();
 			continue;
 		case TAG_FOR_CONDITION:
-			boolValue = OPERAND_IS_EMPTY() || (IsInteger ? !!lpOperandTop->Quad : !!lpOperandTop->Real);
+			boolValue = IsInteger ? !!lpOperandTop->Quad : !!lpOperandTop->Real;
+			if (lpMarkup[-1].Tag == TAG_FOR_INITIALIZE)
+				boolValue = TRUE;
+			else if (OPERAND_POP(), OPERAND_IS_EMPTY())
+			{
+				lpMarkup = lpMarkup->Param;
+				goto PARSING_ERROR;
+			}
 			OPERAND_CLEAR();
 			if (boolValue)
 			{
@@ -6555,18 +6582,19 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpMarkup->Jump = lpPostfix;
 			}
 			break;
-		case TAG_DELIMITER:
-			OPERAND_POP();
 		case TAG_LABEL:
 		case TAG_PARAM_LOCAL:
 		case TAG_IMPORT_FUNCTION:
 		case TAG_IMPORT_REFERENCE:
 			continue;
+		case TAG_DELIMITER:
+			OPERAND_POP();
+			/* FALLTHROUGH */
 		case TAG_RETURN:
 			break;
 		case TAG_ADD:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				if (IsInteger)
@@ -6582,7 +6610,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_SUB:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				if (!(lpMarkup->Type & OS_LEFT_ASSIGN))
 				{
@@ -6590,7 +6618,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				}
 				else
 				{
-					VARIABLE swap = OPERAND_POP();
+					VARIAUNT swap = OPERAND_POP();
 					operand = *lpOperandTop;
 					*lpOperandTop = swap;
 				}
@@ -6607,7 +6635,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_MUL:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				if (IsInteger)
@@ -6624,7 +6652,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		case TAG_IDIV:
 			if (IsInteger)
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 				BOOL     IsQuad;
 
 				operand = OPERAND_POP();
@@ -6641,7 +6669,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			/* FALLTHROUGH */
 		case TAG_DIV:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				if (!(lpMarkup->Type & OS_LEFT_ASSIGN))
 				{
@@ -6649,7 +6677,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				}
 				else
 				{
-					VARIABLE swap = OPERAND_POP();
+					VARIAUNT swap = OPERAND_POP();
 					operand = *lpOperandTop;
 					*lpOperandTop = swap;
 				}
@@ -6675,7 +6703,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		case TAG_IMOD:
 			if (IsInteger)
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 				BOOL     IsQuad;
 
 				operand = OPERAND_POP();
@@ -6692,7 +6720,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			/* FALLTHROUGH */
 		case TAG_MOD:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				if (!(lpMarkup->Type & OS_LEFT_ASSIGN))
 				{
@@ -6700,7 +6728,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				}
 				else
 				{
-					VARIABLE swap = OPERAND_POP();
+					VARIAUNT swap = OPERAND_POP();
 					operand = *lpOperandTop;
 					*lpOperandTop = swap;
 				}
@@ -6740,7 +6768,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_SHL:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				if (!(lpMarkup->Type & OS_LEFT_ASSIGN))
 				{
@@ -6748,16 +6776,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				}
 				else
 				{
-					VARIABLE swap = OPERAND_POP();
+					VARIAUNT swap = OPERAND_POP();
 					operand = *lpOperandTop;
 					*lpOperandTop = swap;
 				}
 				if (IsInteger)
 				{
+					lpOperandTop->Quad = lpOperandTop->Quad << operand.Low;
 					if (!lpOperandTop->IsQuad)
-						lpOperandTop->Low = operand.Quad < sizeof(uint32_t) * 8 ? lpOperandTop->Low << operand.Low : 0;
-					else
-						lpOperandTop->Quad = operand.Quad < sizeof(uint64_t) * 8 ? lpOperandTop->Quad << operand.Low : 0;
+						lpOperandTop->High = 0;
 				}
 				else
 				{
@@ -6771,27 +6798,20 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		case TAG_SAR:
 			if (IsInteger)
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				if (!lpOperandTop->IsQuad)
-				{
-					if (operand.Quad > sizeof(uint32_t) * 8)
-						operand.Low = sizeof(uint32_t) * 8;
-					lpOperandTop->Low = (int32_t)lpOperandTop->Low >> operand.Low;
-				}
-				else
-				{
-					if (operand.Quad > sizeof(uint64_t) * 8)
-						operand.Low = sizeof(uint64_t) * 8;
-					lpOperandTop->Quad = (int64_t)lpOperandTop->Quad >> operand.Low;
-				}
+					lpOperandTop->Quad = (long)lpOperandTop->Low;
+				lpOperandTop->Quad = (int64_t)lpOperandTop->Quad >> operand.Low;
+				if (!lpOperandTop->IsQuad)
+					lpOperandTop->High = 0;
 				break;
 			}
 			/* FALLTHROUGH */
 		case TAG_SHR:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				if (!(lpMarkup->Type & OS_LEFT_ASSIGN))
 				{
@@ -6799,16 +6819,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				}
 				else
 				{
-					VARIABLE swap = OPERAND_POP();
+					VARIAUNT swap = OPERAND_POP();
 					operand = *lpOperandTop;
 					*lpOperandTop = swap;
 				}
 				if (IsInteger)
 				{
-					if (!lpOperandTop->IsQuad)
-						lpOperandTop->Low = operand.Quad < sizeof(uint32_t) * 8 ? lpOperandTop->Low >> operand.Low : 0;
-					else
-						lpOperandTop->Quad = operand.Quad < sizeof(uint64_t) * 8 ? lpOperandTop->Quad >> operand.Low : 0;
+					lpOperandTop->Quad = lpOperandTop->Quad >> operand.Low;
 				}
 				else
 				{
@@ -6821,7 +6838,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_ROL:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				if (!IsInteger)
@@ -6848,7 +6865,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_ROR:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				if (!IsInteger)
@@ -6875,7 +6892,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_BIT_AND:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				if (IsInteger)
@@ -6894,7 +6911,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_BIT_OR:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				if (IsInteger)
@@ -6913,7 +6930,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_XOR:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				if (IsInteger)
@@ -7035,7 +7052,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_EQ:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				if (IsInteger)
@@ -7052,7 +7069,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_NE:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				if (IsInteger)
@@ -7070,7 +7087,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		case TAG_LT:
 			if (IsInteger)
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				lpOperandTop->Quad = !(lpOperandTop->IsQuad | operand.IsQuad) ?
@@ -7082,7 +7099,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			/* FALLTHROUGH */
 		case TAG_BT:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				if (IsInteger)
@@ -7100,7 +7117,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		case TAG_GT:
 			if (IsInteger)
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				lpOperandTop->Quad = !(lpOperandTop->IsQuad | operand.IsQuad) ?
@@ -7112,7 +7129,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			/* FALLTHROUGH */
 		case TAG_AT:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				if (IsInteger)
@@ -7130,7 +7147,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		case TAG_LE:
 			if (IsInteger)
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				lpOperandTop->Quad = !(lpOperandTop->IsQuad | operand.IsQuad) ?
@@ -7142,7 +7159,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			/* FALLTHROUGH */
 		case TAG_BE:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				if (IsInteger)
@@ -7160,7 +7177,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		case TAG_GE:
 			if (IsInteger)
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				lpOperandTop->Quad = !(lpOperandTop->IsQuad | operand.IsQuad) ?
@@ -7172,7 +7189,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			/* FALLTHROUGH */
 		case TAG_AE:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				if (IsInteger)
@@ -7189,7 +7206,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_TERNARY:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				if (IsInteger ? !operand.Quad : !operand.Real)
@@ -7272,8 +7289,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				goto OPEN_ERROR;
 			if (bCompoundAssign)
 			{
-				VARIABLE op1 = OPERAND_POP();
-				VARIABLE op2 = *lpOperandTop;
+				VARIAUNT op1 = OPERAND_POP();
+				VARIAUNT op2 = *lpOperandTop;
 				*lpOperandTop = op1;
 				OPERAND_PUSH(op2);
 			}
@@ -7283,8 +7300,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				bCompoundAssign = lpNext && (lpNext->Type & OS_LEFT_ASSIGN);
 				if (bCompoundAssign)
 				{
-					VARIABLE op1 = OPERAND_POP();
-					VARIABLE op2 = *lpOperandTop;
+					VARIAUNT op1 = OPERAND_POP();
+					VARIAUNT op2 = *lpOperandTop;
 					*lpOperandTop = op1;
 					OPERAND_PUSH(op2);
 					OPERAND_PUSH(op2);
@@ -7479,8 +7496,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		LOCAL_MEMORY:
 			if (bCompoundAssign)
 			{
-				VARIABLE op1 = OPERAND_POP();
-				VARIABLE op2 = *lpOperandTop;
+				VARIAUNT op1 = OPERAND_POP();
+				VARIAUNT op2 = *lpOperandTop;
 				*lpOperandTop = op1;
 				OPERAND_PUSH(op2);
 			}
@@ -7490,8 +7507,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				bCompoundAssign = lpNext && (lpNext->Type & OS_LEFT_ASSIGN);
 				if (bCompoundAssign)
 				{
-					VARIABLE op1 = OPERAND_POP();
-					VARIABLE op2 = *lpOperandTop;
+					VARIAUNT op1 = OPERAND_POP();
+					VARIAUNT op2 = *lpOperandTop;
 					*lpOperandTop = op1;
 					OPERAND_PUSH(op2);
 					OPERAND_PUSH(op2);
@@ -7783,11 +7800,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						LPVOID lpMem;
 						size_t nBytes;
 
-						nBytes = (nNumberOfVariable + 0x10) * sizeof(MARKUP_VARIABLE);
+						nBytes = (nNumberOfVariable + 0x10) * sizeof(VARIABLE);
 						lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
 						if (!lpMem)
 							goto ALLOC_ERROR;
-						lpVariable = (MARKUP_VARIABLE *)lpMem;
+						lpVariable = (VARIABLE *)lpMem;
 					}
 					lpVariable[nNumberOfVariable].Length = length;
 					lpVariable[nNumberOfVariable].String = p;
@@ -7824,7 +7841,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_PROCEDURE:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					goto OPEN_ERROR;
@@ -7852,7 +7869,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_MODULENAME:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				if (!hProcess && !(hProcess = TProcessCtrl_Open(&this->processCtrl, PROCESS_DESIRED_ACCESS)))
 					goto OPEN_ERROR;
@@ -7892,7 +7909,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			{
 				THeapListData *HeapL;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				if (!IsInteger)
@@ -7912,11 +7929,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			{
 				LPVOID lpAddress;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				if (!IsInteger)
-					lpOperandTop->Quad = (uint64_t)lpOperandTop->Real;
+					lpOperandTop->Quad = (DWORD)(long)lpOperandTop->Real;
 				lpAddress = NULL;
 				if (lpOperandTop->Quad >> sizeof(lpProcessMemory[0].Id) * 8)
 					goto PARSING_ERROR;
@@ -7997,7 +8014,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				HANDLE hTargetProcess;
 				LPVOID lp;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				lp = IsInteger ? (LPVOID)lpOperandTop[0].Quad : (LPVOID)(size_t)lpOperandTop[0].Real;
@@ -8041,7 +8058,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_CAST32:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (IsInteger)
@@ -8064,7 +8081,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_CAST64:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger && bInitialIsInteger && !lpOperandTop->IsQuad)
@@ -8072,7 +8089,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			lpOperandTop->IsQuad = TRUE;
 			break;
 		case TAG_I1TOI4:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			lpOperandTop->Quad = (uint32_t)(int8_t)lpOperandTop->Low;
@@ -8080,7 +8097,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->IsQuad = FALSE;
 			break;
 		case TAG_I2TOI4:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			lpOperandTop->Quad = (uint32_t)(int16_t)lpOperandTop->Low;
@@ -8088,7 +8105,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->IsQuad = FALSE;
 			break;
 		case TAG_I4TOI8:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			lpOperandTop->Quad = (int64_t)(int32_t)lpOperandTop->Low;
@@ -8098,14 +8115,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->High = 0;
 			break;
 		case TAG_UTOF:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			lpOperandTop->Real = (double)lpOperandTop->Quad;
 			lpOperandTop->IsQuad = TRUE;
 			break;
 		case TAG_ITOF:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			lpOperandTop->Real = lpOperandTop->IsQuad ? (double)(int64_t)lpOperandTop->Quad : (double)(int32_t)lpOperandTop->Quad;
@@ -8115,7 +8132,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			{
 				int32_t msw;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				msw = lpOperandTop->High;
@@ -8126,7 +8143,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_TRUNC:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -8136,7 +8153,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ROUND:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -8148,7 +8165,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		case TAG_ISFINITE:
 		case TAG_ISINF:
 		case TAG_ISNAN:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			switch (lpMarkup->Tag)
@@ -8171,7 +8188,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Quad = boolValue;
 			break;
 		case TAG_BSF:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (IsInteger)
@@ -8208,7 +8225,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_BSR:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (IsInteger)
@@ -8254,7 +8271,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_ROTL8:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				lpOperandTop->Quad = _rotl8((unsigned char)lpOperandTop->Low, (unsigned char)operand.Low);
@@ -8263,7 +8280,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_ROTL16:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				lpOperandTop->Quad = _rotl16((unsigned short)lpOperandTop->Low, (unsigned char)operand.Low);
@@ -8272,7 +8289,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_ROTL32:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				lpOperandTop->Quad = _rotl(lpOperandTop->Low, operand.Low);
@@ -8281,7 +8298,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_ROTL64:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				lpOperandTop->Quad = _rotl64(lpOperandTop->Quad, operand.Low);
@@ -8290,7 +8307,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_ROTR8:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				lpOperandTop->Quad = _rotr8((unsigned char)lpOperandTop->Low, (unsigned char)operand.Low);
@@ -8299,7 +8316,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_ROTR16:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				lpOperandTop->Quad = _rotr16((unsigned short)lpOperandTop->Low, (unsigned char)operand.Low);
@@ -8308,7 +8325,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_ROTR32:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				lpOperandTop->Quad = _rotr(lpOperandTop->Low, operand.Low);
@@ -8317,7 +8334,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_ROTR64:
 			{
-				VARIABLE operand;
+				VARIAUNT operand;
 
 				operand = OPERAND_POP();
 				lpOperandTop->Quad = _rotr64(lpOperandTop->Quad, operand.Low);
@@ -8331,7 +8348,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				LPCSTR lpMultiByteStr;
 				int    cchWideChar;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				lpBuffer = NULL;
@@ -8408,7 +8425,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				LPCSTR lpMultiByteStr;
 				int    cchWideChar;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				lpBuffer = NULL;
@@ -8472,7 +8489,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				LPCSTR lpUtf8Str;
 				int    cchWideChar;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				lpBuffer = NULL;
@@ -8546,7 +8563,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				LPCSTR lpUtf8Str;
 				int    cchWideChar;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				lpUtf8Str = IsInteger ? (LPCSTR)lpOperandTop->Quad : (LPCSTR)(size_t)lpOperandTop->Real;
@@ -8606,7 +8623,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				LPCWSTR lpWideCharStr;
 				int     cbMultiByte;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				lpBuffer = NULL;
@@ -8667,7 +8684,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				LPCWSTR lpWideCharStr;
 				int     cbMultiByte;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				lpBuffer = NULL;
@@ -8722,7 +8739,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ASSERT:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (IsInteger ? !lpOperandTop->Quad : !lpOperandTop->Real)
@@ -8782,7 +8799,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			{
 				DWORD dwMilliseconds;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				dwMilliseconds = IsInteger ? (DWORD)lpOperandTop->Quad : (DWORD)lpOperandTop->Real;
@@ -8800,13 +8817,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				uint64_t size;
 				LPVOID   address;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
 				if (IsStringOperand(element->Param))
 					goto PARSING_ERROR;
-				id = IsInteger ? (uint64_t)lpOperandTop[0].Quad : (uint64_t)lpOperandTop[0].Real;
+				id = IsInteger ? (uint64_t)lpOperandTop[0].Quad : (uint64_t)(DWORD)(long)lpOperandTop[0].Real;
 				if (id >> sizeof(lpProcessMemory[0].Id) * 8)
 					goto PARSING_ERROR;
 				element = element->Next;
@@ -8955,7 +8972,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 #endif
 		case TAG_ALLOCA:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -8992,7 +9009,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				LPBYTE  *endptr;
 				int     base;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
@@ -9147,7 +9164,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_TICK:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			lpOperandTop->Quad = GetTickCount();
@@ -9155,7 +9172,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_RAND32:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!(lpOperandTop->IsQuad = !IsInteger))
@@ -9164,7 +9181,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = randf32();
 			break;
 		case TAG_RAND64:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (IsInteger)
@@ -9177,7 +9194,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		case TAG_MAX:
 			if (IsInteger)
 			{
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				if (lpMarkup->Tag == TAG_MIN)
@@ -9189,7 +9206,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_IMIN:
 		case TAG_IMAX:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (IsInteger)
@@ -9259,14 +9276,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				MARKUP    *element;
 				size_t    nStackSize;
 				uintptr_t *lpParam;
-				VARIABLE  *lpOperand;
+				VARIAUNT  *lpOperand;
 				int       iResult;
 				HANDLE    hDestProcess;
 				LPBYTE    lpDest;
 				size_t    nCount;
 				LPCBYTE   lpFormat;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				if (!(uFlags & NUMBER_OF_CHARS))
@@ -9414,7 +9431,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				LPCBYTE  lpSrc;
 				size_t   nCount;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				lpSrc = IsInteger ? (LPCBYTE)(uintptr_t)lpOperandTop->Quad : (LPCBYTE)(uintptr_t)lpOperandTop->Real;
@@ -9478,7 +9495,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_STRINC:
 		case TAG_WCSINC:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			assert(lpMarkup->Tag == TAG_STRINC || lpMarkup->Tag == TAG_WCSINC);
@@ -9500,7 +9517,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				HANDLE hTargetProcess;
 				BYTE   c;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				lpCurrent = IsInteger ? (LPBYTE)(uintptr_t)lpOperandTop[0].Quad : (LPBYTE)(uintptr_t)lpOperandTop[0].Real;
@@ -9559,7 +9576,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 
 				LPCBYTE lpStart, lpCurrent;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				lpStart = IsInteger ? (LPCBYTE)(uintptr_t)lpOperandTop[0].Quad : (LPCBYTE)(uintptr_t)lpOperandTop[0].Real;
@@ -9621,7 +9638,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				LPCBYTE lpString;
 				size_t  nCount;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				if (IsStringOperand(lpMarkup->Next->Param))
@@ -9711,7 +9728,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				HANDLE       hTargetProcess;
 				unsigned int uResult;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				lpString = IsInteger ? (LPCBYTE)(uintptr_t)lpOperandTop[0].Quad : (LPCBYTE)(uintptr_t)lpOperandTop[0].Real;
@@ -9787,7 +9804,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			{
 				size_t nLength;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				lpAddress = IsInteger ? (LPVOID)(uintptr_t)lpOperandTop[0].Quad : (LPVOID)(uintptr_t)lpOperandTop[0].Real;
@@ -9851,7 +9868,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				LPCBYTE lpString;
 				size_t  nResult;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
@@ -9941,7 +9958,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				LPCVOID  lpAddress2;
 				size_t   nCount;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
@@ -10025,7 +10042,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				LPCBYTE lpString2;
 				size_t  nCount;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
@@ -10151,7 +10168,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				size_t   nSrcLength;
 				size_t   nCount;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
@@ -10330,7 +10347,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				unsigned int c;
 				size_t       nCount;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
@@ -10414,7 +10431,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				LPCBYTE lpSrc;
 				size_t  nCount;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
@@ -10589,7 +10606,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				size_t   nSrcLength;
 				size_t   nCount;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
@@ -10752,7 +10769,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				size_t       nCount;
 				size_t       nPos;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
@@ -10810,7 +10827,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				LPCBYTE      lpString;
 				unsigned int c;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
@@ -10898,7 +10915,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			{
 				NTSTATUS status;
 				MARKUP   *element;
-				VARIABLE *lpOperand;
+				VARIAUNT *lpOperand;
 				LPVOID   result;
 				HANDLE   haystack_process;
 				LPCVOID  haystack;
@@ -10907,7 +10924,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				LPCVOID  needle;
 				size_t   needle_len;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
@@ -11110,7 +11127,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				LPCBYTE lpString1;
 				LPCBYTE lpString2;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
@@ -11220,7 +11237,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				LPCVOID lpString1;
 				LPCVOID lpString2;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
@@ -11301,7 +11318,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				ULARGE_INTEGER qwFill;
 				size_t         nCount;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
@@ -11429,7 +11446,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				LPCVOID lpString2;
 				LPVOID  *lpContext;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				element = lpMarkup;
@@ -11589,7 +11606,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				size_t nLength;
 				LPVOID lpString;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				if (IsStringOperand(lpMarkup->Param))
@@ -11624,7 +11641,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISALNUM:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11635,7 +11652,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISALPHA:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11647,7 +11664,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_ISASCII:
 		case TAG_ISWASCII:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11658,7 +11675,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_ISBLANK:
 		case TAG_ISWBLANK:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11669,7 +11686,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_ISCNTRL:
 		case TAG_ISWCNTRL:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11680,7 +11697,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_ISCSYM:
 		case TAG_ISWCSYM:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11691,7 +11708,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_ISCSYMF:
 		case TAG_ISWCSYMF:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11701,7 +11718,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISDIGIT:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11712,7 +11729,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISGRAPH:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11723,7 +11740,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISKANA:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11737,7 +11754,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISLEADBYTE:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11751,7 +11768,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISLOWER:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11762,7 +11779,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISPRINT:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11773,7 +11790,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISPUNCT:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11784,7 +11801,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISSPACE:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11795,7 +11812,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISTRAILBYTE:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11811,7 +11828,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISUPPER:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11822,7 +11839,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISXDIGIT:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11833,7 +11850,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISMBBALNUM:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11852,7 +11869,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISMBBALPHA:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11871,7 +11888,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISMBBGRAPH:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11890,7 +11907,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISMBBPRINT:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11909,7 +11926,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISMBCALNUM:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11928,7 +11945,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISMBCALPHA:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11947,7 +11964,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISMBCDIGIT:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11966,7 +11983,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISMBCGRAPH:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11985,7 +12002,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISMBCHIRA:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -11995,7 +12012,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISMBCKATA:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12005,7 +12022,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISMBCL0:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12015,7 +12032,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISMBCL1:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12025,7 +12042,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISMBCL2:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12035,7 +12052,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISMBCLEGAL:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12045,7 +12062,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISMBCLOWER:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12064,7 +12081,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISMBCPRINT:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12083,7 +12100,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISMBCPUNCT:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12102,7 +12119,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISMBCSPACE:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12121,7 +12138,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISMBCSYMBOL:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12131,7 +12148,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_ISMBCUPPER:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12158,7 +12175,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISWALNUM:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12177,7 +12194,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISWALPHA:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12196,7 +12213,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISWDIGIT:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12215,7 +12232,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISWGRAPH:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12234,7 +12251,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISWLOWER:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12253,7 +12270,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISWPRINT:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12272,7 +12289,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISWPUNCT:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12291,7 +12308,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISWSPACE:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12310,7 +12327,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISWUPPER:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12329,7 +12346,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_ISWXDIGIT:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12351,7 +12368,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			break;
 		case TAG_TOASCII:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12361,7 +12378,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_TOLOWER:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12372,7 +12389,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				lpOperandTop->Real = (double)lpOperandTop->Quad;
 			break;
 		case TAG_TOUPPER:
-			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+			if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 				goto PARSING_ERROR;
 			lpEndOfOperand = lpOperandTop + 1;
 			if (!IsInteger)
@@ -12387,12 +12404,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			{
 				MARKUP          *element;
 				size_t          nStackSize;
-				VARIABLE        *lpOperand;
+				VARIAUNT        *lpOperand;
 				PLUGIN_FUNCTION *lpFunction;
 				uintptr_t       *lpStack;
 				PARAM_TYPE      *lpParamType;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				lpFunction = lpMarkup->Function;
@@ -12535,7 +12552,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					uint64_t Actual;
 				} PARAMETER;
 
-				const WCHAR static VA[] = L"0123456789";
+				static WCHAR const VA[] = L"0123456789";
 
 				vector_string *File;
 				string        FName, DefaultExt;
@@ -12544,7 +12561,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				size_t        count, extra = 0;
 				TSSGSubject   *Object = SSGS;
 
-				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) < lpOperandBuffer)
+				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
 				if (lpMarkup->Length != 3 || *lpMarkup->String != '@')
@@ -12608,14 +12625,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					arg->Length = 0;
 				}
 #if SCOPE_SUPPORT
-				for (register PMARKUP_VARIABLE v = lpVariable, end = v + nNumberOfVariable; v < end; v++)
+				for (register PVARIABLE v = lpVariable, end = v + nNumberOfVariable; v < end; v++)
 					if (v->Node)
 						((ScopeVariant *)pair_first(v->Node))->Quad = v->Value.Quad;
 #endif
 				lpOperandTop->Quad = InternalParsing(this, Object, Source, IsInteger, lpParams ? (va_list)lpParams : (va_list)&Terminator);
 				lpOperandTop->IsQuad = !IsInteger || lpOperandTop->High;
 #if SCOPE_SUPPORT
-				for (register PMARKUP_VARIABLE v = lpVariable, end = v + nNumberOfVariable; v < end; v++)
+				for (register PVARIABLE v = lpVariable, end = v + nNumberOfVariable; v < end; v++)
 					if (v->Node)
 					{
 						v->Value.Quad   = ((ScopeVariant *)pair_first(v->Node))->Quad;
@@ -12628,14 +12645,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			break;
 		case TAG_NOT_OPERATOR:
 			{
-				VARIABLE        operand;
-				size_t          length;
-				LPSTR           p, end;
-				MARKUP_VARIABLE *element;
-				char            *endptr;
-				LPSTR           lpEndOfModuleName;
-				LPSTR           lpModuleName;
-				char            c;
+				VARIAUNT operand;
+				size_t   length;
+				LPSTR    p, end;
+				VARIABLE *element;
+				char     *endptr;
+				LPSTR    lpEndOfModuleName;
+				LPSTR    lpModuleName;
+				char     c;
 
 				end = (p = lpMarkup->String) + (length = lpMarkup->Length);
 				element = NULL;
@@ -12733,11 +12750,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						LPVOID lpMem;
 						size_t nBytes;
 
-						nBytes = (nNumberOfVariable + 0x10) * sizeof(MARKUP_VARIABLE);
+						nBytes = (nNumberOfVariable + 0x10) * sizeof(VARIABLE);
 						lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
 						if (!lpMem)
 							goto ALLOC_ERROR;
-						lpVariable = (MARKUP_VARIABLE *)lpMem;
+						lpVariable = (VARIABLE *)lpMem;
 					}
 					element = lpVariable + nNumberOfVariable++;
 					element->Length = length;
@@ -12792,7 +12809,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 #else
 					if (operand.IsQuad = !IsInteger)
 #endif
-						operand.Real = (size_t)operand.Quad;
+						operand.Real = (uintptr_t)operand.Quad;
 					OPERAND_PUSH(operand);
 					lpPostfix++;
 					if (!TSSGCtrl_GetSSGActionListner(this))
@@ -12904,11 +12921,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 							LPVOID lpMem;
 							size_t nBytes;
 
-							nBytes = (nNumberOfVariable + 0x10) * sizeof(MARKUP_VARIABLE);
+							nBytes = (nNumberOfVariable + 0x10) * sizeof(VARIABLE);
 							lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
 							if (!lpMem)
 								goto ALLOC_ERROR;
-							lpVariable = (MARKUP_VARIABLE *)lpMem;
+							lpVariable = (VARIABLE *)lpMem;
 						}
 						element = lpVariable + nNumberOfVariable++;
 						element->Length = length;
@@ -13188,7 +13205,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		if (lpBuffer1)
 			HeapFree(hHeap, 0, lpBuffer1);
 	OPEN_ERROR:
-		if (TMainForm_GetUserMode(MainForm) >= 3 &&
+		if (TSSGCtrl_GetSSGActionListner(this) &&
+			TMainForm_GetUserMode(MainForm) >= 3 &&
 			!vector_empty(&this->processCtrl.processNameVec) &&
 			FormatMessageA(
 				FORMAT_MESSAGE_MAX_WIDTH_MASK |
@@ -13196,7 +13214,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				FORMAT_MESSAGE_IGNORE_INSERTS |
 				FORMAT_MESSAGE_FROM_SYSTEM,
 				NULL,
-				GetLastError(),
+				GetErrorMessageId(),
 				0,
 				(LPSTR)&lpMessage,
 				sizeof(double),
@@ -13261,15 +13279,17 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 
 	GUIDE:
 		if (TMainForm_GetUserMode(MainForm) != 1)
+		{
 			TMainForm_Guide(lpMessage, 0);
-		if (lpEndOfPostfix)
-			goto PARSING_ERROR;
+			if (lpEndOfPostfix)
+				goto PARSING_ERROR;
+		}
 		goto FAILED;
 	}
 	qwResult = lpOperandTop->Quad;
 FAILED:
 #if SCOPE_SUPPORT
-	for (register PMARKUP_VARIABLE v = lpVariable, end = v + nNumberOfVariable; v < end; v++)
+	for (register PVARIABLE v = lpVariable, end = v + nNumberOfVariable; v < end; v++)
 		if (v->Node)
 			((ScopeVariant *)pair_first(v->Node))->Quad = v->Value.Quad;
 #endif

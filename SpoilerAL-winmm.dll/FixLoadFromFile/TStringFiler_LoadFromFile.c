@@ -2,6 +2,7 @@
 #include <winioctl.h>
 #include <assert.h>
 #include "intrinsic.h"
+#include "ProcessMonitor/GetFileTitlePointer.h"
 
 #if (!defined(_MSC_VER) || _MSC_VER < 1200) && !defined(__assume)
 #define __assume(expression)
@@ -38,7 +39,6 @@
 
 extern HANDLE hHeap;
 
-EXTERN_C char * __fastcall GetFileTitlePointerA(const char *lpFileNeme);
 #ifndef __BORLANDC__
 EXTERN_C void __fastcall CheckSSGVersion(const char *begin, const char *end);
 #endif

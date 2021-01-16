@@ -8,7 +8,6 @@ __declspec(naked) void __cdecl TSSGCtrl_Write_ErrorSkip()
 	{
 		#define this             ebx
 		#define SSGS             (ebp + 0CH)
-		#define ssgActionListner (ebx + 54H)
 		#define OldAddress       edi
 		#define result           esi
 
@@ -35,7 +34,6 @@ __declspec(naked) void __cdecl TSSGCtrl_Write_ErrorSkip()
 
 		#undef this
 		#undef SSGS
-		#undef ssgActionListner
 		#undef OldAddress
 		#undef result
 	}

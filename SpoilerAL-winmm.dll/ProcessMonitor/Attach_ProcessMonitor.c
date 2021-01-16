@@ -2,6 +2,7 @@
 #include <dhcpsapi.h>
 #define _NO_CRT_STDIO_INLINE
 #include <stdio.h>
+#include "ShowErrorMessage/ErrorMessage.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "TProcessCtrl.h"
 #include "TMainForm.h"
@@ -110,7 +111,7 @@ static HANDLE __stdcall TProcessCtrl_Open_OpenProcess(DWORD dwDesiredAccess, BOO
 {
 	if (dwProcessId > 0)
 	{
-		HANDLE hProcess = OpenProcess(dwDesiredAccess | SYNCHRONIZE, bInheritHandle, dwProcessId);
+		HANDLE const hProcess = OpenProcessWithSaveError(dwDesiredAccess | SYNCHRONIZE, bInheritHandle, dwProcessId);
 		if (hProcess)
 		{
 			if (WaitForSingleObject(hProcess, 0) == WAIT_TIMEOUT)

@@ -11,8 +11,14 @@
 extern "C" {
 #endif
 
+#if 1
+#include <Shlwapi.h>
+#define GetFileTitlePointerA PathFindFileNameA
+#define GetFileTitlePointerW PathFindFileNameW
+#else
 char * __fastcall GetFileTitlePointerA(const char *lpFileNeme);
 wchar_t * __fastcall GetFileTitlePointerW(const wchar_t *lpFileNeme);
+#endif
 
 #ifdef __cplusplus
 }

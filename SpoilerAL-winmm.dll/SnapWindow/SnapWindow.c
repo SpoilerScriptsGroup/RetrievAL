@@ -4,9 +4,11 @@
 #define CHAR_BIT 8
 #endif
 #include <assert.h>
+#include <stdlib.h>
 
 #define FIXED_ARRAY 4
 #define SNAP_PIXELS 8
+#define SORTED      (!FIXED_ARRAY || FIXED_ARRAY >= 16)
 
 #ifdef _MSC_VER
 void __cdecl bad_alloc();
@@ -26,48 +28,53 @@ extern BOOL __stdcall GetWindowMargin(IN HWND hWnd, OUT LPRECT lprcMargin);
 #pragma pack(push, 1)
 typedef struct {
 #if defined(_M_IX86)
-	DWORD     mov;      //  mov     dword ptr [esp + 4], \      ; 00000000 _ C7. 44 24, 04,
-	LPVOID    this;     //                               this   ; 00000004 _ ????????
-	BYTE      jmp;      //  jmp     \                           ; 00000008 _ E9,
-	ptrdiff_t relproc;  //          WindowProc                  ; 00000009 _ ????????
+	DWORD     mov;      //  mov     dword ptr [esp + 4], \          ; 00000000 _ C7. 44 24, 04,
+	LPVOID    thisPtr;  //                               thisPtr    ; 00000004 _ ????????
+	BYTE      jmp;      //  jmp     \                               ; 00000008 _ E9,
+	ptrdiff_t relproc;  //          WindowProc                      ; 00000009 _ ????????
 #elif defined(_M_X64)
-	WORD      mov1;     //  mov     rax, \                      ; 00000000 _ 48: B8,
-	WNDPROC   wndproc;  //               offset WindowProc      ; 00000002 _ ????????????????
-	WORD      mov2;     //  mov     rcx, \                      ; 0000000A _ 48: B9,
-	LPVOID    this;     //               this                   ; 0000000C _ ????????????????
-	DWORD     jmp;      //  jmp     rax                         ; 00000014 _ 48: FF. E0
+	WORD      mov1;     //  mov     rax, \                          ; 00000000 _ 48: B8,
+	WNDPROC   wndproc;  //               offset WindowProc          ; 00000002 _ ????????????????
+	WORD      mov2;     //  mov     rcx, \                          ; 0000000A _ 48: B9,
+	LPVOID    thisPtr;  //               thisPtr                    ; 0000000C _ ????????????????
+	DWORD     jmp;      //  jmp     rax                             ; 00000014 _ 48: FF. E0
 #endif
 } THUNK;
 #pragma pack(pop)
 #endif
 
-__forceinline void InitThunk(THUNK *thunk, LPVOID this, WNDPROC WindowProc)
+#if defined(_M_IX86) || defined(_M_X64)
+__forceinline void InitThunk(THUNK *thunk, LPVOID thisPtr, WNDPROC WindowProc)
 {
 #if defined(_M_IX86)
 	/*
-		mov     dword ptr [esp + 4], this   ; 00000000 _ C7. 44 24, 04, ????????(d)
-		jmp     WindowProc                  ; 00000008 _ E9, ????????
+		mov     dword ptr [esp + 4], thisPtr    ; 00000000 _ C7. 44 24, 04, ????????(d)
+		jmp     WindowProc                      ; 00000008 _ E9, ????????
 	*/
 	thunk->mov     = 0x042444C7;
-	thunk->this    = this;
+	thunk->thisPtr = thisPtr;
 	thunk->jmp     = 0xE9;
 	thunk->relproc = (ptrdiff_t)WindowProc - (ptrdiff_t)(&thunk->relproc + 1);
+#if !SORTED
+	FlushInstructionCache(GetCurrentProcess(), thunk, sizeof(THUNK));
+#endif
 #elif defined(_M_X64)
 	/*
-		mov     rax, WindowProc             ; 00000000 _ 48: B8, ????????????????
-		mov     rcx, this                   ; 0000000A _ 48: B9, ????????????????
-		jmp     rax                         ; 00000014 _ 48: FF. E0
+		mov     rax, WindowProc                 ; 00000000 _ 48: B8, ????????????????
+		mov     rcx, thisPtr                    ; 0000000A _ 48: B9, ????????????????
+		jmp     rax                             ; 00000014 _ 48: FF. E0
 	*/
 	thunk->mov1    = 0xB848;
 	thunk->wndproc = WindowProc;
 	thunk->mov2    = 0xB948;
-	thunk->this    = this;
+	thunk->thisPtr = thisPtr;
 	thunk->jmp     = 0x00E0FF48;
+#if !SORTED
+	FlushInstructionCache(GetCurrentProcess(), thunk, offsetof(THUNK, jmp) + 3);
 #endif
-#if defined(_M_IX86) || defined(_M_X64)
-	FlushInstructionCache(GetCurrentProcess(), thunk, sizeof(thunk));
 #endif
 }
+#endif
 
 typedef struct {
 #if defined(_M_IX86) || defined(_M_X64)
@@ -96,9 +103,6 @@ static size_t NumberOfElements = 0;
 #else
 #define NumberOfElements (size_t)FIXED_ARRAY
 #endif
-
-static void __stdcall Detach(SNAPINFO *this);
-#define OnDestroy Detach
 
 static void __stdcall OnEnterSizeMove(SNAPINFO *this)
 {
@@ -357,25 +361,97 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 	}
 }
 
-static SNAPINFO * __fastcall FindElement(HWND hWnd)
+static void __stdcall OnDestroy(SNAPINFO *this)
 {
 #if !FIXED_ARRAY
 	SNAPINFO **p, **end;
+
+	SetWindowLongPtrA(this->hWnd, GWLP_WNDPROC, (LONG_PTR)this->PrevWndProc);
+	for (end = (p = SnapInfo) + NumberOfElements; p != end; p++)
+	{
+		if (*p != this)
+			continue;
+		memcpy(p, p + 1, (size_t)(SnapInfo + NumberOfElements--) - (size_t)(p + 1));
+		break;
+	}
+	HeapFree(hExecutableHeap, 0, this);
+	if (NumberOfElements)
+	{
+		LPVOID lpMem;
+
+		if (lpMem = HeapReAlloc(hHeap, 0, SnapInfo, sizeof(SNAPINFO) * NumberOfElements))
+			SnapInfo = (SNAPINFO **)lpMem;
+	}
+	else
+	{
+		HeapFree(hHeap, 0, SnapInfo);
+		SnapInfo = NULL;
+	}
 #else
 	SNAPINFO *p, *end;
+
+	SetWindowLongPtrA(this->hWnd, GWLP_WNDPROC, (LONG_PTR)this->PrevWndProc);
+	this->hWnd = NULL;
+	for (end = (p = SnapInfo) + NumberOfElements; p != end; p++)
+		if (p->hWnd)
+			return;
+	HeapFree(hExecutableHeap, 0, SnapInfo);
+	SnapInfo = NULL;
 #endif
+}
+
+#if SORTED
+static int __cdecl CompareSnapInfo(const void *elem1, const void *elem2)
+{
+#if !FIXED_ARRAY
+#ifndef _WIN64
+	return (int)(*(SNAPINFO **)elem1)->hWnd - (int)(*(SNAPINFO **)elem2)->hWnd;
+#else
+	if ((unsigned __int64)(*(SNAPINFO **)elem1)->hWnd > (unsigned __int64)(*(SNAPINFO **)elem2)->hWnd)
+		return 1;
+	if ((unsigned __int64)(*(SNAPINFO **)elem1)->hWnd < (unsigned __int64)(*(SNAPINFO **)elem2)->hWnd)
+		return -1;
+	return 0;
+#endif
+#else
+#ifndef _WIN64
+	return (int)((SNAPINFO *)elem1)->hWnd - (int)((SNAPINFO *)elem2)->hWnd;
+#else
+	if ((unsigned __int64)((SNAPINFO *)elem1)->hWnd > (unsigned __int64)((SNAPINFO *)elem2)->hWnd)
+		return 1;
+	if ((unsigned __int64)((SNAPINFO *)elem1)->hWnd < (unsigned __int64)((SNAPINFO *)elem2)->hWnd)
+		return -1;
+	return 0;
+#endif
+#endif
+}
+#endif
+
+#if SORTED
+__forceinline
+#endif
+static SNAPINFO * __fastcall FindElement(HWND hWnd)
+{
+#if SORTED
+#if !FIXED_ARRAY
+	SNAPINFO *key, **elem;
+
+	key = (SNAPINFO *)((size_t)&hWnd - offsetof(SNAPINFO, hWnd));
+	elem = (SNAPINFO **)bsearch(&key, SnapInfo, NumberOfElements, sizeof(SNAPINFO), CompareSnapInfo);
+	return elem ? *elem : NULL;
+#else
+	return (SNAPINFO *)bsearch((void *)((size_t)&hWnd - offsetof(SNAPINFO, hWnd)), SnapInfo, NumberOfElements, sizeof(SNAPINFO), CompareSnapInfo);
+#endif
+#else
+	SNAPINFO *p, *end;
 
 	if (!SnapInfo || !hWnd)
 		return NULL;
 	for (end = (p = SnapInfo) + NumberOfElements; p != end; p++)
-#if !FIXED_ARRAY
-		if ((*p)->hWnd == hWnd)
-			return *p;
-#else
 		if (p->hWnd == hWnd)
 			return p;
-#endif
 	return NULL;
+#endif
 }
 
 #if defined(_M_IX86) || defined(_M_X64)
@@ -386,7 +462,7 @@ static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 {
 	SNAPINFO *this;
 
-	this = FindElement(hWnd);
+	this = (SNAPINFO *)FindElement(hWnd);
 	if (!this)
 		return 0;
 #endif
@@ -474,6 +550,14 @@ static SNAPINFO * __fastcall AppendElement(HWND hWnd)
 BOOL __fastcall AttachSnapWindow(HWND hWnd)
 {
 	SNAPINFO *this;
+#if SORTED && (defined(_M_IX86) || defined(_M_X64))
+	HANDLE   process;
+#if !FIXED_ARRAY
+	SNAPINFO **p, **end;
+#else
+	SNAPINFO *p, *end;
+#endif
+#endif
 
 	if (!IsWindow(hWnd))
 		return FALSE;
@@ -489,6 +573,23 @@ BOOL __fastcall AttachSnapWindow(HWND hWnd)
 #else
 	this->PrevWndProc = (WNDPROC)SetWindowLongPtrA(hWnd, GWLP_WNDPROC, (LONG_PTR)WindowProc);
 #endif
+#if SORTED && (defined(_M_IX86) || defined(_M_X64))
+	qsort(SnapInfo, NumberOfElements, sizeof(SNAPINFO), CompareSnapInfo);
+	process = GetCurrentProcess();
+	for (end = (p = SnapInfo) + NumberOfElements; p != end; p++)
+		FlushInstructionCache(
+			process,
+#if !FIXED_ARRAY
+			*p,
+#else
+			p,
+#endif
+#if defined(_M_IX86)
+			sizeof(THUNK));
+#elif defined(_M_X64)
+			offsetof(THUNK, jmp) + 3);
+#endif
+#endif
 	return TRUE;
 }
 
@@ -496,57 +597,18 @@ void __fastcall DetachSnapWindow(HWND hWnd)
 {
 	SNAPINFO *this;
 
-	this = FindElement(hWnd);
+	this = (SNAPINFO *)FindElement(hWnd);
 	if (this)
-		Detach(this);
-}
-
-static void __stdcall Detach(SNAPINFO *this)
-{
-#if !FIXED_ARRAY
-	SNAPINFO **p, **end;
-
-	SetWindowLongPtrA(this->hWnd, GWLP_WNDPROC, (LONG_PTR)this->PrevWndProc);
-	for (end = (p = SnapInfo) + NumberOfElements; p != end; p++)
-	{
-		if (*p != this)
-			continue;
-		memcpy(p, p + 1, (size_t)(SnapInfo + NumberOfElements--) - (size_t)(p + 1));
-		break;
-	}
-	HeapFree(hExecutableHeap, 0, this);
-	if (NumberOfElements)
-	{
-		LPVOID lpMem;
-
-		if (lpMem = HeapReAlloc(hHeap, 0, SnapInfo, sizeof(SNAPINFO) * NumberOfElements))
-			SnapInfo = (SNAPINFO **)lpMem;
-	}
-	else
-	{
-		HeapFree(hHeap, 0, SnapInfo);
-		SnapInfo = NULL;
-	}
-#else
-	SNAPINFO *p, *end;
-
-	SetWindowLongPtrA(this->hWnd, GWLP_WNDPROC, (LONG_PTR)this->PrevWndProc);
-	this->hWnd = NULL;
-	for (end = (p = SnapInfo) + NumberOfElements; p != end; p++)
-		if (p->hWnd)
-			return;
-	HeapFree(hExecutableHeap, 0, SnapInfo);
-	SnapInfo = NULL;
-#endif
+		OnDestroy(this);
 }
 
 BOOL __fastcall EnableSnapWindow(HWND hWnd, BOOL bEnable)
 {
-	BOOL     bResult;
 	SNAPINFO *this;
+	BOOL     bResult;
 
+	this = (SNAPINFO *)FindElement(hWnd);
 	bResult = FALSE;
-	this = FindElement(hWnd);
 	if (this)
 	{
 		bResult = !this->Enabled;

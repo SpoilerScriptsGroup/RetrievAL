@@ -537,7 +537,7 @@ static SNAPINFO * __fastcall AppendElement(HWND hWnd)
 	}
 	else
 	{
-		if (this = (SNAPINFO *)HeapAlloc(hExecutableHeap, 0, sizeof(SNAPINFO) * NumberOfElements))
+		if (this = (SNAPINFO *)HeapAlloc(hExecutableHeap, HEAP_ZERO_MEMORY, sizeof(SNAPINFO) * NumberOfElements))
 			return SnapInfo = this;
 	}
 #endif

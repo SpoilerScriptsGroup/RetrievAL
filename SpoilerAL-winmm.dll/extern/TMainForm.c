@@ -34,13 +34,15 @@ __declspec(naked) void __stdcall TMainForm_Guide(const char *Mes, int Flags)
 		call    dword ptr [__InitExceptBlockLDTC]
 		mov     ecx, [ebx]TMainForm.userMode
 		mov     eax, [ebx]TMainForm.guideForm
+#ifdef GUIDE_LIMITED
 		dec     ecx
-	//	jz      L2
+		jz      L2
+#endif
 		test    eax, eax
 		jnz     L1
 		mov     eax, dword ptr ds:[0062089CH]
 		mov     ecx, ebx
-		mov     dl, 1
+		mov     edx, 1// refer dl only
 		call    dword ptr [F0048C1F8]
 		mov     [ebx]TMainForm.guideForm, eax
 	L1:

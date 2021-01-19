@@ -4,68 +4,59 @@
 #include "TProcessCtrl.h"
 #include "page.h"
 
+extern BOOL FixTheProcedure;
+
 BOOL __cdecl VerifyInternalSpecificationOfHeapID()
 {
-	BOOL   bMatches;
-	HANDLE hSnapshot;
+	BOOL         bMatches  = FALSE;
+	HANDLE const hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPHEAPLIST, 0);
 
-	bMatches = FALSE;
-	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPHEAPLIST, GetCurrentProcessId());
 	if (hSnapshot != INVALID_HANDLE_VALUE)
 	{
-		HEAPLIST32 hl;
+		HEAPLIST32 hl = { .dwSize = sizeof(HEAPLIST32) };
 
-		hl.dwSize = sizeof(HEAPLIST32);
 		if (Heap32ListFirst(hSnapshot, &hl))
 		{
-			HEAPENTRY32 he;
+			HEAPENTRY32 he = { .dwSize = sizeof(HEAPENTRY32) };
 
-			he.dwSize = sizeof(HEAPENTRY32);
-			do
-				if (Heap32First(&he, hl.th32ProcessID, hl.th32HeapID))
-					if (!(bMatches = hl.th32HeapID == (he.dwAddress & -PAGE_SIZE)))
-						break;
-			while (Heap32ListNext(hSnapshot, &hl));
+			while ((bMatches = Heap32First(&he, hl.th32ProcessID, hl.th32HeapID) &&
+					hl.th32HeapID == (he.dwAddress & -PAGE_SIZE)) &&
+				   Heap32ListNext(hSnapshot, &hl));
 		}
 		CloseHandle(hSnapshot);
 	}
 	return bMatches;
 }
 
-static int __cdecl CompareHeapListData(const void *elem1, const void *elem2)
+static ptrdiff_t __cdecl CompareHeapListData(const THeapListData *const heap1, const THeapListData *const heap2)
 {
-	return
-		((THeapListData *)elem1)->heapListAddress > ((THeapListData *)elem2)->heapListAddress ? 1 :
-		((THeapListData *)elem1)->heapListAddress < ((THeapListData *)elem2)->heapListAddress ? -1 :
-		0;
+	return heap1->heapListAddress - heap2->heapListAddress;
 }
 
 void __cdecl LoadHeapList(TProcessCtrl *this)
 {
-	extern BOOL FixTheProcedure;
-	HANDLE hSnapshot;
+	HANDLE const hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPHEAPLIST, this->entry.th32ProcessID);
 
 	vector_clear(&this->heapList);
-	hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPHEAPLIST, this->entry.th32ProcessID);
 	if (hSnapshot != INVALID_HANDLE_VALUE)
 	{
-		HEAPLIST32 hl;
+		THeapListData tmpHLD = {
+			.heapList = {
+				.dwSize = sizeof(tmpHLD.heapList),
+			},
+			.heapListSize = PAGE_SIZE - 1,
+		};
 
-		hl.dwSize = sizeof(HEAPLIST32);
-		if (Heap32ListFirst(hSnapshot, &hl))
+		if (Heap32ListFirst(hSnapshot, &tmpHLD.heapList))
 		{
-			THeapListData heapListData;
+			DWORD const dwErrCode = GetLastError();
 
-			heapListData.heapList.dwSize        = sizeof(HEAPLIST32);           // unused
-			heapListData.heapList.th32ProcessID = this->entry.th32ProcessID;    // unused
-			heapListData.heapList.th32HeapID    = 0;                            // unused
-			heapListData.heapList.dwFlags       = 0;                            // unused
-			heapListData.heapListSize           = 4096 - 1;                     // unused
 			do
 			{
-				heapListData.heapListAddress = hl.th32HeapID;
-				vector_push_back(&this->heapList, heapListData);
-			} while (Heap32ListNext(hSnapshot, &hl));
+				tmpHLD.heapListAddress = tmpHLD.heapList.th32HeapID;
+				vector_push_back(&this->heapList, tmpHLD);
+			} while (Heap32ListNext(hSnapshot, &tmpHLD.heapList));
+			SetLastError(dwErrCode);// discard ERROR_NO_MORE_FILES
 			if (!FixTheProcedure)
 				qsort(vector_begin(&this->heapList), vector_size(&this->heapList), sizeof(THeapListData), CompareHeapListData);
 		}

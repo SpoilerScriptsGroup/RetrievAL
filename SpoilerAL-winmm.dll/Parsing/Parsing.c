@@ -62,8 +62,6 @@ extern wchar_t * _wcsspnp(const wchar_t *string, const wchar_t *control);
 #include "FindReverseProcessMemory.h"
 #include "TranscodeMultiByte.h"
 #include "ToolTip/ToolTip.h"
-#include "ToolTip/commctrl.h"
-#include "ShowErrorMessage/ErrorMessage.h"
 
 #ifdef __BORLANDC__
 #define USE_PLUGIN 0
@@ -165,7 +163,6 @@ EXTERN_C unsigned char * __cdecl _mbsrichr(const unsigned char *string, unsigned
 EXTERN_C unsigned char * __cdecl _mbsistr(const unsigned char *string1, const unsigned char *string2);
 EXTERN_C unsigned char * __cdecl _mbsrstr(const unsigned char *string1, const unsigned char *string2);
 EXTERN_C unsigned char * __cdecl _mbsristr(const unsigned char *string1, const unsigned char *string2);
-EXTERN_C size_t __cdecl _mbsnlen(const unsigned char *string, size_t maxlen);
 EXTERN_C char *__fastcall internal_strtok(char *string, const char *delimiter, char **context);
 EXTERN_C wchar_t *__fastcall internal_wcstok(wchar_t *string, const wchar_t *delimiter, wchar_t **context);
 EXTERN_C unsigned char *__fastcall internal_mbstok(unsigned char *string, const unsigned char *delimiter, unsigned char **context);
@@ -211,7 +208,7 @@ enum OS
 	OS_LOOP_END      = 0x00004000,
 	OS_PASS_OPERAND  = 0x00008000,
 	OS_STRING        = 0x00010000,
-	OS_DEBUG         = 0x00020000,
+	OS_VERIFY        = 0x00020000,
 };
 
 /*
@@ -723,8 +720,8 @@ typedef enum {
 	TAG_BIT_OR           ,  //  24 |    ( 8 |= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
 	TAG_AND              ,  //  20 &&   (20 and)   OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
 	TAG_OR               ,  //  16 ||   (16 or )   OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
-	TAG_TERNARY          ,  //  12 ?               OS_PUSH | OS_TERNARY
-	TAG_TERNARY_SPLIT    ,  //  12 :               OS_PUSH | OS_TERNARY
+	TAG_TERNARY          ,  //  12 ?               OS_PUSH | OS_TERNARY | OS_OPEN
+	TAG_TERNARY_SPLIT    ,  //  12 :               OS_PUSH | OS_TERNARY | OS_CLOSE
 	TAG_RIGHT_ASSIGN     ,  //   8 =>              OS_PUSH
 	TAG_LEFT_ASSIGN      ,  //   8 =               OS_PUSH | OS_LEFT_ASSIGN
 	TAG_DELIMITER        ,  //   4 ,               OS_PUSH | OS_DELIMITER
@@ -1117,7 +1114,7 @@ typedef enum {
 	PRIORITY_BIT_OR            =  24,   // |    ( 8 |= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
 	PRIORITY_AND               =  20,   // &&   (20 and)   OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
 	PRIORITY_OR                =  16,   // ||   (16 or )   OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
-	PRIORITY_TERNARY           =  12,   // ? :             OS_PUSH | OS_TERNARY
+	PRIORITY_TERNARY           =  12,   // ? :             OS_PUSH | OS_TERNARY | (OS_OPEN or OS_CLOSE)
 	PRIORITY_RIGHT_ASSIGN      =   8,   // =>              OS_PUSH
 	PRIORITY_LEFT_ASSIGN       =   8,   // =               OS_PUSH | OS_LEFT_ASSIGN
 	PRIORITY_DELIMITER         =   4,   // ,               OS_PUSH | OS_DELIMITER
@@ -1872,7 +1869,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			APPEND_READ_WRITE:
 				APPEND_TAG_WITH_CONTINUE(iTag, nLength, PRIORITY_READ_WRITE, OS_PUSH | OS_CLOSE);
 			}
-			APPEND_TAG_WITH_CONTINUE(TAG_TERNARY_SPLIT, 1, PRIORITY_TERNARY, OS_PUSH);
+			APPEND_TAG_WITH_CONTINUE(TAG_TERNARY_SPLIT, 1, PRIORITY_TERNARY, OS_PUSH/* | OS_TERNARY*/ | OS_CLOSE);
 		case ';':
 			// ";"
 			bNextIsSeparatedLeft = TRUE;
@@ -1924,7 +1921,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			bNextIsSeparatedLeft = TRUE;
 			if (nFirstTernary == -1)
 				nFirstTernary = nNumberOfTag;
-			APPEND_TAG_WITH_CONTINUE(TAG_TERNARY, 1, PRIORITY_TERNARY, OS_PUSH | OS_TERNARY);
+			APPEND_TAG_WITH_CONTINUE(TAG_TERNARY, 1, PRIORITY_TERNARY, OS_PUSH | OS_TERNARY | OS_OPEN);
 		case 'A':
 			// "A2U", "A2W"
 			if (!bIsSeparatedLeft)
@@ -4040,22 +4037,14 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			for (MARKUP *lpElement = lpTag1 + 1; lpElement < lpEndOfTag; lpElement++)
 			{
 				if (!(lpElement->Type & (OS_OPEN | OS_CLOSE)))
-				{
-					if (nDepth || lpElement->Tag != TAG_TERNARY_SPLIT)
-						continue;
-				}
+					continue;
 				else if (lpElement->Type & OS_OPEN)
 				{
 					nDepth++;
 					continue;
 				}
-				else
-				{
-					if (!nDepth)
-						break;
-					nDepth--;
+				else if (nDepth-- || lpElement->Tag != TAG_TERNARY_SPLIT)
 					continue;
-				}
 				nDepth = 0;
 				lpElement->Type |= OS_TERNARY;
 				while (++lpElement < lpEndOfTag)
@@ -4281,20 +4270,20 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						lpMarkup->Type |= OS_SHORT_CIRCUIT;
 					switch (lpTag->Tag)
 					{
+					case TAG_SPLIT:
+						if (lpMarkup == lpMarkupArray || lpMarkup[-1].Tag != TAG_GOTO)
+							lpMarkup->Type |= OS_SHORT_CIRCUIT;
+						break;
 					case TAG_TERNARY_SPLIT:
 						if (!(lpTag->Type & OS_TERNARY))
 						{
 							lpTag->Type = 0;
 							break;
 						}
+						/* FALLTHROUGH */
 					default:
 						lpTag->Tag = TAG_PARSE_ERROR;
 						lpTag->Type |= OS_PUSH;
-						break;
-					case TAG_SPLIT:
-						if (lpMarkup == lpMarkupArray || lpMarkup[-1].Tag != TAG_GOTO)
-							lpMarkup->Type |= OS_SHORT_CIRCUIT;
-						break;
 					}
 				}
 				else if (lpTag->Tag == TAG_TERNARY_SPLIT && !(lpTag->Type & OS_TERNARY))
@@ -4405,13 +4394,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					if ((lpEnd = FindEndOfStructuredStatement(lpBegin, lpEndOfMarkup)) >= lpEndOfMarkup)
 						break;
-					if ((lpElse = lpEnd + 1) >= lpEndOfMarkup || lpElse->Tag != TAG_ELSE)
-						lpEnd->Type |= OS_SPLIT;
-					else
+					if ((lpElse = lpEnd + 1) < lpEndOfMarkup && lpElse->Tag == TAG_ELSE)
 						lpElse->Type = OS_PUSH;
 					lpClose->Tag = TAG_IF_EXPR;
 					lpClose->Type |= OS_PUSH | OS_SPLIT;
 					lpClose->Param = lpMarkup;
+					lpEnd->Type |= OS_SPLIT;
 					for (MARKUP *lpElement = lpBegin; lpElement < lpEnd; lpElement++)
 						lpElement->Depth++;
 				}
@@ -4561,14 +4549,14 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				{
 					MARKUP *lpBegin, *lpEnd;
 
-					lpMarkup->Type |= OS_DEBUG;
+					lpMarkup->Type |= OS_VERIFY;
 					if ((lpBegin = lpMarkup + 1) >= lpEndOfMarkup)
 						break;
 					if ((lpEnd = FindEndOfStructuredStatement(lpBegin, lpEndOfMarkup)) >= lpEndOfMarkup)
 						break;
 					lpMarkup->Close = lpEnd;
 					for (MARKUP *lpElement = lpBegin; lpElement <= lpEnd; lpElement++)
-						lpElement->Type |= OS_DEBUG;
+						lpElement->Type |= OS_VERIFY;
 				}
 				/* FALLTHROUGH */
 			case TAG_MNAME:           // MName
@@ -4926,7 +4914,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			if (lpMarkup != lpMarkupArray)
 				if (lpMarkup[-1].Tag == TAG_NOT_OPERATOR ||
-					lpMarkup[-1].Type & (OS_CLOSE | OS_POST) && !(lpMarkup[-1].Type & OS_SPLIT))
+					lpMarkup[-1].Type & (OS_CLOSE | OS_POST) && !(lpMarkup[-1].Type & (OS_SPLIT | OS_TERNARY)))
 					break;
 			// plus-sign operator (remove)
 			lpMarkup->Type = 0;
@@ -4936,7 +4924,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			if (lpMarkup != lpMarkupArray)
 				if (lpMarkup[-1].Tag == TAG_NOT_OPERATOR ||
-					lpMarkup[-1].Type & (OS_CLOSE | OS_POST) && !(lpMarkup[-1].Type & OS_SPLIT))
+					lpMarkup[-1].Type & (OS_CLOSE | OS_POST) && !(lpMarkup[-1].Type & (OS_SPLIT | OS_TERNARY)))
 					break;
 			// negative operator
 			lpMarkup->Tag = TAG_NEG;
@@ -4948,7 +4936,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			if (lpMarkup != lpMarkupArray)
 				if (lpMarkup[-1].Tag == TAG_NOT_OPERATOR ||
-					lpMarkup[-1].Type & (OS_CLOSE | OS_POST) && !(lpMarkup[-1].Type & OS_SPLIT))
+					lpMarkup[-1].Type & (OS_CLOSE | OS_POST) && !(lpMarkup[-1].Type & (OS_SPLIT | OS_TERNARY)))
 					break;
 			// indirection operator
 			lpMarkup->Tag = TAG_INDIRECTION;
@@ -4956,14 +4944,15 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			lpMarkup->Type = OS_PUSH | OS_MONADIC;
 			break;
 		case TAG_BIT_AND:
-			if (lpMarkup + 1 < lpEndOfMarkup)
-				if (lpMarkup[1].Tag != TAG_NOT_OPERATOR)
+			if (lpMarkup + 1 >= lpEndOfMarkup)
+				break;
+			if (lpMarkup[1].Tag != TAG_NOT_OPERATOR)
 					break;
 			if (lpMarkup->Type & OS_LEFT_ASSIGN)
 				break;
 			if (lpMarkup != lpMarkupArray)
 				if (lpMarkup[-1].Tag == TAG_NOT_OPERATOR ||
-					lpMarkup[-1].Type & (OS_CLOSE | OS_POST) && !(lpMarkup[-1].Type & OS_SPLIT))
+					lpMarkup[-1].Type & (OS_CLOSE | OS_POST) && !(lpMarkup[-1].Type & (OS_SPLIT | OS_TERNARY)))
 					break;
 			// address-of operator
 			lpMarkup->Tag = TAG_ADDRESS_OF;
@@ -4976,20 +4965,20 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		case TAG_DEFAULT:
 			if (lpMarkup + 1 < lpEndOfMarkup) switch (lpMarkup[1].Tag)
 			{
+			case TAG_SPLIT:
+				if (lpMarkup == lpMarkupArray || lpMarkup[-1].Tag != TAG_GOTO)
+					lpMarkup->Type |= OS_SHORT_CIRCUIT;
+				break;
 			case TAG_TERNARY_SPLIT:
 				if (!(lpMarkup[1].Type & OS_TERNARY))
 				{
 					lpMarkup[1].Type = 0;
 					break;
 				}
+				/* FALLTHROUGH */
 			default:
 				lpMarkup[1].Tag = TAG_PARSE_ERROR;
 				lpMarkup[1].Type |= OS_PUSH;
-				break;
-			case TAG_SPLIT:
-				if (lpMarkup == lpMarkupArray || lpMarkup[-1].Tag != TAG_GOTO)
-					lpMarkup->Type |= OS_SHORT_CIRCUIT;
-				break;
 			}
 			break;
 		}
@@ -5002,7 +4991,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		for (MARKUP *lpCode = lpMarkup->Param + 1; lpCode < lpMarkup->Next; lpCode++) switch (lpCode->Tag)
 		{
 		case TAG_SWITCH:
-			lpCode = lpCode->Next;// skip nested switch
+			lpCode = lpCode->Next;// postpone nested switch
 			continue;
 		case TAG_BREAK:
 			if (lpCode->LoopDepth != lpMarkup->LoopDepth)
@@ -5013,8 +5002,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			if (++lpCode >= lpMarkup->Next ||
 				lpCode->Tag != TAG_CASE && lpCode->Tag != TAG_DEFAULT)
 				continue;
-			lpCode->Next = lpMarkup->Param;// for finding label
-#ifndef ALLOW_GOTO_CASE_STRING
+			lpCode->Next = lpMarkup->Param;// jump resolver
+#ifndef GOTO_ALLOW_CASE_STRING
 			if (!lpCode->Param)
 #endif
 				lpCode->Type &= ~OS_PASS_OPERAND;
@@ -5025,10 +5014,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 #endif
 			lpCode->Type &= ~OS_PASS_OPERAND;
 			if (lpLink->Tag != TAG_DEFAULT)
-			{
-				lpLink->Next = lpCode;
-				lpLink = lpCode;
-			}
+				lpLink = lpLink->Next = lpCode;
 			else// swap chain
 			{
 				lpCode->Next = lpLink;
@@ -5042,13 +5028,13 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 #endif
 			lpCode->Type &= ~OS_PASS_OPERAND;
 			lpCode->Param = lpLink;
-			lpLink->Next = lpCode;
-			lpLink = lpCode;
+			lpLink = lpLink->Next = lpCode;
 			break;
 		}
 		lpLink->Next = lpMarkup->Next;// sentinel (end switch)
 		if (lpLink->Tag == TAG_DEFAULT)
 			lpLink->Param = NULL;
+		lpMarkup = lpMarkup->Param;
 	}
 
 	// return
@@ -5488,7 +5474,7 @@ static MARKUP ** __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOf
 {
 	MARKUP **lpPostfixBuffer, **lpPostfixFirst, **lpPostfixTop, **lpEndOfPostfix;
 	MARKUP **lpFactorBuffer, **lpFactorTop, **lpEndOfFactor;
-	size_t *lpnNestBuffer, *lpnNestTop, *lpnEndOfNest;
+	signed *lpnNestBuffer, *lpnNestTop, *lpnEndOfNest;
 	MARKUP *lpMarkup, *lpEndOfMarkup;
 	size_t nSizeOfPostfix;
 	LPVOID lpMem;
@@ -5515,6 +5501,7 @@ static MARKUP ** __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOf
 	#define NEST_IS_EMPTY()     (lpnEndOfNest == lpnNestBuffer)
 	#define NEST_PUSH(value)    (*(lpnNestTop = lpnEndOfNest++) = (value))
 	#define NEST_POP()          (!NEST_IS_EMPTY() ? *(lpnEndOfNest = lpnNestTop != lpnNestBuffer ? lpnNestTop-- : lpnNestTop) : 0)
+	#define SHUNTING 1
 
 	NEST_PUSH(0);
 	for (lpMarkup = lpMarkupArray, lpEndOfMarkup = lpMarkupArray + nNumberOfMarkup; lpMarkup < lpEndOfMarkup; lpMarkup++)
@@ -5526,7 +5513,7 @@ static MARKUP ** __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOf
 				for (; *lpnNestTop; (*lpnNestTop)--)
 					POSTFIX_PUSH(FACTOR_POP());
 				NEST_POP();
-				if (*lpnNestTop && (lpFactorTop[1 - *lpnNestTop]->Type & OS_LEFT_ASSIGN))
+				while (*lpnNestTop && (lpEndOfFactor[-*lpnNestTop]->Type & OS_LEFT_ASSIGN))
 				{
 					for (; *lpnNestTop; (*lpnNestTop)--)
 						POSTFIX_PUSH(FACTOR_POP());
@@ -5534,41 +5521,18 @@ static MARKUP ** __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOf
 				}
 				if (lpMarkup->Type & OS_PUSH)
 					POSTFIX_PUSH(lpMarkup);
-				if (lpMarkup->Type & (OS_SPLIT | OS_TERNARY))
+				if (lpMarkup->Type & OS_TERNARY)
 					NEST_PUSH(0);
 			}
 			else if (lpMarkup->Type & OS_LEFT_ASSIGN)
 			{
-				if (lpMarkup != lpMarkupArray && (lpMarkup[-1].Type & OS_CLOSE))
-				{
-					MARKUP *lpPrev;
-					size_t nDepth;
-
-					lpPrev = lpMarkup;
-					nDepth = 0;
-					do
-					{
-						lpPrev--;
-						if (!(lpPrev->Type & (OS_OPEN | OS_CLOSE)))
-							continue;
-						if (lpPrev->Type & OS_CLOSE)
-							nDepth++;
-						else if (!--nDepth)
-							break;
-					} while (lpPrev != lpMarkupArray);
-					while (!POSTFIX_IS_EMPTY() && (*lpPostfixTop)->String >= lpPrev->String)
-					{
-						FACTOR_PUSH(POSTFIX_POP());
-						(*lpnNestTop)++;
-					}
-				}
 				lpFactorTop = lpEndOfFactor++;
 				if (*lpnNestTop)
 				{
-					MARKUP **lpFactor;
-
-					lpFactor = lpFactorTop - *lpnNestTop;
-					while (!lpFactor[0]->Priority && lpFactor + 1 < lpFactorTop) lpFactor++;
+					MARKUP **lpFactor = lpFactorTop - *lpnNestTop;
+#if !SHUNTING
+					while (!lpFactor[0]->Priority && lpFactor < lpFactorTop) lpFactor++;
+#endif
 					memmove(lpFactor + 1, lpFactor, (size_t)lpFactorTop - (size_t)lpFactor);
 					*lpFactor = lpMarkup;
 				}
@@ -5577,38 +5541,82 @@ static MARKUP ** __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOf
 					*lpFactorTop = lpMarkup;
 				}
 				(*lpnNestTop)++;
+
+				if (lpMarkup != lpMarkupArray && (lpMarkup[-1].Type & OS_CLOSE))
+				{
+					size_t  nDepth = 0;
+					MARKUP *lpPrev = lpMarkup;
+
+					do if (!((--lpPrev)->Type & (OS_OPEN | OS_CLOSE)))
+						continue;
+					else if (lpPrev->Type & OS_CLOSE)
+						nDepth++;
+					else if (!--nDepth)
+						break;
+					while (lpPrev != lpMarkupArray);
+
+					while (!POSTFIX_IS_EMPTY() && (*lpPostfixTop)->String >= lpPrev->String)
+						FACTOR_PUSH(POSTFIX_POP()), (*lpnNestTop)++;
+				}
 				NEST_PUSH(0);
 			}
 			else if (lpMarkup->Type & OS_SPLIT)
 			{
-				while (!FACTOR_IS_EMPTY())
+#if SHUNTING
+				for (; *lpnNestTop; (*lpnNestTop)--)
 					POSTFIX_PUSH(FACTOR_POP());
+				while (lpnNestTop > lpnNestBuffer && lpnNestTop[-1] && (
+					lpEndOfFactor[-lpnNestTop[-1]]->Type & OS_LEFT_ASSIGN ||
+					lpEndOfFactor[-lpnNestTop[-1]]->Priority == 0))
+				{
+					NEST_POP();
+					for (; *lpnNestTop; (*lpnNestTop)--)
+						POSTFIX_PUSH(FACTOR_POP());
+				}
+#else
+				while (!FACTOR_IS_EMPTY() && (*lpFactorTop)->Depth >= lpMarkup->Depth)
+				{
+					POSTFIX_PUSH(FACTOR_POP());
+					while (!*lpnNestTop)
+						lpnEndOfNest = lpnNestTop--;
+					(*lpnNestTop)--;
+				}
+#endif
 				if (lpMarkup->Type & OS_PUSH)
 					POSTFIX_PUSH(lpMarkup);
 				lpPostfixTop = lpPostfixFirst = lpEndOfPostfix;
-				lpnEndOfNest = (lpnNestTop = lpnNestBuffer) + 1;
-				*lpnNestTop = 0;
 			}
 			else	// OS_DELIMITER
 			{
+#if SHUNTING
+				for (; *lpnNestTop; (*lpnNestTop)--)
+					POSTFIX_PUSH(FACTOR_POP());
+				while (lpnNestTop > lpnNestBuffer && lpnNestTop[-1] && (lpEndOfFactor[-lpnNestTop[-1]]->Type & OS_LEFT_ASSIGN))
+				{
+					NEST_POP();
+					for (; *lpnNestTop; (*lpnNestTop)--)
+						POSTFIX_PUSH(FACTOR_POP());
+				}
+#else
 				if (!FACTOR_IS_EMPTY())
 				{
-					MARKUP *lpPrev;
-					size_t nDepth;
+					size_t  nDepth = 0;
+					MARKUP *lpPrev = lpMarkup;
 
-					lpPrev = lpMarkup;
-					nDepth = 0;
-					while (--lpPrev != lpMarkupArray)
+					while (--lpPrev >= lpMarkupArray)
 					{
-						if (lpPrev->Type & (OS_OPEN | OS_CLOSE | OS_SPLIT | OS_DELIMITER | OS_TERNARY))
-							if (lpPrev->Type & OS_CLOSE)
-								nDepth++;
-							else if (!nDepth)
-								break;
-							else if (lpPrev->Type & OS_OPEN)
-								nDepth--;
-						if (!nDepth && lpPrev[-1].Priority < lpMarkup->Priority)
+						if (!(lpPrev->Type & (OS_OPEN | OS_CLOSE | OS_SPLIT | OS_DELIMITER | OS_TERNARY)) &&
+							lpPrev->Priority >= lpMarkup->Priority)
+							continue;
+						if (lpPrev->Type & OS_CLOSE)
+							nDepth++;
+						else if (!nDepth)
+						{
+							lpPrev++;
 							break;
+						}
+						else if (lpPrev->Type & OS_OPEN)
+							nDepth--;
 					}
 					while (!FACTOR_IS_EMPTY() && (*lpFactorTop)->String >= lpPrev->String)
 					{
@@ -5618,39 +5626,40 @@ static MARKUP ** __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOf
 						(*lpnNestTop)--;
 					}
 				}
+#endif
 				if (lpMarkup->Type & OS_PUSH)
 					POSTFIX_PUSH(lpMarkup);
 			}
 			continue;
 		}
-		while (*lpnNestTop && lpMarkup->Priority <= (*lpFactorTop)->Priority)
+		while (*lpnNestTop && (*lpFactorTop)->Priority >= lpMarkup->Priority)
 		{
 			POSTFIX_PUSH(FACTOR_POP());
 			(*lpnNestTop)--;
 		}
-		if (lpMarkup->Type & (OS_PUSH | OS_OPEN))
+		if (lpMarkup->Type & OS_OPEN)
 		{
-			if (lpMarkup->Type & OS_OPEN)
-			{
-				// 開始括弧ならスタックプッシュ
+			// 開始括弧ならスタックプッシュ
+			NEST_PUSH(0);
+			if (lpMarkup->Type & OS_PUSH)
+				POSTFIX_PUSH(lpMarkup);
+		}
+		else if (lpMarkup->Type & OS_PUSH)
+		{
+			// 除去不可フラグが立っているならスタックへ
+			FACTOR_PUSH(lpMarkup);
+			(*lpnNestTop)++;
+#if SHUNTING
+			if (lpMarkup->Priority == 0)
 				NEST_PUSH(0);
-				if (lpMarkup->Type & OS_PUSH)
-					POSTFIX_PUSH(lpMarkup);
-			}
-			else	// OS_PUSH
+#endif
+			if (lpMarkup->Type & OS_MONADIC)
 			{
-				// 除去不可フラグが立っているならスタックへ
-				FACTOR_PUSH(lpMarkup);
-				(*lpnNestTop)++;
-				if (lpMarkup->Type & OS_MONADIC)
+				for (MARKUP *lpNext;
+					 (lpNext = lpMarkup + 1) < lpEndOfMarkup && (lpNext->Type & OS_MONADIC);
+					 (*lpnNestTop)++)
 				{
-					MARKUP *lpNext;
-
-					while ((lpNext = lpMarkup + 1) < lpEndOfMarkup && (lpNext->Type & OS_MONADIC))
-					{
-						FACTOR_PUSH(lpMarkup = lpNext);
-						(*lpnNestTop)++;
-					}
+					FACTOR_PUSH(lpMarkup = lpNext);
 				}
 			}
 		}
@@ -5674,6 +5683,7 @@ FAILED2:
 FAILED1:
 	return NULL;
 
+	#undef SHUNTING
 	#undef POSTFIX_PUSH
 	#undef FACTOR_IS_EMPTY
 	#undef FACTOR_PUSH
@@ -6049,12 +6059,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		#define OPERAND_CLEAR()     (*(lpOperandTop = lpEndOfOperand = lpOperandBuffer) = operandZero, lpEndOfOperand++)
 
 		bInitialIsInteger = IsInteger;
-		if (nNumberOfMarkup)
-			if (lpMarkupArray->Type & OS_MONADIC)
-				if (lpMarkupArray->Tag == TAG_PARSE_INT)
-					IsInteger = TRUE;
-				else if (lpMarkupArray->Tag == TAG_PARSE_REAL)
-					IsInteger = FALSE;
+		if (nNumberOfMarkup) switch (lpMarkupArray->Tag)
+		{
+		case TAG_PARSE_INT:
+			IsInteger = TRUE;
+			break;
+		case TAG_PARSE_REAL:
+			IsInteger = FALSE;
+		}
 		operandZero.Quad = 0;
 		operandZero.IsQuad = !IsInteger;
 		OPERAND_CLEAR();
@@ -6245,7 +6257,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		WORD         wCharTypeMask;
 		size_t(__cdecl *lpStrlen)(const void *);
 
-		if (((lpMarkup = *lpPostfix)->Type & OS_DEBUG) && TMainForm_GetUserMode(MainForm) < 2)
+		if (((lpMarkup = *lpPostfix)->Type & OS_VERIFY) && TMainForm_GetUserMode(MainForm) < 2)
 			continue;
 		switch (lpMarkup->Tag)
 		{
@@ -7209,27 +7221,22 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				VARIAUNT operand;
 
 				operand = OPERAND_POP();
+				if (OPERAND_IS_EMPTY())
+					goto PARSING_ERROR;
 				if (IsInteger ? !operand.Quad : !operand.Real)
 				{
 					if (lpMarkup->FalsePart)
 						lpPostfix = lpMarkup->FalsePart;
 					else
 					{
-						size_t nDepth;
+						size_t nDepth = 0;
 
-						nDepth = 0;
 						while (++lpPostfix < lpEndOfPostfix)
 						{
 							if ((*lpPostfix)->Tag == TAG_TERNARY)
-							{
 								nDepth++;
-							}
-							else if ((*lpPostfix)->Tag == TAG_TERNARY_SPLIT && (*lpPostfix)->Type & OS_TERNARY)
-							{
-								if (!nDepth)
-									break;
-								nDepth--;
-							}
+							else if ((*lpPostfix)->Tag == TAG_TERNARY_SPLIT && (*lpPostfix)->Type & OS_TERNARY && !nDepth--)
+								break;
 						}
 						if (lpPostfix < lpEndOfPostfix)
 							lpMarkup->FalsePart = lpPostfix;
@@ -13214,7 +13221,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				FORMAT_MESSAGE_IGNORE_INSERTS |
 				FORMAT_MESSAGE_FROM_SYSTEM,
 				NULL,
-				GetErrorMessageId(),
+				GetLastError(),
 				0,
 				(LPSTR)&lpMessage,
 				sizeof(double),
@@ -13278,7 +13285,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		goto GUIDE;
 
 	GUIDE:
-		if (TMainForm_GetUserMode(MainForm) != 1)
+		if (TSSGCtrl_GetSSGActionListner(this) &&
+			TMainForm_GetUserMode(MainForm) != 1)
 		{
 			TMainForm_Guide(lpMessage, 0);
 			if (lpEndOfPostfix)
@@ -13297,10 +13305,19 @@ FAILED:
 		CloseHandle(hProcess);
 	if (TSSGCtrl_GetSSGActionListner(this) && TMainForm_GetUserMode(MainForm) >= 3 &&
 		(nNumberOfProcessMemory || nNumberOfHeapBuffer) && !HeapValidate(hPrivateHeap, 0, NULL)) {
+		CHAR lpText[0x0100];
 #if USE_TOOLTIP
 		extern BOOL bActive;
-		if (!bActive)
-			ShowToolTip("Failed to HeapValidate.", (HICON)TTI_ERROR);
+		if (!bActive && FormatMessageA(
+			FORMAT_MESSAGE_IGNORE_INSERTS |
+			FORMAT_MESSAGE_FROM_SYSTEM,
+			NULL,
+			MEM_E_INVALID_LINK,
+			0,
+			lpText,
+			_countof(lpText),
+			NULL))
+			ShowToolTip(lpText, (HICON)TTI_ERROR);
 #endif
 	}
 RELEASE:

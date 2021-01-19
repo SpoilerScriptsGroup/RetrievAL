@@ -2,7 +2,6 @@
 
 #if USE_TOOLTIP
 
-#include "commctrl.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "TWinControl.h"
 #include "TMainForm.h"
@@ -137,12 +136,17 @@ void __fastcall ShowToolTip(LPCSTR lpText, HICON hIcon)
 	if (hIcon == (HICON)TTI_ERROR)
 	{
 		dwTrackPos = GetFocusedPos();
-		lpTitle = "ÉGÉâÅ[";
+		lpTitle = "Error";
 	}
 	else
 	{
 		dwTrackPos = ToClientPos(GetMessagePos());
-		lpTitle = hIcon == (HICON)TTI_INFO ? "èÓïÒ" : NULL;
+		lpTitle = hIcon == (HICON)TTI_INFO ? "Notice" : NULL;
+		if (!IS_INTRESOURCE(hIcon))
+		{
+			lpTitle = (LPCSTR)hIcon;
+			hIcon = (HICON)TTI_WARNING;
+		}
 	}
 
 	SetWindowPos(hToolTip, IsWindowVisible(hMain) ? HWND_NOTOPMOST : HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);

@@ -49,7 +49,8 @@ __declspec(naked) void __stdcall TMainForm_OnDGridLButtonUp(TMainForm *this, LPA
 				Rect.left -= nXOffset;
 			}
 		}
-		this->DrawTreeCell(this->DGrid->Canvas, PrevRow, PrevRect);
+		if (PrevRow != ARow)
+			this->DrawTreeCell(this->DGrid->Canvas, PrevRow, PrevRect);
 		this->DrawTreeCell(this->DGrid->Canvas, ARow, Rect);
 		this->SubjectAccess(this->selectSubject = this->treeSubjectVec[this->nowSelectSubjectIndex]);
 	}
@@ -143,6 +144,8 @@ __declspec(naked) void __stdcall TMainForm_OnDGridLButtonUp(TMainForm *this, LPA
 		mov     dword ptr [esp + 44], ecx
 		mov     dword ptr [esp + 28], edx
 	L1:
+		cmp     esi, dword ptr [esp + 60]
+		je      AR
 		lea     edx, [esp + 44]
 		mov     ecx, dword ptr [ebx + 932]
 		push    edx
@@ -152,6 +155,7 @@ __declspec(naked) void __stdcall TMainForm_OnDGridLButtonUp(TMainForm *this, LPA
 		push    ebx
 		call    dword ptr [TMainForm_DrawTreeCell]
 		add     esp, 16
+	AR:
 		mov     ecx, dword ptr [ebx + 932]
 		lea     eax, [esp + 28]
 		mov     edx, dword ptr [esp + 60]

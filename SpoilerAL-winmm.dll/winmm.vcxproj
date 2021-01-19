@@ -22,6 +22,7 @@
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <TargetUniversalCRTVersion>10.0.10240.0</TargetUniversalCRTVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -52,7 +53,6 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_WIN32_WINNT=0x0502;WIN32;_DEBUG;_WINDOWS;_USRDLL;VERSION_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)include;$(ProjectDir)crt;$(ProjectDir)crt\longdouble;$(ProjectDir)extern;$(ProjectDir)Verbose;$(ProjectDir)Plugin;$(ProjectDir)TranscodeMultiByte;$(ProjectDir)OptimizeAllocator;$(ProjectDir)IsBadPtr;$(ProjectDir)WaitCursor;$(ProjectDir)SnapWindow;$(ProjectDir)SubjectProperty;$(ProjectDir)SubjectStringTable;$(ProjectDir)regex;$(ProjectDir)Parsing;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -65,6 +65,7 @@
       <ModuleDefinitionFile>$(TargetName).def</ModuleDefinitionFile>
       <EnableUAC>false</EnableUAC>
       <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <ShowProgress>LinkVerboseLib</ShowProgress>
     </Link>
     <MASM>
       <UseSafeExceptionHandlers>true</UseSafeExceptionHandlers>
@@ -1767,6 +1768,9 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="winmm.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="winmm.natvis" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

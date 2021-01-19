@@ -236,16 +236,16 @@ __declspec(naked) void * __fastcall internal_reallocate(void *p, size_t n)
 
 void __cdecl bad_alloc()
 {
-	char lpText[256];
+	char lpText[0x80];
 
-	FormatMessageA(
-		FORMAT_MESSAGE_MAX_WIDTH_MASK | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
+	if (FormatMessageA(
+		FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
 		NULL,
-		ERROR_OUTOFMEMORY,
-		LANGIDFROMLCID(GetThreadLocale()),
+		ERROR_IPSEC_IKE_OUT_OF_MEMORY,
+		0,
 		lpText,
 		_countof(lpText),
-		NULL);
-	MessageBoxA(TWinControl_GetHandle(MainForm), lpText, lpApplicationTitle, MB_ICONERROR);
-	ExitProcess(3);
+		NULL))
+		MessageBoxA(TWinControl_GetHandle(MainForm), lpText, lpApplicationTitle, MB_ICONERROR);
+	ExitProcess(ERROR_NOT_ENOUGH_MEMORY);
 }

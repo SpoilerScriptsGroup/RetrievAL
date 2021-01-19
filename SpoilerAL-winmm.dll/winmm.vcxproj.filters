@@ -2640,4 +2640,7 @@
       <Filter>リソース ファイル</Filter>
     </ResourceCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="winmm.natvis" />
+  </ItemGroup>
 </Project>

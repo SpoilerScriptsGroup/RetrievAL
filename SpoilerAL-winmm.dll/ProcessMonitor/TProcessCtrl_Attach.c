@@ -51,7 +51,7 @@ static void __cdecl FreeExternalDependency(TProcessCtrl *const proc)
 				{
 					LPSTR lpBuffer;
 					if (!VirtualFreeEx(hProcess, lpProcessMemory[i].Address, 0, MEM_RELEASE) &&
-						TMainForm_GetUserMode(MainForm) != 1 &&
+						TMainForm_GetUserMode(MainForm) > 1 &&
 						FormatMessageA(
 							FORMAT_MESSAGE_MAX_WIDTH_MASK |
 							FORMAT_MESSAGE_ALLOCATE_BUFFER |
@@ -102,7 +102,7 @@ BOOLEAN __cdecl TProcessCtrl_AttachByProcessName(TProcessCtrl *this, string Proc
 	if (Result = TProcessCtrl_FindProcess(this, &ProcessName, &PE32) == 0)
 	{
 		this->entry = PE32;
-		ClearErrorMessageId();
+		SetLastError(ClearErrorMessageId());
 
 		// 取得可能だったファイル名を保持
 		string_assign(&this->attachedProcessName, &ProcessName);
@@ -150,7 +150,7 @@ BOOLEAN __cdecl TProcessCtrl_Attach(TProcessCtrl *this)
 			return TRUE;
 	}
 
-	if (!vector_empty(&this->processNameVec)) SetErrorMessageId(ERROR_FLT_INSTANCE_NOT_FOUND);
+	if (!vector_empty(&this->processNameVec)) SetLastError(SetErrorMessageId(ERROR_FLT_INSTANCE_NOT_FOUND));
 	return FALSE;
 }
 //---------------------------------------------------------------------

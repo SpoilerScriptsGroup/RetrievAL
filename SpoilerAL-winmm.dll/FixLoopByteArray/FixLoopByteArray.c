@@ -80,11 +80,8 @@ static void __fastcall TSSGCtrl_MakeLoopSet(
 			*(string_end(&code) = (LPSTR)dd) = '\0';
 			string_end_of_storage(&code) = string_begin(&code);
 			do
-			{
-				ArgPtr[2] = Rel;
 				*(uint64_t*)&vector_at(data, Rel) = InternalParsing(SSGC, SSGS, &code, TRUE, (va_list)ArgPtr);
-			}
-			while ((Rel += Size) < FullSize);
+			while ((ArgPtr[2] = (Rel += Size)) < FullSize);
 
 			vector_end(data) += FullSize;
 		}

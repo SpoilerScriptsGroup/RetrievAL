@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+	<Type Name="tpid">
+		<DisplayString>{(unsigned char *)this + tpName, s}</DisplayString>
+	</Type>
+	<Type Name="_String_base">
+		<DisplayString Condition="_M_end_of_storage == 0">{SubjectStringTable_array[sstIndex]}</DisplayString>
+		<DisplayString>{_M_finish - _M_start} {_M_start, [_M_finish - _M_start]s}</DisplayString>
+	</Type>
+	<Type Name="_Vector_string">
+		<Expand>
+			<ArrayItems>
+				<Size>_M_finish - _M_start</Size>
+				<ValuePointer>_M_start</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+	<Type Name="_Vector_base">
+		<Expand>
+			<ArrayItems>
+				<Size>(void **)_M_finish - (void **)_M_start</Size>
+				<ValuePointer>(TAdjustmentAttribute **)_M_start</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+	<Type Name="_TSSGSubject">
+		<DisplayString>{stype}</DisplayString>
+	</Type>
+	<Type Name="_Vector_PTSSGSubject">
+		<Expand>
+			<ArrayItems>
+				<Size>(void **)_M_finish - (void **)_M_start</Size>
+				<ValuePointer>(TSSGSubject **)_M_start</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+	<Type Name="_TAdjustmentAttribute">
+		<DisplayString>{type} {c_str, s}</DisplayString>
+	</Type>
+	<Type Name="_List_node">
+		<Expand>
+			<Item Name="_Vector_PTSSGAttributeElement">*(_Vector_base **)_M_data</Item>
+		</Expand>
+	</Type>
+	<Type Name="_List_base">
+		<Expand>
+			<LinkedListItems Condition="(*(int**)_M_node->_M_next->_M_data)[1] >= 0x10000">
+				<HeadPointer>_M_node->_M_next</HeadPointer>
+				<NextPointer>_M_next</NextPointer>
+				<ValueNode>*(_Vector_base **)_M_data</ValueNode>
+			</LinkedListItems>
+			<LinkedListItems Condition="(*(int**)_M_node->_M_next->_M_data)[1] &lt; 0x10000">
+				<HeadPointer>_M_node->_M_next</HeadPointer>
+				<NextPointer>_M_next</NextPointer>
+				<ValueNode>*(TAdjustmentAttribute **)_M_data</ValueNode>
+			</LinkedListItems>
+		</Expand>
+	</Type>
+	<Type Name="_Deque_base">
+		<DisplayString>{_M_finish._M_node - _M_start._M_node}</DisplayString>
+		<Expand>
+			<IndexListItems>
+				<Size>_M_finish._M_node - _M_start._M_node</Size>
+				<ValueNode>*(TAdjustmentAttribute **)_M_map[3 + $i] </ValueNode>
+			</IndexListItems>
+		</Expand>
+	</Type>
+	<Type Name="_Rb_tree_node">
+		<DisplayString Condition="(*(TAdjustmentAttribute **)_M_value_field)->type &lt; 0x10000">({*(LPDWORD)&amp;_M_value_field[4], X}) [{*(TAdjustmentAttribute **)_M_value_field}]</DisplayString>
+		<DisplayString Condition="*(LPDWORD)_M_value_field &lt; 0x10000">[{(Attribute)*(LPDWORD)_M_value_field}] {(_Deque_base *)&amp;_M_value_field[8]}</DisplayString>
+		<DisplayString>({*(LPDWORD)&amp;_M_value_field[4], X}) [{*(char **)_M_value_field}]</DisplayString>
+	</Type>
+	<Type Name="_Rb_tree">
+		<DisplayString>{{ {_M_node_count} }}</DisplayString>
+		<Expand>
+			<TreeItems>
+				<Size>_M_node_count</Size>
+				<HeadPointer>_M_header->_M_parent</HeadPointer>
+				<LeftPointer>_M_left</LeftPointer>
+				<RightPointer>_M_right</RightPointer>
+				<ValueNode>this</ValueNode>
+			</TreeItems>
+		</Expand>
+	</Type>
+	<Type Name="_MARKUP">
+		<DisplayString>{Depth}-{LoopDepth} {String, [Length]s} {Tag, en}</DisplayString>
+	</Type>
+	<Type Name="_VARIABLE">
+		<DisplayString>{String, [Length]s} {Value}</DisplayString>
+	</Type>
+</AutoVisualizer>

@@ -493,7 +493,7 @@ DWORD __stdcall FindProcessId(
 	LPSTR       lpBuffer;
 #endif
 
-	if (!lpProcessName && !lpModuleName)
+	if (!lpProcessName && !lpModuleName && !lpCmdLineArg)
 		return 0;
 	if (!bInitialized || (BOOL)_InterlockedCompareExchange((long *)&InProcessing, TRUE, FALSE))
 		return 0;

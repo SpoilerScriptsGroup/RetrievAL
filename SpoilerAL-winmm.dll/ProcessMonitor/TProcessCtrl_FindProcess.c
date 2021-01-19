@@ -228,6 +228,7 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID this, string *ProcessName,
 		pe.dwSize = sizeof(PROCESSENTRY32A);
 		if (Process32FirstA(hSnapshot, &pe))
 		{
+			DWORD const dwErrCode = GetLastError();
 			do
 			{
 				if (pe.th32ProcessID != dwProcessId)
@@ -237,6 +238,7 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID this, string *ProcessName,
 				*Entry = pe;
 				return 0;
 			} while (Process32NextA(hSnapshot, &pe));
+			SetLastError(dwErrCode);// discard ERROR_NO_MORE_FILES
 		}
 		CloseHandle(hSnapshot);
 	} while (0);

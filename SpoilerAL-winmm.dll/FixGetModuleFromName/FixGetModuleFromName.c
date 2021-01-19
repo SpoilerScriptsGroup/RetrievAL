@@ -1,24 +1,28 @@
 #include "TProcessCtrl.h"
+#include "TMainForm.h"
 
-static void __fastcall ProcessCheck(TProcessCtrl *this)
+TProcessCtrl *__fastcall FixGetModuleFromName(TProcessCtrl *const this)
 {
-	HANDLE hProcess = TProcessCtrl_Open(this, PROCESS_QUERY_INFORMATION);
+	LPSTR        lpBuffer;
+	HANDLE const hProcess = TProcessCtrl_Open(this, PROCESS_QUERY_INFORMATION | PROCESS_VM_READ);
 	if (hProcess)
 		CloseHandle(hProcess);
-}
-
-__declspec(naked) void __cdecl FixGetModuleFromName()
-{
-	static DWORD const TStringDivision_Upper = 0x004AE590;
-
-	__asm
+	else if (TMainForm_GetUserMode(MainForm) >= 3 &&
+			 TSSGCtrl_GetSSGActionListner(&MainForm->ssgCtrl) &&
+			 FormatMessageA(
+				 FORMAT_MESSAGE_MAX_WIDTH_MASK |
+				 FORMAT_MESSAGE_ALLOCATE_BUFFER |
+				 FORMAT_MESSAGE_IGNORE_INSERTS |
+				 FORMAT_MESSAGE_FROM_SYSTEM,
+				 NULL,
+				 GetLastError(),
+				 0,
+				 (LPSTR)&lpBuffer,
+				 sizeof(double),
+				 NULL))
 	{
-		#define ProcessCtrl eax
-
-		mov     ecx, ProcessCtrl
-		call    ProcessCheck
-		jmp     TStringDivision_Upper
-
-		#undef ProcessCtrl
+		TMainForm_Guide(lpBuffer, 0);
+		LocalFree(lpBuffer);
 	}
+	return this;
 }

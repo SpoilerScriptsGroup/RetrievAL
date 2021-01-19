@@ -2,7 +2,7 @@
 #include "bcb6_errno.h"
 
 #ifdef _DEBUG
-errno_t * __cdecl _errno();
+_DCRTIMP errno_t * __cdecl _errno();
 #else
 EXTERN_C errno_t _terrno;
 #endif

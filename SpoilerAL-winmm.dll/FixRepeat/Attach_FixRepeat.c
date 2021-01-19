@@ -1,6 +1,7 @@
 #include <windows.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "TMainForm.h"
+#include "ToolTip/ToolTip.h"
 
 EXTERN_C BOOL __cdecl TSSGCtrl_ReadSSRFile_CheckSignedParam();
 EXTERN_C long __fastcall TSSGCtrl_ReadSSRFile_DestReserve(BOOL);
@@ -38,8 +39,8 @@ static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(
 			LPSTR lpBuffer;
 			*Begin = 0;
 			*End   = 0;
-			if (TMainForm_GetUserMode(MainForm) != 1 && FormatMessageA(
-				FORMAT_MESSAGE_MAX_WIDTH_MASK |
+			if (FormatMessageA(
+				FORMAT_MESSAGE_MAX_WIDTH_MASK * !USE_TOOLTIP |
 				FORMAT_MESSAGE_ALLOCATE_BUFFER |
 				FORMAT_MESSAGE_IGNORE_INSERTS |
 				FORMAT_MESSAGE_FROM_SYSTEM,
@@ -50,7 +51,12 @@ static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(
 				sizeof(double),
 				NULL))
 			{
-				TMainForm_Guide(lpBuffer, 0);
+#if USE_TOOLTIP
+				ShowToolTip(lpBuffer, (HICON)TTI_ERROR);
+#else
+				if (TMainForm_GetUserMode(MainForm) != 1)
+					TMainForm_Guide(lpBuffer, 0);
+#endif
 				LocalFree(lpBuffer);
 			}
 		} 
@@ -89,6 +95,10 @@ EXTERN_C void __cdecl Attach_FixRepeat()
 	*(LPBYTE )0x004FEBC4 = CALL_REL32;
 	*(LPDWORD)0x004FEBC5 = (DWORD)TSSGCtrl_ReadSSRFile_CheckSignedParam - (0x004FEBC5 + sizeof(DWORD));
 	*(LPBYTE )0x004FEBC9 = PUSH_EAX;
+
+	// TSSGCtrl::ReadSSRFile
+	//   tmpV.resize(4,"_");
+	*(LPSTR* )(0x004FEBDD + 1) = "";
 
 	// TSSGCtrl::ReadSSRFile
 	//   refer to extra argument "SSGS"

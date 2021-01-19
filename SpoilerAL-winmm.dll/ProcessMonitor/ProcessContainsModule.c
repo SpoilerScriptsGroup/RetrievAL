@@ -125,7 +125,8 @@ BOOL __stdcall ProcessInfoValidation(
 					) && WideCharToMultiByte(CP_THREAD_ACP, 0, (LPCWCH)&cmd[upp.CommandLine.MaximumLength], upp.CommandLine.Length >> 1,
 											 cmd, upp.CommandLine.MaximumLength, NULL, NULL))
 					{
-						if (TMainForm_GetUserMode(MainForm) >= 3)
+						if (TMainForm_GetUserMode(MainForm) >= 3 &&
+							TSSGCtrl_GetSSGActionListner(&MainForm->ssgCtrl))
 							TMainForm_Guide(cmd, 0);
 						iError = bIsRegex ?
 #if USING_REGEX

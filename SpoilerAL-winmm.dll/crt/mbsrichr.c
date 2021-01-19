@@ -6,8 +6,6 @@
 
 #pragma warning(disable:4414)
 
-extern unsigned char * __cdecl _mbsrchr(const unsigned char *string, unsigned int c);
-
 unsigned char * __fastcall internal_mbsrchr_single_byte(const unsigned char *string, unsigned int c);
 unsigned char * __fastcall internal_mbsrchr_multi_byte(const unsigned char *string, unsigned int c);
 unsigned char * __fastcall internal_mbsrichr_single_byte(const unsigned char *string, unsigned int c);

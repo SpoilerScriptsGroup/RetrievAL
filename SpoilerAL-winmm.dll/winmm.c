@@ -10,6 +10,7 @@
 #include "ToolTip\ToolTip.h"
 #include "OptimizeAllocator.h"
 #include "SnapWindow.h"
+#include "random.h"
 
 #pragma intrinsic(__rdtsc)
 
@@ -17,12 +18,15 @@
 #define DISABLE_CRT   1
 #define ENABLE_ASMLIB 1
 #endif
-
+#pragma comment(linker, "/nodefaultlib:oldnames.lib")
 #if DISABLE_CRT
 #pragma comment(linker, "/nodefaultlib:libc.lib")
 #pragma comment(linker, "/nodefaultlib:libcmt.lib")
 #pragma comment(linker, "/nodefaultlib:msvcrt.lib")
-#pragma comment(linker, "/nodefaultlib:oldnames.lib")
+#pragma comment(linker, "/nodefaultlib:libvcruntime.lib")
+#pragma comment(linker, "/nodefaultlib:vcruntime.lib")
+#pragma comment(linker, "/nodefaultlib:libucrt.lib")
+#pragma comment(linker, "/nodefaultlib:ucrt.lib")
 #endif
 
 static LPCSTR ExportNames[] = {
@@ -189,7 +193,7 @@ static BOOL __cdecl Attach()
 			goto LAST_ERROR;
 		if (!ModifyResourceSection())
 			goto LAST_ERROR;
-		srand((unsigned int)__rdtsc());
+		srandom((unsigned int)__rdtsc());
 		verbose(VRB_INFO, "_DllMainCRTStartup - end Attach");
 
 		#undef lpDirectoryPath
@@ -208,7 +212,7 @@ FAILED:
 			FORMAT_MESSAGE_MAX_WIDTH_MASK | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
 			NULL,
 			dwErrCode,
-			LANGIDFROMLCID(GetThreadLocale()),
+			0,
 			lpBuffer,
 			_countof(lpBuffer),
 			NULL))

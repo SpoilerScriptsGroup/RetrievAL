@@ -1,5 +1,4 @@
 #include "HintWindow.h"
-#include "commctrl.h"
 #include "intrinsic.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "TApplication.h"

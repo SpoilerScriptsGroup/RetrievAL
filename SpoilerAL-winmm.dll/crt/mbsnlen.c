@@ -15,7 +15,7 @@ size_t __cdecl _mbsnlen(const unsigned char *string, size_t maxlen)
 	}
 	return length;
 }
-#else
+#elif !defined(_DEBUG)
 __declspec(naked) size_t __cdecl _mbsnlen(const unsigned char *string, size_t maxlen)
 {
 	__asm

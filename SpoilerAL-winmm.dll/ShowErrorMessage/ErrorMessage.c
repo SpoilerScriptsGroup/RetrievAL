@@ -33,28 +33,20 @@ void __cdecl ShowErrorMessage()
 	#define lpNotDefinedError  (LPCSTR)0x00602DE0
 #endif
 
-	char   lpBuffer[256];
+	char   lpBuffer[0x0200];
 	LPCSTR lpText;
 	DWORD  dwError;
 
 	dwError = dwErrorMessageId;
 	dwErrorMessageId = ERROR_SUCCESS;
-	if (dwError != ERROR_SUCCESS)
-	{
-		FormatMessageA(
-			FORMAT_MESSAGE_MAX_WIDTH_MASK | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
-			NULL,
-			dwError,
-			LANGIDFROMLCID(GetThreadLocale()),
-			lpBuffer,
-			_countof(lpBuffer),
-			NULL);
-		lpText = lpBuffer;
-	}
-	else
-	{
-		lpText = lpNotDefinedError;
-	}
+	lpText = dwError != ERROR_SUCCESS &&FormatMessageA(
+		FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL,
+		dwError,
+		0,
+		lpBuffer,
+		_countof(lpBuffer),
+		NULL) ? lpBuffer : lpNotDefinedError;
 #if USE_TOOLTIP
 	ShowToolTip(lpText, (HICON)TTI_ERROR);
 #else

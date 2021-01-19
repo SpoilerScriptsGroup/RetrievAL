@@ -34,43 +34,27 @@ __declspec(naked) LPMODULEENTRY32A __fastcall TProcessCtrl_GetModuleFromName(TPr
 //---------------------------------------------------------------------
 void __cdecl TProcessCtrl_LoadModuleList(TProcessCtrl *const this)
 {
-	DWORD        error;
-	LPSTR        lpBuffer;
-	HANDLE const Snapshot//モジュール列挙用スナップショット
-		= CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, this->entry.th32ProcessID);
 	vector_clear(&this->moduleList);
-	if (Snapshot != INVALID_HANDLE_VALUE)
+	if ((long)this->entry.th32ProcessID > 0)
 	{
-		MODULEENTRY32A ME32 = { sizeof(ME32) };
-		//モジュールの取得
-		if (Module32FirstA(Snapshot, &ME32))
+		HANDLE const Snapshot =//モジュール列挙用スナップショット
+			CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, this->entry.th32ProcessID);
+		if (Snapshot != INVALID_HANDLE_VALUE)
 		{
-			MODULEENTRY32A const EntryModule = ME32;
-			do//hModuleが、アクセス用アドレス
-				vector_push_back(&this->moduleList, ME32);
-			while (Module32NextA(Snapshot, &ME32));
-			*(LPDWORD)EntryModule.szModule = BSWAP32('nul\0');
-			vector_push_back(&this->moduleList, EntryModule);
+			MODULEENTRY32A ME32 = { .dwSize = sizeof(ME32) };
+			//モジュールの取得
+			if (Module32FirstA(Snapshot, &ME32))
+			{
+				const MODULEENTRY32A EntryModule = ME32;
+				const DWORD dwErrCode = GetLastError();
+				do//hModuleが、アクセス用アドレス
+					vector_push_back(&this->moduleList, ME32);
+				while (Module32NextA(Snapshot, &ME32));
+				SetLastError(dwErrCode);// discard ERROR_NO_MORE_FILES
+				*(LPDWORD)EntryModule.szModule = BSWAP32('nul\0');
+				vector_push_back(&this->moduleList, EntryModule);
+			}
+			CloseHandle(Snapshot);
 		}
-		CloseHandle(Snapshot);
-	}
-	else if (TMainForm_GetUserMode(MainForm) != 1
-			 && TSSGCtrl_GetSSGActionListner(&MainForm->ssgCtrl)
-			 && (error = GetLastError()) != ERROR_INVALID_PARAMETER
-			 && FormatMessageA(
-				 FORMAT_MESSAGE_MAX_WIDTH_MASK |
-				 FORMAT_MESSAGE_ALLOCATE_BUFFER |
-				 FORMAT_MESSAGE_IGNORE_INSERTS |
-				 FORMAT_MESSAGE_FROM_SYSTEM,
-				 NULL,
-				 error,
-				 0,
-				 (LPSTR)&lpBuffer,
-				 sizeof(double),
-				 NULL)
-			 )
-	{
-		TMainForm_Guide(lpBuffer, 0);
-		LocalFree(lpBuffer);
 	}
 }

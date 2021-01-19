@@ -4,6 +4,7 @@
 #include "TApplication.h"
 #include "TWinControl.h"
 #include "TDrawGrid.h"
+#include "commctrl.h"
 
 static HWND      hToolTip = NULL;
 static TOOLINFOA ti = { sizeof(TOOLINFOA), TTF_IDISHWND | TTF_SUBCLASS };

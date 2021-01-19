@@ -578,17 +578,23 @@ BOOL __fastcall AttachSnapWindow(HWND hWnd)
 #if defined(_M_IX86) || defined(_M_X64)
 	process = GetCurrentProcess();
 	for (end = (p = SnapInfo) + NumberOfElements; p != end; p++)
-		FlushInstructionCache(
-			process,
-#if !FIXED_ARRAY
-			*p,
-#else
-			p,
-#endif
 #if defined(_M_IX86)
-			sizeof(THUNK));
+	{
+#if !FIXED_ARRAY
+		(*p)->relproc = (ptrdiff_t)WindowProc - (ptrdiff_t)(&(*p)->relproc + 1);
+		FlushInstructionCache(rocess, *p, sizeof(THUNK));
+#else
+		p->relproc = (ptrdiff_t)WindowProc - (ptrdiff_t)(&p->relproc + 1);
+		FlushInstructionCache(rocess, p, sizeof(THUNK));
+#endif
+	}
 #elif defined(_M_X64)
-			offsetof(THUNK, jmp) + 3);
+#if !FIXED_ARRAY
+		FlushInstructionCache(process, *p, offsetof(THUNK, jmp) + 3);
+
+#else
+		FlushInstructionCache(process, p, offsetof(THUNK, jmp) + 3);
+#endif
 #endif
 #endif
 #endif

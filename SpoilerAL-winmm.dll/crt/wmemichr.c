@@ -17,7 +17,7 @@ wchar_t * __cdecl _wmemichr(const wchar_t *buffer, wchar_t c, size_t count)
 	return NULL;
 }
 #else
-#include <xmmintrin.h>
+#include <immintrin.h>
 
 #pragma warning(disable:4414)
 
@@ -25,7 +25,7 @@ extern const wchar_t ymmconst_casebitW[16];
 #define casebit ymmconst_casebitW
 
 static wchar_t * __cdecl wmemichrAVX2(const wchar_t *buffer, wchar_t c, size_t count);
-wchar_t * __vectorcall internal_wmemichrAVX2(const wchar_t *buffer, __m128 c, size_t count);
+wchar_t * __vectorcall internal_wmemichrAVX2(const wchar_t *buffer, __m256 c, size_t count);
 static wchar_t * __cdecl wmemichrSSE42(const wchar_t *buffer, wchar_t c, size_t count);
 wchar_t * __vectorcall internal_wmemichrSSE42(const wchar_t *buffer, __m128 reserved, __m128 c, size_t count);
 static wchar_t * __cdecl wmemichrSSE2(const wchar_t *buffer, wchar_t c, size_t count);
@@ -81,7 +81,7 @@ __declspec(naked) static wchar_t * __cdecl wmemichrAVX2(const wchar_t *buffer, w
 	}
 }
 
-__declspec(naked) wchar_t * __vectorcall internal_wmemichrAVX2(const wchar_t *buffer, __m128 c, size_t count)
+__declspec(naked) wchar_t * __vectorcall internal_wmemichrAVX2(const wchar_t *buffer, __m256 c, size_t count)
 {
 	__asm
 	{

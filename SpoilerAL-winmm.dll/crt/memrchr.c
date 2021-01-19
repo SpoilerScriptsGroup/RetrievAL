@@ -9,10 +9,10 @@ void * __cdecl _memrchr(const void *buffer, int c, size_t count)
 	return NULL;
 }
 #else
-#include <xmmintrin.h>
+#include <immintrin.h>
 
 void * __cdecl memrchrAVX2(const void *buffer, int c, size_t count);
-void * __vectorcall internal_memrchrAVX2(const void *buffer, __m128 c, size_t count);
+void * __vectorcall internal_memrchrAVX2(const void *buffer, __m256 c, size_t count);
 void * __cdecl memrchrSSE42(const void *buffer, int c, size_t count);
 void * __vectorcall internal_memrchrSSE42(const void *buffer, __m128 reserved, __m128 c, size_t count);
 void * __cdecl memrchrSSE2(const void *buffer, int c, size_t count);
@@ -59,7 +59,7 @@ __declspec(naked) void * __cdecl memrchrAVX2(const void *buffer, int c, size_t c
 	}
 }
 
-__declspec(naked) void * __vectorcall internal_memrchrAVX2(const void *buffer, __m128 c, size_t count)
+__declspec(naked) void * __vectorcall internal_memrchrAVX2(const void *buffer, __m256 c, size_t count)
 {
 	__asm
 	{

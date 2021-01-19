@@ -14,7 +14,7 @@ extern void * __cdecl _memichr(const void *buffer, int c, size_t count);
 extern void * __cdecl _memrchr(const void *buffer, int c, size_t count);
 extern void * __cdecl _memrichr(const void *buffer, int c, size_t count);
 #include <tchar.h>
-#include <xmmintrin.h>
+#include <immintrin.h>
 
 #ifndef _UNICODE
 # pragma function(memcmp)
@@ -212,7 +212,7 @@ static TYPE * __cdecl MEMIMEM_SSE42(const TYPE *haystack, size_t haystacklen, co
 static TYPE * __cdecl MEMIMEM_SSE2(const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
 static TYPE * __cdecl MEMIMEM_386(const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
 static TYPE * __cdecl MEMIMEM_CPU_DISPATCH(const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
-static TYPE * __cdecl INTERNAL_MEMMEM_AVX2(unsigned long c, int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__vectorcall *memchr)(const TYPE *, __m128, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
+static TYPE * __cdecl INTERNAL_MEMMEM_AVX2(unsigned long c, int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__vectorcall *memchr)(const TYPE *, __m256, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
 static TYPE * __cdecl INTERNAL_MEMMEM_SSE42(unsigned long c, int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__vectorcall *memchr)(const TYPE *, __m128, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
 static TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__vectorcall *memchr)(const TYPE *, __m128, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
 #ifndef _UNICODE
@@ -242,7 +242,7 @@ __declspec(naked) TYPE * __cdecl MEMIMEM(const TYPE *haystack, size_t haystackle
 
 __declspec(naked) static TYPE * __cdecl MEMMEM_AVX2(const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
 {
-	extern TYPE * __vectorcall INTERNAL_MEMCHR_AVX2(const TYPE *buffer, __m128 c, size_t count);
+	extern TYPE * __vectorcall INTERNAL_MEMCHR_AVX2(const TYPE *buffer, __m256 c, size_t count);
 
 #ifndef _UNICODE
 	#define TCHAR_PTR byte ptr
@@ -293,8 +293,8 @@ __declspec(naked) static TYPE * __cdecl MEMMEM_AVX2(const TYPE *haystack, size_t
 
 __declspec(naked) static TYPE * __cdecl MEMIMEM_AVX2(const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
 {
-	extern TYPE * __vectorcall INTERNAL_MEMCHR_AVX2(const TYPE *buffer, __m128 c, size_t count);
-	extern TYPE * __vectorcall INTERNAL_MEMICHR_AVX2(const TYPE *buffer, __m128 c, size_t count);
+	extern TYPE * __vectorcall INTERNAL_MEMCHR_AVX2(const TYPE *buffer, __m256 c, size_t count);
+	extern TYPE * __vectorcall INTERNAL_MEMICHR_AVX2(const TYPE *buffer, __m256 c, size_t count);
 
 #ifndef _UNICODE
 	#define TCHAR_PTR byte ptr
@@ -350,7 +350,7 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_AVX2(const TYPE *haystack, size_
 	#undef TC
 }
 
-__declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_AVX2(unsigned long c, int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__vectorcall *memchr)(const TYPE *, __m128, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
+__declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_AVX2(unsigned long c, int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__vectorcall *memchr)(const TYPE *, __m256, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
 {
 	__asm
 	{

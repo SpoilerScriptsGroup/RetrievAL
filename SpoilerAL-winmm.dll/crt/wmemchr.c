@@ -11,10 +11,10 @@ wchar_t * __cdecl wmemchr(const wchar_t *buffer, wchar_t c, size_t count)
 	return NULL;
 }
 #else
-#include <xmmintrin.h>
+#include <immintrin.h>
 
 wchar_t * __cdecl wmemchrAVX2(const wchar_t *buffer, wchar_t c, size_t count);
-wchar_t * __vectorcall internal_wmemchrAVX2(const wchar_t *buffer, __m128 c, size_t count);
+wchar_t * __vectorcall internal_wmemchrAVX2(const wchar_t *buffer, __m256 c, size_t count);
 wchar_t * __cdecl wmemchrSSE42(const wchar_t *buffer, wchar_t c, size_t count);
 wchar_t * __vectorcall internal_wmemchrSSE42(const wchar_t *buffer, __m128 reserved, __m128 c, size_t count);
 wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wchar_t c, size_t count);
@@ -62,7 +62,7 @@ __declspec(naked) wchar_t * __cdecl wmemchrAVX2(const wchar_t *buffer, wchar_t c
 	}
 }
 
-__declspec(naked) wchar_t * __vectorcall internal_wmemchrAVX2(const wchar_t *buffer, __m128 c, size_t count)
+__declspec(naked) wchar_t * __vectorcall internal_wmemchrAVX2(const wchar_t *buffer, __m256 c, size_t count)
 {
 	__asm
 	{

@@ -573,8 +573,9 @@ BOOL __fastcall AttachSnapWindow(HWND hWnd)
 #else
 	this->PrevWndProc = (WNDPROC)SetWindowLongPtrA(hWnd, GWLP_WNDPROC, (LONG_PTR)WindowProc);
 #endif
-#if SORTED && (defined(_M_IX86) || defined(_M_X64))
+#if SORTED
 	qsort(SnapInfo, NumberOfElements, sizeof(SNAPINFO), CompareSnapInfo);
+#if defined(_M_IX86) || defined(_M_X64)
 	process = GetCurrentProcess();
 	for (end = (p = SnapInfo) + NumberOfElements; p != end; p++)
 		FlushInstructionCache(
@@ -588,6 +589,7 @@ BOOL __fastcall AttachSnapWindow(HWND hWnd)
 			sizeof(THUNK));
 #elif defined(_M_X64)
 			offsetof(THUNK, jmp) + 3);
+#endif
 #endif
 #endif
 	return TRUE;

@@ -14,7 +14,7 @@ void * __cdecl _memichr(const void *buffer, int c, size_t count)
 	return NULL;
 }
 #else
-#include <xmmintrin.h>
+#include <immintrin.h>
 
 #pragma warning(disable:4414)
 
@@ -22,7 +22,7 @@ extern const char ymmconst_casebitA[32];
 #define casebit ymmconst_casebitA
 
 static void * __cdecl memichrAVX2(const void *buffer, int c, size_t count);
-void * __vectorcall internal_memichrAVX2(const void *buffer, __m128 c, size_t count);
+void * __vectorcall internal_memichrAVX2(const void *buffer, __m256 c, size_t count);
 static void * __cdecl memichrSSE42(const void *buffer, int c, size_t count);
 void * __vectorcall internal_memichrSSE42(const void *buffer, __m128 reserved, __m128 c, size_t count);
 static void * __cdecl memichrSSE2(const void *buffer, int c, size_t count);
@@ -79,7 +79,7 @@ __declspec(naked) static void * __cdecl memichrAVX2(const void *buffer, int c, s
 	}
 }
 
-__declspec(naked) void * __vectorcall internal_memichrAVX2(const void *buffer, __m128 c, size_t count)
+__declspec(naked) void * __vectorcall internal_memichrAVX2(const void *buffer, __m256 c, size_t count)
 {
 	__asm
 	{

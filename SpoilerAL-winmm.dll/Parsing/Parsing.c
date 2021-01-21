@@ -196,27 +196,30 @@ enum OS
 	OS_CLOSE         = 0x00000004,
 	OS_SPLIT         = 0x00000008,
 	OS_DELIMITER     = 0x00000010,
-	OS_MONADIC       = 0x00000020,
+	OS_ANTE          = 0x00000020,
 	OS_POST          = 0x00000040,
-	OS_SHORT_CIRCUIT = 0x00000080,
-	OS_LEFT_ASSIGN   = 0x00000100,
-	OS_PARENTHESIS   = 0x00000200,
-	OS_HAS_EXPR      = 0x00000400,
-	OS_TERNARY       = 0x00000800,
-	OS_TERNARY_END   = 0x00001000,
-	OS_LOOP_BEGIN    = 0x00002000,
-	OS_LOOP_END      = 0x00004000,
-	OS_PASS_OPERAND  = 0x00008000,
-	OS_STRING        = 0x00010000,
-	OS_VERIFY        = 0x00020000,
+	OS_LEFT_ASSIGN   = 0x00000080,
+	OS_STRING        = 0x00000100,
+	OS_HAS_EXPR      = 0x00000200,
+	OS_PARENTHESES   = 0x00000400,
+	OS_BRACES        = 0x00000800,
+	OS_LOOP_BEGIN    = 0x00001000,
+	OS_LOOP_END      = 0x00002000,
+	OS_TERNARIES     = 0x00004000,
+	OS_TERNARY_END   = 0x00008000,
+	OS_VERIFY        = 0x00010000,
+	// Declared below flags are not referenced alone.
+
+	OS_SHORT_CIRCUIT = 0x00020000,
+	OS_YIELD_OPERAND = 0x00040000,
 };
 
 /*
  [Wikipedia] - [演算子の優先順位]
  https://ja.wikipedia.org/wiki/%E6%BC%94%E7%AE%97%E5%AD%90%E3%81%AE%E5%84%AA%E5%85%88%E9%A0%86%E4%BD%8D#.E3.83.97.E3.83.AD.E3.82.B0.E3.83.A9.E3.83.9F.E3.83.B3.E3.82.B0.E8.A8.80.E8.AA.9E
 
- [Microsoft Developer Network] - [優先順位と評価順序] - [C 演算子の優先順位と結合規則]
- https://msdn.microsoft.com/ja-jp/library/2bxt6kc4.aspx
+ [Microsoft Docs] - [優先順位と評価順序] - [C 演算子の優先順位と結合規則]
+ https://docs.microsoft.com/ja-jp/cpp/c-language/precedence-and-order-of-evaluation
 
  [Wikipedia] - [CとC++の演算子] - [演算子の優先順位]
  https://ja.wikipedia.org/wiki/C%E3%81%A8C%2B%2B%E3%81%AE%E6%BC%94%E7%AE%97%E5%AD%90#.E6.BC.94.E7.AE.97.E5.AD.90.E3.81.AE.E5.84.AA.E5.85.88.E9.A0.86.E4.BD.8D
@@ -237,13 +240,14 @@ enum OS
  127 case                                                        OS_PUSH
  127 default                                                     OS_PUSH
  127 parse_int       parse_real      parse_reset                 OS_PUSH
-  64 (                                                           OS_OPEN | OS_PARENTHESIS
+  64 {                                                           OS_OPEN | OS_BRACES
+  64 (                                                           OS_OPEN | OS_PARENTHESES
   64 [_                                                          OS_OPEN
   64 [.                                                          OS_OPEN
   64 [~                                                          OS_OPEN
   64 [:                                                          OS_OPEN
-  64 ++ --                                                       OS_PUSH | OS_MONADIC | OS_POST 後置インクリメント 後置デクリメント
-  60 MName                                                       OS_PUSH | OS_MONADIC
+  64 ++ --                                                       OS_PUSH | OS_POST 後置インクリメント 後置デクリメント
+  60 MName                                                       OS_PUSH | OS_ANTE
      ProcessId
      HNumber
      Memory
@@ -349,7 +353,7 @@ enum OS
      iswgraph        iswlower        iswprint        iswpunct
      iswspace        iswupper        iswxdigit
      toascii         tolower         toupper
-  56 ++ -- - ! ~ * &                                             OS_PUSH | OS_MONADIC           前置インクリメント 前置デクリメント 単項マイナス 論理否定 ビットごとの論理否定 間接演算子
+  56 ++ -- - ! ~ * &                                             OS_PUSH | OS_ANTE              前置インクリメント 前置デクリメント 単項マイナス 論理否定 ビットごとの論理否定 間接演算子 アドレス演算子
   52 * / % idiv imod                                             OS_PUSH                        乗算 除算 剰余算 符号付除算 符号付剰余算
   48 + -                                                         OS_PUSH                        加算 減算
   44 << >> sar rol ror                                           OS_PUSH                        左論理シフト 右論理シフト 右算術シフト 左ローテート 右ローテート
@@ -360,7 +364,7 @@ enum OS
   24 |                                                           OS_PUSH                        ビットごとの論理和
   20 && and                                                      OS_PUSH | OS_SHORT_CIRCUIT     論理積
   16 || or                                                       OS_PUSH | OS_SHORT_CIRCUIT     論理和
-  12 ? :                                                         OS_PUSH | OS_TERNARY           条件演算子
+  12 ? :                                                         OS_PUSH | OS_TERNARIES         条件演算子
    8 =>                                                          OS_PUSH                        右辺代入
    8 = += -= *= /= %= &= |= ^= <<= >>=                           OS_PUSH | OS_LEFT_ASSIGN       左辺代入 加算代入 減算代入 乗算代入 除算代入 剰余代入 ビット積代入 ビット排他的論理和代入 ビット和代入 左論理シフト代入 右論理シフト代入
    4 ,                                                           OS_DELIMITER
@@ -376,13 +380,14 @@ enum OS
    4 ~]   ~8]   ~7]   ~6]   ~5]   ~4]   ~3]   ~2]                OS_PUSH | OS_CLOSE
    4 .]                                                          OS_PUSH | OS_CLOSE
    4 _]                                                          OS_PUSH | OS_CLOSE
-   4 )                                                           OS_CLOSE | OS_PARENTHESIS
+   4 )                                                           OS_CLOSE | OS_PARENTHESES
+   4 }                                                           OS_CLOSE | OS_BRACES
    4 ;                                                           OS_SPLIT
    0 goto                                                        OS_PUSH
    0 return                                                      OS_PUSH
 */
 
-typedef enum {
+typedef enum TAG {
 	TAG_NOT_OPERATOR     ,  // 127                 OS_PUSH
 	TAG_IF               ,  // 127 if              OS_PUSH | OS_HAS_EXPR
 	TAG_ELSE             ,  // 127 else            OS_PUSH
@@ -404,295 +409,296 @@ typedef enum {
 	TAG_PARSE_INT        ,  // 127 parse_int       OS_PUSH
 	TAG_PARSE_REAL       ,  // 127 parse_real      OS_PUSH
 	TAG_PARSE_RESET      ,  // 127 parse_reset     OS_PUSH
-	TAG_PARENTHESIS_OPEN ,  //  64 (               OS_OPEN | OS_PARENTHESIS
+	TAG_BRACE_OPEN       ,  //  64 {               OS_OPEN | OS_BRACES
+	TAG_PARENTHESIS_OPEN ,  //  64 (               OS_OPEN | OS_PARENTHESES
 	TAG_ADDR_ADJUST_OPEN ,  //  64 [_              OS_OPEN
 	TAG_ADDR_REPLACE_OPEN,  //  64 [.              OS_OPEN
 	TAG_REV_ENDIAN_OPEN  ,  //  64 [~              OS_OPEN
 	TAG_REMOTE_OPEN      ,  //  64 [:              OS_OPEN
-	TAG_INC              ,  //  64 N++  (52 ++N)   OS_PUSH | OS_MONADIC | OS_POST (OS_PUSH | OS_MONADIC)
-	TAG_DEC              ,  //  64 N--  (52 --N)   OS_PUSH | OS_MONADIC | OS_POST (OS_PUSH | OS_MONADIC)
+	TAG_INC              ,  //  64 N++  (52 ++N)   OS_PUSH | OS_POST (OS_PUSH | OS_ANTE)
+	TAG_DEC              ,  //  64 N--  (52 --N)   OS_PUSH | OS_POST (OS_PUSH | OS_ANTE)
 	TAG_PROCEDURE        ,  //  60 ::              OS_PUSH
 	TAG_IMPORT_FUNCTION  ,  //  60 :!              OS_PUSH
 	TAG_IMPORT_REFERENCE ,  //  60 :&              OS_PUSH
 	TAG_MODULENAME       ,  //  60                 OS_PUSH
 	TAG_SECTION          ,  //  60 := :+           OS_PUSH
-	TAG_PROCESSID        ,  //  60 ProcessId       OS_PUSH | OS_MONADIC
-	TAG_MNAME            ,  //  60 MName           OS_PUSH | OS_MONADIC
-	TAG_HNUMBER          ,  //  60 HNumber         OS_PUSH | OS_MONADIC
-	TAG_MEMORY           ,  //  60 Memory          OS_PUSH | OS_MONADIC
-	TAG_ISBADCODEPTR     ,  //  60 IsBadCodePtr    OS_PUSH | OS_MONADIC
-	TAG_ISBADREADPTR     ,  //  60 IsBadReadPtr    OS_PUSH | OS_MONADIC
-	TAG_ISBADWRITEPTR    ,  //  60 IsBadWritePtr   OS_PUSH | OS_MONADIC
-	TAG_ISBADSTRINGPTRA  ,  //  60 IsBadStringPtrA OS_PUSH | OS_MONADIC
-	TAG_ISBADSTRINGPTRW  ,  //  60 IsBadStringPtrW OS_PUSH | OS_MONADIC
-	TAG_CAST32           ,  //  60 Cast32          OS_PUSH | OS_MONADIC
-	TAG_CAST64           ,  //  60 Cast64          OS_PUSH | OS_MONADIC
-	TAG_I1TOI4           ,  //  60 I1toI4          OS_PUSH | OS_MONADIC
-	                        //  60 cbd             OS_PUSH | OS_MONADIC
-	TAG_I2TOI4           ,  //  60 I2toI4          OS_PUSH | OS_MONADIC
-	                        //  60 cwd             OS_PUSH | OS_MONADIC
-	TAG_I4TOI8           ,  //  60 I4toI8          OS_PUSH | OS_MONADIC
-	                        //  60 cdq             OS_PUSH | OS_MONADIC
-	TAG_UTOF             ,  //  60 utof            OS_PUSH | OS_MONADIC
-	TAG_ITOF             ,  //  60 itof            OS_PUSH | OS_MONADIC
-	TAG_FTOI             ,  //  60 ftoi            OS_PUSH | OS_MONADIC
-	TAG_TRUNC            ,  //  60 trunc           OS_PUSH | OS_MONADIC
-	TAG_ROUND            ,  //  60 round           OS_PUSH | OS_MONADIC
-	TAG_ISFINITE         ,  //  60 isfinite        OS_PUSH | OS_MONADIC
-	TAG_ISINF            ,  //  60 isinf           OS_PUSH | OS_MONADIC
-	TAG_ISNAN            ,  //  60 isnan           OS_PUSH | OS_MONADIC
-	TAG_BSF              ,  //  60 BitScanForward  OS_PUSH | OS_MONADIC
-	                        //  60 bsf             OS_PUSH | OS_MONADIC
-	TAG_BSR              ,  //  60 BitScanReverse  OS_PUSH | OS_MONADIC
-	                        //  60 bsr             OS_PUSH | OS_MONADIC
-	TAG_ROTL8            ,  //  60 rotl8           OS_PUSH | OS_MONADIC
-	TAG_ROTL16           ,  //  60 rotl16          OS_PUSH | OS_MONADIC
-	TAG_ROTL32           ,  //  60 rotl32          OS_PUSH | OS_MONADIC
-	                        //  60 rotl            OS_PUSH | OS_MONADIC
-	TAG_ROTL64           ,  //  60 rotl64          OS_PUSH | OS_MONADIC
-	TAG_ROTR8            ,  //  60 rotr8           OS_PUSH | OS_MONADIC
-	TAG_ROTR16           ,  //  60 rotr16          OS_PUSH | OS_MONADIC
-	TAG_ROTR32           ,  //  60 rotr32          OS_PUSH | OS_MONADIC
-	                        //  60 rotr            OS_PUSH | OS_MONADIC
-	TAG_ROTR64           ,  //  60 rotr64          OS_PUSH | OS_MONADIC
-	TAG_A2U              ,  //  60 A2U             OS_PUSH | OS_MONADIC
-	TAG_A2W              ,  //  60 A2W             OS_PUSH | OS_MONADIC
-	TAG_U2A              ,  //  60 U2A             OS_PUSH | OS_MONADIC
-	TAG_U2W              ,  //  60 U2W             OS_PUSH | OS_MONADIC
-	TAG_W2A              ,  //  60 W2A             OS_PUSH | OS_MONADIC
-	TAG_W2U              ,  //  60 W2U             OS_PUSH | OS_MONADIC
-	TAG_ASSERT           ,  //  60 assert          OS_PUSH | OS_MONADIC
-	TAG_WAIT             ,  //  60 wait            OS_PUSH | OS_MONADIC
-	TAG_SLEEP            ,  //  60 sleep           OS_PUSH | OS_MONADIC
+	TAG_PROCESSID        ,  //  60 ProcessId       OS_PUSH | OS_ANTE
+	TAG_MNAME            ,  //  60 MName           OS_PUSH | OS_ANTE
+	TAG_HNUMBER          ,  //  60 HNumber         OS_PUSH | OS_ANTE
+	TAG_MEMORY           ,  //  60 Memory          OS_PUSH | OS_ANTE
+	TAG_ISBADCODEPTR     ,  //  60 IsBadCodePtr    OS_PUSH | OS_ANTE
+	TAG_ISBADREADPTR     ,  //  60 IsBadReadPtr    OS_PUSH | OS_ANTE
+	TAG_ISBADWRITEPTR    ,  //  60 IsBadWritePtr   OS_PUSH | OS_ANTE
+	TAG_ISBADSTRINGPTRA  ,  //  60 IsBadStringPtrA OS_PUSH | OS_ANTE
+	TAG_ISBADSTRINGPTRW  ,  //  60 IsBadStringPtrW OS_PUSH | OS_ANTE
+	TAG_CAST32           ,  //  60 Cast32          OS_PUSH | OS_ANTE
+	TAG_CAST64           ,  //  60 Cast64          OS_PUSH | OS_ANTE
+	TAG_I1TOI4           ,  //  60 I1toI4          OS_PUSH | OS_ANTE
+	                        //  60 cbd             OS_PUSH | OS_ANTE
+	TAG_I2TOI4           ,  //  60 I2toI4          OS_PUSH | OS_ANTE
+	                        //  60 cwd             OS_PUSH | OS_ANTE
+	TAG_I4TOI8           ,  //  60 I4toI8          OS_PUSH | OS_ANTE
+	                        //  60 cdq             OS_PUSH | OS_ANTE
+	TAG_UTOF             ,  //  60 utof            OS_PUSH | OS_ANTE
+	TAG_ITOF             ,  //  60 itof            OS_PUSH | OS_ANTE
+	TAG_FTOI             ,  //  60 ftoi            OS_PUSH | OS_ANTE
+	TAG_TRUNC            ,  //  60 trunc           OS_PUSH | OS_ANTE
+	TAG_ROUND            ,  //  60 round           OS_PUSH | OS_ANTE
+	TAG_ISFINITE         ,  //  60 isfinite        OS_PUSH | OS_ANTE
+	TAG_ISINF            ,  //  60 isinf           OS_PUSH | OS_ANTE
+	TAG_ISNAN            ,  //  60 isnan           OS_PUSH | OS_ANTE
+	TAG_BSF              ,  //  60 BitScanForward  OS_PUSH | OS_ANTE
+	                        //  60 bsf             OS_PUSH | OS_ANTE
+	TAG_BSR              ,  //  60 BitScanReverse  OS_PUSH | OS_ANTE
+	                        //  60 bsr             OS_PUSH | OS_ANTE
+	TAG_ROTL8            ,  //  60 rotl8           OS_PUSH | OS_ANTE
+	TAG_ROTL16           ,  //  60 rotl16          OS_PUSH | OS_ANTE
+	TAG_ROTL32           ,  //  60 rotl32          OS_PUSH | OS_ANTE
+	                        //  60 rotl            OS_PUSH | OS_ANTE
+	TAG_ROTL64           ,  //  60 rotl64          OS_PUSH | OS_ANTE
+	TAG_ROTR8            ,  //  60 rotr8           OS_PUSH | OS_ANTE
+	TAG_ROTR16           ,  //  60 rotr16          OS_PUSH | OS_ANTE
+	TAG_ROTR32           ,  //  60 rotr32          OS_PUSH | OS_ANTE
+	                        //  60 rotr            OS_PUSH | OS_ANTE
+	TAG_ROTR64           ,  //  60 rotr64          OS_PUSH | OS_ANTE
+	TAG_A2U              ,  //  60 A2U             OS_PUSH | OS_ANTE
+	TAG_A2W              ,  //  60 A2W             OS_PUSH | OS_ANTE
+	TAG_U2A              ,  //  60 U2A             OS_PUSH | OS_ANTE
+	TAG_U2W              ,  //  60 U2W             OS_PUSH | OS_ANTE
+	TAG_W2A              ,  //  60 W2A             OS_PUSH | OS_ANTE
+	TAG_W2U              ,  //  60 W2U             OS_PUSH | OS_ANTE
+	TAG_ASSERT           ,  //  60 assert          OS_PUSH | OS_ANTE
+	TAG_WAIT             ,  //  60 wait            OS_PUSH | OS_ANTE
+	TAG_SLEEP            ,  //  60 sleep           OS_PUSH | OS_ANTE
 #if ALLOCATE_SUPPORT
-	TAG_REALLOC          ,  //  60 realloc         OS_PUSH | OS_MONADIC
+	TAG_REALLOC          ,  //  60 realloc         OS_PUSH | OS_ANTE
 #endif
-	TAG_ALLOCA           ,  //  60 alloca          OS_PUSH | OS_MONADIC
-	TAG_ATOI             ,  //  60 atoi            OS_PUSH | OS_MONADIC
-	TAG_WTOI             ,  //  60 wtoi            OS_PUSH | OS_MONADIC
-	TAG_ATOF             ,  //  60 atof            OS_PUSH | OS_MONADIC
-	TAG_WTOF             ,  //  60 wtof            OS_PUSH | OS_MONADIC
-	TAG_TICK             ,  //  60 tick            OS_PUSH | OS_MONADIC
-	TAG_RAND32           ,  //  60 rand32          OS_PUSH | OS_MONADIC
-	TAG_RAND64           ,  //  60 rand64          OS_PUSH | OS_MONADIC
-	TAG_MIN              ,  //  60 min             OS_PUSH | OS_MONADIC
-	TAG_MAX              ,  //  60 max             OS_PUSH | OS_MONADIC
-	TAG_IMIN             ,  //  60 imin            OS_PUSH | OS_MONADIC
-	TAG_IMAX             ,  //  60 imax            OS_PUSH | OS_MONADIC
-	TAG_MEMDUP           ,  //  60 memdup          OS_PUSH | OS_MONADIC
-	TAG_WMEMDUP          ,  //  60 wmemdup         OS_PUSH | OS_MONADIC
-	TAG_MEMCCPY          ,  //  60 memccpy         OS_PUSH | OS_MONADIC
-	TAG_WMEMCCPY         ,  //  60 wmemccpy        OS_PUSH | OS_MONADIC
-	TAG_MEMCMP           ,  //  60 memcmp          OS_PUSH | OS_MONADIC
-	TAG_WMEMCMP          ,  //  60 wmemcmp         OS_PUSH | OS_MONADIC
-	TAG_MEMICMP          ,  //  60 memicmp         OS_PUSH | OS_MONADIC
-	TAG_WMEMICMP         ,  //  60 wmemicmp        OS_PUSH | OS_MONADIC
-	TAG_MEMCPY           ,  //  60 memcpy          OS_PUSH | OS_MONADIC
-	TAG_WMEMCPY          ,  //  60 wmemcpy         OS_PUSH | OS_MONADIC
-	TAG_MEMPCPY          ,  //  60 mempcpy         OS_PUSH | OS_MONADIC
-	TAG_WMEMPCPY         ,  //  60 wmempcpy        OS_PUSH | OS_MONADIC
-	TAG_MEMMOVE          ,  //  60 memmove         OS_PUSH | OS_MONADIC
-	TAG_WMEMMOVE         ,  //  60 wmemmove        OS_PUSH | OS_MONADIC
-	TAG_MEMSET8          ,  //  60 memset8         OS_PUSH | OS_MONADIC
-	                        //  60 memset          OS_PUSH | OS_MONADIC
-	TAG_MEMSET16         ,  //  60 memset16        OS_PUSH | OS_MONADIC
-	                        //  60 wmemset         OS_PUSH | OS_MONADIC
-	TAG_MEMSET32         ,  //  60 memset32        OS_PUSH | OS_MONADIC
-	TAG_MEMSET64         ,  //  60 memset64        OS_PUSH | OS_MONADIC
-	TAG_MEMCHR           ,  //  60 memchr          OS_PUSH | OS_MONADIC
-	TAG_WMEMCHR          ,  //  60 wmemchr         OS_PUSH | OS_MONADIC
-	TAG_MEMICHR          ,  //  60 memichr         OS_PUSH | OS_MONADIC
-	TAG_WMEMICHR         ,  //  60 wmemichr        OS_PUSH | OS_MONADIC
-	TAG_MEMRCHR          ,  //  60 memrchr         OS_PUSH | OS_MONADIC
-	TAG_WMEMRCHR         ,  //  60 wmemrchr        OS_PUSH | OS_MONADIC
-	TAG_MEMRICHR         ,  //  60 memrichr        OS_PUSH | OS_MONADIC
-	TAG_WMEMRICHR        ,  //  60 wmemrichr       OS_PUSH | OS_MONADIC
-	TAG_MEMMEM           ,  //  60 memmem          OS_PUSH | OS_MONADIC
-	TAG_WMEMMEM          ,  //  60 wmemmem         OS_PUSH | OS_MONADIC
-	TAG_MEMIMEM          ,  //  60 memimem         OS_PUSH | OS_MONADIC
-	TAG_WMEMIMEM         ,  //  60 wmemimem        OS_PUSH | OS_MONADIC
-	TAG_MEMRMEM          ,  //  60 memrmem         OS_PUSH | OS_MONADIC
-	TAG_WMEMRMEM         ,  //  60 wmemrmem        OS_PUSH | OS_MONADIC
-	TAG_MEMRIMEM         ,  //  60 memrimem        OS_PUSH | OS_MONADIC
-	TAG_WMEMRIMEM        ,  //  60 wmemrimem       OS_PUSH | OS_MONADIC
-	TAG_PRINTF           ,  //  60 printf          OS_PUSH | OS_MONADIC
-	TAG_DPRINTF          ,  //  60 dprintf         OS_PUSH | OS_MONADIC
-	TAG_SNPRINTF         ,  //  60 snprintf        OS_PUSH | OS_MONADIC
-	TAG_SNWPRINTF        ,  //  60 snwprintf       OS_PUSH | OS_MONADIC
-	TAG_STRDUP           ,  //  60 strdup          OS_PUSH | OS_MONADIC
-	TAG_WCSDUP           ,  //  60 wcsdup          OS_PUSH | OS_MONADIC
-	TAG_STRINC           ,  //  60 strinc          OS_PUSH | OS_MONADIC
-	TAG_WCSINC           ,  //  60 wcsinc          OS_PUSH | OS_MONADIC
-	TAG_MBSINC           ,  //  60 mbsinc          OS_PUSH | OS_MONADIC
-	TAG_STRDEC           ,  //  60 strdec          OS_PUSH | OS_MONADIC
-	TAG_WCSDEC           ,  //  60 wcsdec          OS_PUSH | OS_MONADIC
-	TAG_MBSDEC           ,  //  60 mbsdec          OS_PUSH | OS_MONADIC
-	TAG_STRNINC          ,  //  60 strninc         OS_PUSH | OS_MONADIC
-	TAG_WCSNINC          ,  //  60 wcsninc         OS_PUSH | OS_MONADIC
-	TAG_MBSNINC          ,  //  60 mbsninc         OS_PUSH | OS_MONADIC
-	TAG_STRNEXTC         ,  //  60 strnextc        OS_PUSH | OS_MONADIC
-	TAG_WCSNEXTC         ,  //  60 wcsnextc        OS_PUSH | OS_MONADIC
-	TAG_MBSNEXTC         ,  //  60 mbsnextc        OS_PUSH | OS_MONADIC
-	TAG_STRLEN           ,  //  60 strlen          OS_PUSH | OS_MONADIC
-	TAG_WCSLEN           ,  //  60 wcslen          OS_PUSH | OS_MONADIC
-	TAG_MBSLEN           ,  //  60 mbslen          OS_PUSH | OS_MONADIC
-	TAG_STRNLEN          ,  //  60 strnlen         OS_PUSH | OS_MONADIC
-	TAG_WCSNLEN          ,  //  60 wcsnlen         OS_PUSH | OS_MONADIC
-	TAG_MBSNLEN          ,  //  60 mbsnlen         OS_PUSH | OS_MONADIC
-	TAG_MBSNBCNT         ,  //  60 mbsnbcnt        OS_PUSH | OS_MONADIC
-	TAG_MBSNCCNT         ,  //  60 mbsnccnt        OS_PUSH | OS_MONADIC
-	TAG_STRCMP           ,  //  60 strcmp          OS_PUSH | OS_MONADIC
-	TAG_WCSCMP           ,  //  60 wcscmp          OS_PUSH | OS_MONADIC
-	TAG_STRICMP          ,  //  60 stricmp         OS_PUSH | OS_MONADIC
-	TAG_WCSICMP          ,  //  60 wcsicmp         OS_PUSH | OS_MONADIC
-	TAG_MBSICMP          ,  //  60 mbsicmp         OS_PUSH | OS_MONADIC
-	TAG_STRNCMP          ,  //  60 strncmp         OS_PUSH | OS_MONADIC
-	TAG_WCSNCMP          ,  //  60 wcsncmp         OS_PUSH | OS_MONADIC
-	TAG_MBSNCMP          ,  //  60 mbsncmp         OS_PUSH | OS_MONADIC
-	TAG_STRNICMP         ,  //  60 strnicmp        OS_PUSH | OS_MONADIC
-	TAG_WCSNICMP         ,  //  60 wcsnicmp        OS_PUSH | OS_MONADIC
-	TAG_MBSNBICMP        ,  //  60 mbsnbicmp       OS_PUSH | OS_MONADIC
-	TAG_MBSNICMP         ,  //  60 mbsnicmp        OS_PUSH | OS_MONADIC
-	TAG_STRCPY           ,  //  60 strcpy          OS_PUSH | OS_MONADIC
-	TAG_WCSCPY           ,  //  60 wcscpy          OS_PUSH | OS_MONADIC
-	TAG_STPCPY           ,  //  60 stpcpy          OS_PUSH | OS_MONADIC
-	TAG_WCPCPY           ,  //  60 wcpcpy          OS_PUSH | OS_MONADIC
-	TAG_STRCAT           ,  //  60 strcat          OS_PUSH | OS_MONADIC
-	TAG_WCSCAT           ,  //  60 wcscat          OS_PUSH | OS_MONADIC
-	TAG_STRNCPY          ,  //  60 strncpy         OS_PUSH | OS_MONADIC
-	TAG_WCSNCPY          ,  //  60 wcsncpy         OS_PUSH | OS_MONADIC
-	TAG_MBSNBCPY         ,  //  60 mbsnbcpy        OS_PUSH | OS_MONADIC
-	TAG_MBSNCPY          ,  //  60 mbsncpy         OS_PUSH | OS_MONADIC
-	TAG_STPNCPY          ,  //  60 stpncpy         OS_PUSH | OS_MONADIC
-	TAG_WCPNCPY          ,  //  60 wcpncpy         OS_PUSH | OS_MONADIC
-	TAG_STRNCAT          ,  //  60 strncat         OS_PUSH | OS_MONADIC
-	TAG_WCSNCAT          ,  //  60 wcsncat         OS_PUSH | OS_MONADIC
-	TAG_MBSNBCAT         ,  //  60 mbsnbcat        OS_PUSH | OS_MONADIC
-	TAG_MBSNCAT          ,  //  60 mbsncat         OS_PUSH | OS_MONADIC
-	TAG_STRLCPY          ,  //  60 strlcpy         OS_PUSH | OS_MONADIC
-	TAG_WCSLCPY          ,  //  60 wcslcpy         OS_PUSH | OS_MONADIC
-	TAG_STRLCAT          ,  //  60 strlcat         OS_PUSH | OS_MONADIC
-	TAG_WCSLCAT          ,  //  60 wcslcat         OS_PUSH | OS_MONADIC
-	TAG_STRCHR           ,  //  60 strchr          OS_PUSH | OS_MONADIC
-	TAG_WCSCHR           ,  //  60 wcschr          OS_PUSH | OS_MONADIC
-	TAG_MBSCHR           ,  //  60 mbschr          OS_PUSH | OS_MONADIC
-	TAG_STRICHR          ,  //  60 strichr         OS_PUSH | OS_MONADIC
-	TAG_WCSICHR          ,  //  60 wcsichr         OS_PUSH | OS_MONADIC
-	TAG_MBSICHR          ,  //  60 mbsichr         OS_PUSH | OS_MONADIC
-	TAG_STRRCHR          ,  //  60 strrchr         OS_PUSH | OS_MONADIC
-	TAG_WCSRCHR          ,  //  60 wcsrchr         OS_PUSH | OS_MONADIC
-	TAG_MBSRCHR          ,  //  60 mbsrchr         OS_PUSH | OS_MONADIC
-	TAG_STRRICHR         ,  //  60 strrichr        OS_PUSH | OS_MONADIC
-	TAG_WCSRICHR         ,  //  60 wcsrichr        OS_PUSH | OS_MONADIC
-	TAG_MBSRICHR         ,  //  60 mbsrichr        OS_PUSH | OS_MONADIC
-	TAG_STRSTR           ,  //  60 strstr          OS_PUSH | OS_MONADIC
-	TAG_WCSSTR           ,  //  60 wcsstr          OS_PUSH | OS_MONADIC
-	TAG_MBSSTR           ,  //  60 mbsstr          OS_PUSH | OS_MONADIC
-	TAG_STRISTR          ,  //  60 stristr         OS_PUSH | OS_MONADIC
-	TAG_WCSISTR          ,  //  60 wcsistr         OS_PUSH | OS_MONADIC
-	TAG_MBSISTR          ,  //  60 mbsistr         OS_PUSH | OS_MONADIC
-	TAG_STRRSTR          ,  //  60 strrstr         OS_PUSH | OS_MONADIC
-	TAG_WCSRSTR          ,  //  60 wcsrstr         OS_PUSH | OS_MONADIC
-	TAG_MBSRSTR          ,  //  60 mbsrstr         OS_PUSH | OS_MONADIC
-	TAG_STRRISTR         ,  //  60 strristr        OS_PUSH | OS_MONADIC
-	TAG_WCSRISTR         ,  //  60 wcsristr        OS_PUSH | OS_MONADIC
-	TAG_MBSRISTR         ,  //  60 mbsristr        OS_PUSH | OS_MONADIC
-	TAG_STRSPN           ,  //  60 strspn          OS_PUSH | OS_MONADIC
-	TAG_WCSSPN           ,  //  60 wcsspn          OS_PUSH | OS_MONADIC
-	TAG_MBSSPN           ,  //  60 mbsspn          OS_PUSH | OS_MONADIC
-	TAG_STRSPNP          ,  //  60 strspnp         OS_PUSH | OS_MONADIC
-	TAG_WCSSPNP          ,  //  60 wcsspnp         OS_PUSH | OS_MONADIC
-	TAG_MBSSPNP          ,  //  60 mbsspnp         OS_PUSH | OS_MONADIC
-	TAG_STRCSPN          ,  //  60 strcspn         OS_PUSH | OS_MONADIC
-	TAG_WCSCSPN          ,  //  60 wcscspn         OS_PUSH | OS_MONADIC
-	TAG_MBSCSPN          ,  //  60 mbscspn         OS_PUSH | OS_MONADIC
-	TAG_STRPBRK          ,  //  60 strpbrk         OS_PUSH | OS_MONADIC
-	TAG_WCSPBRK          ,  //  60 wcspbrk         OS_PUSH | OS_MONADIC
-	TAG_MBSPBRK          ,  //  60 mbspbrk         OS_PUSH | OS_MONADIC
-	TAG_STRSET           ,  //  60 strset          OS_PUSH | OS_MONADIC
-	TAG_WCSSET           ,  //  60 wcsset          OS_PUSH | OS_MONADIC
-	TAG_MBSSET           ,  //  60 mbsset          OS_PUSH | OS_MONADIC
-	TAG_STRNSET          ,  //  60 strnset         OS_PUSH | OS_MONADIC
-	TAG_WCSNSET          ,  //  60 wcsnset         OS_PUSH | OS_MONADIC
-	TAG_MBSNBSET         ,  //  60 mbsnbset        OS_PUSH | OS_MONADIC
-	TAG_MBSNSET          ,  //  60 mbsnset         OS_PUSH | OS_MONADIC
-	TAG_STRTOK           ,  //  60 strtok          OS_PUSH | OS_MONADIC
-	TAG_WCSTOK           ,  //  60 wcstok          OS_PUSH | OS_MONADIC
-	TAG_MBSTOK           ,  //  60 mbstok          OS_PUSH | OS_MONADIC
-	TAG_STRLWR           ,  //  60 strlwr          OS_PUSH | OS_MONADIC
-	TAG_WCSLWR           ,  //  60 wcslwr          OS_PUSH | OS_MONADIC
-	TAG_MBSLWR           ,  //  60 mbslwr          OS_PUSH | OS_MONADIC
-	TAG_STRUPR           ,  //  60 strupr          OS_PUSH | OS_MONADIC
-	TAG_WCSUPR           ,  //  60 wcsupr          OS_PUSH | OS_MONADIC
-	TAG_MBSUPR           ,  //  60 mbsupr          OS_PUSH | OS_MONADIC
-	TAG_STRREV           ,  //  60 strrev          OS_PUSH | OS_MONADIC
-	TAG_WCSREV           ,  //  60 wcsrev          OS_PUSH | OS_MONADIC
-	TAG_MBSREV           ,  //  60 mbsrev          OS_PUSH | OS_MONADIC
-	TAG_ISALNUM          ,  //  60 isalnum         OS_PUSH | OS_MONADIC
-	TAG_ISALPHA          ,  //  60 isalpha         OS_PUSH | OS_MONADIC
-	TAG_ISASCII          ,  //  60 isascii         OS_PUSH | OS_MONADIC
-	TAG_ISBLANK          ,  //  60 isblank         OS_PUSH | OS_MONADIC
-	TAG_ISCNTRL          ,  //  60 iscntrl         OS_PUSH | OS_MONADIC
-	TAG_ISCSYM           ,  //  60 iscsym          OS_PUSH | OS_MONADIC
-	TAG_ISCSYMF          ,  //  60 iscsymf         OS_PUSH | OS_MONADIC
-	TAG_ISDIGIT          ,  //  60 isdigit         OS_PUSH | OS_MONADIC
-	TAG_ISGRAPH          ,  //  60 isgraph         OS_PUSH | OS_MONADIC
-	TAG_ISKANA           ,  //  60 iskana          OS_PUSH | OS_MONADIC
-	TAG_ISLEADBYTE       ,  //  60 isleadbyte      OS_PUSH | OS_MONADIC
-	TAG_ISLOWER          ,  //  60 islower         OS_PUSH | OS_MONADIC
-	TAG_ISPRINT          ,  //  60 isprint         OS_PUSH | OS_MONADIC
-	TAG_ISPUNCT          ,  //  60 ispunct         OS_PUSH | OS_MONADIC
-	TAG_ISSPACE          ,  //  60 isspace         OS_PUSH | OS_MONADIC
-	TAG_ISTRAILBYTE      ,  //  60 istrailbyte     OS_PUSH | OS_MONADIC
-	TAG_ISUPPER          ,  //  60 isupper         OS_PUSH | OS_MONADIC
-	TAG_ISXDIGIT         ,  //  60 isxdigit        OS_PUSH | OS_MONADIC
-	TAG_ISMBBALNUM       ,  //  60 ismbbalnum      OS_PUSH | OS_MONADIC
-	TAG_ISMBBALPHA       ,  //  60 ismbbalpha      OS_PUSH | OS_MONADIC
-	TAG_ISMBBGRAPH       ,  //  60 ismbbgraph      OS_PUSH | OS_MONADIC
-	TAG_ISMBBPRINT       ,  //  60 ismbbprint      OS_PUSH | OS_MONADIC
-	TAG_ISMBCALNUM       ,  //  60 ismbcalnum      OS_PUSH | OS_MONADIC
-	TAG_ISMBCALPHA       ,  //  60 ismbcalpha      OS_PUSH | OS_MONADIC
-	TAG_ISMBCDIGIT       ,  //  60 ismbcdigit      OS_PUSH | OS_MONADIC
-	TAG_ISMBCGRAPH       ,  //  60 ismbcgraph      OS_PUSH | OS_MONADIC
-	TAG_ISMBCHIRA        ,  //  60 ismbchira       OS_PUSH | OS_MONADIC
-	TAG_ISMBCKATA        ,  //  60 ismbckata       OS_PUSH | OS_MONADIC
-	TAG_ISMBCL0          ,  //  60 ismbcl0         OS_PUSH | OS_MONADIC
-	TAG_ISMBCL1          ,  //  60 ismbcl1         OS_PUSH | OS_MONADIC
-	TAG_ISMBCL2          ,  //  60 ismbcl2         OS_PUSH | OS_MONADIC
-	TAG_ISMBCLEGAL       ,  //  60 ismbclegal      OS_PUSH | OS_MONADIC
-	TAG_ISMBCLOWER       ,  //  60 ismbclower      OS_PUSH | OS_MONADIC
-	TAG_ISMBCPRINT       ,  //  60 ismbcprint      OS_PUSH | OS_MONADIC
-	TAG_ISMBCPUNCT       ,  //  60 ismbcpunct      OS_PUSH | OS_MONADIC
-	TAG_ISMBCSPACE       ,  //  60 ismbcspace      OS_PUSH | OS_MONADIC
-	TAG_ISMBCSYMBOL      ,  //  60 ismbcsymbol     OS_PUSH | OS_MONADIC
-	TAG_ISMBCUPPER       ,  //  60 ismbcupper      OS_PUSH | OS_MONADIC
-	TAG_ISWALNUM         ,  //  60 iswalnum        OS_PUSH | OS_MONADIC
-	TAG_ISWALPHA         ,  //  60 iswalpha        OS_PUSH | OS_MONADIC
-	TAG_ISWASCII         ,  //  60 iswascii        OS_PUSH | OS_MONADIC
-	TAG_ISWBLANK         ,  //  60 iswblank        OS_PUSH | OS_MONADIC
-	TAG_ISWCNTRL         ,  //  60 iswcntrl        OS_PUSH | OS_MONADIC
-	TAG_ISWCSYM          ,  //  60 iswcsym         OS_PUSH | OS_MONADIC
-	TAG_ISWCSYMF         ,  //  60 iswcsymf        OS_PUSH | OS_MONADIC
-	TAG_ISWDIGIT         ,  //  60 iswdigit        OS_PUSH | OS_MONADIC
-	TAG_ISWGRAPH         ,  //  60 iswgraph        OS_PUSH | OS_MONADIC
-	TAG_ISWLOWER         ,  //  60 iswlower        OS_PUSH | OS_MONADIC
-	TAG_ISWPRINT         ,  //  60 iswprint        OS_PUSH | OS_MONADIC
-	TAG_ISWPUNCT         ,  //  60 iswpunct        OS_PUSH | OS_MONADIC
-	TAG_ISWSPACE         ,  //  60 iswspace        OS_PUSH | OS_MONADIC
-	TAG_ISWUPPER         ,  //  60 iswupper        OS_PUSH | OS_MONADIC
-	TAG_ISWXDIGIT        ,  //  60 iswxdigit       OS_PUSH | OS_MONADIC
-	TAG_TOASCII          ,  //  60 toascii         OS_PUSH | OS_MONADIC
-	TAG_TOLOWER          ,  //  60 tolower         OS_PUSH | OS_MONADIC
-	TAG_TOUPPER          ,  //  60 toupper         OS_PUSH | OS_MONADIC
+	TAG_ALLOCA           ,  //  60 alloca          OS_PUSH | OS_ANTE
+	TAG_ATOI             ,  //  60 atoi            OS_PUSH | OS_ANTE
+	TAG_WTOI             ,  //  60 wtoi            OS_PUSH | OS_ANTE
+	TAG_ATOF             ,  //  60 atof            OS_PUSH | OS_ANTE
+	TAG_WTOF             ,  //  60 wtof            OS_PUSH | OS_ANTE
+	TAG_TICK             ,  //  60 tick            OS_PUSH | OS_ANTE
+	TAG_RAND32           ,  //  60 rand32          OS_PUSH | OS_ANTE
+	TAG_RAND64           ,  //  60 rand64          OS_PUSH | OS_ANTE
+	TAG_MIN              ,  //  60 min             OS_PUSH | OS_ANTE
+	TAG_MAX              ,  //  60 max             OS_PUSH | OS_ANTE
+	TAG_IMIN             ,  //  60 imin            OS_PUSH | OS_ANTE
+	TAG_IMAX             ,  //  60 imax            OS_PUSH | OS_ANTE
+	TAG_MEMDUP           ,  //  60 memdup          OS_PUSH | OS_ANTE
+	TAG_WMEMDUP          ,  //  60 wmemdup         OS_PUSH | OS_ANTE
+	TAG_MEMCCPY          ,  //  60 memccpy         OS_PUSH | OS_ANTE
+	TAG_WMEMCCPY         ,  //  60 wmemccpy        OS_PUSH | OS_ANTE
+	TAG_MEMCMP           ,  //  60 memcmp          OS_PUSH | OS_ANTE
+	TAG_WMEMCMP          ,  //  60 wmemcmp         OS_PUSH | OS_ANTE
+	TAG_MEMICMP          ,  //  60 memicmp         OS_PUSH | OS_ANTE
+	TAG_WMEMICMP         ,  //  60 wmemicmp        OS_PUSH | OS_ANTE
+	TAG_MEMCPY           ,  //  60 memcpy          OS_PUSH | OS_ANTE
+	TAG_WMEMCPY          ,  //  60 wmemcpy         OS_PUSH | OS_ANTE
+	TAG_MEMPCPY          ,  //  60 mempcpy         OS_PUSH | OS_ANTE
+	TAG_WMEMPCPY         ,  //  60 wmempcpy        OS_PUSH | OS_ANTE
+	TAG_MEMMOVE          ,  //  60 memmove         OS_PUSH | OS_ANTE
+	TAG_WMEMMOVE         ,  //  60 wmemmove        OS_PUSH | OS_ANTE
+	TAG_MEMSET8          ,  //  60 memset8         OS_PUSH | OS_ANTE
+	                        //  60 memset          OS_PUSH | OS_ANTE
+	TAG_MEMSET16         ,  //  60 memset16        OS_PUSH | OS_ANTE
+	                        //  60 wmemset         OS_PUSH | OS_ANTE
+	TAG_MEMSET32         ,  //  60 memset32        OS_PUSH | OS_ANTE
+	TAG_MEMSET64         ,  //  60 memset64        OS_PUSH | OS_ANTE
+	TAG_MEMCHR           ,  //  60 memchr          OS_PUSH | OS_ANTE
+	TAG_WMEMCHR          ,  //  60 wmemchr         OS_PUSH | OS_ANTE
+	TAG_MEMICHR          ,  //  60 memichr         OS_PUSH | OS_ANTE
+	TAG_WMEMICHR         ,  //  60 wmemichr        OS_PUSH | OS_ANTE
+	TAG_MEMRCHR          ,  //  60 memrchr         OS_PUSH | OS_ANTE
+	TAG_WMEMRCHR         ,  //  60 wmemrchr        OS_PUSH | OS_ANTE
+	TAG_MEMRICHR         ,  //  60 memrichr        OS_PUSH | OS_ANTE
+	TAG_WMEMRICHR        ,  //  60 wmemrichr       OS_PUSH | OS_ANTE
+	TAG_MEMMEM           ,  //  60 memmem          OS_PUSH | OS_ANTE
+	TAG_WMEMMEM          ,  //  60 wmemmem         OS_PUSH | OS_ANTE
+	TAG_MEMIMEM          ,  //  60 memimem         OS_PUSH | OS_ANTE
+	TAG_WMEMIMEM         ,  //  60 wmemimem        OS_PUSH | OS_ANTE
+	TAG_MEMRMEM          ,  //  60 memrmem         OS_PUSH | OS_ANTE
+	TAG_WMEMRMEM         ,  //  60 wmemrmem        OS_PUSH | OS_ANTE
+	TAG_MEMRIMEM         ,  //  60 memrimem        OS_PUSH | OS_ANTE
+	TAG_WMEMRIMEM        ,  //  60 wmemrimem       OS_PUSH | OS_ANTE
+	TAG_PRINTF           ,  //  60 printf          OS_PUSH | OS_ANTE
+	TAG_DPRINTF          ,  //  60 dprintf         OS_PUSH | OS_ANTE
+	TAG_SNPRINTF         ,  //  60 snprintf        OS_PUSH | OS_ANTE
+	TAG_SNWPRINTF        ,  //  60 snwprintf       OS_PUSH | OS_ANTE
+	TAG_STRDUP           ,  //  60 strdup          OS_PUSH | OS_ANTE
+	TAG_WCSDUP           ,  //  60 wcsdup          OS_PUSH | OS_ANTE
+	TAG_STRINC           ,  //  60 strinc          OS_PUSH | OS_ANTE
+	TAG_WCSINC           ,  //  60 wcsinc          OS_PUSH | OS_ANTE
+	TAG_MBSINC           ,  //  60 mbsinc          OS_PUSH | OS_ANTE
+	TAG_STRDEC           ,  //  60 strdec          OS_PUSH | OS_ANTE
+	TAG_WCSDEC           ,  //  60 wcsdec          OS_PUSH | OS_ANTE
+	TAG_MBSDEC           ,  //  60 mbsdec          OS_PUSH | OS_ANTE
+	TAG_STRNINC          ,  //  60 strninc         OS_PUSH | OS_ANTE
+	TAG_WCSNINC          ,  //  60 wcsninc         OS_PUSH | OS_ANTE
+	TAG_MBSNINC          ,  //  60 mbsninc         OS_PUSH | OS_ANTE
+	TAG_STRNEXTC         ,  //  60 strnextc        OS_PUSH | OS_ANTE
+	TAG_WCSNEXTC         ,  //  60 wcsnextc        OS_PUSH | OS_ANTE
+	TAG_MBSNEXTC         ,  //  60 mbsnextc        OS_PUSH | OS_ANTE
+	TAG_STRLEN           ,  //  60 strlen          OS_PUSH | OS_ANTE
+	TAG_WCSLEN           ,  //  60 wcslen          OS_PUSH | OS_ANTE
+	TAG_MBSLEN           ,  //  60 mbslen          OS_PUSH | OS_ANTE
+	TAG_STRNLEN          ,  //  60 strnlen         OS_PUSH | OS_ANTE
+	TAG_WCSNLEN          ,  //  60 wcsnlen         OS_PUSH | OS_ANTE
+	TAG_MBSNLEN          ,  //  60 mbsnlen         OS_PUSH | OS_ANTE
+	TAG_MBSNBCNT         ,  //  60 mbsnbcnt        OS_PUSH | OS_ANTE
+	TAG_MBSNCCNT         ,  //  60 mbsnccnt        OS_PUSH | OS_ANTE
+	TAG_STRCMP           ,  //  60 strcmp          OS_PUSH | OS_ANTE
+	TAG_WCSCMP           ,  //  60 wcscmp          OS_PUSH | OS_ANTE
+	TAG_STRICMP          ,  //  60 stricmp         OS_PUSH | OS_ANTE
+	TAG_WCSICMP          ,  //  60 wcsicmp         OS_PUSH | OS_ANTE
+	TAG_MBSICMP          ,  //  60 mbsicmp         OS_PUSH | OS_ANTE
+	TAG_STRNCMP          ,  //  60 strncmp         OS_PUSH | OS_ANTE
+	TAG_WCSNCMP          ,  //  60 wcsncmp         OS_PUSH | OS_ANTE
+	TAG_MBSNCMP          ,  //  60 mbsncmp         OS_PUSH | OS_ANTE
+	TAG_STRNICMP         ,  //  60 strnicmp        OS_PUSH | OS_ANTE
+	TAG_WCSNICMP         ,  //  60 wcsnicmp        OS_PUSH | OS_ANTE
+	TAG_MBSNBICMP        ,  //  60 mbsnbicmp       OS_PUSH | OS_ANTE
+	TAG_MBSNICMP         ,  //  60 mbsnicmp        OS_PUSH | OS_ANTE
+	TAG_STRCPY           ,  //  60 strcpy          OS_PUSH | OS_ANTE
+	TAG_WCSCPY           ,  //  60 wcscpy          OS_PUSH | OS_ANTE
+	TAG_STPCPY           ,  //  60 stpcpy          OS_PUSH | OS_ANTE
+	TAG_WCPCPY           ,  //  60 wcpcpy          OS_PUSH | OS_ANTE
+	TAG_STRCAT           ,  //  60 strcat          OS_PUSH | OS_ANTE
+	TAG_WCSCAT           ,  //  60 wcscat          OS_PUSH | OS_ANTE
+	TAG_STRNCPY          ,  //  60 strncpy         OS_PUSH | OS_ANTE
+	TAG_WCSNCPY          ,  //  60 wcsncpy         OS_PUSH | OS_ANTE
+	TAG_MBSNBCPY         ,  //  60 mbsnbcpy        OS_PUSH | OS_ANTE
+	TAG_MBSNCPY          ,  //  60 mbsncpy         OS_PUSH | OS_ANTE
+	TAG_STPNCPY          ,  //  60 stpncpy         OS_PUSH | OS_ANTE
+	TAG_WCPNCPY          ,  //  60 wcpncpy         OS_PUSH | OS_ANTE
+	TAG_STRNCAT          ,  //  60 strncat         OS_PUSH | OS_ANTE
+	TAG_WCSNCAT          ,  //  60 wcsncat         OS_PUSH | OS_ANTE
+	TAG_MBSNBCAT         ,  //  60 mbsnbcat        OS_PUSH | OS_ANTE
+	TAG_MBSNCAT          ,  //  60 mbsncat         OS_PUSH | OS_ANTE
+	TAG_STRLCPY          ,  //  60 strlcpy         OS_PUSH | OS_ANTE
+	TAG_WCSLCPY          ,  //  60 wcslcpy         OS_PUSH | OS_ANTE
+	TAG_STRLCAT          ,  //  60 strlcat         OS_PUSH | OS_ANTE
+	TAG_WCSLCAT          ,  //  60 wcslcat         OS_PUSH | OS_ANTE
+	TAG_STRCHR           ,  //  60 strchr          OS_PUSH | OS_ANTE
+	TAG_WCSCHR           ,  //  60 wcschr          OS_PUSH | OS_ANTE
+	TAG_MBSCHR           ,  //  60 mbschr          OS_PUSH | OS_ANTE
+	TAG_STRICHR          ,  //  60 strichr         OS_PUSH | OS_ANTE
+	TAG_WCSICHR          ,  //  60 wcsichr         OS_PUSH | OS_ANTE
+	TAG_MBSICHR          ,  //  60 mbsichr         OS_PUSH | OS_ANTE
+	TAG_STRRCHR          ,  //  60 strrchr         OS_PUSH | OS_ANTE
+	TAG_WCSRCHR          ,  //  60 wcsrchr         OS_PUSH | OS_ANTE
+	TAG_MBSRCHR          ,  //  60 mbsrchr         OS_PUSH | OS_ANTE
+	TAG_STRRICHR         ,  //  60 strrichr        OS_PUSH | OS_ANTE
+	TAG_WCSRICHR         ,  //  60 wcsrichr        OS_PUSH | OS_ANTE
+	TAG_MBSRICHR         ,  //  60 mbsrichr        OS_PUSH | OS_ANTE
+	TAG_STRSTR           ,  //  60 strstr          OS_PUSH | OS_ANTE
+	TAG_WCSSTR           ,  //  60 wcsstr          OS_PUSH | OS_ANTE
+	TAG_MBSSTR           ,  //  60 mbsstr          OS_PUSH | OS_ANTE
+	TAG_STRISTR          ,  //  60 stristr         OS_PUSH | OS_ANTE
+	TAG_WCSISTR          ,  //  60 wcsistr         OS_PUSH | OS_ANTE
+	TAG_MBSISTR          ,  //  60 mbsistr         OS_PUSH | OS_ANTE
+	TAG_STRRSTR          ,  //  60 strrstr         OS_PUSH | OS_ANTE
+	TAG_WCSRSTR          ,  //  60 wcsrstr         OS_PUSH | OS_ANTE
+	TAG_MBSRSTR          ,  //  60 mbsrstr         OS_PUSH | OS_ANTE
+	TAG_STRRISTR         ,  //  60 strristr        OS_PUSH | OS_ANTE
+	TAG_WCSRISTR         ,  //  60 wcsristr        OS_PUSH | OS_ANTE
+	TAG_MBSRISTR         ,  //  60 mbsristr        OS_PUSH | OS_ANTE
+	TAG_STRSPN           ,  //  60 strspn          OS_PUSH | OS_ANTE
+	TAG_WCSSPN           ,  //  60 wcsspn          OS_PUSH | OS_ANTE
+	TAG_MBSSPN           ,  //  60 mbsspn          OS_PUSH | OS_ANTE
+	TAG_STRSPNP          ,  //  60 strspnp         OS_PUSH | OS_ANTE
+	TAG_WCSSPNP          ,  //  60 wcsspnp         OS_PUSH | OS_ANTE
+	TAG_MBSSPNP          ,  //  60 mbsspnp         OS_PUSH | OS_ANTE
+	TAG_STRCSPN          ,  //  60 strcspn         OS_PUSH | OS_ANTE
+	TAG_WCSCSPN          ,  //  60 wcscspn         OS_PUSH | OS_ANTE
+	TAG_MBSCSPN          ,  //  60 mbscspn         OS_PUSH | OS_ANTE
+	TAG_STRPBRK          ,  //  60 strpbrk         OS_PUSH | OS_ANTE
+	TAG_WCSPBRK          ,  //  60 wcspbrk         OS_PUSH | OS_ANTE
+	TAG_MBSPBRK          ,  //  60 mbspbrk         OS_PUSH | OS_ANTE
+	TAG_STRSET           ,  //  60 strset          OS_PUSH | OS_ANTE
+	TAG_WCSSET           ,  //  60 wcsset          OS_PUSH | OS_ANTE
+	TAG_MBSSET           ,  //  60 mbsset          OS_PUSH | OS_ANTE
+	TAG_STRNSET          ,  //  60 strnset         OS_PUSH | OS_ANTE
+	TAG_WCSNSET          ,  //  60 wcsnset         OS_PUSH | OS_ANTE
+	TAG_MBSNBSET         ,  //  60 mbsnbset        OS_PUSH | OS_ANTE
+	TAG_MBSNSET          ,  //  60 mbsnset         OS_PUSH | OS_ANTE
+	TAG_STRTOK           ,  //  60 strtok          OS_PUSH | OS_ANTE
+	TAG_WCSTOK           ,  //  60 wcstok          OS_PUSH | OS_ANTE
+	TAG_MBSTOK           ,  //  60 mbstok          OS_PUSH | OS_ANTE
+	TAG_STRLWR           ,  //  60 strlwr          OS_PUSH | OS_ANTE
+	TAG_WCSLWR           ,  //  60 wcslwr          OS_PUSH | OS_ANTE
+	TAG_MBSLWR           ,  //  60 mbslwr          OS_PUSH | OS_ANTE
+	TAG_STRUPR           ,  //  60 strupr          OS_PUSH | OS_ANTE
+	TAG_WCSUPR           ,  //  60 wcsupr          OS_PUSH | OS_ANTE
+	TAG_MBSUPR           ,  //  60 mbsupr          OS_PUSH | OS_ANTE
+	TAG_STRREV           ,  //  60 strrev          OS_PUSH | OS_ANTE
+	TAG_WCSREV           ,  //  60 wcsrev          OS_PUSH | OS_ANTE
+	TAG_MBSREV           ,  //  60 mbsrev          OS_PUSH | OS_ANTE
+	TAG_ISALNUM          ,  //  60 isalnum         OS_PUSH | OS_ANTE
+	TAG_ISALPHA          ,  //  60 isalpha         OS_PUSH | OS_ANTE
+	TAG_ISASCII          ,  //  60 isascii         OS_PUSH | OS_ANTE
+	TAG_ISBLANK          ,  //  60 isblank         OS_PUSH | OS_ANTE
+	TAG_ISCNTRL          ,  //  60 iscntrl         OS_PUSH | OS_ANTE
+	TAG_ISCSYM           ,  //  60 iscsym          OS_PUSH | OS_ANTE
+	TAG_ISCSYMF          ,  //  60 iscsymf         OS_PUSH | OS_ANTE
+	TAG_ISDIGIT          ,  //  60 isdigit         OS_PUSH | OS_ANTE
+	TAG_ISGRAPH          ,  //  60 isgraph         OS_PUSH | OS_ANTE
+	TAG_ISKANA           ,  //  60 iskana          OS_PUSH | OS_ANTE
+	TAG_ISLEADBYTE       ,  //  60 isleadbyte      OS_PUSH | OS_ANTE
+	TAG_ISLOWER          ,  //  60 islower         OS_PUSH | OS_ANTE
+	TAG_ISPRINT          ,  //  60 isprint         OS_PUSH | OS_ANTE
+	TAG_ISPUNCT          ,  //  60 ispunct         OS_PUSH | OS_ANTE
+	TAG_ISSPACE          ,  //  60 isspace         OS_PUSH | OS_ANTE
+	TAG_ISTRAILBYTE      ,  //  60 istrailbyte     OS_PUSH | OS_ANTE
+	TAG_ISUPPER          ,  //  60 isupper         OS_PUSH | OS_ANTE
+	TAG_ISXDIGIT         ,  //  60 isxdigit        OS_PUSH | OS_ANTE
+	TAG_ISMBBALNUM       ,  //  60 ismbbalnum      OS_PUSH | OS_ANTE
+	TAG_ISMBBALPHA       ,  //  60 ismbbalpha      OS_PUSH | OS_ANTE
+	TAG_ISMBBGRAPH       ,  //  60 ismbbgraph      OS_PUSH | OS_ANTE
+	TAG_ISMBBPRINT       ,  //  60 ismbbprint      OS_PUSH | OS_ANTE
+	TAG_ISMBCALNUM       ,  //  60 ismbcalnum      OS_PUSH | OS_ANTE
+	TAG_ISMBCALPHA       ,  //  60 ismbcalpha      OS_PUSH | OS_ANTE
+	TAG_ISMBCDIGIT       ,  //  60 ismbcdigit      OS_PUSH | OS_ANTE
+	TAG_ISMBCGRAPH       ,  //  60 ismbcgraph      OS_PUSH | OS_ANTE
+	TAG_ISMBCHIRA        ,  //  60 ismbchira       OS_PUSH | OS_ANTE
+	TAG_ISMBCKATA        ,  //  60 ismbckata       OS_PUSH | OS_ANTE
+	TAG_ISMBCL0          ,  //  60 ismbcl0         OS_PUSH | OS_ANTE
+	TAG_ISMBCL1          ,  //  60 ismbcl1         OS_PUSH | OS_ANTE
+	TAG_ISMBCL2          ,  //  60 ismbcl2         OS_PUSH | OS_ANTE
+	TAG_ISMBCLEGAL       ,  //  60 ismbclegal      OS_PUSH | OS_ANTE
+	TAG_ISMBCLOWER       ,  //  60 ismbclower      OS_PUSH | OS_ANTE
+	TAG_ISMBCPRINT       ,  //  60 ismbcprint      OS_PUSH | OS_ANTE
+	TAG_ISMBCPUNCT       ,  //  60 ismbcpunct      OS_PUSH | OS_ANTE
+	TAG_ISMBCSPACE       ,  //  60 ismbcspace      OS_PUSH | OS_ANTE
+	TAG_ISMBCSYMBOL      ,  //  60 ismbcsymbol     OS_PUSH | OS_ANTE
+	TAG_ISMBCUPPER       ,  //  60 ismbcupper      OS_PUSH | OS_ANTE
+	TAG_ISWALNUM         ,  //  60 iswalnum        OS_PUSH | OS_ANTE
+	TAG_ISWALPHA         ,  //  60 iswalpha        OS_PUSH | OS_ANTE
+	TAG_ISWASCII         ,  //  60 iswascii        OS_PUSH | OS_ANTE
+	TAG_ISWBLANK         ,  //  60 iswblank        OS_PUSH | OS_ANTE
+	TAG_ISWCNTRL         ,  //  60 iswcntrl        OS_PUSH | OS_ANTE
+	TAG_ISWCSYM          ,  //  60 iswcsym         OS_PUSH | OS_ANTE
+	TAG_ISWCSYMF         ,  //  60 iswcsymf        OS_PUSH | OS_ANTE
+	TAG_ISWDIGIT         ,  //  60 iswdigit        OS_PUSH | OS_ANTE
+	TAG_ISWGRAPH         ,  //  60 iswgraph        OS_PUSH | OS_ANTE
+	TAG_ISWLOWER         ,  //  60 iswlower        OS_PUSH | OS_ANTE
+	TAG_ISWPRINT         ,  //  60 iswprint        OS_PUSH | OS_ANTE
+	TAG_ISWPUNCT         ,  //  60 iswpunct        OS_PUSH | OS_ANTE
+	TAG_ISWSPACE         ,  //  60 iswspace        OS_PUSH | OS_ANTE
+	TAG_ISWUPPER         ,  //  60 iswupper        OS_PUSH | OS_ANTE
+	TAG_ISWXDIGIT        ,  //  60 iswxdigit       OS_PUSH | OS_ANTE
+	TAG_TOASCII          ,  //  60 toascii         OS_PUSH | OS_ANTE
+	TAG_TOLOWER          ,  //  60 tolower         OS_PUSH | OS_ANTE
+	TAG_TOUPPER          ,  //  60 toupper         OS_PUSH | OS_ANTE
 #if USE_PLUGIN
-	TAG_PLUGIN           ,  //  60                 OS_PUSH | OS_MONADIC
+	TAG_PLUGIN           ,  //  60                 OS_PUSH | OS_ANTE
 #endif
-	TAG_FUNCTION         ,  //  60                 OS_PUSH | OS_MONADIC
-	TAG_NEG              ,  //  56 -               OS_PUSH | OS_MONADIC
-	TAG_NOT              ,  //  56 !               OS_PUSH | OS_MONADIC
-	TAG_BIT_NOT          ,  //  56 ~               OS_PUSH | OS_MONADIC
-	TAG_INDIRECTION      ,  //  56 *               OS_PUSH | OS_MONADIC
-	TAG_ADDRESS_OF       ,  //  56 &               OS_PUSH | OS_MONADIC
+	TAG_FUNCTION         ,  //  60                 OS_PUSH | OS_ANTE
+	TAG_NEG              ,  //  56 -               OS_PUSH | OS_ANTE
+	TAG_NOT              ,  //  56 !               OS_PUSH | OS_ANTE
+	TAG_BIT_NOT          ,  //  56 ~               OS_PUSH | OS_ANTE
+	TAG_INDIRECTION      ,  //  56 *               OS_PUSH | OS_ANTE
+	TAG_ADDRESS_OF       ,  //  56 &               OS_PUSH | OS_ANTE
 	TAG_MUL              ,  //  52 *    ( 8 *= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
 	TAG_DIV              ,  //  52 /    ( 8 /= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
 	TAG_MOD              ,  //  52 %    ( 8 %= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
@@ -720,8 +726,8 @@ typedef enum {
 	TAG_BIT_OR           ,  //  24 |    ( 8 |= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
 	TAG_AND              ,  //  20 &&   (20 and)   OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
 	TAG_OR               ,  //  16 ||   (16 or )   OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
-	TAG_TERNARY          ,  //  12 ?               OS_PUSH | OS_TERNARY | OS_OPEN
-	TAG_TERNARY_SPLIT    ,  //  12 :               OS_PUSH | OS_TERNARY | OS_CLOSE
+	TAG_TERNARY          ,  //  12 ?               OS_PUSH | OS_TERNARIES | OS_OPEN
+	TAG_TERNARY_SPLIT    ,  //  12 :               OS_PUSH | OS_TERNARIES | OS_CLOSE
 	TAG_RIGHT_ASSIGN     ,  //   8 =>              OS_PUSH
 	TAG_LEFT_ASSIGN      ,  //   8 =               OS_PUSH | OS_LEFT_ASSIGN
 	TAG_DELIMITER        ,  //   4 ,               OS_PUSH | OS_DELIMITER
@@ -772,20 +778,21 @@ typedef enum {
 	TAG_REV_ENDIAN8      ,  //   4 ~8]             OS_PUSH | OS_CLOSE
 	TAG_ADDR_REPLACE     ,  //   4 .]              OS_PUSH | OS_CLOSE
 	TAG_ADDR_ADJUST      ,  //   4 _]              OS_PUSH | OS_CLOSE
-	TAG_IF_EXPR          ,  //   4 )               OS_PUSH | OS_CLOSE | OS_SPLIT | OS_PARENTHESIS
-	TAG_SWITCH_EXPR      ,  //   4 )               OS_PUSH | OS_CLOSE | OS_SPLIT | OS_PARENTHESIS
-	TAG_WHILE_EXPR       ,  //   4 )               OS_PUSH | OS_CLOSE | OS_SPLIT | OS_PARENTHESIS
+	TAG_IF_EXPR          ,  //   4 )               OS_PUSH | OS_CLOSE | OS_SPLIT | OS_PARENTHESES
+	TAG_SWITCH_EXPR      ,  //   4 )               OS_PUSH | OS_CLOSE | OS_SPLIT | OS_PARENTHESES
+	TAG_WHILE_EXPR       ,  //   4 )               OS_PUSH | OS_CLOSE | OS_SPLIT | OS_PARENTHESES
 	TAG_FOR_INITIALIZE   ,  //   4 ;               OS_PUSH | OS_SPLIT
 	TAG_FOR_CONDITION    ,  //   4 ;               OS_PUSH | OS_SPLIT | OS_LOOP_BEGIN
-	TAG_FOR_UPDATE       ,  //   4 )               OS_PUSH | OS_CLOSE | OS_SPLIT | OS_PARENTHESIS
-	TAG_PARENTHESIS_CLOSE,  //   4 )               OS_CLOSE | OS_PARENTHESIS
+	TAG_FOR_UPDATE       ,  //   4 )               OS_PUSH | OS_CLOSE | OS_SPLIT | OS_PARENTHESES
+	TAG_PARENTHESIS_CLOSE,  //   4 )               OS_CLOSE | OS_PARENTHESES
+	TAG_BRACE_CLOSE      ,  //   4 }               OS_CLOSE | OS_BRACES
 	TAG_SPLIT            ,  //   4 ;               OS_SPLIT
 	TAG_GOTO             ,  //   0 goto            OS_PUSH
 	TAG_RETURN           ,  //   0 return          OS_PUSH
 	TAG_PARSE_ERROR      ,
 } TAG;
 
-typedef enum {
+typedef enum PRIORITY {
 	PRIORITY_NOT_OPERATOR      = 127,   //                 OS_PUSH
 	PRIORITY_IF                = 127,   // if              OS_PUSH | OS_HAS_EXPR
 	PRIORITY_ELSE              = 127,   // else            OS_PUSH
@@ -804,289 +811,290 @@ typedef enum {
 	PRIORITY_CASE              = 127,   // case            OS_PUSH
 	PRIORITY_DEFAULT           = 127,   // default         OS_PUSH
 	PRIORITY_LABEL             = 127,   // :               OS_PUSH
-	PRIORITY_PARENTHESIS_OPEN  =  64,   // (               OS_OPEN | OS_PARENTHESIS
+	PRIORITY_BRACE_OPEN        =  64,   // {               OS_OPEN | OS_BRACES
+	PRIORITY_PARENTHESIS_OPEN  =  64,   // (               OS_OPEN | OS_PARENTHESES
 	PRIORITY_ADDR_ADJUST_OPEN  =  64,   // [_              OS_OPEN
 	PRIORITY_ADDR_REPLACE_OPEN =  64,   // [.              OS_OPEN
 	PRIORITY_REV_ENDIAN_OPEN   =  64,   // [~              OS_OPEN
 	PRIORITY_REMOTE_OPEN       =  64,   // [:              OS_OPEN
-	PRIORITY_POST_INC_DEC      =  64,   // N++, N--        OS_PUSH | OS_MONADIC | OS_POST
-	PRIORITY_FUNCTION          =  60,   // MName           OS_PUSH | OS_MONADIC
+	PRIORITY_POST_INC_DEC      =  64,   // N++, N--        OS_PUSH | OS_POST
+	PRIORITY_FUNCTION          =  60,   // MName           OS_PUSH | OS_ANTE
 	                                    // ::              OS_PUSH
 	                                    // :!              OS_PUSH
 	                                    // :&              OS_PUSH
 	                                    // := :+           OS_PUSH
-	                                    // ProcessId       OS_PUSH | OS_MONADIC
-	                                    // HNumber         OS_PUSH | OS_MONADIC
-	                                    // Memory          OS_PUSH | OS_MONADIC
-	                                    // IsBadCodePtr    OS_PUSH | OS_MONADIC
-	                                    // IsBadReadPtr    OS_PUSH | OS_MONADIC
-	                                    // IsBadWritePtr   OS_PUSH | OS_MONADIC
-	                                    // IsBadStringPtrA OS_PUSH | OS_MONADIC
-	                                    // IsBadStringPtrW OS_PUSH | OS_MONADIC
-	                                    // Cast32          OS_PUSH | OS_MONADIC
-	                                    // Cast64          OS_PUSH | OS_MONADIC
-	                                    // I1toI4          OS_PUSH | OS_MONADIC
-	                                    // I2toI4          OS_PUSH | OS_MONADIC
-	                                    // I4toI8          OS_PUSH | OS_MONADIC
-	                                    // cbd             OS_PUSH | OS_MONADIC
-	                                    // cwd             OS_PUSH | OS_MONADIC
-	                                    // cdq             OS_PUSH | OS_MONADIC
-	                                    // utof            OS_PUSH | OS_MONADIC
-	                                    // itof            OS_PUSH | OS_MONADIC
-	                                    // ftoi            OS_PUSH | OS_MONADIC
-	                                    // trunc           OS_PUSH | OS_MONADIC
-	                                    // round           OS_PUSH | OS_MONADIC
-	                                    // isfinite        OS_PUSH | OS_MONADIC
-	                                    // isinf           OS_PUSH | OS_MONADIC
-	                                    // isnan           OS_PUSH | OS_MONADIC
-	                                    // BitScanForward  OS_PUSH | OS_MONADIC
-	                                    // bsf             OS_PUSH | OS_MONADIC
-	                                    // BitScanReverse  OS_PUSH | OS_MONADIC
-	                                    // bsr             OS_PUSH | OS_MONADIC
-	                                    // rotl8           OS_PUSH | OS_MONADIC
-	                                    // rotl16          OS_PUSH | OS_MONADIC
-	                                    // rotl32          OS_PUSH | OS_MONADIC
-	                                    // rotl            OS_PUSH | OS_MONADIC
-	                                    // rotl64          OS_PUSH | OS_MONADIC
-	                                    // rotr8           OS_PUSH | OS_MONADIC
-	                                    // rotr16          OS_PUSH | OS_MONADIC
-	                                    // rotr32          OS_PUSH | OS_MONADIC
-	                                    // rotr            OS_PUSH | OS_MONADIC
-	                                    // rotr64          OS_PUSH | OS_MONADIC
-	                                    // A2U             OS_PUSH | OS_MONADIC
-	                                    // A2W             OS_PUSH | OS_MONADIC
-	                                    // U2A             OS_PUSH | OS_MONADIC
-	                                    // U2W             OS_PUSH | OS_MONADIC
-	                                    // W2A             OS_PUSH | OS_MONADIC
-	                                    // W2U             OS_PUSH | OS_MONADIC
-	                                    // assert          OS_PUSH | OS_MONADIC
-	                                    // wait            OS_PUSH | OS_MONADIC
-	                                    // sleep           OS_PUSH | OS_MONADIC
+	                                    // ProcessId       OS_PUSH | OS_ANTE
+	                                    // HNumber         OS_PUSH | OS_ANTE
+	                                    // Memory          OS_PUSH | OS_ANTE
+	                                    // IsBadCodePtr    OS_PUSH | OS_ANTE
+	                                    // IsBadReadPtr    OS_PUSH | OS_ANTE
+	                                    // IsBadWritePtr   OS_PUSH | OS_ANTE
+	                                    // IsBadStringPtrA OS_PUSH | OS_ANTE
+	                                    // IsBadStringPtrW OS_PUSH | OS_ANTE
+	                                    // Cast32          OS_PUSH | OS_ANTE
+	                                    // Cast64          OS_PUSH | OS_ANTE
+	                                    // I1toI4          OS_PUSH | OS_ANTE
+	                                    // I2toI4          OS_PUSH | OS_ANTE
+	                                    // I4toI8          OS_PUSH | OS_ANTE
+	                                    // cbd             OS_PUSH | OS_ANTE
+	                                    // cwd             OS_PUSH | OS_ANTE
+	                                    // cdq             OS_PUSH | OS_ANTE
+	                                    // utof            OS_PUSH | OS_ANTE
+	                                    // itof            OS_PUSH | OS_ANTE
+	                                    // ftoi            OS_PUSH | OS_ANTE
+	                                    // trunc           OS_PUSH | OS_ANTE
+	                                    // round           OS_PUSH | OS_ANTE
+	                                    // isfinite        OS_PUSH | OS_ANTE
+	                                    // isinf           OS_PUSH | OS_ANTE
+	                                    // isnan           OS_PUSH | OS_ANTE
+	                                    // BitScanForward  OS_PUSH | OS_ANTE
+	                                    // bsf             OS_PUSH | OS_ANTE
+	                                    // BitScanReverse  OS_PUSH | OS_ANTE
+	                                    // bsr             OS_PUSH | OS_ANTE
+	                                    // rotl8           OS_PUSH | OS_ANTE
+	                                    // rotl16          OS_PUSH | OS_ANTE
+	                                    // rotl32          OS_PUSH | OS_ANTE
+	                                    // rotl            OS_PUSH | OS_ANTE
+	                                    // rotl64          OS_PUSH | OS_ANTE
+	                                    // rotr8           OS_PUSH | OS_ANTE
+	                                    // rotr16          OS_PUSH | OS_ANTE
+	                                    // rotr32          OS_PUSH | OS_ANTE
+	                                    // rotr            OS_PUSH | OS_ANTE
+	                                    // rotr64          OS_PUSH | OS_ANTE
+	                                    // A2U             OS_PUSH | OS_ANTE
+	                                    // A2W             OS_PUSH | OS_ANTE
+	                                    // U2A             OS_PUSH | OS_ANTE
+	                                    // U2W             OS_PUSH | OS_ANTE
+	                                    // W2A             OS_PUSH | OS_ANTE
+	                                    // W2U             OS_PUSH | OS_ANTE
+	                                    // assert          OS_PUSH | OS_ANTE
+	                                    // wait            OS_PUSH | OS_ANTE
+	                                    // sleep           OS_PUSH | OS_ANTE
 #if ALLOCATE_SUPPORT
-	                                    // realloc         OS_PUSH | OS_MONADIC
+	                                    // realloc         OS_PUSH | OS_ANTE
 #endif
-	                                    // alloca          OS_PUSH | OS_MONADIC
-	                                    // atoi            OS_PUSH | OS_MONADIC
-	                                    // wtoi            OS_PUSH | OS_MONADIC
-	                                    // atof            OS_PUSH | OS_MONADIC
-	                                    // wtof            OS_PUSH | OS_MONADIC
-	                                    // tick            OS_PUSH | OS_MONADIC
-	                                    // rand32          OS_PUSH | OS_MONADIC
-	                                    // rand64          OS_PUSH | OS_MONADIC
-	                                    // min             OS_PUSH | OS_MONADIC
-	                                    // max             OS_PUSH | OS_MONADIC
-	                                    // imin            OS_PUSH | OS_MONADIC
-	                                    // imax            OS_PUSH | OS_MONADIC
-	                                    // memdup          OS_PUSH | OS_MONADIC
-	                                    // wmemdup         OS_PUSH | OS_MONADIC
-	                                    // memccpy         OS_PUSH | OS_MONADIC
-	                                    // wmemccpy        OS_PUSH | OS_MONADIC
-	                                    // memcmp          OS_PUSH | OS_MONADIC
-	                                    // wmemcmp         OS_PUSH | OS_MONADIC
-	                                    // memicmp         OS_PUSH | OS_MONADIC
-	                                    // wmemicmp        OS_PUSH | OS_MONADIC
-	                                    // memcpy          OS_PUSH | OS_MONADIC
-	                                    // wmemcpy         OS_PUSH | OS_MONADIC
-	                                    // mempcpy         OS_PUSH | OS_MONADIC
-	                                    // wmempcpy        OS_PUSH | OS_MONADIC
-	                                    // memmove         OS_PUSH | OS_MONADIC
-	                                    // wmemmove        OS_PUSH | OS_MONADIC
-	                                    // memset          OS_PUSH | OS_MONADIC
-	                                    // wmemset         OS_PUSH | OS_MONADIC
-	                                    // memset8         OS_PUSH | OS_MONADIC
-	                                    // memset16        OS_PUSH | OS_MONADIC
-	                                    // memset32        OS_PUSH | OS_MONADIC
-	                                    // memset64        OS_PUSH | OS_MONADIC
-	                                    // memchr          OS_PUSH | OS_MONADIC
-	                                    // wmemchr         OS_PUSH | OS_MONADIC
-	                                    // memichr         OS_PUSH | OS_MONADIC
-	                                    // wmemichr        OS_PUSH | OS_MONADIC
-	                                    // memrchr         OS_PUSH | OS_MONADIC
-	                                    // wmemrchr        OS_PUSH | OS_MONADIC
-	                                    // memrichr        OS_PUSH | OS_MONADIC
-	                                    // wmemrichr       OS_PUSH | OS_MONADIC
-	                                    // memmem          OS_PUSH | OS_MONADIC
-	                                    // wmemmem         OS_PUSH | OS_MONADIC
-	                                    // memimem         OS_PUSH | OS_MONADIC
-	                                    // wmemimem        OS_PUSH | OS_MONADIC
-	                                    // memrmem         OS_PUSH | OS_MONADIC
-	                                    // wmemrmem        OS_PUSH | OS_MONADIC
-	                                    // memrimem        OS_PUSH | OS_MONADIC
-	                                    // wmemrimem       OS_PUSH | OS_MONADIC
-	                                    // printf          OS_PUSH | OS_MONADIC
-	                                    // dprintf         OS_PUSH | OS_MONADIC
-	                                    // snprintf        OS_PUSH | OS_MONADIC
-	                                    // snwprintf       OS_PUSH | OS_MONADIC
-	                                    // strdup          OS_PUSH | OS_MONADIC
-	                                    // wcsdup          OS_PUSH | OS_MONADIC
-	                                    // strinc          OS_PUSH | OS_MONADIC
-	                                    // wcsinc          OS_PUSH | OS_MONADIC
-	                                    // mbsinc          OS_PUSH | OS_MONADIC
-	                                    // strdec          OS_PUSH | OS_MONADIC
-	                                    // wcsdec          OS_PUSH | OS_MONADIC
-	                                    // mbsdec          OS_PUSH | OS_MONADIC
-	                                    // strninc         OS_PUSH | OS_MONADIC
-	                                    // wcsninc         OS_PUSH | OS_MONADIC
-	                                    // mbsninc         OS_PUSH | OS_MONADIC
-	                                    // strnextc        OS_PUSH | OS_MONADIC
-	                                    // wcsnextc        OS_PUSH | OS_MONADIC
-	                                    // mbsnextc        OS_PUSH | OS_MONADIC
-	                                    // strlen          OS_PUSH | OS_MONADIC
-	                                    // wcslen          OS_PUSH | OS_MONADIC
-	                                    // mbslen          OS_PUSH | OS_MONADIC
-	                                    // strnlen         OS_PUSH | OS_MONADIC
-	                                    // wcsnlen         OS_PUSH | OS_MONADIC
-	                                    // mbsnlen         OS_PUSH | OS_MONADIC
-	                                    // mbsnbcnt        OS_PUSH | OS_MONADIC
-	                                    // mbsnccnt        OS_PUSH | OS_MONADIC
-	                                    // strcmp          OS_PUSH | OS_MONADIC
-	                                    // wcscmp          OS_PUSH | OS_MONADIC
-	                                    // stricmp         OS_PUSH | OS_MONADIC
-	                                    // wcsicmp         OS_PUSH | OS_MONADIC
-	                                    // mbsicmp         OS_PUSH | OS_MONADIC
-	                                    // strncmp         OS_PUSH | OS_MONADIC
-	                                    // wcsncmp         OS_PUSH | OS_MONADIC
-	                                    // mbsncmp         OS_PUSH | OS_MONADIC
-	                                    // strnicmp        OS_PUSH | OS_MONADIC
-	                                    // wcsnicmp        OS_PUSH | OS_MONADIC
-	                                    // mbsnbicmp       OS_PUSH | OS_MONADIC
-	                                    // mbsnicmp        OS_PUSH | OS_MONADIC
-	                                    // strcpy          OS_PUSH | OS_MONADIC
-	                                    // wcscpy          OS_PUSH | OS_MONADIC
-	                                    // stpcpy          OS_PUSH | OS_MONADIC
-	                                    // wcpcpy          OS_PUSH | OS_MONADIC
-	                                    // strcat          OS_PUSH | OS_MONADIC
-	                                    // wcscat          OS_PUSH | OS_MONADIC
-	                                    // strncpy         OS_PUSH | OS_MONADIC
-	                                    // wcsncpy         OS_PUSH | OS_MONADIC
-	                                    // mbsnbcpy        OS_PUSH | OS_MONADIC
-	                                    // mbsncpy         OS_PUSH | OS_MONADIC
-	                                    // stpncpy         OS_PUSH | OS_MONADIC
-	                                    // wcpncpy         OS_PUSH | OS_MONADIC
-	                                    // strncat         OS_PUSH | OS_MONADIC
-	                                    // wcsncat         OS_PUSH | OS_MONADIC
-	                                    // strlcpy         OS_PUSH | OS_MONADIC
-	                                    // wcslcpy         OS_PUSH | OS_MONADIC
-	                                    // strlcat         OS_PUSH | OS_MONADIC
-	                                    // wcslcat         OS_PUSH | OS_MONADIC
-	                                    // strchr          OS_PUSH | OS_MONADIC
-	                                    // wcschr          OS_PUSH | OS_MONADIC
-	                                    // mbschr          OS_PUSH | OS_MONADIC
-	                                    // strichr         OS_PUSH | OS_MONADIC
-	                                    // wcsichr         OS_PUSH | OS_MONADIC
-	                                    // mbsichr         OS_PUSH | OS_MONADIC
-	                                    // strrchr         OS_PUSH | OS_MONADIC
-	                                    // wcsrchr         OS_PUSH | OS_MONADIC
-	                                    // mbsrchr         OS_PUSH | OS_MONADIC
-	                                    // strrichr        OS_PUSH | OS_MONADIC
-	                                    // wcsrichr        OS_PUSH | OS_MONADIC
-	                                    // mbsrichr        OS_PUSH | OS_MONADIC
-	                                    // strstr          OS_PUSH | OS_MONADIC
-	                                    // wcsstr          OS_PUSH | OS_MONADIC
-	                                    // mbsstr          OS_PUSH | OS_MONADIC
-	                                    // stristr         OS_PUSH | OS_MONADIC
-	                                    // wcsistr         OS_PUSH | OS_MONADIC
-	                                    // mbsistr         OS_PUSH | OS_MONADIC
-	                                    // strrstr         OS_PUSH | OS_MONADIC
-	                                    // wcsrstr         OS_PUSH | OS_MONADIC
-	                                    // mbsrstr         OS_PUSH | OS_MONADIC
-	                                    // strristr        OS_PUSH | OS_MONADIC
-	                                    // wcsristr        OS_PUSH | OS_MONADIC
-	                                    // mbsristr        OS_PUSH | OS_MONADIC
-	                                    // strspn          OS_PUSH | OS_MONADIC
-	                                    // wcsspn          OS_PUSH | OS_MONADIC
-	                                    // mbsspn          OS_PUSH | OS_MONADIC
-	                                    // strspnp         OS_PUSH | OS_MONADIC
-	                                    // wcsspnp         OS_PUSH | OS_MONADIC
-	                                    // mbsspnp         OS_PUSH | OS_MONADIC
-	                                    // strcspn         OS_PUSH | OS_MONADIC
-	                                    // wcscspn         OS_PUSH | OS_MONADIC
-	                                    // mbscspn         OS_PUSH | OS_MONADIC
-	                                    // strpbrk         OS_PUSH | OS_MONADIC
-	                                    // wcspbrk         OS_PUSH | OS_MONADIC
-	                                    // mbspbrk         OS_PUSH | OS_MONADIC
-	                                    // strset          OS_PUSH | OS_MONADIC
-	                                    // wcsset          OS_PUSH | OS_MONADIC
-	                                    // mbsset          OS_PUSH | OS_MONADIC
-	                                    // strnset         OS_PUSH | OS_MONADIC
-	                                    // wcsnset         OS_PUSH | OS_MONADIC
-	                                    // mbsnbset        OS_PUSH | OS_MONADIC
-	                                    // mbsnset         OS_PUSH | OS_MONADIC
-	                                    // strtok          OS_PUSH | OS_MONADIC
-	                                    // wcstok          OS_PUSH | OS_MONADIC
-	                                    // mbstok          OS_PUSH | OS_MONADIC
-	                                    // strlwr          OS_PUSH | OS_MONADIC
-	                                    // wcslwr          OS_PUSH | OS_MONADIC
-	                                    // mbslwr          OS_PUSH | OS_MONADIC
-	                                    // strupr          OS_PUSH | OS_MONADIC
-	                                    // wcsupr          OS_PUSH | OS_MONADIC
-	                                    // mbsupr          OS_PUSH | OS_MONADIC
-	                                    // strrev          OS_PUSH | OS_MONADIC
-	                                    // wcsrev          OS_PUSH | OS_MONADIC
-	                                    // mbsrev          OS_PUSH | OS_MONADIC
-	                                    // isalnum         OS_PUSH | OS_MONADIC
-	                                    // isalpha         OS_PUSH | OS_MONADIC
-	                                    // isascii         OS_PUSH | OS_MONADIC
-	                                    // isblank         OS_PUSH | OS_MONADIC
-	                                    // iscntrl         OS_PUSH | OS_MONADIC
-	                                    // iscsym          OS_PUSH | OS_MONADIC
-	                                    // iscsymf         OS_PUSH | OS_MONADIC
-	                                    // isdigit         OS_PUSH | OS_MONADIC
-	                                    // isgraph         OS_PUSH | OS_MONADIC
-	                                    // iskana          OS_PUSH | OS_MONADIC
-	                                    // isleadbyte      OS_PUSH | OS_MONADIC
-	                                    // islower         OS_PUSH | OS_MONADIC
-	                                    // isprint         OS_PUSH | OS_MONADIC
-	                                    // ispunct         OS_PUSH | OS_MONADIC
-	                                    // isspace         OS_PUSH | OS_MONADIC
-	                                    // istrailbyte     OS_PUSH | OS_MONADIC
-	                                    // isupper         OS_PUSH | OS_MONADIC
-	                                    // isxdigit        OS_PUSH | OS_MONADIC
-	                                    // ismbbalnum      OS_PUSH | OS_MONADIC
-	                                    // ismbbalpha      OS_PUSH | OS_MONADIC
-	                                    // ismbbgraph      OS_PUSH | OS_MONADIC
-	                                    // ismbbprint      OS_PUSH | OS_MONADIC
-	                                    // ismbcalnum      OS_PUSH | OS_MONADIC
-	                                    // ismbcalpha      OS_PUSH | OS_MONADIC
-	                                    // ismbcdigit      OS_PUSH | OS_MONADIC
-	                                    // ismbcgraph      OS_PUSH | OS_MONADIC
-	                                    // ismbchira       OS_PUSH | OS_MONADIC
-	                                    // ismbckata       OS_PUSH | OS_MONADIC
-	                                    // ismbcl0         OS_PUSH | OS_MONADIC
-	                                    // ismbcl1         OS_PUSH | OS_MONADIC
-	                                    // ismbcl2         OS_PUSH | OS_MONADIC
-	                                    // ismbclegal      OS_PUSH | OS_MONADIC
-	                                    // ismbclower      OS_PUSH | OS_MONADIC
-	                                    // ismbcprint      OS_PUSH | OS_MONADIC
-	                                    // ismbcpunct      OS_PUSH | OS_MONADIC
-	                                    // ismbcspace      OS_PUSH | OS_MONADIC
-	                                    // ismbcsymbol     OS_PUSH | OS_MONADIC
-	                                    // ismbcupper      OS_PUSH | OS_MONADIC
-	                                    // iswalnum        OS_PUSH | OS_MONADIC
-	                                    // iswalpha        OS_PUSH | OS_MONADIC
-	                                    // iswascii        OS_PUSH | OS_MONADIC
-	                                    // iswblank        OS_PUSH | OS_MONADIC
-	                                    // iswcntrl        OS_PUSH | OS_MONADIC
-	                                    // iswcsym         OS_PUSH | OS_MONADIC
-	                                    // iswcsymf        OS_PUSH | OS_MONADIC
-	                                    // iswdigit        OS_PUSH | OS_MONADIC
-	                                    // iswgraph        OS_PUSH | OS_MONADIC
-	                                    // iswlower        OS_PUSH | OS_MONADIC
-	                                    // iswprint        OS_PUSH | OS_MONADIC
-	                                    // iswpunct        OS_PUSH | OS_MONADIC
-	                                    // iswspace        OS_PUSH | OS_MONADIC
-	                                    // iswupper        OS_PUSH | OS_MONADIC
-	                                    // iswxdigit       OS_PUSH | OS_MONADIC
-	                                    // toascii         OS_PUSH | OS_MONADIC
-	                                    // tolower         OS_PUSH | OS_MONADIC
-	                                    // toupper         OS_PUSH | OS_MONADIC
-	PRIORITY_NEG               =  56,   // -               OS_PUSH | OS_MONADIC
-	PRIORITY_NOT               =  56,   // !               OS_PUSH | OS_MONADIC
-	PRIORITY_BIT_NOT           =  56,   // ~               OS_PUSH | OS_MONADIC
-	PRIORITY_INDIRECTION       =  56,   // *               OS_PUSH | OS_MONADIC
-	PRIORITY_ADDRESS_OF        =  56,   // &               OS_PUSH | OS_MONADIC
-	PRIORITY_PRE_INC           =  56,   // ++N             OS_PUSH | OS_MONADIC
-	PRIORITY_PRE_DEC           =  56,   // --N             OS_PUSH | OS_MONADIC
+	                                    // alloca          OS_PUSH | OS_ANTE
+	                                    // atoi            OS_PUSH | OS_ANTE
+	                                    // wtoi            OS_PUSH | OS_ANTE
+	                                    // atof            OS_PUSH | OS_ANTE
+	                                    // wtof            OS_PUSH | OS_ANTE
+	                                    // tick            OS_PUSH | OS_ANTE
+	                                    // rand32          OS_PUSH | OS_ANTE
+	                                    // rand64          OS_PUSH | OS_ANTE
+	                                    // min             OS_PUSH | OS_ANTE
+	                                    // max             OS_PUSH | OS_ANTE
+	                                    // imin            OS_PUSH | OS_ANTE
+	                                    // imax            OS_PUSH | OS_ANTE
+	                                    // memdup          OS_PUSH | OS_ANTE
+	                                    // wmemdup         OS_PUSH | OS_ANTE
+	                                    // memccpy         OS_PUSH | OS_ANTE
+	                                    // wmemccpy        OS_PUSH | OS_ANTE
+	                                    // memcmp          OS_PUSH | OS_ANTE
+	                                    // wmemcmp         OS_PUSH | OS_ANTE
+	                                    // memicmp         OS_PUSH | OS_ANTE
+	                                    // wmemicmp        OS_PUSH | OS_ANTE
+	                                    // memcpy          OS_PUSH | OS_ANTE
+	                                    // wmemcpy         OS_PUSH | OS_ANTE
+	                                    // mempcpy         OS_PUSH | OS_ANTE
+	                                    // wmempcpy        OS_PUSH | OS_ANTE
+	                                    // memmove         OS_PUSH | OS_ANTE
+	                                    // wmemmove        OS_PUSH | OS_ANTE
+	                                    // memset          OS_PUSH | OS_ANTE
+	                                    // wmemset         OS_PUSH | OS_ANTE
+	                                    // memset8         OS_PUSH | OS_ANTE
+	                                    // memset16        OS_PUSH | OS_ANTE
+	                                    // memset32        OS_PUSH | OS_ANTE
+	                                    // memset64        OS_PUSH | OS_ANTE
+	                                    // memchr          OS_PUSH | OS_ANTE
+	                                    // wmemchr         OS_PUSH | OS_ANTE
+	                                    // memichr         OS_PUSH | OS_ANTE
+	                                    // wmemichr        OS_PUSH | OS_ANTE
+	                                    // memrchr         OS_PUSH | OS_ANTE
+	                                    // wmemrchr        OS_PUSH | OS_ANTE
+	                                    // memrichr        OS_PUSH | OS_ANTE
+	                                    // wmemrichr       OS_PUSH | OS_ANTE
+	                                    // memmem          OS_PUSH | OS_ANTE
+	                                    // wmemmem         OS_PUSH | OS_ANTE
+	                                    // memimem         OS_PUSH | OS_ANTE
+	                                    // wmemimem        OS_PUSH | OS_ANTE
+	                                    // memrmem         OS_PUSH | OS_ANTE
+	                                    // wmemrmem        OS_PUSH | OS_ANTE
+	                                    // memrimem        OS_PUSH | OS_ANTE
+	                                    // wmemrimem       OS_PUSH | OS_ANTE
+	                                    // printf          OS_PUSH | OS_ANTE
+	                                    // dprintf         OS_PUSH | OS_ANTE
+	                                    // snprintf        OS_PUSH | OS_ANTE
+	                                    // snwprintf       OS_PUSH | OS_ANTE
+	                                    // strdup          OS_PUSH | OS_ANTE
+	                                    // wcsdup          OS_PUSH | OS_ANTE
+	                                    // strinc          OS_PUSH | OS_ANTE
+	                                    // wcsinc          OS_PUSH | OS_ANTE
+	                                    // mbsinc          OS_PUSH | OS_ANTE
+	                                    // strdec          OS_PUSH | OS_ANTE
+	                                    // wcsdec          OS_PUSH | OS_ANTE
+	                                    // mbsdec          OS_PUSH | OS_ANTE
+	                                    // strninc         OS_PUSH | OS_ANTE
+	                                    // wcsninc         OS_PUSH | OS_ANTE
+	                                    // mbsninc         OS_PUSH | OS_ANTE
+	                                    // strnextc        OS_PUSH | OS_ANTE
+	                                    // wcsnextc        OS_PUSH | OS_ANTE
+	                                    // mbsnextc        OS_PUSH | OS_ANTE
+	                                    // strlen          OS_PUSH | OS_ANTE
+	                                    // wcslen          OS_PUSH | OS_ANTE
+	                                    // mbslen          OS_PUSH | OS_ANTE
+	                                    // strnlen         OS_PUSH | OS_ANTE
+	                                    // wcsnlen         OS_PUSH | OS_ANTE
+	                                    // mbsnlen         OS_PUSH | OS_ANTE
+	                                    // mbsnbcnt        OS_PUSH | OS_ANTE
+	                                    // mbsnccnt        OS_PUSH | OS_ANTE
+	                                    // strcmp          OS_PUSH | OS_ANTE
+	                                    // wcscmp          OS_PUSH | OS_ANTE
+	                                    // stricmp         OS_PUSH | OS_ANTE
+	                                    // wcsicmp         OS_PUSH | OS_ANTE
+	                                    // mbsicmp         OS_PUSH | OS_ANTE
+	                                    // strncmp         OS_PUSH | OS_ANTE
+	                                    // wcsncmp         OS_PUSH | OS_ANTE
+	                                    // mbsncmp         OS_PUSH | OS_ANTE
+	                                    // strnicmp        OS_PUSH | OS_ANTE
+	                                    // wcsnicmp        OS_PUSH | OS_ANTE
+	                                    // mbsnbicmp       OS_PUSH | OS_ANTE
+	                                    // mbsnicmp        OS_PUSH | OS_ANTE
+	                                    // strcpy          OS_PUSH | OS_ANTE
+	                                    // wcscpy          OS_PUSH | OS_ANTE
+	                                    // stpcpy          OS_PUSH | OS_ANTE
+	                                    // wcpcpy          OS_PUSH | OS_ANTE
+	                                    // strcat          OS_PUSH | OS_ANTE
+	                                    // wcscat          OS_PUSH | OS_ANTE
+	                                    // strncpy         OS_PUSH | OS_ANTE
+	                                    // wcsncpy         OS_PUSH | OS_ANTE
+	                                    // mbsnbcpy        OS_PUSH | OS_ANTE
+	                                    // mbsncpy         OS_PUSH | OS_ANTE
+	                                    // stpncpy         OS_PUSH | OS_ANTE
+	                                    // wcpncpy         OS_PUSH | OS_ANTE
+	                                    // strncat         OS_PUSH | OS_ANTE
+	                                    // wcsncat         OS_PUSH | OS_ANTE
+	                                    // strlcpy         OS_PUSH | OS_ANTE
+	                                    // wcslcpy         OS_PUSH | OS_ANTE
+	                                    // strlcat         OS_PUSH | OS_ANTE
+	                                    // wcslcat         OS_PUSH | OS_ANTE
+	                                    // strchr          OS_PUSH | OS_ANTE
+	                                    // wcschr          OS_PUSH | OS_ANTE
+	                                    // mbschr          OS_PUSH | OS_ANTE
+	                                    // strichr         OS_PUSH | OS_ANTE
+	                                    // wcsichr         OS_PUSH | OS_ANTE
+	                                    // mbsichr         OS_PUSH | OS_ANTE
+	                                    // strrchr         OS_PUSH | OS_ANTE
+	                                    // wcsrchr         OS_PUSH | OS_ANTE
+	                                    // mbsrchr         OS_PUSH | OS_ANTE
+	                                    // strrichr        OS_PUSH | OS_ANTE
+	                                    // wcsrichr        OS_PUSH | OS_ANTE
+	                                    // mbsrichr        OS_PUSH | OS_ANTE
+	                                    // strstr          OS_PUSH | OS_ANTE
+	                                    // wcsstr          OS_PUSH | OS_ANTE
+	                                    // mbsstr          OS_PUSH | OS_ANTE
+	                                    // stristr         OS_PUSH | OS_ANTE
+	                                    // wcsistr         OS_PUSH | OS_ANTE
+	                                    // mbsistr         OS_PUSH | OS_ANTE
+	                                    // strrstr         OS_PUSH | OS_ANTE
+	                                    // wcsrstr         OS_PUSH | OS_ANTE
+	                                    // mbsrstr         OS_PUSH | OS_ANTE
+	                                    // strristr        OS_PUSH | OS_ANTE
+	                                    // wcsristr        OS_PUSH | OS_ANTE
+	                                    // mbsristr        OS_PUSH | OS_ANTE
+	                                    // strspn          OS_PUSH | OS_ANTE
+	                                    // wcsspn          OS_PUSH | OS_ANTE
+	                                    // mbsspn          OS_PUSH | OS_ANTE
+	                                    // strspnp         OS_PUSH | OS_ANTE
+	                                    // wcsspnp         OS_PUSH | OS_ANTE
+	                                    // mbsspnp         OS_PUSH | OS_ANTE
+	                                    // strcspn         OS_PUSH | OS_ANTE
+	                                    // wcscspn         OS_PUSH | OS_ANTE
+	                                    // mbscspn         OS_PUSH | OS_ANTE
+	                                    // strpbrk         OS_PUSH | OS_ANTE
+	                                    // wcspbrk         OS_PUSH | OS_ANTE
+	                                    // mbspbrk         OS_PUSH | OS_ANTE
+	                                    // strset          OS_PUSH | OS_ANTE
+	                                    // wcsset          OS_PUSH | OS_ANTE
+	                                    // mbsset          OS_PUSH | OS_ANTE
+	                                    // strnset         OS_PUSH | OS_ANTE
+	                                    // wcsnset         OS_PUSH | OS_ANTE
+	                                    // mbsnbset        OS_PUSH | OS_ANTE
+	                                    // mbsnset         OS_PUSH | OS_ANTE
+	                                    // strtok          OS_PUSH | OS_ANTE
+	                                    // wcstok          OS_PUSH | OS_ANTE
+	                                    // mbstok          OS_PUSH | OS_ANTE
+	                                    // strlwr          OS_PUSH | OS_ANTE
+	                                    // wcslwr          OS_PUSH | OS_ANTE
+	                                    // mbslwr          OS_PUSH | OS_ANTE
+	                                    // strupr          OS_PUSH | OS_ANTE
+	                                    // wcsupr          OS_PUSH | OS_ANTE
+	                                    // mbsupr          OS_PUSH | OS_ANTE
+	                                    // strrev          OS_PUSH | OS_ANTE
+	                                    // wcsrev          OS_PUSH | OS_ANTE
+	                                    // mbsrev          OS_PUSH | OS_ANTE
+	                                    // isalnum         OS_PUSH | OS_ANTE
+	                                    // isalpha         OS_PUSH | OS_ANTE
+	                                    // isascii         OS_PUSH | OS_ANTE
+	                                    // isblank         OS_PUSH | OS_ANTE
+	                                    // iscntrl         OS_PUSH | OS_ANTE
+	                                    // iscsym          OS_PUSH | OS_ANTE
+	                                    // iscsymf         OS_PUSH | OS_ANTE
+	                                    // isdigit         OS_PUSH | OS_ANTE
+	                                    // isgraph         OS_PUSH | OS_ANTE
+	                                    // iskana          OS_PUSH | OS_ANTE
+	                                    // isleadbyte      OS_PUSH | OS_ANTE
+	                                    // islower         OS_PUSH | OS_ANTE
+	                                    // isprint         OS_PUSH | OS_ANTE
+	                                    // ispunct         OS_PUSH | OS_ANTE
+	                                    // isspace         OS_PUSH | OS_ANTE
+	                                    // istrailbyte     OS_PUSH | OS_ANTE
+	                                    // isupper         OS_PUSH | OS_ANTE
+	                                    // isxdigit        OS_PUSH | OS_ANTE
+	                                    // ismbbalnum      OS_PUSH | OS_ANTE
+	                                    // ismbbalpha      OS_PUSH | OS_ANTE
+	                                    // ismbbgraph      OS_PUSH | OS_ANTE
+	                                    // ismbbprint      OS_PUSH | OS_ANTE
+	                                    // ismbcalnum      OS_PUSH | OS_ANTE
+	                                    // ismbcalpha      OS_PUSH | OS_ANTE
+	                                    // ismbcdigit      OS_PUSH | OS_ANTE
+	                                    // ismbcgraph      OS_PUSH | OS_ANTE
+	                                    // ismbchira       OS_PUSH | OS_ANTE
+	                                    // ismbckata       OS_PUSH | OS_ANTE
+	                                    // ismbcl0         OS_PUSH | OS_ANTE
+	                                    // ismbcl1         OS_PUSH | OS_ANTE
+	                                    // ismbcl2         OS_PUSH | OS_ANTE
+	                                    // ismbclegal      OS_PUSH | OS_ANTE
+	                                    // ismbclower      OS_PUSH | OS_ANTE
+	                                    // ismbcprint      OS_PUSH | OS_ANTE
+	                                    // ismbcpunct      OS_PUSH | OS_ANTE
+	                                    // ismbcspace      OS_PUSH | OS_ANTE
+	                                    // ismbcsymbol     OS_PUSH | OS_ANTE
+	                                    // ismbcupper      OS_PUSH | OS_ANTE
+	                                    // iswalnum        OS_PUSH | OS_ANTE
+	                                    // iswalpha        OS_PUSH | OS_ANTE
+	                                    // iswascii        OS_PUSH | OS_ANTE
+	                                    // iswblank        OS_PUSH | OS_ANTE
+	                                    // iswcntrl        OS_PUSH | OS_ANTE
+	                                    // iswcsym         OS_PUSH | OS_ANTE
+	                                    // iswcsymf        OS_PUSH | OS_ANTE
+	                                    // iswdigit        OS_PUSH | OS_ANTE
+	                                    // iswgraph        OS_PUSH | OS_ANTE
+	                                    // iswlower        OS_PUSH | OS_ANTE
+	                                    // iswprint        OS_PUSH | OS_ANTE
+	                                    // iswpunct        OS_PUSH | OS_ANTE
+	                                    // iswspace        OS_PUSH | OS_ANTE
+	                                    // iswupper        OS_PUSH | OS_ANTE
+	                                    // iswxdigit       OS_PUSH | OS_ANTE
+	                                    // toascii         OS_PUSH | OS_ANTE
+	                                    // tolower         OS_PUSH | OS_ANTE
+	                                    // toupper         OS_PUSH | OS_ANTE
+	PRIORITY_NEG               =  56,   // -               OS_PUSH | OS_ANTE
+	PRIORITY_NOT               =  56,   // !               OS_PUSH | OS_ANTE
+	PRIORITY_BIT_NOT           =  56,   // ~               OS_PUSH | OS_ANTE
+	PRIORITY_INDIRECTION       =  56,   // *               OS_PUSH | OS_ANTE
+	PRIORITY_ADDRESS_OF        =  56,   // &               OS_PUSH | OS_ANTE
+	PRIORITY_PRE_INC           =  56,   // ++N             OS_PUSH | OS_ANTE
+	PRIORITY_PRE_DEC           =  56,   // --N             OS_PUSH | OS_ANTE
 	PRIORITY_MUL               =  52,   // *    ( 8 *= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
 	PRIORITY_DIV               =  52,   // /    ( 8 /= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
 	PRIORITY_MOD               =  52,   // %    ( 8 %= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
@@ -1114,7 +1122,7 @@ typedef enum {
 	PRIORITY_BIT_OR            =  24,   // |    ( 8 |= )   OS_PUSH (OS_PUSH | OS_LEFT_ASSIGN)
 	PRIORITY_AND               =  20,   // &&   (20 and)   OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
 	PRIORITY_OR                =  16,   // ||   (16 or )   OS_PUSH | OS_SHORT_CIRCUIT (OS_PUSH | OS_SHORT_CIRCUIT | OS_RET_OPERAND)
-	PRIORITY_TERNARY           =  12,   // ? :             OS_PUSH | OS_TERNARY | (OS_OPEN or OS_CLOSE)
+	PRIORITY_TERNARY           =  12,   // ? :             OS_PUSH | OS_TERNARIES | (OS_OPEN or OS_CLOSE)
 	PRIORITY_RIGHT_ASSIGN      =   8,   // =>              OS_PUSH
 	PRIORITY_LEFT_ASSIGN       =   8,   // =               OS_PUSH | OS_LEFT_ASSIGN
 	PRIORITY_DELIMITER         =   4,   // ,               OS_PUSH | OS_DELIMITER
@@ -1142,7 +1150,8 @@ typedef enum {
 	                                    // ~5] ~6] ~7] ~8]
 	PRIORITY_ADDR_REPLACE      =   4,   // .]              OS_PUSH | OS_CLOSE
 	PRIORITY_ADDR_ADJUST       =   4,   // _]              OS_PUSH | OS_CLOSE
-	PRIORITY_PARENTHESIS_CLOSE =   4,   // )               OS_CLOSE | OS_PARENTHESIS
+	PRIORITY_PARENTHESIS_CLOSE =   4,   // )               OS_CLOSE | OS_PARENTHESES
+	PRIORITY_BRACE_CLOSE       =   4,   // }               OS_CLOSE | OS_BRACES
 	PRIORITY_SPLIT             =   4,   // ;               OS_SPLIT
 	PRIORITY_GOTO              =   0,   // goto            OS_PUSH
 	PRIORITY_RETURN            =   0,   // return          OS_PUSH
@@ -1271,15 +1280,15 @@ __forceinline static size_t TrimMarkupString(char **pfirst, const char *last)
 	return (const char *)(result >> 32) - (*pfirst = (char *)result);
 }
 //---------------------------------------------------------------------
-static MARKUP * __fastcall FindParenthesisClose(const MARKUP *lpMarkup, const MARKUP *lpEndOfMarkup)
+static MARKUP * __fastcall FindBracketClose(const MARKUP *lpMarkup, const MARKUP *lpEndOfMarkup)
 {
-	if (lpMarkup < lpEndOfMarkup)
+	enum OS const brackets = lpMarkup[-1].Type & (OS_PARENTHESES | OS_BRACES);
+	if (brackets && lpMarkup < lpEndOfMarkup)
 	{
-		size_t nDepth;
+		size_t nDepth = 1;
 
-		nDepth = 1;
 		do
-			if (lpMarkup->Type & OS_PARENTHESIS)
+			if (lpMarkup->Type & brackets)
 				if (lpMarkup->Type & OS_OPEN)
 					nDepth++;
 				else if (!--nDepth)
@@ -1293,9 +1302,8 @@ static MARKUP * __fastcall FindDelimiter(const MARKUP *lpMarkup, const MARKUP *l
 {
 	if (lpMarkup < lpEndOfMarkup)
 	{
-		size_t nDepth;
+		size_t nDepth = 0;
 
-		nDepth = 0;
 		do
 			if (lpMarkup->Type & (OS_OPEN | OS_CLOSE | OS_DELIMITER))
 				if (lpMarkup->Type & (OS_OPEN | OS_CLOSE))
@@ -1316,9 +1324,8 @@ static MARKUP * __fastcall FindSplit(const MARKUP *lpMarkup, const MARKUP *lpEnd
 {
 	if (lpMarkup < lpEndOfMarkup)
 	{
-		size_t nDepth;
+		size_t nDepth = 0;
 
-		nDepth = 0;
 		do
 			if (lpMarkup->Type & (OS_OPEN | OS_CLOSE | OS_SPLIT))
 				if (lpMarkup->Type & (OS_OPEN | OS_CLOSE))
@@ -1349,7 +1356,7 @@ static MARKUP * __fastcall FindEndOfStructuredStatement(const MARKUP *lpMarkup, 
 				break;
 			if (lpMarkup->Tag != TAG_PARENTHESIS_OPEN)
 				break;
-			if ((lpMarkup = FindParenthesisClose(lpMarkup + 1, lpEndOfMarkup)) + 1 >= lpEndOfMarkup)
+			if ((lpMarkup = FindBracketClose(lpMarkup + 1, lpEndOfMarkup)) + 1 >= lpEndOfMarkup)
 				break;
 			if ((lpMarkup = FindEndOfStructuredStatement(lpMarkup + 1, lpEndOfMarkup)) >= lpEndOfMarkup)
 				break;
@@ -1367,7 +1374,7 @@ static MARKUP * __fastcall FindEndOfStructuredStatement(const MARKUP *lpMarkup, 
 				break;
 			if (lpMarkup[2].Tag != TAG_PARENTHESIS_OPEN)
 				break;
-			if ((lpMarkup = FindParenthesisClose(lpMarkup + 3, lpEndOfMarkup) + 1) >= lpEndOfMarkup)
+			if ((lpMarkup = FindBracketClose(lpMarkup + 3, lpEndOfMarkup) + 1) >= lpEndOfMarkup)
 				break;
 			if (lpMarkup->Tag != TAG_SPLIT)
 				break;
@@ -1377,8 +1384,8 @@ static MARKUP * __fastcall FindEndOfStructuredStatement(const MARKUP *lpMarkup, 
 				continue;
 			}
 		}
-		else if (lpMarkup->Tag == TAG_PARENTHESIS_OPEN)
-			lpMarkup = FindParenthesisClose(lpMarkup + 1, lpEndOfMarkup);
+		else if (lpMarkup->Type & OS_OPEN && lpMarkup->Type & (OS_PARENTHESES | OS_BRACES))
+			lpMarkup = FindBracketClose(lpMarkup + 1, lpEndOfMarkup);
 		else
 			lpMarkup = FindSplit(lpMarkup, lpEndOfMarkup);
 		return (MARKUP *)lpMarkup;
@@ -1399,7 +1406,7 @@ BOOL __fastcall CorrectFunction(MARKUP *lpMarkup, MARKUP *lpEndOfMarkup, size_t 
 		return TRUE;
 	}
 	if (lpOpen->Tag == TAG_PARENTHESIS_OPEN &&
-		(lpClose = FindParenthesisClose(lpOpen + 1, lpEndOfMarkup)) < lpEndOfMarkup)
+		(lpClose = FindBracketClose(lpOpen + 1, lpEndOfMarkup)) < lpEndOfMarkup)
 	{
 		size_t nCount;
 
@@ -1510,7 +1517,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		        break;                                                                          \
 		    bNextIsSeparatedLeft = TRUE;                                                        \
 		    bCorrectTag = TRUE;                                                                 \
-		    APPEND_TAG_WITH_CONTINUE(tag, nLength, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);    \
+		    APPEND_TAG_WITH_CONTINUE(tag, nLength, PRIORITY_FUNCTION, OS_PUSH | OS_ANTE);       \
 		} else do { } while (0)
 
 		#define APPEND_FUNCTION_MULTI_PARAM(tag, length)                                        \
@@ -1520,7 +1527,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		        break;                                                                          \
 		    bNextIsSeparatedLeft = TRUE;                                                        \
 		    bCorrectTag = TRUE;                                                                 \
-		    APPEND_TAG_WITH_CONTINUE(tag, length, PRIORITY_FUNCTION, OS_PUSH | OS_MONADIC);     \
+		    APPEND_TAG_WITH_CONTINUE(tag, length, PRIORITY_FUNCTION, OS_PUSH | OS_ANTE);        \
 		} else do { } while (0)
 
 		/*
@@ -1559,7 +1566,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			if (p[1] == '=')
 				APPEND_TAG_WITH_CONTINUE(TAG_NE, 2, PRIORITY_NE, OS_PUSH);
 			else if (!nNumberOfTag || (lpTagArray[nNumberOfTag - 1].Tag != TAG_IMPORT_FUNCTION && lpTagArray[nNumberOfTag - 1].Tag != TAG_IMPORT_REFERENCE))
-				APPEND_TAG_WITH_CONTINUE(TAG_NOT, 1, PRIORITY_NOT, OS_PUSH | OS_MONADIC);
+				APPEND_TAG_WITH_CONTINUE(TAG_NOT, 1, PRIORITY_NOT, OS_PUSH | OS_ANTE);
 			if ((lpMarkup = lpTagArray + nNumberOfTag++) >= lpEndOfMarkup)
 				goto FAILED1;
 			lpMarkup->Tag        = TAG_MODULENAME;
@@ -1633,11 +1640,11 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		case '(':
 			// "("
 			bNextIsSeparatedLeft = TRUE;
-			APPEND_TAG_WITH_CONTINUE(TAG_PARENTHESIS_OPEN, 1, PRIORITY_PARENTHESIS_OPEN, OS_OPEN | OS_PARENTHESIS);
+			APPEND_TAG_WITH_CONTINUE(TAG_PARENTHESIS_OPEN, 1, PRIORITY_PARENTHESIS_OPEN, OS_OPEN | OS_PARENTHESES);
 		case ')':
 			// ")"
 			bNextIsSeparatedLeft = TRUE;
-			APPEND_TAG_WITH_CONTINUE(TAG_PARENTHESIS_CLOSE, 1, PRIORITY_PARENTHESIS_CLOSE, OS_CLOSE | OS_PARENTHESIS);
+			APPEND_TAG_WITH_CONTINUE(TAG_PARENTHESIS_CLOSE, 1, PRIORITY_PARENTHESIS_CLOSE, OS_CLOSE | OS_PARENTHESES);
 		case '*':
 			// "*", "*="
 			bNextIsSeparatedLeft = TRUE;
@@ -1651,7 +1658,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			switch (p[1])
 			{
 			case '+':
-				APPEND_TAG_WITH_CONTINUE(TAG_INC, 2, PRIORITY_PRE_INC, OS_PUSH | OS_MONADIC);
+				APPEND_TAG_WITH_CONTINUE(TAG_INC, 2, PRIORITY_PRE_INC, OS_PUSH | OS_ANTE);
 			case '=':
 				APPEND_TAG_WITH_CONTINUE(TAG_ADD, 2, PRIORITY_LEFT_ASSIGN, OS_PUSH | OS_LEFT_ASSIGN);
 			default:
@@ -1667,7 +1674,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			switch (p[1])
 			{
 			case '-':
-				APPEND_TAG_WITH_CONTINUE(TAG_DEC, 2, PRIORITY_PRE_DEC, OS_PUSH | OS_MONADIC);
+				APPEND_TAG_WITH_CONTINUE(TAG_DEC, 2, PRIORITY_PRE_DEC, OS_PUSH | OS_ANTE);
 			case '=':
 				APPEND_TAG_WITH_CONTINUE(TAG_SUB, 2, PRIORITY_LEFT_ASSIGN, OS_PUSH | OS_LEFT_ASSIGN);
 			default:
@@ -1869,7 +1876,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			APPEND_READ_WRITE:
 				APPEND_TAG_WITH_CONTINUE(iTag, nLength, PRIORITY_READ_WRITE, OS_PUSH | OS_CLOSE);
 			}
-			APPEND_TAG_WITH_CONTINUE(TAG_TERNARY_SPLIT, 1, PRIORITY_TERNARY, OS_PUSH/* | OS_TERNARY*/ | OS_CLOSE);
+			APPEND_TAG_WITH_CONTINUE(TAG_TERNARY_SPLIT, 1, PRIORITY_TERNARY, OS_PUSH/* | OS_TERNARIES*/ | OS_CLOSE);
 		case ';':
 			// ";"
 			bNextIsSeparatedLeft = TRUE;
@@ -1921,7 +1928,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			bNextIsSeparatedLeft = TRUE;
 			if (nFirstTernary == -1)
 				nFirstTernary = nNumberOfTag;
-			APPEND_TAG_WITH_CONTINUE(TAG_TERNARY, 1, PRIORITY_TERNARY, OS_PUSH | OS_TERNARY | OS_OPEN);
+			APPEND_TAG_WITH_CONTINUE(TAG_TERNARY, 1, PRIORITY_TERNARY, OS_PUSH | OS_TERNARIES | OS_OPEN);
 		case 'A':
 			// "A2U", "A2W"
 			if (!bIsSeparatedLeft)
@@ -2347,7 +2354,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				iTag = TAG_AND;
 				nLength = 3;
 				bPriority = PRIORITY_AND;
-				goto APPEND_RET_OPERAND_OPERATOR;
+				goto APPEND_YIELD_OPERAND_OPERATOR;
 			case 's':
 				if (*(uint32_t *)(p + 2) != BSWAP32('sert'))
 					break;
@@ -2403,7 +2410,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					if (!__intrinsic_isspace(p[4]) || !FixTheProcedure)
 						break;
 					bNextIsSeparatedLeft = TRUE;
-					APPEND_TAG_WITH_CONTINUE(TAG_CASE, 4, PRIORITY_CASE, OS_PUSH | OS_PASS_OPERAND);
+					APPEND_TAG_WITH_CONTINUE(TAG_CASE, 4, PRIORITY_CASE, OS_PUSH | OS_YIELD_OPERAND);
 				}
 				break;
 			case 'b':
@@ -2479,7 +2486,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				if (p[7] != ':' && !__intrinsic_isspace(p[7]) && p[7] != ';' || !FixTheProcedure)
 					break;
 				bNextIsSeparatedLeft = TRUE;
-				APPEND_TAG_WITH_CONTINUE(TAG_DEFAULT, 7, PRIORITY_DEFAULT, OS_PUSH | OS_PASS_OPERAND);
+				APPEND_TAG_WITH_CONTINUE(TAG_DEFAULT, 7, PRIORITY_DEFAULT, OS_PUSH | OS_YIELD_OPERAND);
 			case 'o':
 				if (p[2] != '(' && !__intrinsic_isspace(p[2]))
 					break;
@@ -3188,12 +3195,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			iTag = TAG_OR;
 			nLength = 2;
 			bPriority = PRIORITY_OR;
-		APPEND_RET_OPERAND_OPERATOR:
+		APPEND_YIELD_OPERAND_OPERATOR:
 			if (!IS_SEPARATED_RIGHT(p + nLength))
 				break;
 			bNextIsSeparatedLeft = TRUE;
-			APPEND_TAG(iTag, nLength, bPriority, OS_PUSH | OS_SHORT_CIRCUIT | OS_PASS_OPERAND);
-			APPEND_TAG_WITH_CONTINUE(iTag, nLength, bPriority, OS_PUSH | OS_PASS_OPERAND);
+			APPEND_TAG(iTag, nLength, bPriority, OS_PUSH | OS_SHORT_CIRCUIT | OS_YIELD_OPERAND);
+			APPEND_TAG_WITH_CONTINUE(iTag, nLength, bPriority, OS_PUSH | OS_YIELD_OPERAND);
 		case 'p':
 			// "parse_int", "parse_real", "parse_reset", "printf"
 			if (!bIsSeparatedLeft)
@@ -3895,6 +3902,37 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			default:
 				APPEND_TAG_WITH_CONTINUE(TAG_BIT_OR, 1, PRIORITY_BIT_OR, OS_PUSH);
 			}
+		case '{':
+			// "{"
+			bNextIsSeparatedLeft = TRUE;
+			if (__intrinsic_isspace(p[1]))
+			{
+				APPEND_TAG_WITH_CONTINUE(TAG_BRACE_OPEN, 1, PRIORITY_BRACE_OPEN, OS_OPEN | OS_BRACES);
+			}
+			else
+			{
+				LPCBYTE b = p;
+				while (++b < end && *b != '}');
+				if (b < end)
+				{
+					size_t const length = ++b - p;
+					APPEND_TAG_WITH_CONTINUE(TAG_PARSE_ERROR, length, PRIORITY_NOT_OPERATOR, OS_PUSH);
+				}
+				p = (LPBYTE)b;
+				break;
+			}
+		case '}':
+			// "}"
+			bNextIsSeparatedLeft = TRUE;
+			if (bIsSeparatedLeft)
+
+			{
+				APPEND_TAG_WITH_CONTINUE(TAG_BRACE_CLOSE, 1, PRIORITY_BRACE_CLOSE, OS_CLOSE | OS_BRACES);
+			}
+			else
+			{
+				APPEND_TAG_WITH_CONTINUE(TAG_PARSE_ERROR, 1, PRIORITY_NOT_OPERATOR, OS_PUSH);
+			}
 		case '~':
 			// "~", "~]", "~2]", "~3]", "~4]", "~5]", "~6]", "~7]", "~8]"
 			bNextIsSeparatedLeft = TRUE;
@@ -3920,7 +3958,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				}
 				/* FALLTHROUGH */
 			default:
-				APPEND_TAG_WITH_CONTINUE(TAG_BIT_NOT, 1, PRIORITY_BIT_NOT, OS_PUSH | OS_MONADIC);
+				APPEND_TAG_WITH_CONTINUE(TAG_BIT_NOT, 1, PRIORITY_BIT_NOT, OS_PUSH | OS_ANTE);
 			}
 			break;
 #if CODEPAGE_SUPPORT
@@ -4046,7 +4084,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				else if (nDepth-- || lpElement->Tag != TAG_TERNARY_SPLIT)
 					continue;
 				nDepth = 0;
-				lpElement->Type |= OS_TERNARY;
+				lpElement->Type |= OS_TERNARIES;
 				while (++lpElement < lpEndOfTag)
 				{
 					if (!(lpElement->Type & (OS_OPEN | OS_CLOSE)))
@@ -4081,7 +4119,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			if (lpBegin)
 			{
 				size_t  size;
-				LPCVOID src;
+				MARKUP *src;
 
 				(LPBYTE)lpBegin -= (size_t)lpTagArray;
 				if (++nNumberOfTag > nSrcLength)
@@ -4103,7 +4141,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			lpBegin->Tag        = TAG_PARENTHESIS_OPEN;
 			lpBegin->Length     = 0;
 			lpBegin->Priority   = PRIORITY_PARENTHESIS_OPEN;
-			lpBegin->Type       = OS_OPEN | OS_PARENTHESIS;
+			lpBegin->Type       = OS_OPEN | OS_PARENTHESES;
 			lpBegin->Depth      = 0;
 			lpBegin->Param      = NULL;
 			lpBegin->Next       = NULL;
@@ -4129,7 +4167,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			lpEnd->Tag        = TAG_PARENTHESIS_CLOSE;
 			lpEnd->Length     = 0;
 			lpEnd->Priority   = PRIORITY_PARENTHESIS_CLOSE;
-			lpEnd->Type       = OS_PUSH | OS_CLOSE | OS_PARENTHESIS | OS_TERNARY_END;
+			lpEnd->Type       = OS_PUSH | OS_CLOSE | OS_PARENTHESES | OS_TERNARY_END;
 			lpEnd->Depth      = 0;
 			lpEnd->Param      = NULL;
 			lpEnd->Next       = NULL;
@@ -4180,7 +4218,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					// function
 					lpMarkup->Tag      = TAG_FUNCTION;
 					lpMarkup->Priority = PRIORITY_FUNCTION;
-					lpMarkup->Type     = OS_PUSH | OS_MONADIC;
+					lpMarkup->Type     = OS_PUSH | OS_ANTE;
 				}
 				else
 #endif
@@ -4198,7 +4236,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					lpMarkup->Tag      = TAG_FUNCTION;
 					lpMarkup->Length   = end - lpMarkup->String;
 					lpMarkup->Priority = PRIORITY_FUNCTION;
-					lpMarkup->Type     = OS_PUSH | OS_MONADIC;
+					lpMarkup->Type     = OS_PUSH | OS_ANTE;
 					lpTag += 2 + (lpTag[2].Tag != TAG_PARENTHESIS_OPEN);
 					bCorrectTag = TRUE;
 				}
@@ -4275,7 +4313,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 							lpMarkup->Type |= OS_SHORT_CIRCUIT;
 						break;
 					case TAG_TERNARY_SPLIT:
-						if (!(lpTag->Type & OS_TERNARY))
+						if (!(lpTag->Type & OS_TERNARIES))
 						{
 							lpTag->Type = 0;
 							break;
@@ -4286,7 +4324,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						lpTag->Type |= OS_PUSH;
 					}
 				}
-				else if (lpTag->Tag == TAG_TERNARY_SPLIT && !(lpTag->Type & OS_TERNARY))
+				else if (lpTag->Tag == TAG_TERNARY_SPLIT && !(lpTag->Type & OS_TERNARIES))
 				{
 					lpMarkup->Tag = TAG_LABEL;
 					lpMarkup->Priority = PRIORITY_LABEL;
@@ -4315,7 +4353,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					lpMarkup[-1].Param = lpMarkup;
 					lpMarkup[-1].UnescapedString = prefixLength;
 					lpMarkup->Type = 0;
-					if (lpTag->Tag == TAG_TERNARY_SPLIT && !(lpTag->Type & OS_TERNARY))
+					if (lpTag->Tag == TAG_TERNARY_SPLIT && !(lpTag->Type & OS_TERNARIES))
 						lpTag->Type = 0;
 					else
 					{
@@ -4390,7 +4428,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					if (lpOpen->Tag != TAG_PARENTHESIS_OPEN)
 						break;
-					if ((lpBegin = (lpClose = FindParenthesisClose(lpOpen + 1, lpEndOfMarkup)) + 1) >= lpEndOfMarkup)
+					if ((lpBegin = (lpClose = FindBracketClose(lpOpen + 1, lpEndOfMarkup)) + 1) >= lpEndOfMarkup)
 						break;
 					if ((lpEnd = FindEndOfStructuredStatement(lpBegin, lpEndOfMarkup)) >= lpEndOfMarkup)
 						break;
@@ -4427,7 +4465,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					if (lpOpen->Tag != TAG_PARENTHESIS_OPEN)
 						break;
-					if ((lpEnd = (lpClose = FindParenthesisClose(lpOpen + 1, lpEndOfMarkup)) + 1) >= lpEndOfMarkup)
+					if ((lpEnd = (lpClose = FindBracketClose(lpOpen + 1, lpEndOfMarkup)) + 1) >= lpEndOfMarkup)
 						break;
 					if ((lpEnd = FindEndOfStructuredStatement(lpEnd, lpEndOfMarkup)) >= lpEndOfMarkup)
 						break;
@@ -4452,7 +4490,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					if (lpWhile[1].Tag != TAG_PARENTHESIS_OPEN)
 						break;
-					if ((lpNext = (lpEnd = FindParenthesisClose(lpWhile + 2, lpEndOfMarkup)) + 1) >= lpEndOfMarkup)
+					if ((lpNext = (lpEnd = FindBracketClose(lpWhile + 2, lpEndOfMarkup)) + 1) >= lpEndOfMarkup)
 						break;
 					if (lpNext->Tag != TAG_SPLIT)
 						break;
@@ -4477,7 +4515,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					if (lpOpen->Tag != TAG_PARENTHESIS_OPEN)
 						break;
-					if ((lpEnd = (lpClose = FindParenthesisClose(lpOpen + 1, lpEndOfMarkup)) + 1) >= lpEndOfMarkup)
+					if ((lpEnd = (lpClose = FindBracketClose(lpOpen + 1, lpEndOfMarkup)) + 1) >= lpEndOfMarkup)
 						break;
 					if ((lpEnd = FindEndOfStructuredStatement(lpEnd, lpEndOfMarkup)) >= lpEndOfMarkup)
 						break;
@@ -4498,7 +4536,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						break;
 					if (lpOpen->Tag != TAG_PARENTHESIS_OPEN)
 						break;
-					if ((lpEnd = (lpUpdate = FindParenthesisClose(lpOpen + 1, lpEndOfMarkup)) + 1) >= lpEndOfMarkup)
+					if ((lpEnd = (lpUpdate = FindBracketClose(lpOpen + 1, lpEndOfMarkup)) + 1) >= lpEndOfMarkup)
 						break;
 					if ((lpInitialize = FindSplit(lpOpen + 1, lpUpdate)) >= lpUpdate)
 						break;
@@ -4526,11 +4564,11 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 
 					if ((lpClose = (lpOpen = lpMarkup + 1) + 1) >= lpEndOfMarkup)
 						continue;
-					if (lpOpen->Tag != TAG_PARENTHESIS_OPEN)
+					if (!(lpOpen->Type & OS_OPEN && lpOpen->Type & (OS_PARENTHESES | OS_BRACES)))
 						continue;
-					if (lpClose->Tag == TAG_PARENTHESIS_CLOSE)
+					if (lpClose->Type & OS_CLOSE && lpClose->Type & (OS_PARENTHESES | OS_BRACES))
 						continue;
-					if ((lpClose = FindParenthesisClose(lpClose, lpEndOfMarkup)) >= lpEndOfMarkup)
+					if ((lpClose = FindBracketClose(lpClose, lpEndOfMarkup)) >= lpEndOfMarkup)
 						break;
 					(lpMarkup->Close = lpClose)->Type |= OS_PUSH;
 				}
@@ -4678,7 +4716,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 						continue;
 					if (lpMarkup->NumberOfOperand == 1)
 						continue;
-					lpMarkup->Type &= ~OS_MONADIC;
+					lpMarkup->Type &= ~OS_ANTE;
 				}
 				else
 				{
@@ -4906,7 +4944,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			if (lpMarkup[-1].Tag != TAG_NOT_OPERATOR)
 				break;
-			lpMarkup->Type = OS_PUSH | OS_MONADIC | OS_POST;
+			lpMarkup->Type = OS_PUSH | OS_POST;
 			lpMarkup->Priority = PRIORITY_POST_INC_DEC;
 			break;
 		case TAG_ADD:
@@ -4914,7 +4952,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			if (lpMarkup != lpMarkupArray)
 				if (lpMarkup[-1].Tag == TAG_NOT_OPERATOR ||
-					lpMarkup[-1].Type & (OS_CLOSE | OS_POST) && !(lpMarkup[-1].Type & (OS_SPLIT | OS_TERNARY)))
+					lpMarkup[-1].Type & (OS_CLOSE | OS_POST) && !(lpMarkup[-1].Type & (OS_SPLIT | OS_TERNARIES)))
 					break;
 			// plus-sign operator (remove)
 			lpMarkup->Type = 0;
@@ -4924,24 +4962,24 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			if (lpMarkup != lpMarkupArray)
 				if (lpMarkup[-1].Tag == TAG_NOT_OPERATOR ||
-					lpMarkup[-1].Type & (OS_CLOSE | OS_POST) && !(lpMarkup[-1].Type & (OS_SPLIT | OS_TERNARY)))
+					lpMarkup[-1].Type & (OS_CLOSE | OS_POST) && !(lpMarkup[-1].Type & (OS_SPLIT | OS_TERNARIES)))
 					break;
 			// negative operator
 			lpMarkup->Tag = TAG_NEG;
 			lpMarkup->Priority = PRIORITY_NEG;
-			lpMarkup->Type = OS_PUSH | OS_MONADIC;
+			lpMarkup->Type = OS_PUSH | OS_ANTE;
 			break;
 		case TAG_MUL:
 			if (lpMarkup->Type & OS_LEFT_ASSIGN)
 				break;
 			if (lpMarkup != lpMarkupArray)
 				if (lpMarkup[-1].Tag == TAG_NOT_OPERATOR ||
-					lpMarkup[-1].Type & (OS_CLOSE | OS_POST) && !(lpMarkup[-1].Type & (OS_SPLIT | OS_TERNARY)))
+					lpMarkup[-1].Type & (OS_CLOSE | OS_POST) && !(lpMarkup[-1].Type & (OS_SPLIT | OS_TERNARIES)))
 					break;
 			// indirection operator
 			lpMarkup->Tag = TAG_INDIRECTION;
 			lpMarkup->Priority = PRIORITY_INDIRECTION;
-			lpMarkup->Type = OS_PUSH | OS_MONADIC;
+			lpMarkup->Type = OS_PUSH | OS_ANTE;
 			break;
 		case TAG_BIT_AND:
 			if (lpMarkup + 1 >= lpEndOfMarkup)
@@ -4952,12 +4990,12 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				break;
 			if (lpMarkup != lpMarkupArray)
 				if (lpMarkup[-1].Tag == TAG_NOT_OPERATOR ||
-					lpMarkup[-1].Type & (OS_CLOSE | OS_POST) && !(lpMarkup[-1].Type & (OS_SPLIT | OS_TERNARY)))
+					lpMarkup[-1].Type & (OS_CLOSE | OS_POST) && !(lpMarkup[-1].Type & (OS_SPLIT | OS_TERNARIES)))
 					break;
 			// address-of operator
 			lpMarkup->Tag = TAG_ADDRESS_OF;
 			lpMarkup->Priority = PRIORITY_ADDRESS_OF;
-			lpMarkup->Type = OS_PUSH | OS_MONADIC;
+			lpMarkup->Type = OS_PUSH | OS_ANTE;
 			break;
 		case TAG_MODULENAME:
 			lpMarkup->Length--;
@@ -4970,7 +5008,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					lpMarkup->Type |= OS_SHORT_CIRCUIT;
 				break;
 			case TAG_TERNARY_SPLIT:
-				if (!(lpMarkup[1].Type & OS_TERNARY))
+				if (!(lpMarkup[1].Type & OS_TERNARIES))
 				{
 					lpMarkup[1].Type = 0;
 					break;
@@ -5006,13 +5044,13 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 #ifndef GOTO_ALLOW_CASE_STRING
 			if (!lpCode->Param)
 #endif
-				lpCode->Type &= ~OS_PASS_OPERAND;
+				lpCode->Type &= ~OS_YIELD_OPERAND;
 			break;
 		case TAG_CASE:
 #ifdef SWITCH_LIMITED_DEPTH
 			if (lpCode->Depth != lpMarkup->Depth) continue;
 #endif
-			lpCode->Type &= ~OS_PASS_OPERAND;
+			lpCode->Type &= ~OS_YIELD_OPERAND;
 			if (lpLink->Tag != TAG_DEFAULT)
 				lpLink = lpLink->Next = lpCode;
 			else// swap chain
@@ -5026,7 +5064,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 #ifdef SWITCH_LIMITED_DEPTH
 			if (lpCode->Depth != lpMarkup->Depth) continue;
 #endif
-			lpCode->Type &= ~OS_PASS_OPERAND;
+			lpCode->Type &= ~OS_YIELD_OPERAND;
 			lpCode->Param = lpLink;
 			lpLink = lpLink->Next = lpCode;
 			break;
@@ -5506,9 +5544,9 @@ static MARKUP ** __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOf
 	NEST_PUSH(0);
 	for (lpMarkup = lpMarkupArray, lpEndOfMarkup = lpMarkupArray + nNumberOfMarkup; lpMarkup < lpEndOfMarkup; lpMarkup++)
 	{
-		if (lpMarkup->Type & (OS_CLOSE | OS_SPLIT | OS_DELIMITER | OS_LEFT_ASSIGN | OS_TERNARY))
+		if (lpMarkup->Type & (OS_CLOSE | OS_SPLIT | OS_DELIMITER | OS_LEFT_ASSIGN | OS_TERNARIES))
 		{
-			if (lpMarkup->Type & (OS_CLOSE | OS_TERNARY))
+			if (lpMarkup->Type & (OS_CLOSE | OS_TERNARIES))
 			{
 				for (; *lpnNestTop; (*lpnNestTop)--)
 					POSTFIX_PUSH(FACTOR_POP());
@@ -5521,7 +5559,7 @@ static MARKUP ** __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOf
 				}
 				if (lpMarkup->Type & OS_PUSH)
 					POSTFIX_PUSH(lpMarkup);
-				if (lpMarkup->Type & OS_TERNARY)
+				if (lpMarkup->Type & OS_TERNARIES)
 					NEST_PUSH(0);
 			}
 			else if (lpMarkup->Type & OS_LEFT_ASSIGN)
@@ -5605,7 +5643,7 @@ static MARKUP ** __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOf
 
 					while (--lpPrev >= lpMarkupArray)
 					{
-						if (!(lpPrev->Type & (OS_OPEN | OS_CLOSE | OS_SPLIT | OS_DELIMITER | OS_TERNARY)) &&
+						if (!(lpPrev->Type & (OS_OPEN | OS_CLOSE | OS_SPLIT | OS_DELIMITER | OS_TERNARIES)) &&
 							lpPrev->Priority >= lpMarkup->Priority)
 							continue;
 						if (lpPrev->Type & OS_CLOSE)
@@ -5653,10 +5691,10 @@ static MARKUP ** __stdcall Postfix(IN MARKUP *lpMarkupArray, IN size_t nNumberOf
 			if (lpMarkup->Priority == 0)
 				NEST_PUSH(0);
 #endif
-			if (lpMarkup->Type & OS_MONADIC)
+			if (lpMarkup->Type & OS_ANTE)
 			{
 				for (MARKUP *lpNext;
-					 (lpNext = lpMarkup + 1) < lpEndOfMarkup && (lpNext->Type & OS_MONADIC);
+					 (lpNext = lpMarkup + 1) < lpEndOfMarkup && (lpNext->Type & OS_ANTE);
 					 (*lpnNestTop)++)
 				{
 					FACTOR_PUSH(lpMarkup = lpNext);
@@ -6059,13 +6097,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		#define OPERAND_CLEAR()     (*(lpOperandTop = lpEndOfOperand = lpOperandBuffer) = operandZero, lpEndOfOperand++)
 
 		bInitialIsInteger = IsInteger;
-		if (nNumberOfMarkup) switch (lpMarkupArray->Tag)
+		if (nNumberOfPostfix && !lpPostfixBuffer[0]->Close) switch (lpPostfixBuffer[0]->Tag)
 		{
 		case TAG_PARSE_INT:
 			IsInteger = TRUE;
 			break;
 		case TAG_PARSE_REAL:
 			IsInteger = FALSE;
+			break;
 		}
 		operandZero.Quad = 0;
 		operandZero.IsQuad = !IsInteger;
@@ -6543,6 +6582,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			continue;
 		case TAG_PARENTHESIS_CLOSE:
+		case TAG_BRACE_CLOSE:
 		case TAG_SPLIT:
 		LOOP_CHECK:
 			if (!(lpMarkup->Type & OS_LOOP_END))
@@ -6976,7 +7016,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			if (IsInteger)
 			{
 				boolValue = !!lpOperandTop->Quad;
-				if (!(lpMarkup->Type & OS_PASS_OPERAND))
+				if (!(lpMarkup->Type & OS_YIELD_OPERAND))
 				{
 					lpOperandTop->Quad = boolValue;
 					lpOperandTop->IsQuad = FALSE;
@@ -6985,7 +7025,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			else
 			{
 				boolValue = !!lpOperandTop->Real;
-				if (!(lpMarkup->Type & OS_PASS_OPERAND))
+				if (!(lpMarkup->Type & OS_YIELD_OPERAND))
 				{
 					lpOperandTop->Real = boolValue;
 					lpOperandTop->IsQuad = TRUE;
@@ -7015,7 +7055,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			if (IsInteger)
 			{
 				boolValue = !!lpOperandTop->Quad;
-				if (!(lpMarkup->Type & OS_PASS_OPERAND))
+				if (!(lpMarkup->Type & OS_YIELD_OPERAND))
 				{
 					lpOperandTop->Quad = boolValue;
 					lpOperandTop->IsQuad = FALSE;
@@ -7024,7 +7064,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			else
 			{
 				boolValue = !!lpOperandTop->Real;
-				if (!(lpMarkup->Type & OS_PASS_OPERAND))
+				if (!(lpMarkup->Type & OS_YIELD_OPERAND))
 				{
 					lpOperandTop->Real = boolValue;
 					lpOperandTop->IsQuad = TRUE;
@@ -7235,7 +7275,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						{
 							if ((*lpPostfix)->Tag == TAG_TERNARY)
 								nDepth++;
-							else if ((*lpPostfix)->Tag == TAG_TERNARY_SPLIT && (*lpPostfix)->Type & OS_TERNARY && !nDepth--)
+							else if ((*lpPostfix)->Tag == TAG_TERNARY_SPLIT && (*lpPostfix)->Type & OS_TERNARIES && !nDepth--)
 								break;
 						}
 						if (lpPostfix < lpEndOfPostfix)
@@ -7249,7 +7289,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		case TAG_TERNARY_SPLIT:
 			if (lpMarkup->Jump)
 				lpPostfix = lpMarkup->Jump;
-			else if (lpMarkup->Type & OS_TERNARY)
+			else if (lpMarkup->Type & OS_TERNARIES)
 			{
 				for (; lpPostfix + 1 < lpEndOfPostfix; lpPostfix++)
 					if (lpPostfix[1]->Type & OS_TERNARY_END)
@@ -12643,7 +12683,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					if (v->Node)
 					{
 						v->Value.Quad   = ((ScopeVariant *)pair_first(v->Node))->Quad;
-						v->Value.IsQuad = !IsInteger || !!v->Value.High;
+						v->Value.IsQuad = !IsInteger || v->Value.High;
 					}
 #endif
 				if (lpParams)
@@ -12948,12 +12988,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					break;
 				case TAG_MNAME:
 					{
-						LPMODULEENTRY32A lpme;
-
-						c = lpMarkup->String[lpMarkup->Length];
-						lpMarkup->String[lpMarkup->Length] = '\0';
-						lpme = TProcessCtrl_GetModuleFromName(&this->processCtrl, lpMarkup->String);
-						lpMarkup->String[lpMarkup->Length] = c;
+						LPMODULEENTRY32A lpme = TProcessCtrl_GetModuleFromName(&this->processCtrl, &(string) {
+							lpMarkup->String, lpMarkup->String + lpMarkup->Length, ._M_end_of_storage = lpMarkup->String
+						});
 						operand.Quad = lpme ? (uintptr_t)lpme->hModule : 0;
 #if INTPTR_MAX > INT32_MAX
 						operand.IsQuad = TRUE;
@@ -13101,12 +13138,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					break;
 				case TAG_PROCESSID:
 					{
-						LPMODULEENTRY32A lpme;
-
-						c = lpMarkup->String[lpMarkup->Length];
-						lpMarkup->String[lpMarkup->Length] = '\0';
-						lpme = TProcessCtrl_GetModuleFromName(&this->processCtrl, lpMarkup->String);
-						lpMarkup->String[lpMarkup->Length] = c;
+						LPMODULEENTRY32A lpme = TProcessCtrl_GetModuleFromName(&this->processCtrl, &(string) {
+							lpMarkup->String, lpMarkup->String + lpMarkup->Length, ._M_end_of_storage = lpMarkup->String
+						});
 						operand.Quad = lpme ? lpme->th32ProcessID : 0;
 						if (operand.IsQuad = !IsInteger)
 							operand.Real = operand.Low;
@@ -13303,8 +13337,10 @@ FAILED:
 #endif
 	if (hProcess)
 		CloseHandle(hProcess);
-	if (TSSGCtrl_GetSSGActionListner(this) && TMainForm_GetUserMode(MainForm) >= 3 &&
-		(nNumberOfProcessMemory || nNumberOfHeapBuffer) && !HeapValidate(hPrivateHeap, 0, NULL)) {
+	if ((nNumberOfProcessMemory || nNumberOfHeapBuffer)
+		&& this->script.ePos
+		&& TMainForm_GetUserMode(MainForm) >= 3
+		&& !HeapValidate(hPrivateHeap, 0, NULL)) {
 		CHAR lpText[0x0100];
 #if USE_TOOLTIP
 		extern BOOL bActive;

@@ -662,14 +662,10 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 					string  const *code = SubjectStringTable_GetString(&SSGS->code);
 					if (!string_empty(code))
 					{
+						vector_string tmpV = { NULL };
 						string_ctor_assign_char(&Tag, ',');
-						SSGS->isRepeatable = TStringDivision_FindBack(
-							&this->strD,
-							SubjectStringTable_GetString(&SSGS->code),
-							Tag,
-							MAXDWORD,
-							0,
-							dtNEST) != MAXDWORD;
+						SSGS->isRepeatable = TStringDivision_List(&this->strD, code, Tag, &tmpV, dtNEST) > 1;
+						vector_string_dtor(&tmpV);
 					}
 
 					// dir

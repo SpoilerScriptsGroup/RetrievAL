@@ -15,12 +15,21 @@
  *      All Rights Reserved.
  *
  */
+
+// We want "C" exception handling
 #define EXCEPT_C
+
 #define _ss
 #define __far
+
+// We want the exception handling structures to be 1 byte aligned,
+// the compiler excepts this.
+#pragma pack(push, 1)
+
 #define TPDST  __far                // type-id's and such are always 'far'
 struct  TPDST  tpid;                // type descriptor structure
 typedef struct tpid  TPDST *tpidPtr;
+// tpMask flags
 enum flagsType
 {
 	TM_IS_STRUCT   = 0x0001,
@@ -33,6 +42,7 @@ enum flagsType
 	TM_IS_VOLATILE = 0x0200,
 	TM_IS_ARRAY    = 0x0400,
 };
+// Class flags ('tpcFlags')
 enum flagsClass
 {
 	CF_HAS_CTOR    = 0x00000001,
@@ -45,6 +55,21 @@ enum flagsClass
 	CF_DELPHICLASS = 0x00000080,
 	CF_HAS_FARVPTR = 0x00001000,
 	CF_HAS_GUID    = 0x00002000,// The tpcGuid field is valid and filled in
+};
+// Variable cleanup descriptor flags
+enum flagsClean
+{
+	DTCVF_PTRVAL   = 0x0001,
+	DTCVF_DELPTR   = 0x0002,
+	DTCVF_STACKVAR = 0x0004,
+	DTCVF_DELETE   = 0x0008,
+	DTCVF_RETVAL   = 0x0010,
+	DTCVF_RETCTX   = 0x0020,
+	DTCVF_VECCNT   = 0x0040,
+	DTCVF_DTCADJ   = 0x0100,
+	DTCVF_THROWCTX = 0x0200,// Used internally by the compiler?
+	DTCVF_THISCTX  = 0x0400,
+	DTCVF_WITHVT   = 0x1000,
 };
 struct tpid                         // type descriptor
 {
@@ -121,22 +146,10 @@ struct tpid                         // type descriptor
 	// Optionally (if tpcFlags & CF_HAS_DTOR), we have next:
 	//  - list of destructible members, terminated by a null pointer
 };
-enum flagsClean
-{
-	DTCVF_PTRVAL   = 0x0001,
-	DTCVF_DELPTR   = 0x0002,
-	DTCVF_STACKVAR = 0x0004,
-	DTCVF_DELETE   = 0x0008,
-	DTCVF_RETVAL   = 0x0010,
-	DTCVF_RETCTX   = 0x0020,
-	DTCVF_VECCNT   = 0x0040,
-	DTCVF_DTCADJ   = 0x0100,
-	DTCVF_THROWCTX = 0x0200,// Used internally by the compiler?
-	DTCVF_THISCTX  = 0x0400,
-	DTCVF_WITHVT   = 0x1000,
-};
 typedef EXCEPTION_ROUTINE   *   catchPtrTP;
 typedef struct  ERRbc   _ss *   PREGISTRATION_RECORD;
+#define CPP_EXCEPT_CODE 0x0EEFFACEul// use something better, OK?
+#define PAS_EXCEPT_CODE 0x0EEDFADE
 typedef struct  _EXCEPTION_POINTERS EXCEPTION_PTRS, *PEXCEPTION_PTRS;
 struct  DTT
 {
@@ -148,7 +161,6 @@ struct  DTT
 		void    __far * dttAddress;
 	};
 };
-typedef unsigned int            dtorCntType;
 typedef enum excBlock
 {
 	XB_FINALLY,                     /* 0 try/finally        ("C") */
@@ -158,6 +170,7 @@ typedef enum excBlock
 	XB_CATCH,                       /* 4 catch              (C++) */
 	XB_DEST,                        /* 5 destructor cleanup (C++) */
 } excBlockKind;
+typedef unsigned int            dtorCntType;
 typedef struct
 {
 	tpidPtr TPDST * xtThrowLst;             // throw-list address or NULL
@@ -171,7 +184,7 @@ typedef struct
 			excBlockKind kind  : 16;
 			union
 			{
-				struct
+				struct XB_DEST
 				{
 					unsigned     dtcMin;
 					struct DTT * dttAdr;
@@ -182,31 +195,36 @@ typedef struct
 } EXCTAB, TPDST * EXCTABPTR;
 enum flagsError
 {
-	EF_DELETETHIS = 0x01,
+	EF_DELETETHIS = 0x01,// set if we need to delete 'this'
 };
 typedef struct  ERRbc
 {
 	PREGISTRATION_RECORD    ERRcNext;       // next registration record
 	catchPtrTP              ERRcCatcher;    // address of handler
 	EXCTABPTR               ERRcXtab;       // addr of table of handlers
-	void    _ss *           ERRcSPsv;       // saved (E)SP value
+	void     _ss *          ERRcSPsv;       // saved (E)SP value
 	unsigned short          ERRcCCtx;       // current context
 #ifdef  EXCEPT_C
-#pragma pack(push, 2)
 	struct
 	{
 		unsigned short  ERRcUnwind;     // unwinding flag
 		NTSTATUS        ERRcExcCode;    // exception code
 		PEXCEPTION_PTRS ERRcExcInfo;    // exception info
 	} ERRcInfo;
-#pragma pack(pop)
 #endif
 	dtorCntType     ERRcInitDtc;            // initial destructor count
 	enum flagsError ERRflags : 8;           // flags for hacks - see EF_*
 } REGREC_BC, _ss *PREGREC_BC;
+
+#undef TPDST
+
+#pragma pack(pop)
+
 #undef __far
 #undef _ss
+
 #undef EXCEPT_C
+
 #endif
 
 #endif	// _RTL_H_

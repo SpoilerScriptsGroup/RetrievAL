@@ -34,11 +34,13 @@ unsigned long __cdecl TStringDivision_List(
 			switch (*p)
 			{
 			case '(':
+			case '{':
 				// '\x2B' == '+'
 				if (tokenLength != 3 || *(LPDWORD)token != (DWORD)'\'\x2B\'')
 					nest++;
 				break;
 			case ')':
+			case '}':
 				// '\x2B' == '+'
 				if ((tokenLength != 3 || *(LPDWORD)token != (DWORD)'\'\x2B\'') && nest)
 					nest--;

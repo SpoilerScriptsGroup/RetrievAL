@@ -35,9 +35,11 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 		switch (*p)
 		{
 		case '(':
+		case '{':
 			nest++;
 			break;
 		case ')':
+		case '}':
 			if (nest)
 				nest--;
 			break;

@@ -39,7 +39,7 @@ void __cdecl ShowErrorMessage()
 
 	dwError = dwErrorMessageId;
 	dwErrorMessageId = ERROR_SUCCESS;
-	lpText = dwError != ERROR_SUCCESS &&FormatMessageA(
+	lpText = dwError != ERROR_SUCCESS && FormatMessageA(
 		FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
 		NULL,
 		dwError,

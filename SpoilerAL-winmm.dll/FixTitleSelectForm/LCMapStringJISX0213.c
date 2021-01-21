@@ -815,7 +815,7 @@ __declspec(naked) int __stdcall LCMapStringJISX0213(
 	        call    HeapAlloc                           //
 	        test    eax, eax                            //
 	        jnz     L104                                //
-	        push    ERROR_NOT_ENOUGH_MEMORY             //         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+	        push    ERROR_OUTOFMEMORY                   //         SetLastError(ERROR_OUTOFMEMORY);
 	        call    SetLastError                        //
 	        xor     eax, eax                            //         return 0;
 	        pop     ebx                                 //

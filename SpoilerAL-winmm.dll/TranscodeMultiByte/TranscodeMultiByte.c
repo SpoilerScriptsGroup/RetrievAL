@@ -33,7 +33,7 @@ int __stdcall TranscodeMultiByte(
 		}
 		else
 		{
-			SetLastError(ERROR_NOT_ENOUGH_MEMORY);
+			SetLastError(ERROR_OUTOFMEMORY);
 		}
 	}
 	return 0;

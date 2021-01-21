@@ -35,7 +35,7 @@ typedef struct _ENUM_WINDOWS_PARAM {
 
 static BOOL CALLBACK EnumWindowsProc(HWND hWnd, ENUM_WINDOWS_PARAM *param)
 {
-	char         lpString[0x1000];
+	char         lpString[0x0400];
 	unsigned int uLength;
 	DWORD        dwProcessId;
 

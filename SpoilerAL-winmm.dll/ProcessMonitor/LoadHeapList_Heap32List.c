@@ -5,6 +5,7 @@
 #include "page.h"
 
 extern BOOL FixTheProcedure;
+static SYSTEM_INFO sysinfo;
 
 BOOL __cdecl VerifyInternalSpecificationOfHeapID()
 {
@@ -19,6 +20,7 @@ BOOL __cdecl VerifyInternalSpecificationOfHeapID()
 		{
 			HEAPENTRY32 he = { .dwSize = sizeof(HEAPENTRY32) };
 
+			GetSystemInfo(&sysinfo);
 			while ((bMatches = Heap32First(&he, hl.th32ProcessID, hl.th32HeapID) &&
 					hl.th32HeapID == (he.dwAddress & -PAGE_SIZE)) &&
 				   Heap32ListNext(hSnapshot, &hl));
@@ -44,7 +46,7 @@ void __cdecl LoadHeapList(TProcessCtrl *this)
 			.heapList = {
 				.dwSize = sizeof(tmpHLD.heapList),
 			},
-			.heapListSize = PAGE_SIZE - 1,
+			.heapListSize = sysinfo.dwPageSize - 1,
 		};
 
 		if (Heap32ListFirst(hSnapshot, &tmpHLD.heapList))

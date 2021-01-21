@@ -88,6 +88,7 @@ size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LP
 				*(p++) = ' ';
 			case '{':
 #endif
+				if (!__intrinsic_isspace(p[1]))
 				{
 					LPCSTR key;
 					size_t keyLength;
@@ -278,7 +279,7 @@ size_t __stdcall ByteArrayReplaceDefineByHeap(vector_TSSGAttributeElement *attri
 				prev = '\0';
 				break;
 			case '{':
-				if (prev != '*')
+				if (prev != '*' && !__intrinsic_isspace(p[1]))
 				{
 					LPCSTR key;
 					size_t keyLength;

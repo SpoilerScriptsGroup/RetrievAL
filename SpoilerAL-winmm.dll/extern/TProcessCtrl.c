@@ -10,7 +10,7 @@ BOOLEAN(__cdecl * const TProcessCtrl_OneRead)(HANDLE ProcessHandle, DWORD Addres
 
 extern const DWORD F004A61F8;
 
-__declspec(naked) LPMODULEENTRY32A __fastcall TProcessCtrl_GetModuleFromName(TProcessCtrl *this, LPCSTR Name)
+__declspec(naked) LPMODULEENTRY32A __fastcall TProcessCtrl_GetModuleFromName(TProcessCtrl *const this, const string *const Name)
 {
 	__asm
 	{
@@ -18,9 +18,9 @@ __declspec(naked) LPMODULEENTRY32A __fastcall TProcessCtrl_GetModuleFromName(TPr
 		mov     eax, ecx
 		mov     ecx, esp
 		push    eax
-		call    string_ctor_assign_cstr
+		call    string_ctor_assign
 		call    dword ptr [F004A61F8]
-		add     esp, 4 + size string
+		add     esp, size PVOID + size string
 		ret
 	}
 }

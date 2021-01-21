@@ -1,6 +1,8 @@
 #include <windows.h>
+#include <winternl.h>
 #include <commctrl.h>
 #include <strsafe.h>
+#include "xx.h"
 #include "intrinsic.h"
 #include "ErrorMessage.h"
 #include "ToolTip\ToolTip.h"
@@ -8,18 +10,25 @@
 EXTERN_C void __cdecl TProcessCtrl_Write_GetLastError();
 EXTERN_C void __cdecl TSSGActionListner_OnSubjectDisabled_SetErrorMessage();
 
-static __declspec(naked) int __stdcall GetExceptionObject_LoadResString(
+static __declspec(naked) int __stdcall SysUtils_GetExceptionObject_LoadResString(
 	HINSTANCE hInstance,
-	UINT uID,
-	LPSTR lpBuffer,
-	int cchBufferMax)
+	UINT      uID,
+	LPSTR     lpBuffer,
+	int       cchBufferMax)
 {
 	__asm {
 		cmp  dword ptr [esp + 0x041C], 0x005C3109
-		je   GetException
+		je   EXCEPT
 		jmp  LoadStringA
+		ud2
 
-	GetException:
+		align 16
+	EXCEPT:
+		mov  ecx, [ebp - 0x04]
+		mov  eax, [ecx]EXCEPTION_RECORD32.ExceptionCode
+		cmp  eax, CPP_EXCEPT_CODE
+		jne  FORMAT
+
 		mov  edx, dword ptr [esp + 0x0C]
 		push 0
 		mov  ecx, esp
@@ -37,6 +46,25 @@ static __declspec(naked) int __stdcall GetExceptionObject_LoadResString(
 		pop  eax
 		pop  ecx
 		sub  eax, dword ptr [esp + 0x0C]
+		ret  16
+
+		align 16
+	FORMAT:
+		test eax, eax
+		jns  NOTSEV
+		push eax
+		call RtlNtStatusToDosError
+	NOTSEV:
+		mov  edx, dword ptr [esp + 0x0C]
+		mov  ecx, dword ptr [esp + 0x10]
+		push 0
+		push ecx
+		push edx
+		push 0
+		push eax
+		push 0
+		push FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM
+		call FormatMessageA
 		ret  16
 	}
 }
@@ -118,7 +146,7 @@ EXTERN_C void __cdecl Attach_ShowErrorMessage()
 	*(LPBYTE )0x0052F1D2 = NOP;
 
 	// System::LoadResString
-	*(LPDWORD)(0x005D4355 + 1) = (DWORD)GetExceptionObject_LoadResString - (0x005D4355 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x005D4355 + 1) = (DWORD)SysUtils_GetExceptionObject_LoadResString - (0x005D4355 + 1 + sizeof(DWORD));
 
 	// ::OpenProcess
 	*(LPBYTE )0x00600DE8 = JMP_REL32;

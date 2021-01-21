@@ -247,5 +247,5 @@ void __cdecl bad_alloc()
 		_countof(lpText),
 		NULL))
 		MessageBoxA(TWinControl_GetHandle(MainForm), lpText, lpApplicationTitle, MB_ICONERROR);
-	ExitProcess(ERROR_NOT_ENOUGH_MEMORY);
+	ExitProcess(ERROR_OUTOFMEMORY);
 }

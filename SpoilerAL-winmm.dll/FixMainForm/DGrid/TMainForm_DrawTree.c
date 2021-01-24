@@ -12,6 +12,7 @@ __declspec(naked) void __cdecl Caller_TMainForm_DrawTree(TMainForm *this, LPVOID
 		#define LeftOffset (esp + 12)
 		#define TopOffset  (esp + 16)
 
+#if DRAWTREE_CONVENTION
 		mov     eax, dword ptr [TopOffset      ]
 		pop     edx
 		push    FALSE
@@ -23,6 +24,7 @@ __declspec(naked) void __cdecl Caller_TMainForm_DrawTree(TMainForm *this, LPVOID
 		mov     ecx, dword ptr [this       + 12]
 		push    ecx
 		push    edx
+#endif
 		jmp     TMainForm_DrawTree
 
 		#undef this
@@ -32,7 +34,15 @@ __declspec(naked) void __cdecl Caller_TMainForm_DrawTree(TMainForm *this, LPVOID
 	}
 }
 
-void __stdcall TMainForm_DrawTree(TMainForm *this, LPVOID DestCanvas, long LeftOffset, long TopOffset, BOOL IgnoreDebugString)
+void
+#if DRAWTREE_CONVENTION
+__stdcall
+#endif
+TMainForm_DrawTree(TMainForm *this, LPVOID DestCanvas, long LeftOffset, long TopOffset
+#if DRAWTREE_CONVENTION
+								  , BOOL IgnoreDebugString
+#endif
+)
 {
 	HWND       DGridHandle;
 	RECT       rect;
@@ -40,6 +50,9 @@ void __stdcall TMainForm_DrawTree(TMainForm *this, LPVOID DestCanvas, long LeftO
 	SCROLLINFO si;
 	int        span;
 	int        i, end;
+#if !DRAWTREE_CONVENTION
+	BOOL       IgnoreDebugString = TopOffset < 0;
+#endif
 
 	DGridHandle = TWinControl_GetHandle(this->DGrid);
 	GetClientRect(DGridHandle, &rect);
@@ -69,7 +82,7 @@ void __stdcall TMainForm_DrawTree(TMainForm *this, LPVOID DestCanvas, long LeftO
 	rect.right = this->DGrid->DefaultColWidth + LeftOffset;
 	if (DestCanvas)
 	{
-		rect.top = TopOffset;
+		rect.top = TopOffset & LONG_MAX;
 	}
 	else
 	{

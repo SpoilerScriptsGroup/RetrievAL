@@ -79,9 +79,9 @@ EXTERN_C void __cdecl Attach_StringSubject()
 
 	// TSSString::Write
 	*(LPDWORD)(0x0052B2DC + 1) = (DWORD)Caller_TSSString_Write_Str_ctor - (0x0052B2DC + 1 + sizeof(DWORD));
-	*(LPBYTE )(0x0052B2EB + 2) = 4;// discard stack size
+	*(LPBYTE )(0x0052B2EB + 2) = 4;// stack size to discard
 
 	// TSSString::ToByteCode
 	*(LPDWORD)(0x0052B7C3 + 1) = (DWORD)Caller_TSSString_ToByteCode_Val_ctor - (0x0052B7C3 + 1 + sizeof(DWORD));
-	*(LPBYTE )(0x0052B7CC + 2) = 4;// discard stack size
+	*(LPBYTE )(0x0052B7CC + 2) = 4;// stack size to discard
 }

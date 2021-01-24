@@ -13,6 +13,7 @@ extern int TMainForm_DGridLButtonDownRow;
 
 __declspec(naked) void __stdcall TMainForm_OnDGridLButtonUp(TMainForm *this, LPARAM lParam)
 {
+	static const char szEmpty[] = "";
 	/*
 	int ACol, ARow;
 
@@ -51,6 +52,8 @@ __declspec(naked) void __stdcall TMainForm_OnDGridLButtonUp(TMainForm *this, LPA
 		}
 		if (PrevRow != ARow)
 			this->DrawTreeCell(this->DGrid->Canvas, PrevRow, PrevRect);
+		if (this->userMode == 4)
+			this->Guide("", GUIDE_IS_CLEAR | GUIDE_IS_NOT_LINE);
 		this->DrawTreeCell(this->DGrid->Canvas, ARow, Rect);
 		this->SubjectAccess(this->selectSubject = this->treeSubjectVec[this->nowSelectSubjectIndex]);
 	}
@@ -145,7 +148,7 @@ __declspec(naked) void __stdcall TMainForm_OnDGridLButtonUp(TMainForm *this, LPA
 		mov     dword ptr [esp + 28], edx
 	L1:
 		cmp     esi, dword ptr [esp + 60]
-		je      AR
+		je      CR
 		lea     edx, [esp + 44]
 		mov     ecx, dword ptr [ebx + 932]
 		push    edx
@@ -155,6 +158,12 @@ __declspec(naked) void __stdcall TMainForm_OnDGridLButtonUp(TMainForm *this, LPA
 		push    ebx
 		call    dword ptr [TMainForm_DrawTreeCell]
 		add     esp, 16
+	CR:
+		cmp     [ebx]TMainForm.userMode, 4
+		jne     AR
+		push    GUIDE_IS_CLEAR | GUIDE_IS_NOT_LINE
+		push    offset szEmpty
+		call    TMainForm_Guide
 	AR:
 		mov     ecx, dword ptr [ebx + 932]
 		lea     eax, [esp + 28]

@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <mbstring.h>
 #include "intrinsic.h"
-#include "xx.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "TMainForm.h"
 #include "TSSCalc.h"

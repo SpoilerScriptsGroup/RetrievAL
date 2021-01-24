@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <winternl.h>
 #include <commctrl.h>
+#define STRSAFE_NO_CB_FUNCTIONS
 #include <strsafe.h>
 #include "xx.h"
 #include "intrinsic.h"
@@ -15,48 +16,50 @@ static __declspec(naked) int __stdcall SysUtils_GetExceptionObject_LoadResString
 	UINT      uID,
 	LPSTR     lpBuffer,
 	int       cchBufferMax)
-{
+{// EExternalException.CreateFmt(SExternalException, [P.ExceptionCode])
 	__asm {
 		cmp  dword ptr [esp + 0x041C], 0x005C3109
-		je   EXCEPT
+		je   EXTERN
+	REVERT:
 		jmp  LoadStringA
 		ud2
 
 		align 16
-	EXCEPT:
+	EXTERN:
 		mov  ecx, [ebp - 0x04]
 		mov  eax, [ecx]EXCEPTION_RECORD32.ExceptionCode
 		cmp  eax, CPP_EXCEPT_CODE
-		jne  FORMAT
+		jne  NTSTAT
 
-		mov  edx, dword ptr [esp + 0x0C]
-		push 0
-		mov  ecx, esp
+		lea  edx, [esp + 0x0C]
 		push 0
 		mov  eax, esp
+		push 0
+		mov  ecx, esp
 		push STRSAFE_IGNORE_NULLS | STRSAFE_NULL_ON_FAILURE
 		push ecx
 		push eax
-		push 0x0400
+		push dword ptr [edx + size PVOID]
 		mov  ecx, [ebp - 0x04]
 		push [ecx]EXCEPTION_RECORD32.ExceptionInformation
-		push 0x0400
-		push edx
+		push dword ptr [edx + size PVOID]
+		push dword ptr [edx]
 		call StringCchCopyNExA
-		pop  eax
 		pop  ecx
-		sub  eax, dword ptr [esp + 0x0C]
+		pop  eax
+		mov  eax, [esp + 0x10]
+		sub  eax, ecx
 		ret  16
 
 		align 16
-	FORMAT:
+	NTSTAT:
 		test eax, eax
-		jns  NOTSEV
+		jns  FORMAT
 		push eax
 		call RtlNtStatusToDosError
-	NOTSEV:
-		mov  edx, dword ptr [esp + 0x0C]
-		mov  ecx, dword ptr [esp + 0x10]
+	FORMAT:
+		mov  edx, [esp + 0x0C]
+		mov  ecx, [esp + 0x10]
 		push 0
 		push ecx
 		push edx
@@ -65,7 +68,23 @@ static __declspec(naked) int __stdcall SysUtils_GetExceptionObject_LoadResString
 		push 0
 		push FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM
 		call FormatMessageA
+		test eax, eax
+		jz   REVERT
 		ret  16
+	}
+}
+
+static __declspec(naked) void __stdcall CloseHandleIgnoreInvalid(HANDLE hObject)
+{// Avoid SetLastError when close CurrentProcess.
+	__asm {
+		cmp dword ptr [esp + 4], -1
+		je  REVERT
+		jmp CloseHandle
+		ud2
+
+		align 16
+	REVERT:
+		ret 4
 	}
 }
 
@@ -77,6 +96,7 @@ static __declspec(naked) int __stdcall SysUtils_GetExceptionObject_LoadResString
 #define NOP           (BYTE )0x90
 #define NOP_X2        (WORD )0x9090
 #define NOP_X4        (DWORD)0x90909090
+#define INT3          (BYTE )0xCC
 
 EXTERN_C void __cdecl Attach_ShowErrorMessage()
 {
@@ -148,15 +168,20 @@ EXTERN_C void __cdecl Attach_ShowErrorMessage()
 	// System::LoadResString
 	*(LPDWORD)(0x005D4355 + 1) = (DWORD)SysUtils_GetExceptionObject_LoadResString - (0x005D4355 + 1 + sizeof(DWORD));
 
+	// ::CloseHandle
+	*(LPBYTE )0x00600BCC = JMP_REL32;
+	*(LPDWORD)0x00600BCD = (DWORD)CloseHandleIgnoreInvalid - (0x00600BCD + sizeof(DWORD));
+	*(LPBYTE )0x00600BD1 = INT3;
+
 	// ::OpenProcess
 	*(LPBYTE )0x00600DE8 = JMP_REL32;
 	*(LPDWORD)0x00600DE9 = (DWORD)OpenProcessWithSaveError - (0x00600DE9 + sizeof(DWORD));
-	*(LPBYTE )0x00600DED = NOP;
+	*(LPBYTE )0x00600DED = INT3;
 
 	// ::WriteProcessMemory
 	*(LPBYTE )0x00600EA2 = JMP_REL32;
 	*(LPDWORD)0x00600EA3 = (DWORD)WriteProcessMemoryWithSaveError - (0x00600EA3 + sizeof(DWORD));
-	*(LPBYTE )0x00600EA7 = NOP;
+	*(LPBYTE )0x00600EA7 = INT3;
 
 	// "Ç≈ì«Ç›çûÇ›ÉGÉâÅ[ÅB"
 	// referenced at TSSGActionListner::OnSubjectWriteError

@@ -127,7 +127,7 @@ __declspec(naked) void __cdecl TSSGActionListner_OnSubjectDisabled_SetErrorMessa
 {
 	__asm
 	{
-		mov     dword ptr [dwErrorMessageId], ERROR_INVALID_FLAGS
+		mov     dword ptr [dwErrorMessageId], ERROR_DS_ILLEGAL_MOD_OPERATION
 		jmp     dword ptr [__InitExceptBlockLDTC]
 	}
 }

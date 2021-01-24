@@ -659,6 +659,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 				if (SSGS->type == stDIR)
 				{
 					TDirAttribute *NewAElem;
+#ifdef DECIDE_DURING_DECLARED
 					string  const *code = SubjectStringTable_GetString(&SSGS->code);
 					if (!string_empty(code))
 					{
@@ -667,6 +668,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 						SSGS->isRepeatable = TStringDivision_List(&this->strD, code, Tag, &tmpV, dtNEST) > 1;
 						vector_string_dtor(&tmpV);
 					}
+#endif
 
 					// dir
 					NewAElem = new_TDirAttribute();

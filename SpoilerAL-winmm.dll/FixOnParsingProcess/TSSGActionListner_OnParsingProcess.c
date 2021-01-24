@@ -7,12 +7,17 @@ size_t __fastcall _ui64to16a(unsigned __int64 value, char *buffer, BOOL upper);
 
 void __stdcall TSSGActionListner_OnParsingProcess(LPCSTR code, size_t codeLength, unsigned __int64 topVal)
 {
-	char *message, *p;
+	char message[0x1000], *p;
 
-	if (MainForm->userMode != 3 && MainForm->userMode != 4)
+	switch (TMainForm_GetUserMode(MainForm))
+	{
+	case 3:
+	case 4:
+		break;
+	default:
 		return;
-	message = (char *)HeapAlloc(hHeap, 0, codeLength + 34);
-	if (message == NULL)
+	}
+	if (codeLength + 34 > sizeof(message))
 		return;
 	p = message;
 	*(LPDWORD) p      = BSWAP32('Pars');
@@ -27,5 +32,4 @@ void __stdcall TSSGActionListner_OnParsingProcess(LPCSTR code, size_t codeLength
 	p += _ui64to16a(topVal, p, TRUE);
 	*(LPWORD)p = BSWAP16(']\0');
 	TMainForm_Guide(message, 0);
-	HeapFree(hHeap, 0, message);
 }

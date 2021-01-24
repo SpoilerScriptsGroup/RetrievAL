@@ -310,8 +310,8 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 					char   *buffer;
 
 					valueEnd = UnescapeParam(valueBegin, valueEnd);
-					string_begin(&src) = valueBegin;
-					string_end_of_storage(&src) = string_end(&src) = valueEnd;
+					string_end_of_storage(&src) = string_begin(&src) = valueBegin;
+					string_end(&src) = valueEnd;
 					number = ParsingDouble(this, SSGS, &src, 0);
 					if (option & FEP)
 						number = TSSGCtrl_CheckIO_FEPDouble(this, SSGS, number, FALSE);
@@ -361,8 +361,8 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 					size_t   args[] = { 0 };
 
 					valueEnd = UnescapeParam(valueBegin, valueEnd);
-					string_begin(&src) = valueBegin;
-					string_end_of_storage(&src) = string_end(&src) = valueEnd;
+					string_end_of_storage(&src) = string_begin(&src) = valueBegin;
+					string_end(&src) = valueEnd;
 					param = InternalParsing(this, SSGS, &src, TRUE, (va_list)args);
 					if (option & FEP)
 						param = TSSGCtrl_CheckIO_FEP(this, SSGS, (unsigned long)param, FALSE);
@@ -575,8 +575,8 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 					string s;
 
 					indexEnd = UnescapeParam(indexBegin, indexEnd);
-					string_begin(&s) = indexBegin;
-					string_end_of_storage(&s) = string_end(&s) = indexEnd;
+					string_end_of_storage(&s) = string_begin(&s) = indexBegin;
+					string_end(&s) = indexEnd;
 					index = Parsing(this, SSGS, &s, 0);
 					if (isFEP)
 						index = TSSGCtrl_CheckIO_FEP(this, SSGS, index, FALSE);

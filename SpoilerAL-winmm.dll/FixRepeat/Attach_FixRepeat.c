@@ -1,9 +1,10 @@
 #include <windows.h>
+#include <dhcpsapi.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "TMainForm.h"
 #include "ToolTip/ToolTip.h"
 
-EXTERN_C BOOL __cdecl TSSGCtrl_ReadSSRFile_CheckSignedParam();
+EXTERN_C DWORD_DWORD __fastcall TSSGCtrl_ReadSSRFile_CheckSignedParam(void *, void *, void *, void *, void *);
 EXTERN_C long __fastcall TSSGCtrl_ReadSSRFile_DestReserve(BOOL);
 EXTERN_C void __fastcall TSSGCtrl_ReadSSRFile_CompareLoopCounter(BOOL);
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0();
@@ -11,11 +12,18 @@ EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_FixWordRepeat();
 EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_Format();
 EXTERN_C unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, ...);
 
+#if USE_TOOLTIP
+extern BOOL bActive;
+#else
+#define bActive FALSE
+#endif
+
 static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(
 	unsigned long *const End,
 	unsigned long *const Begin,
 	vector_string *const tmpV,
 	TSSGCtrl      *const SSGC,
+	string  const *const Code,
 	TSSGSubject   *const SSGS)
 {
 	unsigned long   Step;
@@ -28,31 +36,31 @@ static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(
 	}
 	else
 	{
-		int error;
+		DWORD dwErrCode;
 		SetLastError(NO_ERROR);
 		*Begin = Parsing(SSGC, SSGS, &vector_at(tmpV, 1), 0);
 		*End   = Parsing(SSGC, SSGS, &vector_at(tmpV, 2), 0);
 		Step   = Parsing(SSGC, SSGS, &vector_at(tmpV, 3), 0);
 		if (!Step) Step = 1;
-		if ((error = GetLastError()) && error != ERROR_NO_MORE_FILES)
+		if ((dwErrCode = GetLastError()) && dwErrCode != ERROR_NO_MORE_FILES)
 		{
 			LPSTR lpBuffer;
 			*Begin = 0;
 			*End   = 0;
-			if (FormatMessageA(
-				FORMAT_MESSAGE_MAX_WIDTH_MASK * !USE_TOOLTIP |
+			if (!bActive && FormatMessageA(
+				FORMAT_MESSAGE_MAX_WIDTH_MASK |
 				FORMAT_MESSAGE_ALLOCATE_BUFFER |
 				FORMAT_MESSAGE_IGNORE_INSERTS |
 				FORMAT_MESSAGE_FROM_SYSTEM,
 				NULL,
-				error,
+				dwErrCode,
 				0,
 				(LPSTR)&lpBuffer,
 				sizeof(double),
 				NULL))
 			{
 #if USE_TOOLTIP
-				ShowToolTip(lpBuffer, (HICON)TTI_ERROR);
+				ShowToolTip(string_c_str(Code), (HICON)lpBuffer);
 #else
 				if (TMainForm_GetUserMode(MainForm) != 1)
 					TMainForm_Guide(lpBuffer, 0);
@@ -70,17 +78,57 @@ static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(
 	return Step;
 }
 
+static DWORD_DWORD __stdcall TSSGCtrl_ReadSSRFile_GetSSGDataFile_StepFile(
+	TSSGCtrl      *const this,
+	vector_string *const tmpV,
+	vector_string *const StepFile
+)
+{
+	LPSTR lpBuffer;
+	DWORD const dwErrCode = GetLastError();
+	if (!bActive && this->script.ePos
+		&& (!StepFile || dwErrCode && dwErrCode != ERROR_NO_MORE_FILES)
+		&& FormatMessageA(
+			FORMAT_MESSAGE_MAX_WIDTH_MASK |
+			FORMAT_MESSAGE_ALLOCATE_BUFFER |
+			FORMAT_MESSAGE_IGNORE_INSERTS |
+			FORMAT_MESSAGE_FROM_SYSTEM,
+			NULL,
+			dwErrCode ? dwErrCode : ERROR_INVALID_TARGET_HANDLE,
+			0,
+			(LPSTR)&lpBuffer,
+			sizeof(double),
+			NULL))
+	{
+#if USE_TOOLTIP
+		ShowToolTip(string_c_str(&vector_at(tmpV, 1)), (HICON)lpBuffer);
+#else
+		if (TMainForm_GetUserMode(MainForm) != 1)
+			TMainForm_Guide(lpBuffer, 0);
+#endif
+		LocalFree(lpBuffer);
+	}
+	if (!StepFile) string_clear(&vector_at(tmpV, 1));// prevent Parsing
+	return (DWORD_DWORD) { (DWORD)StepFile, !StepFile };// edx isn't 0 means set Begin, End, Step to 0, 0, 1
+}
+
 #define CALL_REL32  (BYTE)0xE8
 #define PUSH_EAX    (BYTE)0x50
+#define PUSH_EDX    (BYTE)0x52
+#define PUSH_ESI    (BYTE)0x56
+#define PUSH_EDI    (BYTE)0x57
 #define JMP_REL8    (BYTE)0xEB
 #define POP_EDX     (BYTE)0x5A
 #define POP_EBX     (BYTE)0x5B
 #define POP_EBP     (BYTE)0x5D
 #define POP_ESI     (BYTE)0x5E
 #define POP_EDI     (BYTE)0x5F
+#define PUSH_IMM8   (BYTE)0x6A
+#define MOV_ECX_ESI (WORD)0xCE8B
 #define MOV_ESP_EBP (WORD)0xE58B
 #define NOP         (BYTE)0x90
 #define NOP_X2      (WORD)0x9066
+#define NOP_X4     (DWORD)0x00401F0F 
 #define RET         (BYTE)0xC3
 #define SS_LEAVE    (WORD)0xC936
 #define JECXZ       (BYTE)0xE3
@@ -90,15 +138,16 @@ static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(
 EXTERN_C void __cdecl Attach_FixRepeat()
 {
 	// TSSGCtrl::ReadSSRFile
-	*(LPBYTE )0x004FEB85 = etTRIM;
-
-	*(LPBYTE )0x004FEBC4 = CALL_REL32;
-	*(LPDWORD)0x004FEBC5 = (DWORD)TSSGCtrl_ReadSSRFile_CheckSignedParam - (0x004FEBC5 + sizeof(DWORD));
-	*(LPBYTE )0x004FEBC9 = PUSH_EAX;
+	*(LPBYTE )0x004FEB85 = dtNEST | etTRIM;
 
 	// TSSGCtrl::ReadSSRFile
 	//   tmpV.resize(4,"_");
-	*(LPSTR* )(0x004FEBDD + 1) = "";
+	*(LPWORD )0x004FEBEC = BSWAP16(0x8B55);// mov edx,
+	*(LPBYTE )0x004FEBEE =         0x18   ;// dword ptr [SSGS]
+	*(LPWORD )0x004FEBF4 = MOV_ECX_ESI;
+	*(LPBYTE )0x004FEBF6 = CALL_REL32;
+	*(LPDWORD)0x004FEBF7 = (DWORD)TSSGCtrl_ReadSSRFile_CheckSignedParam - (0x004FEBF7 + sizeof(DWORD));
+	*(LPBYTE )0x004FEBFB = PUSH_EDX;
 
 	// TSSGCtrl::ReadSSRFile
 	//   refer to extra argument "SSGS"
@@ -111,6 +160,17 @@ EXTERN_C void __cdecl Attach_FixRepeat()
 	*(LPBYTE )(0x004FED84 + 1) = 0x6B;
 	*(LPBYTE )(0x004FED84 + 3) = 0x04;
 
+	// TSSGCtrl::ReadSSRFile
+	//   SetLastError(0) before GetSSGDataFile
+	*(LPBYTE )(0x004FF0A5 + 1) = 0x004FF123 - (0x004FF0A5 + 1 + sizeof(BYTE));
+	*(LPBYTE )(0x004FF0A9 + 0) = PUSH_IMM8;
+	*(LPBYTE )(0x004FF0A9 + 1) = 0;
+	*(LPBYTE )(0x004FF0AB + 0) = CALL_REL32;
+	*(LPDWORD)(0x004FF0AB + 1) = (DWORD)SetLastError - (0x004FF0AB + 1 + sizeof(DWORD));
+	*(LPDWORD) 0x004FF0B0      = NOP_X4;
+
+	// TSSGCtrl::ReadSSRFile
+	//   refer to extra argument "SSGS"
 	*(LPBYTE )(0x004FF0F2 + 0) = 0x81;
 	*(LPBYTE )(0x004FF0F2 + 3) = 0x00;
 	*(LPWORD )(0x004FF0F2 + 4) = 0x0000;
@@ -121,15 +181,23 @@ EXTERN_C void __cdecl Attach_FixRepeat()
 	*(LPBYTE )(0x004FF102 + 3) = 0x04;
 
 	// TSSGCtrl::ReadSSRFile
-	*(LPBYTE )0x004FF123 =         0xFF       ;// push dword ptr [SSGS]
-	*(LPDWORD)0x004FF124 = BSWAP32(0x75185756);// push this
-	*(LPBYTE )0x004FF128 = JMP_REL8           ;// push tmpV
-	*(LPBYTE )0x004FF129 = 0x004FF151 - (0x004FF129 + sizeof(BYTE));
+	//   after GetSSGDataFile
+	*(LPBYTE )0x004FF114 = PUSH_EAX;
+	*(LPBYTE )0x004FF115 = PUSH_ESI;
+	*(LPBYTE )0x004FF116 = PUSH_EDI;
+	*(LPBYTE )0x004FF117 = CALL_REL32;
+	*(LPDWORD)0x004FF118 = (DWORD)TSSGCtrl_ReadSSRFile_GetSSGDataFile_StepFile -(0x004FF118 + sizeof(DWORD));
 
-	*(LPBYTE )0x004FF151 =         0x8D       ;  
-	*(LPWORD )0x004FF152 = BSWAP16(0x9510    );// lea edx, [Begin]
-	*(LPDWORD)0x004FF154 = BSWAP32(0xFFFFFF8D);// lea ecx, [Begin - 4]
-	*(LPWORD )0x004FF158 = BSWAP16(0x4AFC);
+	// TSSGCtrl::ReadSSRFile
+	*(LPBYTE )0x004FF123 = JMP_REL8;
+	*(LPBYTE )0x004FF124 = 0x004FF149 - (0x004FF124 + sizeof(BYTE));
+
+	*(LPBYTE )0x004FF149 =         0xFF       ;// push dword ptr [SSGS]
+	*(LPWORD )0x004FF14A = BSWAP16(0x7518    );// push dword ptr [Code]
+	*(LPDWORD)0x004FF14C = BSWAP32(0xFF751057);// push this
+	*(LPDWORD)0x004FF150 = BSWAP32(0x568D9510);// push tmpV
+	*(LPDWORD)0x004FF154 = BSWAP32(0xFFFFFF8D);// lea  edx, [Begin]
+	*(LPWORD )0x004FF158 = BSWAP16(0x4AFC    );// lea  ecx, [Begin - 4]
 	*(LPBYTE )0x004FF15A = CALL_REL32;
 	*(LPDWORD)0x004FF15B = (DWORD)TSSGCtrl_ReadSSRFile_Parsing - (0x004FF15B + sizeof(DWORD));
 

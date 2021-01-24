@@ -40,7 +40,7 @@ void __cdecl    TMainForm_SetCalcNowValue_TSSCalc_GetNowValHeadStr();
 #define         TMainForm_SetCalcNowValue_TSSCalc_GetNowValFootStr          TMainForm_SetCalcNowValue_TSSCalc_GetNowValHeadStr
 void __cdecl    TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValHeadStr();
 #define         TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValFootStr     TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValHeadStr
-void __cdecl    TMainForm_DrawTreeCell_GetStrParam();
+void __stdcall  TMainForm_DrawTreeCell_GetStrParam(void *, void *);
 void __cdecl    TFindNameForm_EnumSubjectNameFind_GetName();
 
 extern BOOL FixTheProcedure;
@@ -891,7 +891,9 @@ static __inline void AttachOperator()
 
 	// TMainForm::DrawTreeCell
 	SET_PROC (0x00444FBB, TMainForm_DrawTreeCell_GetStrParam);
+	*(LPBYTE )0x00444FC9 = 0;// stack size to discard
 	SET_PROC (0x004451C3, TMainForm_DrawTreeCell_GetStrParam);
+	*(LPBYTE )0x004451DB = 0;// stack size to discard
 
 	// TSSGSubject::Setting
 	//   subjectName=name; => subjectName.sstIndex=name.sstIndex;
@@ -1857,7 +1859,7 @@ static __inline void AttachOperator()
 
 static void __cdecl TSSGCtrl_AddressAttributeFilter_GetOffsetCode(string* const AddressStr, const string* const offsetCode) {
 	*AddressStr = *offsetCode;
-	string_end_of_storage(AddressStr) = string_begin(AddressStr);// prevent dealloc
+	string_end_of_storage(AddressStr) = string_begin(AddressStr);// Non-allocated mark.
 }
 
 static void __fastcall TSSGCtrl_GetAddress_Trim(string* const Trim, const string* const AddressStr) {
@@ -1872,23 +1874,42 @@ static void __fastcall TSSGCtrl_GetAddress_Trim(string* const Trim, const string
 		while (p > string_begin(Trim) && __intrinsic_isspace(p[-1])) --p;
 		string_end(Trim) = (LPSTR)p;
 	}
-	if (string_begin(AddressStr) && string_begin(AddressStr) == string_end_of_storage(AddressStr))
-		string_end_of_storage(Trim) = string_begin(Trim);
+	string_end_of_storage(Trim) = string_begin(Trim);// Non-allocated mark.
 }
 
-static void __cdecl TSSGCtrl_GetAddress_tmpS_ctor(string* const dest, const string* const src) {
-	*dest = *src;
+static void __cdecl TSSGCtrl_GetAddress_tmpS_ctor(string* const tmpS, const string* const Trim) {
+	*tmpS = *Trim;
+#if 0// Pre-processed in TSSGCtrl_GetAddress_Trim.
+	string_end_of_storage(tmpS) = string_begin(tmpS);// Non-allocated mark.
+#endif
 }
 
 static void __fastcall TSSGCtrl_GetAddress_substr(string* const substr, const string* const tmpS) {
 	*substr = *tmpS;
 	++string_begin(substr);
-	if (string_begin(tmpS) && string_begin(tmpS) == string_end_of_storage(tmpS))
-		string_end_of_storage(substr) = string_begin(substr);
+	string_end_of_storage(substr) = string_begin(substr);// Non-allocated mark.
+}
+
+static void __cdecl TSSGCtrl_StrToProcessAccessElementVec_Code_substr(
+	string       *const substr,
+	string const *const Code,
+	size_t        const __pos,
+	size_t        const __n) {
+	*substr = *Code;
+	string_end_of_storage(substr) = string_begin(substr) += __pos;// Non-allocated mark.
+	string_end(substr) = string_begin(substr) + __n;
+}
+
+static void __cdecl TSSGCtrl_IsEnabled_GetCode(
+	string       *const Src,
+	string const *const code) {
+	*Src = *code;
+	string_end_of_storage(Src) = string_begin(Src);// Non-allocated mark.
 }
 
 static __inline void AttachStringReference() {
 	// TSSGCtrl::GetAddress
+	//   tmpS( strD.Trim(AddressStr) )
 	SET_PROC(0x00503966, TSSGCtrl_GetAddress_Trim);
 	SET_PROC(0x0050397A, TSSGCtrl_GetAddress_tmpS_ctor);
 	*(LPBYTE)0x0050399E = OPCODE_JMP_REL8;// omit dtor Trim
@@ -1896,6 +1917,7 @@ static __inline void AttachStringReference() {
 	*(LPBYTE)0x005039F5 = OPCODE_JMP_REL8;// omit dtor tmpS
 
 	//   case '_':
+	//     string(tmpS.substr(1,string::npos))
 	SET_PROC(0x00503A61, TSSGCtrl_GetAddress_substr);
 	NPAD5   (0x00503A75);                 // omit ctor Src
 	*(LPBYTE)0x00503AA7 = OPCODE_JMP_REL8;// omit dtor Src
@@ -1923,8 +1945,21 @@ static __inline void AttachStringReference() {
 	*(LPBYTE)0x00503F6D = OPCODE_JMP_REL8;// omit dtor tmpS
 
 	// TSSGCtrl::AddressAttributeFilter
+	//   tmpAE->GetOffsetCode()
 	SET_PROC(0x005041B3, TSSGCtrl_AddressAttributeFilter_GetOffsetCode);
 	*(LPBYTE)0x005041EE = OPCODE_JMP_REL8;// omit dtor AddressStr
+
+#if 0//incompatible with `TStringDivision::ToULongDef`
+	// TSSGCtrl::StrToProcessAccessElementVec
+	//   Code.substr(i+2, PosSep-(i+2))
+	SET_PROC(0x0050AF15, TSSGCtrl_StrToProcessAccessElementVec_Code_substr);
+	*(LPBYTE)0x0050AF69 = OPCODE_JMP_REL8;// omit dtor AddressStr
+#endif
+
+	// TSSGCtrl::IsEnabled
+	//   ((TEnabledAttribute*)*VIt)->GetCode()
+	SET_PROC(0x00511240, TSSGCtrl_IsEnabled_GetCode);
+	*(LPBYTE)0x0051127E = OPCODE_JMP_REL8;// omit dtor Src
 }
 
 void __cdecl Attach_SubjectStringTable()

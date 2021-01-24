@@ -138,32 +138,11 @@ __declspec(naked) static void __fastcall TMainForm_FormatNameString(TSSGCtrl *th
 	}
 }
 
-static void __fastcall ModifySplit(string *dest, string *src, TMainForm *this, TSSGSubject *TSSS);
-
-__declspec(naked) void __cdecl TMainForm_DrawTreeCell_GetStrParam()
-{
-	__asm
-	{
-		#define this ebx
-		#define SSGS (ebp - 1E0H)
-
-		mov     edx, dword ptr [SSGS]
-		pop     eax
-		mov     ecx, dword ptr [esp - 4 + 8]
-		push    edx
-		push    this
-		push    eax
-		call    SubjectStringTable_GetString
-		mov     edx, eax
-		mov     ecx, dword ptr [esp + 8 + 4]
-		jmp     ModifySplit
-
-		#undef this
-		#undef SSGS
-	}
-}
-
-static void __fastcall ModifySplit(string *dest, string *src, TMainForm *this, TSSGSubject *SSGS)
+static void __fastcall ModifySplit(
+	TMainForm    *const this,
+	TSSGSubject  *const SSGS,
+	string       *const dest,
+	string const *const src)
 {
 	if (!string_empty(src))
 	{
@@ -174,6 +153,25 @@ static void __fastcall ModifySplit(string *dest, string *src, TMainForm *this, T
 	else
 	{
 		TSSGSubject_GetSubjectName(dest, SSGS, &this->ssgCtrl);
+	}
+}
+
+__declspec(naked) void __stdcall TMainForm_DrawTreeCell_GetStrParam(string *const tmpS, string const *strParam)
+{
+	__asm
+	{
+		#define this  ebx
+		#define SSGS (ebp - 0x01E0)
+
+		mov     ecx, dword ptr [esp + 8]
+		call    SubjectStringTable_GetString
+		mov     dword ptr [esp + 8], eax
+		mov     edx, dword ptr [SSGS]
+		mov     ecx, this
+		jmp     ModifySplit
+
+		#undef this
+		#undef SSGS
 	}
 }
 

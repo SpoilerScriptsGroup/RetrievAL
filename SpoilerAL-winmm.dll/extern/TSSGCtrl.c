@@ -1,7 +1,8 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TSSGCtrl.h"
 
-void(__cdecl *const TSSGCtrl_LockClear)(TSSGCtrl *this) = (LPVOID)0x004E4408;
+void(__cdecl * const TSSGCtrl_LockClear)(TSSGCtrl *this) = (LPVOID)0x004E4408;
+BOOLEAN(__cdecl * const TSSGCtrl_IsEnabled)(TSSGCtrl *this, TSSGSubject *SSGS) = (LPVOID)0x005111E0;
 TSSGSubject *(__cdecl * const TSSGCtrl_MakeSubjectClass)(const string *Tag) = (LPVOID)0x004EC3EC;
 LPVOID(__cdecl * const TSSGCtrl_MakeAdjustmentClass)(const string *) = (LPVOID)0x004ED738;
 TSSGSubject *(__cdecl * const TSSGCtrl_GetTargetSubject)(TSSGSubject *SSGS) = (LPVOID)0x004EDF84;

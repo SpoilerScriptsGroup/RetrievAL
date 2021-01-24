@@ -6,22 +6,27 @@ __declspec(naked) void __cdecl TMainForm_DGridMouseMove_DrawTree()
 	{
 		#define _NULL         0
 		#define this          ebx
-		#define ReturnAddress 00446C6DH
 
-		mov     ecx, [this]TMainForm.userMode
-		cmp     ecx, 4
-		setae   al
-		movzx   eax, al
+		cmp     [this]TMainForm.userMode, 4
+		sbb     eax, eax
+		inc     eax
+#if DRAWTREE_CONVENTION
 		push    eax
 		push    0
+#else
+		ror     eax, 1
+		push    eax
+#endif
 		push    0
 		push    _NULL
 		push    this
-		push    ReturnAddress
-		jmp     TMainForm_DrawTree
+		call    TMainForm_DrawTree
+#if !DRAWTREE_CONVENTION
+		add     esp, 16
+#endif
+		ret
 
 		#undef _NULL
 		#undef this
-		#undef ReturnAddress
 	}
 }

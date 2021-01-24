@@ -183,7 +183,16 @@ EXTERN_C void(__cdecl * const TMainForm_DrawTreeCell)(TMainForm *this, LPVOID De
 EXTERN_C void(__cdecl * const TMainForm_ChangeSubjectPanel)(TMainForm *this, long Type);
 EXTERN_C void(__cdecl * const TMainForm_GoCalcHexChange)(TMainForm *this, boolean IsCalcHex);
 
-EXTERN_C void __stdcall TMainForm_DrawTree(TMainForm *this, LPVOID DestCanvas, long LeftOffset, long TopOffset, BOOL IgnoreDebug);
+#define DRAWTREE_CONVENTION 0
+EXTERN_C void
+#if DRAWTREE_CONVENTION
+__stdcall
+#endif
+TMainForm_DrawTree(TMainForm *this, LPVOID DestCanvas, long LeftOffset, long TopOffset
+#if DRAWTREE_CONVENTION
+				   , BOOL IgnoreDebug
+#endif
+);
 
 EXTERN_C void __fastcall _TMainForm_FormMouseWheel(TMainForm *this, LPVOID Sender, WORD Shift, BOOLEAN *Handled, POINT *MousePos, int WheelDelta);
 #define TMainForm_FormMouseWheel(this, Sender, Shift, Handled, MousePos, WheelDelta) TMainForm_FormMouseWheel(this, Sender, Shift, WheelDelta, MousePos, Handled)

@@ -4,29 +4,20 @@
 #include "TSSGCtrl.h"
 #include <mbstring.h>
 
-EXTERN_C void __cdecl FixGetSSGDataFile();
+EXTERN_C void*__stdcall FixGetSSGDataFile(void *);
 EXTERN_C void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
 
-static __declspec(naked) void TSSGCtrl_GetSSGDataFile_Half(
-	bcb6_std_string *FileName,
-	TStringDivision *strD,
-	bcb6_std_string *FName,
-	bcb6_std_string  Token,
-	unsigned long    Index,
-	unsigned long    Option) {
+static string * __stdcall TSSGCtrl_GetSSGDataFile_Half(
+	TSSGSubject  *const SSGS,
+	string       *const FName,
+	string const *const Token,
+	char   const *const __s,
+	void   const *const __a)
+{
 	extern BOOL EnableParserFix;
-	__asm {// eax is FName already
-		cmp  EnableParserFix, 0
-		je   SKIP
-		mov  edx, [ebp + 0x0C]// SSGS
-		test edx, edx
-		jz   SKIP
-		push eax
-		push edx
-		call ReplaceDefineDynamic
-	SKIP:
-		jmp  TStringDivision_Half
-	}
+	if (EnableParserFix && SSGS)
+		ReplaceDefineDynamic(SSGS, FName);
+	return FName;
 }
 
 static BOOL __fastcall FunctionableGroup(string *name, vector_string *func)
@@ -196,15 +187,23 @@ static void __cdecl TSSGCtrl_SetSSGDataFile_insert(
 	}
 }
 
+#define PUSH_EAX  (BYTE)0x50
 #define CALL_REL  (BYTE)0xE8
 #define JMP_REL32 (BYTE)0xE9
 
 EXTERN_C void __cdecl Attach_FixGetSSGDataFile()
 {
 	// TSSGCtrl::GetSSGDataFile
-	*(LPDWORD)(0x004EF8E9 + 1) = (DWORD)TSSGCtrl_GetSSGDataFile_Half - (0x004EF8E9 + 1 + sizeof(DWORD));
+	*(LPBYTE )(0x004EF8C3 + 0) =         0x8D   ;// lea  edx, [ebp + 0x10]
+	*(LPWORD )(0x004EF8C3 + 1) = BSWAP16(0x5510);// push edx
+	*(LPWORD ) 0x004EF8C6      = BSWAP16(0x5257);// push edi
+	*(LPBYTE )(0x004EF8C8 + 0) = CALL_REL;
+	*(LPDWORD)(0x004EF8C8 + 1) = (DWORD)TSSGCtrl_GetSSGDataFile_Half - (0x004EF8C8 + 1 + sizeof(DWORD));
+	*(LPBYTE )(0x004EF8E5 + 3) = 0;
 
-	*(LPDWORD)(0x004EF9C2 + 1) = (DWORD)FixGetSSGDataFile - (0x004EF9C2 + 1 + sizeof(DWORD));
+	*(LPDWORD) 0x004EF8F1      = PUSH_EAX;
+	*(LPDWORD)(0x004EF8F2 + 0) = CALL_REL;
+	*(LPDWORD)(0x004EF8F2 + 1) = (DWORD)FixGetSSGDataFile - (0x004EF8F2 + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::SetSSGDataFile
 	*(LPDWORD)0x004F0B08 = BSWAP32(0x52568D55);

@@ -54,7 +54,7 @@ typedef struct _TSSGCtrl
 EXTERN_C void(__cdecl * const TSSGCtrl_LockClear)(TSSGCtrl *this);
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSG(
 	TSSGCtrl *this, bcb6_std_vector_string *SSGFile, bcb6_std_stack *ParentStack, TDialogAdjustmentAttribute *ADJElem, DWORD RepeatIndex, DWORD OuterRepeat);
-EXTERN_C BOOLEAN __cdecl TSSGCtrl_IsEnabled(TSSGCtrl *this, TSSGSubject *SSGS);
+EXTERN_C BOOLEAN (__cdecl * const TSSGCtrl_IsEnabled)(TSSGCtrl *this, TSSGSubject *SSGS);
 EXTERN_C unsigned long __cdecl TSSGCtrl_MakeSubjectType(const bcb6_std_string *Tag);
 EXTERN_C TSSGSubject *(__cdecl * const TSSGCtrl_MakeSubjectClass)(const bcb6_std_string *Tag);
 EXTERN_C LPVOID(__cdecl * const TSSGCtrl_MakeAdjustmentClass)(const bcb6_std_string *);

@@ -11,7 +11,7 @@ EXTERN_C void __cdecl TMainForm_dtor();
 EXTERN_C void __cdecl TMainForm_LoadSetting_ListLBox_Font_SetName();
 EXTERN_C void __cdecl TMainForm_LoadSetting_SetUserMode();
 EXTERN_C void __cdecl TMainForm_SubjectAccess_FixDirSameChildren();
-EXTERN_C void __cdecl TSSGSubject_Write_WithDrawTree();
+EXTERN_C UINT __stdcall TSSGSubject_Write_WithDrawTree(LPVOID, LPVOID, LPVOID);
 EXTERN_C void __cdecl Caller_TMainForm_SetLockVisible_ModifyLockName();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_DrawHover();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_FixLabelDrawX();
@@ -426,9 +426,11 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPWORD )0x0044695F = NOP_X2;
 
 	// TMainForm::DGridMouseMove
-	*(LPBYTE )0x00446C5F = JMP_REL32;
-	*(LPDWORD)0x00446C60 = (DWORD)TMainForm_DGridMouseMove_DrawTree - (0x00446C60 + sizeof(DWORD));
-	*(LPBYTE )0x00446C64 = NOP;
+#if 0// replaced at "OptimizeGuide\OptimizeGuide.c" - TMainForm_DGridDrawCell_DrawTreeCell
+	*(LPBYTE )0x00446C67 = CALL_REL32;
+	*(LPDWORD)0x00446C68 = (DWORD)TMainForm_DGridMouseMove_DrawTree - (0x00446C68 + sizeof(DWORD));
+	*(LPBYTE )0x00446C6C = NOP;
+#endif
 
 	// TMainForm::FormResize
 	*(LPDWORD)(0x00446DB2 + 1) = (DWORD)TMainForm_FormResize_CheckTreeSize - (0x00446DB2 + 1 + sizeof(DWORD));

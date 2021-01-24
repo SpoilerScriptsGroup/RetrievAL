@@ -233,8 +233,12 @@ static void __fastcall TSSDir_GetSubjectVec_onOpen(TSSGSubject *const SSGS, TSSG
 	static void(__cdecl *const stack_ptr_ctor)(pdeque this, rsize_t __n) = (void *)0x004E49B0;
 	static void(__cdecl *const stack_ptr_dtor)(pdeque this, BOOL delete) = (void *)0x004E4FA8;
 #define ABBREV_SELECT 1
+	string Token;
+	vector_string tmpV = { NULL };
 	const string *Code = SubjectStringTable_GetString(&SSGS->code);
-	if (SSGS->isRepeatable)
+	if (string_empty(Code))
+		return;
+	else if (TStringDivision_List(&SSGC->strD, Code, *string_ctor_assign_char(&Token, ','), &tmpV, dtNEST) > 1)
 	{
 		TSSDir *const this = (void *)SSGS;
 		vector *const attr = TSSGSubject_GetAttribute(SSGS);
@@ -309,8 +313,9 @@ static void __fastcall TSSDir_GetSubjectVec_onOpen(TSSGSubject *const SSGS, TSSG
 		}
 		TSSGAttributeSelector_EndElementCheck(TSSGCtrl_GetAttributeSelector(SSGC));
 	}
-	else if (!string_empty(Code))
+	else
 		Parsing(SSGC, SSGS, Code, 0);
+	vector_string_dtor(&tmpV);
 }
 
 static void __declspec(naked) TSSGCtrl_ChangeDirectorySubject_GetSubjectVec(TSSDir *this, long Mode, pvector_PTSSGSubject Vec)

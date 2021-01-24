@@ -161,10 +161,8 @@ static __inline void OnProcessAttach()
 		IsProcessAttached = TRUE;
 		if (!string_empty(&ProcessAttachCode))
 		{
-			dummySSGS.type = -1;
 			dummySSGS.attribute = ProcessAttachAttribute;
 			Parsing(&MainForm->ssgCtrl, &dummySSGS, &ProcessAttachCode, 0);
-			dummySSGS.type = stNONE;
 			dummySSGS.attribute = NULL;
 		}
 	}
@@ -178,10 +176,8 @@ void __cdecl OnProcessDetach(TProcessCtrl *const proc)
 		if (!string_empty(&ProcessDetachCode))
 		{
 			InProcessDetached = TRUE;
-			dummySSGS.type = -1;
 			dummySSGS.attribute = ProcessDetachAttribute;
 			Parsing(&MainForm->ssgCtrl, &dummySSGS, &ProcessDetachCode, 0);
-			dummySSGS.type = stNONE;
 			dummySSGS.attribute = NULL;
 			InProcessDetached = FALSE;
 		}

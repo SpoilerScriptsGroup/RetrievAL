@@ -10,6 +10,7 @@ string * __cdecl FixToggleByteArray(string *Result, TStringDivision *strD, strin
 {
 	LPSTR lpFind, lpPtr;
 	char  ch;
+	int   nest = 0;
 
 	string_dtor(&Token);
 	string_ctor(Result);
@@ -18,6 +19,18 @@ string * __cdecl FixToggleByteArray(string *Result, TStringDivision *strD, strin
 	{
 		if (!__intrinsic_isleadbyte(ch))
 		{
+			if (ch == '(' || ch == '{')
+			{
+				nest++;
+				continue;
+			}
+			if (ch == ')' || ch == '}')
+			{
+				nest--;
+				continue;
+			}
+			if (nest)
+				continue;
 			if (ch == '-')
 			{
 				lpFind = lpPtr;

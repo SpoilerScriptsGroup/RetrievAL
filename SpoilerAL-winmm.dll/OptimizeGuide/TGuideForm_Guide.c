@@ -102,11 +102,9 @@ void TGuideForm::Guide(const char *Mes, int Flags)
 
 LRESULT __stdcall DrawGuideBuffer(WNDPROC lpPrevWndFunc, HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (nTextLength)
+	if (nTextLength || bClear)
 	{
-		HWND hWnd;
-
-		hWnd = TWinControl_GetHandle(MainForm->guideForm->REdit);
+		HWND const hWnd = TWinControl_GetHandle(MainForm->guideForm->REdit);
 		if (bClear)
 		{
 			bClear = FALSE;
@@ -114,10 +112,10 @@ LRESULT __stdcall DrawGuideBuffer(WNDPROC lpPrevWndFunc, HWND hWnd, UINT uMsg, W
 		}
 		else
 		{
-			SendMessageA(hWnd, EM_SETSEL, LONG_MAX, LONG_MAX);
+			SendMessageA(hWnd, EM_SETSEL, -1, -1);
 			SendMessageA(hWnd, EM_REPLACESEL, FALSE, (LPARAM)lpszTextBuffer);
-			PostMessageA(hWnd, EM_SCROLLCARET, 0, 0);
 		}
+		PostMessageA(hWnd, WM_VSCROLL, SB_BOTTOM, 0);
 		nTextLength = 0;
 	}
 	return 0;

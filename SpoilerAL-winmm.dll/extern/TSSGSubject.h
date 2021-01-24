@@ -77,7 +77,7 @@ typedef struct _TSSGSubject
 			bool    isOpen       : 1;
 			bool    isLocked     : 1;
 			bool    isCanUnknown : 1;
-			bool    isRepeatable : 1;
+			bool    isRepeatable : 1;// Reserved.
 			bool    withFEP      : 1;
 		};
 	};

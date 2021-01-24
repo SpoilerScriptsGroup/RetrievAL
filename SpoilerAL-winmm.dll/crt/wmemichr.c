@@ -72,7 +72,6 @@ __declspec(naked) static wchar_t * __cdecl wmemichrAVX2(const wchar_t *buffer, w
 		align   16
 	retnull:
 		xor     eax, eax
-		vzeroupper
 		ret
 
 		#undef buffer

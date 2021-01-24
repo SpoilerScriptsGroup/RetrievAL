@@ -206,7 +206,7 @@ static void (*sfmt_gen_rand_all)() = sfmt_gen_rand_all_cpu_dispatch;
 /**
  * parameters used by sse2.
  */
-static const w128_t __declspec(align(32)) sse2_param_mask = { {
+static const w128_t __declspec(align(16)) simd_param_mask = { {
 	SFMT_MSK(0) & (UINT32_MAX >> SFMT_SR1),
 	SFMT_MSK(1) & (UINT32_MAX >> SFMT_SR1),
 	SFMT_MSK(2) & (UINT32_MAX >> SFMT_SR1),
@@ -247,9 +247,9 @@ static void sfmt_gen_rand_all_avx2(sfmt_t *sfmt)
 	assert(SFMT_N % 2 == 0);
 	assert(SFMT_POS1 % 2 == 0);
 	assert((size_t)sfmt % 32 == 0);
-	assert((size_t)&sse2_param_mask % 32 == 0);
+	assert((size_t)&simd_param_mask % 16 == 0);
 
-	r5 = _mm256_broadcastsi128_si256(sse2_param_mask.si);
+	r5 = _mm256_broadcastsi128_si256(simd_param_mask.si);
 	r4 = _mm256_loadu_si256((__m256i *)(sfmt + SFMT_N) - 1);
 	offset = LE_MINUS(SFMT_N - SFMT_POS1) * 16;
 	do
@@ -294,11 +294,11 @@ static void sfmt_gen_rand_all_sse2()
 	ptrdiff_t offset;
 
 	assert((size_t)sfmt % 16 == 0);
-	assert((size_t)&sse2_param_mask % 16 == 0);
+	assert((size_t)&simd_param_mask % 16 == 0);
 
 	r2 = _mm_load_si128(sfmt + IDX128(SFMT_N - 1));
 	r3 = _mm_load_si128(sfmt + IDX128(SFMT_N - 2));
-	r4 = _mm_load_si128(&sse2_param_mask.si);
+	r4 = _mm_load_si128(&simd_param_mask.si);
 	offset = LE_MINUS(SFMT_N - SFMT_POS1) * 16;
 	do
 		mm_recursion(r2, r3, r4,
@@ -352,7 +352,7 @@ __declspec(naked) static void __cdecl sfmt_gen_rand_all_avx2()
 {
 	__asm
 	{
-		vbroadcasti128 ymm5, xmmword ptr [sse2_param_mask]
+		vbroadcasti128 ymm5, xmmword ptr [simd_param_mask]
 		vmovdqa ymm4, ymmword ptr [state + IDX128(SFMT_N - 2) * 16]
 		mov     eax, LE_MINUS(SFMT_N - SFMT_POS1) * 16
 
@@ -407,7 +407,7 @@ __declspec(naked) static void __cdecl sfmt_gen_rand_all_sse2()
 	{
 		movdqa  xmm2, xmmword ptr [state + IDX128(SFMT_N - 1) * 16]
 		movdqa  xmm3, xmmword ptr [state + IDX128(SFMT_N - 2) * 16]
-		movdqa  xmm4, xmmword ptr [sse2_param_mask]
+		movdqa  xmm4, xmmword ptr [simd_param_mask]
 		mov     eax, LE_MINUS(SFMT_N - SFMT_POS1) * 16
 
 		align   16

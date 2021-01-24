@@ -70,7 +70,6 @@ __declspec(naked) static void * __cdecl memichrAVX2(const void *buffer, int c, s
 		align   16
 	retnull:
 		xor     eax, eax
-		vzeroupper
 		ret
 
 		#undef buffer

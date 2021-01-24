@@ -50,7 +50,6 @@ __declspec(naked) void * __cdecl memrchrAVX2(const void *buffer, int c, size_t c
 		align   16
 	retnull:
 		xor     eax, eax
-		vzeroupper
 		ret
 
 		#undef buffer

@@ -1,8 +1,8 @@
 #include "TCanvas.h"
 
-extern const DWORD F005E0D50;
+extern const DWORD vcl_System_AnsiString_ctor_sz;
 extern const DWORD F0055E418;
-extern const DWORD F005E0EA8;
+extern const DWORD vcl_System_AnsiString_dtor;
 
 __declspec(naked) void __fastcall TCanvas_FillRect(LPVOID this, const RECT *rect)
 {
@@ -56,7 +56,7 @@ __declspec(naked) void __fastcall TCanvas_TextOut(LPVOID *this, int X, int Y, LP
 		mov     edx, dword ptr [Text]
 		push    eax
 		mov     eax, esp
-		call    dword ptr [F005E0D50]
+		call    dword ptr [vcl_System_AnsiString_ctor_sz]
 		mov     ecx, dword ptr [eax]
 		push    ecx
 		mov     ecx, dword ptr [Y + 4]
@@ -65,7 +65,7 @@ __declspec(naked) void __fastcall TCanvas_TextOut(LPVOID *this, int X, int Y, LP
 		call    dword ptr [F0055E418]
 		mov     edx, 2
 		mov     eax, esp
-		call    dword ptr [F005E0EA8]
+		call    dword ptr [vcl_System_AnsiString_dtor]
 		pop     eax
 		ret     16
 

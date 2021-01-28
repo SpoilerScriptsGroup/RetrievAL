@@ -12,7 +12,7 @@
 
 void __cdecl TSSGCtrl_TrimString();
 
-extern const DWORD bcb6_std_string_substr;
+extern const DWORD _STL_string_substr;
 extern const DWORD F0050123C;
 extern const DWORD __InitExceptBlockLDTC;
 
@@ -143,7 +143,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		push    edx
 		lea     ecx, [ebp - 40H]
 		push    ecx
-		call    dword ptr [bcb6_std_string_substr]
+		call    dword ptr [_STL_string_substr]
 		add     esp, 16
 		lea     ecx, [ebp - 40H]
 		push    ecx

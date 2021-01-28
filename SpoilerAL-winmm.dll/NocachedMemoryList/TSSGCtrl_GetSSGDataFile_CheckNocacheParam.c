@@ -26,7 +26,7 @@ static BOOL __fastcall TSSGCtrl_GetSSGDataFile_CheckNocacheParam(vector_string *
 
 static map_iterator __fastcall TSSGCtrl_GetSSGDataFile_findCache(TSSGCtrl *const SSGC, const string *const FName)
 {
-	map_iterator it = map_string_find(&SSGC->dataFileMap, FName);
+	map_iterator it = map_find(&SSGC->dataFileMap, FName);
 	return it == map_end(&SSGC->dataFileMap) ? NULL : it;
 }
 

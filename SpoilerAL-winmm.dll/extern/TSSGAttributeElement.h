@@ -495,18 +495,19 @@ typedef struct _THeapAdjustmentAttribute {
 //----------------------------------------------------------------------------
 typedef struct value_type
 {
-	const   unsigned long Identifier;
-#pragma pack(push, 4)
-	union
+	// const
+	bcb6_std_string  Identifier;
+	union data_type
 	{
-		struct
+		struct mapped_type
 		{
-			unsigned long Low;
-			unsigned long High;
+			unsigned Low;
+			unsigned High;
 		};
-		signed  long long Quad;
+		long    long Quad;
+		long  double Real;
+		const LPCSTR Text;
 	};
-#pragma pack(pop)
 } ScopeVariant;
 //----------------------------------------------------------------------------
 //「CRC補正属性クラス」

@@ -13,7 +13,7 @@ extern const DWORD TSSGScriptStruct_GetTitleTextWidth_CtorData[];
 __declspec(naked) void __fastcall delete_TSSGSubject(TSSGSubject *this)
 {
 	static const struct DTT vt[] = {
-		(void *)0x00462E80, 0x0000500F, -(signed)sizeof(LPVOID) * 3,
+		(void *)0x00462E80, 0x0000500F, -(signed)(sizeof(LPVOID) * 3),
 		NULL,// sentinel, dttFrameOffs = void *[2] + args shadow
 	};
 	static const EXCTAB ERRcXtab = {

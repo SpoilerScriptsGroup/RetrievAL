@@ -140,9 +140,11 @@ static char * __fastcall FindDelimiter(const char *p, const char *end)
 		switch (*p)
 		{
 		case '(':
+		case '{':
 			nest++;
 			break;
 		case ')':
+		case '}':
 			if (nest)
 				nest--;
 			break;

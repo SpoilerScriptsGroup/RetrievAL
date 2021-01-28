@@ -4,10 +4,12 @@
 
 #pragma warning(disable:4733)
 
-map_iterator(__cdecl * const map_find)(map *, const DWORD *) = (LPVOID)0x004D4008;
-map_iterator(__cdecl * const map_lower_bound)(map *, const DWORD *) = (LPVOID)0x004D0A44;// string-double 0x0051A770;
-void(__cdecl * const map_dword_dw_dw_insert)(map_iterator *, map *, map_iterator, const void *) = (LPVOID)0x004D0ABC;// string-double = 0x0051AF0C;
-map_iterator(__cdecl * const map_string_find)(map *, const string *) = (LPVOID)0x004F0758;
+map_iterator(__cdecl * const bcb6_std_map_find)(map *, const DWORD *) = (LPVOID)0x004D4008;
+map_iterator(__cdecl * const bcb6_std_map_lower_bound)(map *, const DWORD *) = (LPVOID)0x004D0A44;
+map_iterator(__cdecl * const bcb6_std_map_string_find)(map *, const string *) = (LPVOID)0x004F0758;
+map_iterator(__cdecl * const bcb6_std_map_string_lower_bound)(map *, const string *) = (LPVOID)0x0051A770;
+void(__cdecl * const map_dword_dw_dw_insert)(map_iterator *, map *, map_iterator, const void *) = (LPVOID)0x004D0ABC;
+void(__cdecl * const map_string_quad_insert)(map_iterator *, map *, map_iterator, const void *) = (LPVOID)0x0051AF0C;
 map_iterator(__cdecl * const _Rb_global_M_increment)(map_iterator it) = (LPVOID)0x005F532C;
 map_iterator(__cdecl * const _Rb_global_M_decrement)(map_iterator it) = (LPVOID)0x005F5360;
 void(__cdecl *const _Rb_global_Rebalance)(map_iterator, map_iterator *) = (LPVOID)0x005F4F9C;

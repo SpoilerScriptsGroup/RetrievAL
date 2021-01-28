@@ -1,30 +1,44 @@
 #define _CRT_SECURE_NO_WARNINGS
+#include <windows.h>
 #define _NO_CRT_STDIO_INLINE
 #include <stdio.h>
-#include <windows.h>
 #include <intrin.h>
 #define USING_NAMESPACE_BCB6_STD
-#include "bcb6_std_vector_string.h"
+#include "TSSGCtrl.h"
 
 extern HANDLE hHeap;
-
 #ifdef _NO_CRT_STDIO_INLINE
-void __fastcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC, vector_string* tmpV)
+void __fastcall AddressNamingFromUnicode(
+	unsigned long  const DataSize,
+	char          *const tmpC,
+	vector_string *const tmpV,
+	TSSGCtrl      *const SSGCtrl,
+	TSSGSubject   *const SSGS)
 {
+
 	LPWSTR lpWideCharStr;
-	string* format = &vector_type_at(tmpV, string, 5);
-	if (lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, DataSize + sizeof(wchar_t))) {
-		__movsw((unsigned short *)lpWideCharStr, (const unsigned short *)tmpC, DataSize >> 1);
+	string *const format = &vector_at(tmpV, 5);
+	if (lpWideCharStr = HeapAlloc(hHeap, 0, DataSize + sizeof(wchar_t)))
+	{
+		__movsw(lpWideCharStr, (wchar_t *)tmpC, DataSize >> 1);
 		lpWideCharStr[DataSize >> 1] = L'\0';
-		_snprintf(tmpC, DataSize + 1, string_empty(format) ? "%S" : string_c_str(format), lpWideCharStr);
+		_snprintf(tmpC, DataSize + 1, string_empty(format) ? "%ls" : string_c_str(format), lpWideCharStr);
 		HeapFree(hHeap, 0, lpWideCharStr);
-	} else {
+	}
+	else
+	{
 		*tmpC = '\0';
+		SetLastError(ERROR_OUTOFMEMORY);
 	}
 	string_clear(format);
 }
 #else
-__declspec(naked) void __fastcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC, vector_string* tmpV)
+__declspec(naked) void __fastcall AddressNamingFromUnicode(
+	unsigned long  const DataSize,
+	char          *const tmpC,
+	vector_string *const tmpV,
+	TSSGCtrl      *const SSGCtrl,
+	TSSGSubject   *const SSGS)
 {
 	__asm
 	{

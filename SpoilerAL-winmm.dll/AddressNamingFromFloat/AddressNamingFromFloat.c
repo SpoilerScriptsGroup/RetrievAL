@@ -1,38 +1,23 @@
-#include "TStringDivision.h"
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_vector_string.h"
 
-__declspec(naked) void __cdecl AddressNamingFromFloat()
+const char* __fastcall AddressNamingFromFloat(
+	vector_string const *const tmpV,
+	double              *const _Dst,
+	double              *const Val,
+	double        const *const tmpC,
+	unsigned long        const DataSize)
 {
-	static const DWORD X005062A0 = 0x005062A0;
-
-	__asm
+	switch (DataSize)
 	{
-		mov     eax, dword ptr [ebp - 01ECH]
-		mov     ecx, dword ptr [ebp - 01E8H]
-		cmp     eax, 8
-		jae     L2
-		cmp     eax, 4
-		jae     L1
-		mov     ecx, 0051A768H
-	L1:
-		fld     dword ptr [ecx]
-		jmp     L3
-
-	L2:
-		fld     qword ptr [ecx]
-	L3:
-		fstp    qword ptr [ebp - 0420H]
-		mov     eax, dword ptr [esi]
-		mov     ecx, dword ptr [ebp - 041CH]
-		mov     edx, dword ptr [ebp - 0420H]
-		mov     eax, dword ptr [eax + 78H]
-		mov     word ptr [ebx + 10H], 1340
-		push    eax
-		push    ecx
-		lea     eax, [ebp - 0144H]
-		push    edx
-		push    eax
-		call    TStringDivision_ToStringDouble
-		add     esp, 16
-		jmp     dword ptr [X005062A0]
+	case 4:
+		*_Dst = *(const float *)tmpC;
+		break;
+	case 8:
+		*_Dst = *tmpC;
+		break;
+	default:
+		return NULL;
 	}
+	return string_c_str(&vector_at(tmpV, 5));
 }

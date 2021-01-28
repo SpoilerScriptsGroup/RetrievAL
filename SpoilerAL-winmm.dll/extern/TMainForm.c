@@ -3,6 +3,7 @@
 #pragma warning(disable:4733)
 
 void(__cdecl * const TMainForm_GoCalcEnter)(TMainForm *this) = (LPVOID)0x0043F454;
+void(__cdecl * const TMainForm_SetLockVisible)(TMainForm *this, TSSGSubject *SSGS, BOOLEAN MustVisible) = (LPVOID)0x00444490;
 void(__cdecl * const TMainForm_DrawTreeCell)(TMainForm *this, LPVOID DestCanvas, int ARow, RECT *Rect) = (LPVOID)0x00444848;
 void(__cdecl * const TMainForm_ChangeSubjectPanel)(TMainForm *this, long Type) = (LPVOID)0x004465AC;
 void(__cdecl * const TMainForm_GoCalcHexChange)(TMainForm *this, boolean IsCalcHex) = (LPVOID)0x00447194;

@@ -34,7 +34,7 @@ DWORD_DWORD __fastcall TSSGCtrl_ReadSSG_rootSubject_SetAttribute(
 	return (DWORD_DWORD) { (DWORD)nowAttributeVec, (DWORD)this->rootSubject };
 }
 
-__inline void Attribute_scope_open(TSSGCtrl *this, string *code)
+__inline void Attribute_scope_open(TSSGCtrl *const this, string *const code)
 {
 	string label, Token;
 	vector_string tmpV = { NULL };
@@ -42,8 +42,8 @@ __inline void Attribute_scope_open(TSSGCtrl *this, string *code)
 	TScopeAttribute *scope = new_TScopeAttribute();
 	scope->super.adjustVal = -(intptr_t)scope;// guarantee unique
 
-	ReplaceDefine(TSSGCtrl_GetAttributeSelector(this), code);
-	TStringDivision_Half_WithoutTokenDtor(&label, &this->strD, code, ":", 1, 0, etTRIM);
+	ReplaceDefine(&this->attributeSelector, code);
+	TStringDivision_Half_WithoutTokenDtor(&label, &this->strD, code, ":", 1u, 0, etTRIM);
 	if (string_at(&label, 0) != ':')
 	{
 		LPSTR last;
@@ -55,26 +55,26 @@ __inline void Attribute_scope_open(TSSGCtrl *this, string *code)
 	TSSGAttributeSelector_AddElement(&this->attributeSelector, scope);
 	scope = *(TScopeAttribute **)list_back(this->attributeSelector.nowAttributeList);
 
-	string_ctor_assign_char(&Token, ',');
-	TStringDivision_List(&this->strD, code, Token, &tmpV, etTRIM);
+	TStringDivision_List(&this->strD, code, *string_ctor_assign_char(&Token, ','), &tmpV, etTRIM);
 	for (string *tmpS = vector_begin(&tmpV); tmpS < vector_end(&tmpV); ++tmpS)
 	{
-		TStringDivision_Half_WithoutTokenDtor(&label, &this->strD, tmpS, "=", 1, 0, etTRIM);
+		TStringDivision_Half_WithoutTokenDtor(&label, &this->strD, tmpS, "=", 1u, 0, etTRIM);
 		if (!string_empty(&label) && !string_empty(tmpS))
 		{
 			BOOL assign = string_at(&label, 0) != '=';
 			string *var = assign ? &label : tmpS;
-			LPSTR key[] = { &string_at(var, string_at(var, 0) == SCOPE_PREFIX), string_end(var) };
-			ScopeVariant sv = { SubjectStringTable_insert((string *)&key), 0, 0 };
+			LPSTR start = &string_at(var, string_at(var, 0) == SCOPE_PREFIX);
+			ScopeVariant sv = { { start, string_end(var), NULL, NULL, start, -1 }, 0, 0 };
 			map_iterator it = map_lower_bound(&scope->heapMap, &sv.Identifier);
-			if (it == map_end(&scope->heapMap) || ((ScopeVariant *)pair_first(it))->Identifier != sv.Identifier)
-				map_dword_dw_dw_insert(&it, &scope->heapMap, it, &sv);
+			if (it == map_end(&scope->heapMap) || !string_equals(&((ScopeVariant *)pair_first(it))->Identifier, &sv.Identifier))
+				map_string_quad_insert(&it, &scope->heapMap, it, &sv);
+			((ScopeVariant *)pair_first(it))->Identifier.sstIndex = -1;
 			if (assign)
 			{
 				char *endptr;
 
 				errno = 0;
-				*(uint64_t *)pair_second(it, sv.Identifier) = _strtoui64(string_c_str(tmpS), &endptr, 0);
+				((ScopeVariant *)pair_first(it))->Quad = _strtoui64(string_c_str(tmpS), &endptr, 0);
 				do	/* do { ... } while (0); */
 				{
 					if (errno != ERANGE)
@@ -92,7 +92,7 @@ __inline void Attribute_scope_open(TSSGCtrl *this, string *code)
 								((ScopeVariant *)pair_first(it))->High = 0;
 							continue;
 						}
-					*(double *)pair_second(it, sv.Identifier) = strtod(string_c_str(tmpS), NULL);
+					((ScopeVariant *)pair_first(it))->Real = strtod(string_c_str(tmpS), NULL);
 				} while (0);
 			}
 		}

@@ -167,13 +167,18 @@ static BOOL __cdecl Attach()
 		if (!(hHeap = GetProcessHeap()))
 			goto LAST_ERROR;
 #if SNAPWINDOW
-		if (!(hExecutableHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS | HEAP_CREATE_ALIGN_16 | HEAP_CREATE_ENABLE_EXECUTE, 0, 0)))
+		if (!(hExecutableHeap = HeapCreate(HEAP_NO_SERIALIZE | HEAP_CREATE_ALIGN_16 | HEAP_CREATE_ENABLE_EXECUTE, 0, 0)))
 			goto LAST_ERROR;
 #endif
-		if (!(hReadOnlyHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS | HEAP_CREATE_ALIGN_16, 0, 0)))
+		if (!(hReadOnlyHeap = HeapCreate(HEAP_NO_SERIALIZE | HEAP_CREATE_ALIGN_16, 0, 0)))
 			goto LAST_ERROR;
-		if (!(hPrivateHeap = HeapCreate(HEAP_GENERATE_EXCEPTIONS, 0, 0)))
+		if (!(hPrivateHeap = HeapCreate(0, 0, 0)))
 			goto LAST_ERROR;
+		else
+		{
+			DWORD HeapInformation = 2;
+			HeapSetInformation(hPrivateHeap, HeapCompatibilityInformation, &HeapInformation, sizeof(HeapInformation));
+		}
 		if (!SetThreadLocale(MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_JAPANESE_XJIS)))
 			goto LAST_ERROR;
 		LoadComCtl32();
@@ -431,21 +436,41 @@ static __inline BOOL ModifyResourceSection()
 	// TGuideForm::REdit
 	//__movsb((unsigned char *)0x00664900,
 	//	"\x06\x09" "MS Gothic"
-	//	"\x09" "Font.Size" "\x03\x0A\x00"// 10pt
-	//	"\x08" "ReadOnly"  "\x08"// false
+	//	"\x09" "Font.Size" "\x02\x0A"// 10pt
+	//	"\x09" "PlainText" "\x09"// true
 	//	"\x08" "WordWrap", 43);
 	*(LPDWORD)0x00664900 = BSWAP16(0x0609) | ((DWORD)BSWAP16('MS') << 16);
 	*(LPDWORD)0x00664904 = BSWAP32(' Got');
 	*(LPDWORD)0x00664908 = BSWAP24('hic') | (0x09 << 24);
 	*(LPDWORD)0x0066490C = BSWAP32('Font');
 	*(LPDWORD)0x00664910 = BSWAP32('.Siz');
-	*(LPDWORD)0x00664914 = 'e' | (BSWAP24(0x030A00) << 8);
-	*(LPDWORD)0x00664918 = 0x08 | (BSWAP24('Rea') << 8);
-	*(LPDWORD)0x0066491C = BSWAP32('dOnl');
-	*(LPDWORD)0x00664920 = 'y' | ((DWORD)BSWAP16(0x0808) << 8) | ((DWORD)'W' << 24);
+	*(LPDWORD)0x00664914 = 'e' | (BSWAP24(0x020A09) << 8);
+	*(LPDWORD)0x00664918 = BSWAP32('Plai');
+	*(LPDWORD)0x0066491C = BSWAP32('nTex');
+	*(LPDWORD)0x00664920 = 't' | ((DWORD)BSWAP16(0x0908) << 8) | ((DWORD)'W' << 24);
 	*(LPDWORD)0x00664924 = BSWAP32('ordW');
 	*(LPDWORD)0x00664928 = BSWAP24('rap') | (0x08 << 24);
+#if 0
+	__movsb((LPBYTE)0x0066530C,
+			"\x09" "TRichEdit"
+			"\x10" "StringNowValEdit"
+			"\x0A" "ScrollBars" "\x07" "\x06" "ssBoth"
+			"\x05" "Ctl3D"      "\x08"// false
+			, 53);
+	*(LPDWORD)0x006653DC = BSWAP32('Hint');
 
+	__movsb((LPBYTE)0x006653FC,
+			"\x09" "TRichEdit"
+			"\x10" "StringNewValEdit"
+			"\x0A" "ScrollBars" "\x07" "\x06" "ssBoth"
+			"\x05" "Ctl3D"      "\x08"// false
+			, 53);
+	__movsb((LPBYTE)0x006654B8,
+			"\x08" "WordWrap"  "\x08"// false
+			"\x08" "WantTabs"  "\x09"// true
+			"\x09" "PlainText" "\x09"// true
+			, 31);
+#endif
 	// TMemorySettingForm::Panel_C.CRCBtn.Caption
 	// "Š“¾" -> "Žæ“¾"
 	*(LPWORD)0x006673D6 = BSWAP16(0xD653);

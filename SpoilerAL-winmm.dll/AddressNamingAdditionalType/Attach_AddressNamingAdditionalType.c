@@ -1,36 +1,41 @@
 #define _CRT_SECURE_NO_WARNINGS
+#include <windows.h>
 #define _NO_CRT_STDIO_INLINE
 #include <stdio.h>
-#include <windows.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_vector_string.h"
 
-EXTERN_C void __cdecl AddressNamingAdditionalType();
+EXTERN_C void __stdcall AddressNamingAdditionalType(void *, void *, void *);
 
-static void __fastcall TSSGCtrl_AddressNaming_return_Data(
-	      string*        const retVal,
-	const string*        const Data,
-	const vector_string* const tmpV,
-	      unsigned long  const DataSize)
+static string* __fastcall TSSGCtrl_AddressNaming_return_Data(
+	vector_string *const tmpV,
+	unsigned long  const DataSize,
+	string        *const retVal,
+	string        *const Data)
 {
-	string* format = &vector_type_at(tmpV, string, 5);
-	string_ctor_assign(retVal, Data);
-	if (!string_empty(format)) {
-		int len;
-		string_reserve(retVal, DataSize);
-		len = _snprintf(string_begin(retVal), DataSize + 1, string_c_str(format), string_c_str(Data));
-		if (len >= 0) string_end(retVal) = string_begin(retVal) + min(DataSize, (size_t)len);
+	string *const format = &vector_at(tmpV, 5);
+	if (string_empty(format))
+	{
+		*retVal = *Data;
+		string_ctor_null(Data);
 	}
+	else
+	{
+		int len;
+		string *const ErrorStr = &vector_at(tmpV, 4);
+		*retVal = *ErrorStr;
+		string_ctor_null(ErrorStr);
+		string_reserve(retVal, DataSize);
+		len = _snprintf(string_begin(retVal), string_storage_capacity(retVal), string_c_str(format), string_c_str(Data));
+		if (len >= 0) string_end(retVal) = string_begin(retVal) + min(string_capacity(retVal), (size_t)len);
+	}
+	return retVal;
 }
 
-static __declspec(naked) void __cdecl TSSGCtrl_AddressNaming_return_DataStub(string* retVal, string* Data) {
+static __declspec(naked) string* __stdcall TSSGCtrl_AddressNaming_return_DataStub(string *retVal, string *Data) {
 	__asm {
 		mov  edx, [ebp - 0x01EC]
-		xchg edx, [esp]
-		push esi
-		push edx
-		mov  edx, ecx
-		mov  ecx, eax
+		mov  ecx, esi
 		jmp  TSSGCtrl_AddressNaming_return_Data
 	}
 }
@@ -38,11 +43,17 @@ static __declspec(naked) void __cdecl TSSGCtrl_AddressNaming_return_DataStub(str
 EXTERN_C void __cdecl Attach_AddressNamingAdditionalType()
 {
 	// TSSGCtrl::AddressNaming
-	*(LPDWORD)(0x00505E11 + 2) = (DWORD)AddressNamingAdditionalType - (0x00505E11 + 2 + sizeof(DWORD));
+	*(LPBYTE )(0x00505E04 + 1) = 0x00505E17 - (0x00505E04 + 1 + sizeof(BYTE));
+	*(LPWORD ) 0x00505E06      = BSWAP16(0xFF75    );// push dword[SSGS]; push this
+	*(LPDWORD) 0x00505E08      = BSWAP32(0x105756E8);// push offset tmpV; call
+	*(LPDWORD)(0x00505E0B + 1) = (DWORD)AddressNamingAdditionalType - (0x00505E0B + 1 + sizeof(DWORD));
+	*(LPWORD ) 0x00505E10      = BSWAP16(0x6690    );// nop
+	*(LPBYTE )(0x00505E12 + 0) =         0xE9       ;// jmp
 
 	//   tmpV[2] => tmpV[3]
 	*(LPBYTE )(0x0050673D + 2) = sizeof(string) * 3;
 
 	//   return Data;
 	*(LPDWORD)(0x00506A21 + 1) = (DWORD)TSSGCtrl_AddressNaming_return_DataStub - (0x00506A21 + 1 + sizeof(DWORD));
+	*(LPBYTE )(0x00506A2D + 2) = 0;// stack size to discard
 }

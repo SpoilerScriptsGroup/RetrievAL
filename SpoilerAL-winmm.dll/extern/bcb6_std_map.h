@@ -36,20 +36,24 @@ EXTERN_C _Rb_tree_iterator(__cdecl * const _Rb_global_M_decrement)(_Rb_tree_iter
 #define tree_erase_sans_delete(this, it) \
 	((this)->_M_node_count--, _Rb_global_Rebalance_for_erase(it, &(this)->_M_header->_M_parent, &(this)->_M_header->_M_left, &(this)->_M_header->_M_right))
 
-EXTERN_C bcb6_std_map_iterator(__cdecl *const bcb6_std_map_find)(bcb6_std_map *this, const DWORD *key);
-EXTERN_C bcb6_std_map_iterator(__cdecl *const bcb6_std_map_lower_bound)(bcb6_std_map *this, const DWORD *key);
-EXTERN_C void(__cdecl *const bcb6_std_ulong_pair_uu_insert)(bcb6_std_map_iterator *it, bcb6_std_map *this, bcb6_std_map_iterator pos, const void *pair);
+EXTERN_C bcb6_std_map_iterator(__cdecl *const bcb6_std_map_find)(bcb6_std_map *this, const unsigned long *key);
+EXTERN_C bcb6_std_map_iterator(__cdecl *const bcb6_std_map_lower_bound)(bcb6_std_map *this, const unsigned long *key);
+
 EXTERN_C bcb6_std_map_iterator(__cdecl *const bcb6_std_map_string_find)(bcb6_std_map *this, const bcb6_std_string *key);
+EXTERN_C bcb6_std_map_iterator(__cdecl *const bcb6_std_map_string_lower_bound)(bcb6_std_map *this, const bcb6_std_string *key);
+
+EXTERN_C void(__cdecl *const bcb6_std_ulong_pair_uu_insert)(bcb6_std_map_iterator *it, bcb6_std_map *this, bcb6_std_map_iterator pos, const void *pair);
+EXTERN_C void(__cdecl *const bcb6_std_string_double_insert)(bcb6_std_map_iterator *it, bcb6_std_map *this, bcb6_std_map_iterator pos, const void *pair);
 
 #ifdef USING_NAMESPACE_BCB6_STD
 typedef bcb6_std_map_iterator  map_iterator;
 typedef pbcb6_std_map_iterator pmap_iterator;
 typedef bcb6_std_map           map;
 typedef pbcb6_std_map          pmap;
-#define map_find               bcb6_std_map_find
-#define map_lower_bound        bcb6_std_map_lower_bound
+#define map_find(map,k)        _Generic(k, const bcb6_std_string *: bcb6_std_map_string_find, default: bcb6_std_map_find)(map, k)
+#define map_lower_bound(map,k) _Generic(k, bcb6_std_string *: bcb6_std_map_string_lower_bound, const unsigned long *: bcb6_std_map_lower_bound)(map, k)
 #define map_dword_dw_dw_insert bcb6_std_ulong_pair_uu_insert
-#define map_string_find        bcb6_std_map_string_find
+#define map_string_quad_insert bcb6_std_string_double_insert
 #define map_begin              bcb6_std_map_begin
 #define map_end                bcb6_std_map_end
 #define pair_first             bcb6_std_pair_first

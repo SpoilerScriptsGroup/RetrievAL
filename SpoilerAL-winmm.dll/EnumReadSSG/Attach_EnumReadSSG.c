@@ -193,7 +193,7 @@ EXTERN_C void __cdecl Attach_EnumReadSSG()
 	*(LPDWORD)(0x00510F69 + 1) = (DWORD)TSSGCtrl_CheckIO_FEP_GetAttribute - (0x00510F69 + 1 + sizeof(DWORD));
 
 	// THeapAdjustmentAttribute::~THeapAdjustmentAttribute
-#ifdef SCOPE_USE_STRING_KEY
+#ifdef map_string_quad_insert
 	*(LPDWORD)(0x00523531 + 1) = (DWORD)THeapAdjustmentAttribute_dtor_heapMap - (0x00523531 + 1 + sizeof(DWORD));
 #endif
 

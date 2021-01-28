@@ -42,7 +42,6 @@
 
 #include "random.h"
 #if defined(_M_IX86) || defined(_M_X64)
-#include <emmintrin.h>
 #include <immintrin.h>
 #endif
 #include <assert.h>
@@ -74,7 +73,7 @@
 #define SFMT_MSK2       0xDDFECB7FU             //
 #define SFMT_MSK3       0xBFFAFFFFU             //
 #define SFMT_MSK4       0xBFFFFFF6U             //
-#define SFMT_PARITY1    0x00000001U             // These definitions are part of a 128-bit period certification vector. */
+#define SFMT_PARITY1    0x00000001U             // These definitions are part of a 128-bit period certification vector.
 #define SFMT_PARITY2    0x00000000U             //
 #define SFMT_PARITY3    0x00000000U             //
 #define SFMT_PARITY4    0x13C9E684U             //

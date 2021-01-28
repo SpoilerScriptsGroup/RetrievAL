@@ -9,7 +9,7 @@ typedef struct _String_base
 	LPSTR  _M_finish;
 	LPVOID allocator_type[2];// using as order @ TSSGAttributeElement
 	LPCSTR _M_end_of_storage;
-	size_t sstIndex;
+	signed sstIndex;
 } bcb6_std_string, *pbcb6_std_string;
 
 #ifdef USING_NAMESPACE_BCB6_STD

@@ -212,13 +212,13 @@ static TYPE * __cdecl MEMIMEM_SSE42(const TYPE *haystack, size_t haystacklen, co
 static TYPE * __cdecl MEMIMEM_SSE2(const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
 static TYPE * __cdecl MEMIMEM_386(const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
 static TYPE * __cdecl MEMIMEM_CPU_DISPATCH(const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
-static TYPE * __cdecl INTERNAL_MEMMEM_AVX2(unsigned long c, int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__vectorcall *memchr)(const TYPE *, __m256, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
-static TYPE * __cdecl INTERNAL_MEMMEM_SSE42(unsigned long c, int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__vectorcall *memchr)(const TYPE *, __m128, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
-static TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__vectorcall *memchr)(const TYPE *, __m128, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
+static TYPE * __cdecl INTERNAL_MEMMEM_AVX2(unsigned long c, int *(__cdecl *pfnmemcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__vectorcall *pfnmemchr)(const TYPE *, __m256, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
+static TYPE * __cdecl INTERNAL_MEMMEM_SSE42(unsigned long c, int *(__cdecl *pfnmemcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__vectorcall *pfnmemchr)(const TYPE *, __m128, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
+static TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, int *(__cdecl *pfnmemcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__vectorcall *pfnmemchr)(const TYPE *, __m128, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
 #ifndef _UNICODE
-static TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__fastcall *memchr)(const TYPE *, unsigned long, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
+static TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, int *(__cdecl *pfnmemcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__fastcall *pfnmemchr)(const TYPE *, unsigned long, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
 #else
-static TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__cdecl *memchr)(const TYPE *, TYPE, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
+static TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, int *(__cdecl *pfnmemcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__cdecl *pfnmemchr)(const TYPE *, TYPE, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen);
 #endif
 
 static TYPE *(__cdecl *MEMMEM_DISPATCH)(const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen) = MEMMEM_CPU_DISPATCH;
@@ -350,13 +350,13 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_AVX2(const TYPE *haystack, size_
 	#undef TC
 }
 
-__declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_AVX2(unsigned long c, int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__vectorcall *memchr)(const TYPE *, __m256, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
+__declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_AVX2(unsigned long c, int *(__cdecl *pfnmemcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__vectorcall *pfnmemchr)(const TYPE *, __m256, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
 {
 	__asm
 	{
 		#define c           (esp + 4)
-		#define memcmp      (esp + 8)
-		#define memchr      (esp + 12)
+		#define pfnmemcmp   (esp + 8)
+		#define pfnmemchr   (esp + 12)
 		#define reserved    (esp + 16)
 		#define haystack    (esp + 20)
 		#define haystacklen (esp + 24)
@@ -384,8 +384,8 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_AVX2(unsigned long c, in
 		sub     esp, 64
 
 		#undef c
-		#undef memcmp
-		#undef memchr
+		#undef pfnmemcmp
+		#undef pfnmemchr
 		#undef reserved
 		#undef haystack
 		#undef haystacklen
@@ -393,8 +393,8 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_AVX2(unsigned long c, in
 		#undef needlelen
 
 		#define c           (ebp + 16)
-		#define memcmp      (ebp + 20)
-		#define memchr      (ebp + 24)
+		#define pfnmemcmp   (ebp + 20)
+		#define pfnmemchr   (ebp + 24)
 		#define reserved    (ebp + 28)
 		#define haystack    (ebp + 32)
 		#define haystacklen (ebp + 36)
@@ -418,7 +418,7 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_AVX2(unsigned long c, in
 #endif
 		mov     ecx, esi
 		vmovdqa ymm0, ymmword ptr [esp + 32]
-		call    dword ptr [memchr]
+		call    dword ptr [pfnmemchr]
 		test    eax, eax
 		jz      not_found
 		mov     ecx, dword ptr [needle]
@@ -431,7 +431,7 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_AVX2(unsigned long c, in
 		mov     dword ptr [esp], eax
 		mov     dword ptr [esp + 4], ecx
 		mov     dword ptr [esp + 8], edx
-		call    dword ptr [memcmp]
+		call    dword ptr [pfnmemcmp]
 		test    eax, eax
 		jz      found
 		mov     edx, edi
@@ -464,8 +464,8 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_AVX2(unsigned long c, in
 		ret
 
 		#undef c
-		#undef memcmp
-		#undef memchr
+		#undef pfnmemcmp
+		#undef pfnmemchr
 		#undef reserved
 		#undef haystack
 		#undef haystacklen
@@ -587,13 +587,13 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_SSE42(const TYPE *haystack, size
 	#undef TC
 }
 
-__declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_SSE42(unsigned long c, int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__vectorcall *memchr)(const TYPE *, __m128, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
+__declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_SSE42(unsigned long c, int *(__cdecl *pfnmemcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__vectorcall *pfnmemchr)(const TYPE *, __m128, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
 {
 	__asm
 	{
 		#define c           (esp + 4)
-		#define memcmp      (esp + 8)
-		#define memchr      (esp + 12)
+		#define pfnmemcmp   (esp + 8)
+		#define pfnmemchr   (esp + 12)
 		#define reserved    (esp + 16)
 		#define haystack    (esp + 20)
 		#define haystacklen (esp + 24)
@@ -621,8 +621,8 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_SSE42(unsigned long c, i
 		sub     esp, 32
 
 		#undef c
-		#undef memcmp
-		#undef memchr
+		#undef pfnmemcmp
+		#undef pfnmemchr
 		#undef reserved
 		#undef haystack
 		#undef haystacklen
@@ -630,8 +630,8 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_SSE42(unsigned long c, i
 		#undef needlelen
 
 		#define c           (ebp + 16)
-		#define memcmp      (ebp + 20)
-		#define memchr      (ebp + 24)
+		#define pfnmemcmp   (ebp + 20)
+		#define pfnmemchr   (ebp + 24)
 		#define reserved    (ebp + 28)
 		#define haystack    (ebp + 32)
 		#define haystacklen (ebp + 36)
@@ -651,7 +651,7 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_SSE42(unsigned long c, i
 #endif
 		mov     ecx, esi
 		movdqa  xmm1, xmmword ptr [esp + 16]
-		call    dword ptr [memchr]
+		call    dword ptr [pfnmemchr]
 		test    eax, eax
 		jz      not_found
 		mov     ecx, dword ptr [needle]
@@ -664,7 +664,7 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_SSE42(unsigned long c, i
 		mov     dword ptr [esp], eax
 		mov     dword ptr [esp + 4], ecx
 		mov     dword ptr [esp + 8], edx
-		call    dword ptr [memcmp]
+		call    dword ptr [pfnmemcmp]
 		test    eax, eax
 		jz      found
 		mov     edx, edi
@@ -696,8 +696,8 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_SSE42(unsigned long c, i
 		ret
 
 		#undef c
-		#undef memcmp
-		#undef memchr
+		#undef pfnmemcmp
+		#undef pfnmemchr
 		#undef reserved
 		#undef haystack
 		#undef haystacklen
@@ -816,13 +816,13 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_SSE2(const TYPE *haystack, size_
 	#undef TC
 }
 
-__declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__vectorcall *memchr)(const TYPE *, __m128, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
+__declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, int *(__cdecl *pfnmemcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__vectorcall *pfnmemchr)(const TYPE *, __m128, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
 {
 	__asm
 	{
 		#define c           (esp + 4)
-		#define memcmp      (esp + 8)
-		#define memchr      (esp + 12)
+		#define pfnmemcmp   (esp + 8)
+		#define pfnmemchr   (esp + 12)
 		#define reserved    (esp + 16)
 		#define haystack    (esp + 20)
 		#define haystacklen (esp + 24)
@@ -850,8 +850,8 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, in
 		sub     esp, 32
 
 		#undef c
-		#undef memcmp
-		#undef memchr
+		#undef pfnmemcmp
+		#undef pfnmemchr
 		#undef reserved
 		#undef haystack
 		#undef haystacklen
@@ -859,8 +859,8 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, in
 		#undef needlelen
 
 		#define c           (ebp + 16)
-		#define memcmp      (ebp + 20)
-		#define memchr      (ebp + 24)
+		#define pfnmemcmp   (ebp + 20)
+		#define pfnmemchr   (ebp + 24)
 		#define reserved    (ebp + 28)
 		#define haystack    (ebp + 32)
 		#define haystacklen (ebp + 36)
@@ -885,7 +885,7 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, in
 #endif
 		mov     ecx, esi
 		movdqa  xmm0, xmmword ptr [esp + 16]
-		call    dword ptr [memchr]
+		call    dword ptr [pfnmemchr]
 		test    eax, eax
 		jz      not_found
 		mov     ecx, dword ptr [needle]
@@ -898,7 +898,7 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, in
 		mov     dword ptr [esp], eax
 		mov     dword ptr [esp + 4], ecx
 		mov     dword ptr [esp + 8], edx
-		call    dword ptr [memcmp]
+		call    dword ptr [pfnmemcmp]
 		test    eax, eax
 		jz      found
 		mov     edx, edi
@@ -930,8 +930,8 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_SSE2(unsigned long c, in
 		ret
 
 		#undef c
-		#undef memcmp
-		#undef memchr
+		#undef pfnmemcmp
+		#undef pfnmemchr
 		#undef reserved
 		#undef haystack
 		#undef haystacklen
@@ -1055,16 +1055,16 @@ __declspec(naked) static TYPE * __cdecl MEMIMEM_386(const TYPE *haystack, size_t
 }
 
 #ifndef _UNICODE
-__declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__fastcall *memchr)(const TYPE *, unsigned long, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
+__declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, int *(__cdecl *pfnmemcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__fastcall *pfnmemchr)(const TYPE *, unsigned long, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
 #else
-__declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, int *(__cdecl *memcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__cdecl *memchr)(const TYPE *, TYPE, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
+__declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, int *(__cdecl *pfnmemcmp)(const TYPE *, const TYPE *, size_t), TYPE *(__cdecl *pfnmemchr)(const TYPE *, TYPE, size_t), void *reserved, const TYPE *haystack, size_t haystacklen, const TYPE *needle, size_t needlelen)
 #endif
 {
 	__asm
 	{
 		#define c           (esp + 4)
-		#define memcmp      (esp + 8)
-		#define memchr      (esp + 12)
+		#define pfnmemcmp   (esp + 8)
+		#define pfnmemchr   (esp + 12)
 		#define reserved    (esp + 16)
 		#define haystack    (esp + 20)
 		#define haystacklen (esp + 24)
@@ -1103,7 +1103,7 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, int
 		mov     ecx, esi
 		mov     edx, ebx
 		push    eax
-		call    dword ptr [memchr + 28]
+		call    dword ptr [pfnmemchr + 28]
 #else
 		push    ebx                                         // preserve ebx
 		push    esi                                         // preserve esi
@@ -1120,7 +1120,7 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, int
 		mov     dword ptr [esp], esi
 		mov     dword ptr [esp + 4], ebx
 		mov     dword ptr [esp + 8], eax
-		call    dword ptr [memchr + 24]
+		call    dword ptr [pfnmemchr + 24]
 #endif
 		test    eax, eax
 		jz      not_found
@@ -1134,7 +1134,7 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, int
 		mov     dword ptr [esp], eax
 		mov     dword ptr [esp + 4], ecx
 		mov     dword ptr [esp + 8], edx
-		call    dword ptr [memcmp + 24]
+		call    dword ptr [pfnmemcmp + 24]
 		test    eax, eax
 		jz      found
 		mov     eax, edi
@@ -1166,8 +1166,8 @@ __declspec(naked) static TYPE * __cdecl INTERNAL_MEMMEM_386(unsigned long c, int
 		ret
 
 		#undef c
-		#undef memcmp
-		#undef memchr
+		#undef pfnmemcmp
+		#undef pfnmemchr
 		#undef reserved
 		#undef haystack
 		#undef haystacklen

@@ -7,7 +7,12 @@
 #include "bcb6_std_vector_string.h"
 #include "TSSGCtrl.h"
 
-EXTERN_C void __stdcall AddressNamingFEPNumber(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector_string *tmpV, unsigned long DataSize, char *tmpC)
+EXTERN_C void __fastcall AddressNamingFEPNumber(
+	unsigned long  const DataSize,
+	char          *const tmpC,
+	vector_string *const tmpV,
+	TSSGCtrl      *const SSGCtrl,
+	TSSGSubject   *const SSGS)
 {
 	string_clear(&vector_at(tmpV, 3));
 	if (!string_empty(&vector_at(tmpV, 5)))

@@ -4,7 +4,7 @@
 
 __declspec(naked) void __fastcall deque_ptr_pop_back(pdeque deque)
 {
-	extern const DWORD deque_ptr_pop_back_aux;
+	extern const DWORD _STL_deque_M_pop_back_aux;
 
 	__asm
 	{
@@ -14,7 +14,7 @@ __declspec(naked) void __fastcall deque_ptr_pop_back(pdeque deque)
 		jne     L1
 
 		push    ecx
-		call    deque_ptr_pop_back_aux
+		call    _STL_deque_M_pop_back_aux
 		pop     ecx
 		ret
 
@@ -28,7 +28,7 @@ __declspec(naked) void __fastcall deque_ptr_pop_back(pdeque deque)
 
 __declspec(naked) void __fastcall deque_ptr_push_back(pdeque deque, const void *const *value)
 {
-	extern const DWORD deque_ptr_push_back_aux_v;
+	extern const DWORD _STL_deque_M_push_back_aux_v;
 
 	__asm
 	{
@@ -39,7 +39,7 @@ __declspec(naked) void __fastcall deque_ptr_push_back(pdeque deque, const void *
 
 		push    edx
 		push    ecx
-		call    deque_ptr_push_back_aux_v
+		call    _STL_deque_M_push_back_aux_v
 		add     esp, 8
 		ret
 

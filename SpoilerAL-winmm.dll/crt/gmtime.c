@@ -58,7 +58,7 @@ static uint64_t __fastcall progress(HANDLE output, DWORD position, uint64_t curr
 	return next;
 }
 
-static uint32_t test_gmtime64_s()
+static BOOL test_gmtime64_s()
 {
 	#define TEST_HOUR   1
 	#define TEST_MINUTE 1
@@ -103,7 +103,7 @@ static uint32_t test_gmtime64_s()
 		dest.tm_wday  != (days + 4) % 7 ||
 		dest.tm_yday  != yday           ||
 		dest.tm_isdst != 0)
-		return 0;
+		return FALSE;
 #endif
 
 	// first day (1969/12/31 12:00:00 - 1969/12/31 23:59:59)
@@ -124,7 +124,7 @@ static uint32_t test_gmtime64_s()
 					dest.tm_wday  != (days + 4) % 7 ||
 					dest.tm_yday  != yday           ||
 					dest.tm_isdst != 0)
-					return 0;
+					return FALSE;
 				if ((int32_t)current >= (int32_t)next)
 					next = progress(output, position, current);
 			}
@@ -159,7 +159,7 @@ static uint32_t test_gmtime64_s()
 								dest.tm_wday  != (days + 4) % 7 ||
 								dest.tm_yday  != yday           ||
 								dest.tm_isdst != 0)
-								return 0;
+								return FALSE;
 							if (current >= next)
 								next = progress(output, position, current);
 						}
@@ -194,7 +194,7 @@ static uint32_t test_gmtime64_s()
 						dest.tm_wday  != (days + 4) % 7 ||
 						dest.tm_yday  != yday           ||
 						dest.tm_isdst != 0)
-						return 0;
+						return FALSE;
 					if (current >= next)
 						next = progress(output, position, current);
 				}
@@ -222,7 +222,7 @@ static uint32_t test_gmtime64_s()
 					dest.tm_wday  != (days + 4) % 7 ||
 					dest.tm_yday  != yday           ||
 					dest.tm_isdst != 0)
-					return 0;
+					return FALSE;
 				if (current >= next)
 					next = progress(output, position, current);
 			}
@@ -247,19 +247,17 @@ static uint32_t test_gmtime64_s()
 			dest.tm_wday  != (days + 4) % 7 ||
 			dest.tm_yday  != yday           ||
 			dest.tm_isdst != 0)
-			return 0;
+			return FALSE;
 		progress(output, position, current);
 	}
 
 #endif
-	return 1;
+	return TRUE;
 
 	#undef TEST_HOUR
 	#undef TEST_MINUTE
 	#undef TEST_SECOND
 }
-
-#include <stdio.h>	// using printf, getchar
 
 int main()
 {

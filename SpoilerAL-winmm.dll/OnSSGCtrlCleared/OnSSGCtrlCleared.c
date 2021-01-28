@@ -44,7 +44,7 @@ void __cdecl OnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl)
 			size_t i = nNumberOfProcessMemory;
 			do
 				if (!lpProcessMemory[--i].Protect && lpProcessMemory[i].Address)
-					HeapFree(hPrivateHeap, 0, lpProcessMemory[i].Address);
+					HeapFree(hPrivateHeap, HEAP_NO_SERIALIZE, lpProcessMemory[i].Address);
 			while (i);
 			nNumberOfProcessMemory = 0;
 		}
@@ -52,7 +52,7 @@ void __cdecl OnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl)
 		lpProcessMemory = NULL;
 	}
 #endif
-
+	HeapCompact(hPrivateHeap, 0);
 	if (lpCodeCache)
 	{
 		if (nNumberOfCodeCache)

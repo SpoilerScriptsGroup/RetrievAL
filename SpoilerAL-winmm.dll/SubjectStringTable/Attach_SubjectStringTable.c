@@ -1,6 +1,5 @@
 #include <windows.h>
 #include <dhcpsapi.h>
-#include <mbstring.h>
 #include "intrinsic.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "SubjectStringOperator.h"
@@ -80,8 +79,14 @@ static __declspec(naked) void __cdecl TFindNameForm_EnumSubjectNameFind_StrD_Get
 	}
 }
 
+#define TOGGLE_SIZE_POSTPONE 0
+
 static DWORD_DWORD __fastcall TSSToggle_Setting_GetAddress(
+#if TOGGLE_SIZE_POSTPONE
+	void    const *const ReturnAddress,
+#else
 	TSSGCtrl      *const SSGC,
+#endif
 	vector_string *const tmpV)
 {
 	extern string* __cdecl FixToggleByteArray(
@@ -92,24 +97,75 @@ static DWORD_DWORD __fastcall TSSToggle_Setting_GetAddress(
 		unsigned long    Index,
 		unsigned long    Option);
 
-	string AddressStr, Token, *addressStr = &vector_at(tmpV, 0);
-	if (FixTheProcedure && !SSGC->script.ePos && string_at(addressStr, 0) == '_')
+	string
+#if !TOGGLE_SIZE_POSTPONE
+		AddressStr, Token,
+#endif
+		*addressStr = &vector_at(tmpV, 0);
+#if !TOGGLE_SIZE_POSTPONE
+	if (FixTheProcedure && !SSGC->script.ePos && string_at(addressStr, 0) == '_' && string_at(addressStr, 1) != 'L')
 	{
 		FixToggleByteArray(&AddressStr, &SSGC->strD, &vector_at(tmpV, 1), *string_ctor_assign_char(&Token, '-'), 0, dtESCAPE);
 		if (string_at(&AddressStr, 0) == '-')
 			addressStr = &vector_at(&SubjectStringTable_array, 0);
 		string_dtor(&AddressStr);
 	}
+#else
+	switch ((uintptr_t)ReturnAddress)
+	{
+	case 0x0052C410u:// TSSToggle::Read
+	case 0x0052C6F0u:// TSSToggle::Write
+	case 0x0052CA03u:// TSSToggle::ToByteCode
+		break;
+	default:
+		if (FixTheProcedure)
+			return (DWORD_DWORD) { 0, atALL };
+	}
+#endif
 	return (DWORD_DWORD) { (DWORD)addressStr, atALL };
 }
 
-static void __declspec(naked) TSSToggle_Setting_GetAddressStub(DWORD OffsetAddress)
+static void __declspec(naked) TSSToggle_Setting_GetAddressStub(unsigned long OffsetAddress)
 {
 	__asm {
-		mov edx, edi
-		mov ecx, dword ptr [ebp + 0x0C]
-		jmp TSSToggle_Setting_GetAddress
+		mov   edx, edi
+#if !TOGGLE_SIZE_POSTPONE
+		mov   ecx, dword ptr [ebp + 0x0C]
+		jmp   TSSToggle_Setting_GetAddress
+#else
+		mov   ecx, dword ptr [ebp + 0x04]
+		call  TSSToggle_Setting_GetAddress
+		test  eax, eax
+		jz    PASS
+		ret
+
+		align 16
+	PASS:
+		lea   ecx, [ebp - 0x30]// AEV.data
+		mov   [ecx]vector._M_start, 0
+		mov   [ecx]vector._M_finish, 0
+		mov   [ecx]vector._M_end_of_storage, 0
+		add   [esi]REGREC_BC.ERRcInitDtc, 5
+		mov   dword ptr [esp], 0x0052BFC5
+		ret   4// goto size = TProcessAccessElementBase::GetTotalSize(*AEV.GetData(), true);
+#endif
 	}
+}
+
+static void __fastcall TSSToggle_Setting_epilog(TSSToggle *const this)
+{
+#if TOGGLE_SIZE_POSTPONE
+	if (FixTheProcedure) switch ((uintptr_t)_ReturnAddress())
+	{
+	case 0x0052C410u:// TSSToggle::Read
+	case 0x0052C6F0u:// TSSToggle::Write
+	case 0x0052CA03u:// TSSToggle::ToByteCode
+		this->super.isSeted = TRUE;
+		break;
+	default:
+		this->super.isSeted = FALSE;
+	}
+#endif
 }
 
 #define         TSearchForm_Init_GetName                                    TFindNameForm_EnumSubjectNameFind_GetName
@@ -905,20 +961,19 @@ static __inline void AttachOperator()
 	NPAD2    (0x0046CBDC);
 
 	// TFindNameForm::EnumSubjectNameFind
-#ifdef FIND_SUBJECT_RAW
-	SET_PROC (0x0048520E, TFindNameForm_EnumSubjectNameFind_GetName);
-#else
 	//   omit Token ctor
 	*(LPWORD )0x004851DA = BSWAP16(0x83EC);
 	*(LPBYTE )0x004851DC = sizeof(double) + sizeof(void*);
-	*(LPBYTE )0x004851EA = 0xB8;
-	*(LPBYTE )0x004851F3 =         0x89;
-	*(LPDWORD)0x004851F4 = BSWAP32(0x028D4801);
-	*(LPBYTE )0x004851F8 =         0x51;
-	*(LPBYTE )0x004851FD =         0x50;
-	*(LPWORD )0x004851FE = OPCODE_NOP_X2;
+	*(LPBYTE )0x004851EA = 0xB8;// push => mov eax
+	NPAD1    (0x004851F3);
+	*(LPDWORD)0x004851F4 = BSWAP32(0x89028D48);// mov [edx], eax
+	*(LPBYTE )0x004851F8 =         1          ;// lea ecx, [eax+1]
+	NPAD1    (0x004851FD);
+	PUSH_ECX (0x004851FE);
+	PUSH_EAX (0x004851FF);
+
+	SET_PROC (0x0048520E, TFindNameForm_EnumSubjectNameFind_GetName);
 	SET_PROC (0x00485237, TFindNameForm_EnumSubjectNameFind_StrD_Get);
-#endif
 
 	// TSearchForm::Init
 	SET_PROC (0x00491CBC, TSearchForm_Init_GetName);
@@ -1463,8 +1518,10 @@ static __inline void AttachOperator()
 	// TSSFloatCalc::Write
 	SET_PROC (0x004CE593, TSSFloatCalc_Write_GetAddressStr);
 
-	// TSSGCtrl::ReadSSG
-	SET_PROC (0x004E44D7, TSSGCtrl_ReadSSG_ctor);
+	// TSSGCtrl::OpenSSG
+	*(LPWORD )0x004FD267 = BSWAP16(0x836E);
+	*(LPBYTE )0x004FD26A = 3;
+	CALL     (0x004FD26B, SubjectStringTable_clear);
 
 #if 0
 	// TSSGCtrl::EnumReadSSG
@@ -1617,6 +1674,10 @@ static __inline void AttachOperator()
 	NPAD3    (0x0052B418);
 
 	// TSSToggle::Setting
+	*(LPBYTE )0x0052BA71 = 0x8B;// mov ecx, 
+	*(LPBYTE )0x0052BA72 = 0xCB;// ebx
+	SET_REL32(0x0052BA74, 0x0052C3BF);
+
 	SET_PROC (0x0052BAF7, TSSToggle_Setting_GetCode);
 
 	CALL     (0x0052BD48, TSSToggle_Setting_SetAddressStr);
@@ -1711,6 +1772,15 @@ static __inline void AttachOperator()
 	CALL     (0x0052C24C, TSSToggle_Setting_SetLockStr);
 	JMP_REL8 (0x0052C251, 0x0052C2A7);
 	NPAD5    (0x0052C253);
+
+	*(LPBYTE )0x0052C3AF =         0x83       ;// sub 
+	*(LPBYTE )0x0052C3B0 =         0x6E       ;// [esi+?],
+	*(LPWORD )0x0052C3B2 = BSWAP16(0x0290    );// 2
+	*(LPDWORD)0x0052C3B4 = BSWAP32(0x8B0664A3);// mov eax, [esi]
+	*(LPDWORD)0x0052C3B8 =         0          ;// mov fs:[0], eax  
+	*(LPDWORD)0x0052C3BC = BSWAP32(0x8B4D085F);// mov ecx, [ebp+8]; pop edi
+	*(LPDWORD)0x0052C3C0 = BSWAP32(0x5E5BC9E9);// pop esi; pop ebx; leave; jmp
+	SET_REL32(0x0052C3C4, (DWORD)TSSToggle_Setting_epilog);
 
 	// TSSToggle::Read
 	SET_PROC (0x0052C4B5, TSSToggle_Read_GetAddressStr);
@@ -1857,9 +1927,20 @@ static __inline void AttachOperator()
 	NPAD4    (0x0053057C);
 }
 
-static void __cdecl TSSGCtrl_AddressAttributeFilter_GetOffsetCode(string* const AddressStr, const string* const offsetCode) {
-	*AddressStr = *offsetCode;
-	string_end_of_storage(AddressStr) = string_begin(AddressStr);// Non-allocated mark.
+static void __cdecl TSSGCtrl_GetSSGDataFile_FileName_assign(
+	string     *const FileName,
+	char       *const _M_start,
+	char       *const _M_finish,
+	char const *const _M_end_of_storage/*__false_type*/) {
+	string_dtor(FileName);
+	string_begin(FileName) = _M_start;
+	string_end(FileName) = _M_finish;
+	string_end_of_storage(FileName) = _M_end_of_storage;
+}
+
+static void __cdecl TSSGCtrl_GetSSGDataFile_string_ctor_assign(string *const Src, string *const __s) {
+	*Src = *__s;
+	string_ctor_null(__s);
 }
 
 static void __fastcall TSSGCtrl_GetAddress_Trim(string* const Trim, const string* const AddressStr) {
@@ -1890,6 +1971,26 @@ static void __fastcall TSSGCtrl_GetAddress_substr(string* const substr, const st
 	string_end_of_storage(substr) = string_begin(substr);// Non-allocated mark.
 }
 
+static void __cdecl TSSGCtrl_AddressAttributeFilter_GetOffsetCode(string* const AddressStr, const string* const offsetCode) {
+	*AddressStr = *offsetCode;
+	string_end_of_storage(AddressStr) = string_begin(AddressStr);// Non-allocated mark.
+}
+
+static void __cdecl TSSGCtrl_AddressNaming_Trim(string* const Trim, TStringDivision const *const strD, const string* const NameStr) {
+	*Trim = *NameStr;
+	{
+		register LPCSTR p = string_begin(Trim);
+		while (__intrinsic_isspace(*p)) ++p;
+		string_begin(Trim) = (LPSTR)p;
+	}
+	{
+		register LPCSTR p = string_end(Trim);
+		while (p > string_begin(Trim) && __intrinsic_isspace(p[-1])) --p;
+		string_end(Trim) = (LPSTR)p;
+	}
+	string_end_of_storage(Trim) = string_begin(Trim);// Non-allocated mark.
+}
+
 static void __cdecl TSSGCtrl_StrToProcessAccessElementVec_Code_substr(
 	string       *const substr,
 	string const *const Code,
@@ -1908,6 +2009,33 @@ static void __cdecl TSSGCtrl_IsEnabled_GetCode(
 }
 
 static __inline void AttachStringReference() {
+	// TSSGCtrl::GetSSGDataFile
+	//   FileName = strD.Half(&FName, "->", 0);
+	*(LPBYTE)0x004EF91E =  0x8B  ;// mov eax,
+	*(LPWORD)0x004EF920 = -0x01D0;// dword ptr [ebp - 01D0h]
+	SET_PROC(0x004EF948, TSSGCtrl_GetSSGDataFile_FileName_assign);
+	*(LPBYTE)0x004EF981 = OPCODE_JMP_REL8;// omit dtor Half
+
+	//   FileName  = strD.Lower(CurDir + FName +DefaultExt);
+	SET_PROC(0x004EFB71, TSSGCtrl_GetSSGDataFile_string_ctor_assign);
+	*(LPBYTE)0x004EFBA8 = OPCODE_JMP_REL8;// omit dtor Src
+
+	*(LPBYTE)0x004EFC3B =  0x8B  ;// mov eax,
+	*(LPWORD)0x004EFC3D = -0x0200;// dword ptr [ebp - 0200h]
+	SET_PROC(0x004EFC65, TSSGCtrl_GetSSGDataFile_FileName_assign);
+	*(LPBYTE)0x004EFC9E = OPCODE_JMP_REL8;// omit dtor Lower
+
+	//   FileName  = strD.Lower(CurDir + FileName) + ".ssl";    //Šg’£Žq•t‰Á
+	*(LPBYTE)0x004EFE1E =  0x8B  ;// mov ecx,
+	*(LPWORD)0x004EFE20 = -0x0250;// dword ptr [ebp - 0250h]
+	SET_PROC(0x004EFE48, TSSGCtrl_GetSSGDataFile_FileName_assign);
+	*(LPBYTE)0x004EFE81 = OPCODE_JMP_REL8;// omit dtor Lower
+	
+	// TSSGCtrl::SetSSGDataFile
+	//   string Path(strD.Lower(FileName));
+	SET_PROC(0x004F1956, TSSGCtrl_GetSSGDataFile_string_ctor_assign);
+	*(LPBYTE)0x004F198D = OPCODE_JMP_REL8;// omit dtor Lower
+
 	// TSSGCtrl::GetAddress
 	//   tmpS( strD.Trim(AddressStr) )
 	SET_PROC(0x00503966, TSSGCtrl_GetAddress_Trim);
@@ -1948,6 +2076,11 @@ static __inline void AttachStringReference() {
 	//   tmpAE->GetOffsetCode()
 	SET_PROC(0x005041B3, TSSGCtrl_AddressAttributeFilter_GetOffsetCode);
 	*(LPBYTE)0x005041EE = OPCODE_JMP_REL8;// omit dtor AddressStr
+
+	// TSSGCtrl::AddressNaming
+	//   strD.Trim(NameStr)
+	SET_PROC(0x00504647, TSSGCtrl_AddressNaming_Trim);
+	*(LPBYTE)0x00504689 = OPCODE_JMP_REL8;// omit dtor Trim
 
 #if 0//incompatible with `TStringDivision::ToULongDef`
 	// TSSGCtrl::StrToProcessAccessElementVec

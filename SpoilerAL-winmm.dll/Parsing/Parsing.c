@@ -3211,7 +3211,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				switch (*(uint32_t *)(p + 5))
 				{
 				case BSWAP32('_int'):
-					if (p[9] != ';' && p[9] != '(' && !__intrinsic_isspace(p[9]))
+					if (p[9] != ';' && p[9] != '(' && p[9] != '{' && !__intrinsic_isspace(p[9]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
 					bCorrectTag = TRUE;
@@ -3219,7 +3219,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				case BSWAP32('_rea'):
 					if (p[9] != 'l')
 						break;
-					if (p[10] != ';' && p[10] != '(' && !__intrinsic_isspace(p[10]))
+					if (p[10] != ';' && p[10] != '(' && p[10] != '{' && !__intrinsic_isspace(p[10]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
 					bCorrectTag = TRUE;
@@ -3227,7 +3227,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				case BSWAP32('_res'):
 					if (*(uint16_t *)(p + 9) != BSWAP16('et'))
 						break;
-					if (p[11] != ';' && p[11] != '(' && !__intrinsic_isspace(p[11]))
+					if (p[11] != ';' && p[11] != '(' && p[11] != '{' && !__intrinsic_isspace(p[11]))
 						break;
 					bNextIsSeparatedLeft = TRUE;
 					bCorrectTag = TRUE;
@@ -4927,7 +4927,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		// get depth of nested loop
 		lpMarkup->LoopDepth =
 			(lpMarkup->Type & OS_LOOP_BEGIN) ? nDepth++ :
-			((lpMarkup->Type & OS_LOOP_END) && nDepth) ? --nDepth :
+			(lpMarkup->Type & OS_LOOP_END && nDepth) ? --nDepth :
 			nDepth;
 		lpMarkup->Depth += lpMarkup->LoopDepth;
 
@@ -5756,7 +5756,7 @@ static LPVOID __fastcall AllocateHeapBuffer(LPVOID **lplpHeapBuffer, size_t *lpn
 			return NULL;
 		*lplpHeapBuffer = lpHeapBuffer;
 	}
-	lpBuffer = HeapAlloc(hPrivateHeap, HEAP_ZERO_MEMORY, cbSize);
+	lpBuffer = HeapAlloc(hPrivateHeap, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, cbSize);
 	if (!lpBuffer)
 		return NULL;
 	lpHeapBuffer[nNumberOfHeapBuffer] = lpBuffer;
@@ -5843,7 +5843,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 #if ADDITIONAL_TAGS
 			if (!(attributes = TSSGSubject_GetAttribute(SSGS)))// check for TSSGCtrl::LoopSSRFile
 				attributes = TSSGAttributeSelector_GetNowAtteributeVec(&this->attributeSelector);
-			variable = (TPrologueAttribute *)TSSGCtrl_GetAttribute(this, SSGS, atPROLOGUE);
+			variable = TSSGCtrl_GetAttribute(this, SSGS, atPROLOGUE);
 #endif
 			p = string_begin(Src);
 			if (string_length(Src) >= sizeof(size_t) * 2 && *(size_t *)string_begin(Src) == BOM)
@@ -5861,15 +5861,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						 it < end;
 						 it++)
 						nSizeOfReplace +=
-							string_length(TIO_FEPAttribute_GetInputCode ((TIO_FEPAttribute *)*it)) + 1 +
-							string_length(TIO_FEPAttribute_GetOutputCode((TIO_FEPAttribute *)*it)) + 1;
+							string_length(TIO_FEPAttribute_GetInputCode (*it)) + 1 +
+							string_length(TIO_FEPAttribute_GetOutputCode(*it)) + 1;
 				}
 				if (nSizeOfReplace)
 				{
 					LPBYTE p, dest;
 					size_t n;
 
-					if (!(lpszReplace = (LPBYTE)HeapAlloc(hHeap, 0, nSizeOfReplace += 2)))
+					if (!(lpszReplace = (LPBYTE)HeapAlloc(hHeap, 0, ++nSizeOfReplace)))
 						goto ALLOC_ERROR;
 					p = lpszReplace;
 					if (variable && string_length(code = TEndWithAttribute_GetCode(variable)))
@@ -5885,15 +5885,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 							 it < end;
 							 it++)
 						{
-							code = TIO_FEPAttribute_GetInputCode((TIO_FEPAttribute *)*it);
+							code = TIO_FEPAttribute_GetInputCode (*it);
 							p = (dest = p) + (n = string_length(code) + 1);
 							memcpy(dest, string_c_str(code), n);
-							code = TIO_FEPAttribute_GetOutputCode((TIO_FEPAttribute *)*it);
+							code = TIO_FEPAttribute_GetOutputCode(*it);
 							p = (dest = p) + (n = string_length(code) + 1);
 							memcpy(dest, string_c_str(code), n);
 						}
 					}
-					*p = '\0';
 				}
 #endif
 				cacheNext = 0;
@@ -8030,7 +8029,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						}
 						else
 						{
-							lpProcessMemory[i].Address = lpAddress = HeapAlloc(hPrivateHeap, HEAP_ZERO_MEMORY, allocSize);
+							lpProcessMemory[i].Address = lpAddress = HeapAlloc(hPrivateHeap, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, allocSize);
 						}
 						break;
 					}
@@ -8989,12 +8988,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 							if (!IsInteger)
 								allocSize += ULL2DBL_LOST_MAX;
 #endif
-							address =
-								lpProcessMemory[i].Address ?
-									HeapReAlloc(hPrivateHeap, HEAP_ZERO_MEMORY, lpProcessMemory[i].Address, allocSize) :
-									HeapAlloc(hPrivateHeap, HEAP_ZERO_MEMORY, allocSize);
+							address = lpProcessMemory[i].Address
+								? HeapReAlloc(hPrivateHeap,
+											  HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY | HEAP_REALLOC_IN_PLACE_ONLY * (allocSize <= lpProcessMemory[i].Size),
+											  lpProcessMemory[i].Address,
+											  allocSize)
+								: HeapAlloc(hPrivateHeap, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, allocSize);
 							if (!address)
-								break;
+								goto ALLOC_ERROR;
 						}
 						lpProcessMemory[i].Address = address;
 						lpProcessMemory[i].Size = (size_t)size;
@@ -12670,8 +12671,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				}
 #if SCOPE_SUPPORT
 				for (register PVARIABLE v = lpVariable, end = v + nNumberOfVariable; v < end; v++)
-					if (v->Node)
+					if (v->Node && !((ScopeVariant *)pair_first(v->Node))->Identifier.sstIndex)
+					{
+						((ScopeVariant *)pair_first(v->Node))->Identifier.sstIndex = -1;
 						((ScopeVariant *)pair_first(v->Node))->Quad = v->Value.Quad;
+					}
 #endif
 				if (this->ssgActionListner && lpMarkup->Length + 10 < 1024) switch (TMainForm_GetUserMode(MainForm))
 				{
@@ -12688,6 +12692,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				for (register PVARIABLE v = lpVariable, end = v + nNumberOfVariable; v < end; v++)
 					if (v->Node)
 					{
+						((ScopeVariant *)pair_first(v->Node))->Identifier.sstIndex = 0;
 						v->Value.Quad   = ((ScopeVariant *)pair_first(v->Node))->Quad;
 						v->Value.IsQuad = !IsInteger || v->Value.High;
 					}
@@ -12719,16 +12724,14 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					size_t prefixLength;
 					size_t i;
 
-					if (!length)
-						break;
+					if (!length || lpNext && (lpNext->Tag <= TAG_MNAME && lpNext->Tag >= TAG_MODULENAME || lpNext->Tag == TAG_GOTO))
+						break;// Operand is always immediate string.
 					if (p[prefixLength = 0] != '\'' && (p[0] != 'u' ||
 						p[prefixLength = 1] != '\'' && (p[1] != '8' ||
 						p[prefixLength = 2] != '\'')))
 					{
 						if (!IsStringOperand(lpMarkup))
 						{
-							if (lpNext && (lpNext->Tag <= TAG_MNAME && lpNext->Tag >= TAG_MODULENAME || lpNext->Tag == TAG_GOTO))
-								break;
 							if (*p == '$')
 							{
 								p++;
@@ -12822,15 +12825,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						{
 							TScopeAttribute *scope;
 							map_iterator it;
-							LPSTR const s[] = { p + 1, p + length };
-							ScopeVariant sv = { SubjectStringTable_insert((string *)&s), 0, 0 };
+							ScopeVariant sv = { { p + 1, p + length, NULL, NULL, p + 1, -1 }, 0, 0 };
 							for (TScopeAttribute **base = &vector_type_at(attributes, TScopeAttribute *, coord.Y),
 								 **cur  = base + coord.X;
 								 --cur >= base; )
 							{
 								it = map_lower_bound(&(scope = *cur)->heapMap, &sv.Identifier);
-								if (it != map_end(&scope->heapMap) && ((ScopeVariant *)pair_first(it))->Identifier == sv.Identifier)
+								if (it != map_end(&scope->heapMap) && string_equals(&((ScopeVariant *)pair_first(it))->Identifier, &sv.Identifier))
 								{
+									((ScopeVariant *)pair_first(it))->Identifier.sstIndex = 0;
 									element->Value.Quad    = ((ScopeVariant *)pair_first(it))->Quad;
 									element->Value.IsQuad |= !!element->Value.High;
 									element->Node = it;
@@ -12838,11 +12841,22 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 								}
 							}
 							if (!element->Node)
-								map_dword_dw_dw_insert(&element->Node, &scope->heapMap, it, &sv);
+							{
+								map_string_quad_insert(&element->Node, &scope->heapMap, it, &sv);
+								((ScopeVariant *)pair_first(element->Node))->Identifier.sstIndex = 0;
+							}
 						}
 					}
 #endif
 				}
+#if SCOPE_SUPPORT
+				else if (element && element->Node && ((ScopeVariant *)pair_first(element->Node))->Identifier.sstIndex)
+				{
+					((ScopeVariant *)pair_first(element->Node))->Identifier.sstIndex = 0;
+					element->Value.Quad   = ((ScopeVariant *)pair_first(element->Node))->Quad;
+					element->Value.IsQuad = !IsInteger || element->Value.High;
+				}
+#endif
 				*end = c;
 #pragma endregion end
 				switch (lpNext ? lpNext->Tag : -1)
@@ -13253,8 +13267,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			HeapFree(hHeap, 0, lpBuffer1);
 	OPEN_ERROR:
 		if (this->ssgActionListner &&
+			this->script.ePos &&
 			TMainForm_GetUserMode(MainForm) >= 3 &&
-			!vector_empty(&this->processCtrl.processNameVec) &&
 			FormatMessageA(
 				FORMAT_MESSAGE_MAX_WIDTH_MASK |
 				FORMAT_MESSAGE_ALLOCATE_BUFFER |
@@ -13337,8 +13351,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 FAILED:
 #if SCOPE_SUPPORT
 	for (register PVARIABLE v = lpVariable, end = v + nNumberOfVariable; v < end; v++)
-		if (v->Node)
+		if (v->Node && !((ScopeVariant *)pair_first(v->Node))->Identifier.sstIndex)
+		{
+			((ScopeVariant *)pair_first(v->Node))->Identifier.sstIndex = -1;
 			((ScopeVariant *)pair_first(v->Node))->Quad = v->Value.Quad;
+		}
 #endif
 	if (hProcess)
 		CloseHandle(hProcess);
@@ -13347,7 +13364,7 @@ FAILED:
 	if ((nNumberOfProcessMemory || nNumberOfHeapBuffer)
 		&& this->script.ePos
 		&& TMainForm_GetUserMode(MainForm) >= 3
-		&& !HeapValidate(hPrivateHeap, 0, NULL)) {
+		&& !HeapValidate(hPrivateHeap, HEAP_NO_SERIALIZE, NULL)) {
 		CHAR lpText[0x0100];
 #if USE_TOOLTIP
 		extern BOOL bActive;
@@ -13370,7 +13387,7 @@ RELEASE:
 
 		i = nNumberOfHeapBuffer;
 		while (i)
-			HeapFree(hPrivateHeap, 0, lpHeapBuffer[--i]);
+			HeapFree(hPrivateHeap, HEAP_NO_SERIALIZE, lpHeapBuffer[--i]);
 		HeapFree(hHeap, 0, lpHeapBuffer);
 	}
 #if REPEAT_INDEX

@@ -1,6 +1,6 @@
 #include <windows.h>
 
-extern const DWORD F00415948;
+extern const DWORD _STL_string_M_assign_dispatch;
 
 __declspec(naked) void __cdecl TMainForm_M_CustomizeClick_ChainPrevRedrawCalcImage()
 {
@@ -9,6 +9,6 @@ __declspec(naked) void __cdecl TMainForm_M_CustomizeClick_ChainPrevRedrawCalcIma
 		mov     eax, dword ptr [ebp - 1F4H]
 		push    eax
 		push    0044B312H
-		jmp     dword ptr [F00415948]
+		jmp     dword ptr [_STL_string_M_assign_dispatch]
 	}
 }

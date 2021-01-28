@@ -1,6 +1,5 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TProcessCtrl.h"
-#include "TMainForm.h"
 
 void(__cdecl * const TProcessCtrl_Clear)(TProcessCtrl *this) = (LPVOID)0x004A3350;
 void(__cdecl * const TProcessCtrl_LoadHeapList)(TProcessCtrl *this) = (LPVOID)0x004A3980;

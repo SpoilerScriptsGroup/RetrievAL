@@ -7,7 +7,12 @@
 
 EXTERN_C void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
 
-EXTERN_C void __stdcall AddressNamingFEPFreeList(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector_string *tmpV, unsigned long DataSize, char *tmpC)
+EXTERN_C void __fastcall AddressNamingFEPFreeList(
+	unsigned long  const DataSize,
+	char          *const tmpC,
+	vector_string *const tmpV,
+	TSSGCtrl      *const SSGCtrl,
+	TSSGSubject   *const SSGS)
 {
 	if (DataSize <= 4 && !string_empty(&vector_at(tmpV, 5)))
 	{

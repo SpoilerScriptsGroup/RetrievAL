@@ -5,6 +5,7 @@
 #include "bcb6_std_string.h"
 #include "TCheckBox.h"
 #include "TDrawGrid.h"
+#include "TStringDivision.h"
 #include "TSSGScriptStruct.h"
 #include "TSSGCtrl.h"
 #include "TCalcImage.h"
@@ -159,7 +160,7 @@ typedef struct _TMainForm
 	BYTE             topManagerListner[168];
 	BYTE             ssgActionListner[16];
 	BYTE             adjustmentListner[16];
-	BYTE             strD[144];
+	TStringDivision  strD;
 	TSSGCtrl         ssgCtrl;
 	bcb6_std_string  exeDir;
 	BYTE             searchMode;
@@ -179,6 +180,7 @@ EXTERN_C void(__cdecl * const TMainForm_GoCalcEnter)(TMainForm *this);
 
 EXTERN_C void __cdecl TMainForm_CalcButtonPushFunc(TMainForm *this, long BtnNum);
 
+EXTERN_C void(__cdecl * const TMainForm_SetLockVisible)(TMainForm *this, TSSGSubject *SSGS, BOOLEAN MustVisible);
 EXTERN_C void(__cdecl * const TMainForm_DrawTreeCell)(TMainForm *this, LPVOID DestCanvas, int ARow, RECT *Rect);
 EXTERN_C void(__cdecl * const TMainForm_ChangeSubjectPanel)(TMainForm *this, long Type);
 EXTERN_C void(__cdecl * const TMainForm_GoCalcHexChange)(TMainForm *this, boolean IsCalcHex);

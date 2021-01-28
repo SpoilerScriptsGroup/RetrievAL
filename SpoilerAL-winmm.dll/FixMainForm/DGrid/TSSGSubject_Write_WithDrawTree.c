@@ -26,7 +26,7 @@ __declspec(naked) unsigned long __stdcall TSSGSubject_Write_WithDrawTree(TSSGSub
 		mov     ecx,      [esp + 0x0C]
 		push    ecx
 		mov     dword ptr [esp + 24], edx
-		mov     eax, [ecx]
+		mov     eax, [ecx]TSSGSubject.VTable
 		call    [eax]SubjectVtbl.Write
 		mov     ecx, dword ptr ds:[_MainForm]
 		mov     dword ptr [esp + 20], eax

@@ -38,20 +38,27 @@ EXTERN_C void __cdecl TGuideForm_ctor();
 EXTERN_C void __cdecl UpdateUserModeMenu();
 EXTERN_C void __cdecl TSearchForm_ctor();
 
-extern const DWORD F005E0EA8;
+extern const DWORD vcl_System_AnsiString_dtor;
 
 static __declspec(naked) void __cdecl TMainForm_SubjectAccess_break_ListLBox()
 {
 	__asm {// ListLBox->Items->Clear();
-		call dword ptr [F005E0EA8]
-		mov  ecx, [ebx + 0x03E8]
+		call dword ptr [vcl_System_AnsiString_dtor]
+		push FALSE
+		push edi
+		push ebx
+		call TMainForm_SetLockVisible
+		add  esp, 12
+		mov  ecx, [ebx]TMainForm.ListLBox
 		mov  eax, [ecx + 0x0218]
 		mov  edx, [eax]
 		jmp  dword ptr [edx + 0x44]
+		ud2
 	}
 }
 
-static HANDLE __fastcall TMainForm_SubjectAccess_GetCautionHandle(TMainForm* this, TSSString* SSGS) {
+static HWND __fastcall TMainForm_SubjectAccess_GetCautionHandle(TMainForm *const this, TSSString *const SSGS)
+{
 	return SSGS->cautious ? TWinControl_GetHandle(this->CautionREdit) : NULL;
 }
 
@@ -67,8 +74,8 @@ static __declspec(naked) void __cdecl TMainForm_SubjectAccess_CautiousString() {
 		align 16
 	CAUTION:// TSSArgString.value.c_str()
 		push 0
-		push 0
-		push EM_SCROLLCARET
+		push SB_TOP
+		push WM_VSCROLL
 		push eax
 		push dword ptr [ebp - 0xE4]
 		push 0
@@ -77,62 +84,71 @@ static __declspec(naked) void __cdecl TMainForm_SubjectAccess_CautiousString() {
 		call SendMessageA
 		call PostMessageA
 		// selectSubject = NULL;
-		mov  dword ptr [ebx + 0x0524], 0
+		mov  dword ptr [ebx]TMainForm.selectSubject, 0
 		// CautionTabS->TabVisible = true;
-		mov  edx, 1
-		mov  eax, dword ptr [ebx + 0x0408]
+		mov  edx, TRUE
+		mov  eax, [ebx]TMainForm.CautionTabS
 		mov  ecx, 0x00594684
 		call ecx
 		// PageCtrl->ActivePage = CautionTabS;
-		mov  edx, dword ptr [ebx + 0x0408]
-		mov  eax, dword ptr [ebx + 0x03C4]
+		mov  edx, [ebx]TMainForm.CautionTabS
+		mov  eax, [ebx]TMainForm.PageCtrl
 		mov  ecx, 0x00594E6C
 		jmp  ecx
+		ud2
 	}
 }
 
 static __declspec(naked) void __cdecl TMainForm_SubjectAccess_break_MultiLBox()
 {
 	__asm {// MultiLBox->Items->Clear();
-		call dword ptr [F005E0EA8]
-		mov  ecx, [ebx + 0x03E4]
+		call dword ptr [vcl_System_AnsiString_dtor]
+		push FALSE
+		push edi
+		push ebx
+		call TMainForm_SetLockVisible
+		add  esp, 12
+		mov  ecx, [ebx]TMainForm.MultiLBox
 		mov  eax, [ecx + 0x0218]
 		mov  edx, [eax]
 		jmp  dword ptr [edx + 0x44]
+		ud2
 	}
 }
 
 static __declspec(naked) void __cdecl TMainForm_StringEnterBtnClick_GetSubjectName(string* retval, TSSGSubject* this, TSSGCtrl* SSGC) {
-	__asm {
-		// this = TMainForm*->selectSubject
-		mov  ecx, [esi + 0x0524]
-		xchg ecx, [esp + 8]
+	__asm {// this = TMainForm*->selectSubject
+		mov  eax, [esi]TMainForm.selectSubject
+		xchg eax, [esp + 8]
 		jmp  TSSGSubject_GetSubjectName
+		ud2
 	}
 }
 
 static void __fastcall TMainForm_GoCalcEnter_selectAll(TMainForm* mainForm) {
 	HWND edit = TWinControl_GetHandle(vector_at(&mainForm->calcImage->valBox, 1).edit);
-	SendMessageA(edit, EM_SETSEL, 0, ULONG_MAX);
-	SendMessageA(edit, WM_SETFOCUS, (WPARAM)NULL, 0);
+	SendMessageA(edit, EM_SETSEL, 0, -1);
+	PostMessageA(edit, WM_SETFOCUS, (WPARAM)NULL, 0);
 }
 
 static void __declspec(naked) __fastcall TMainForm_GoCalcEnter_destroyMessage(string* this, DWORD two) {
 	extern BOOL FixTheProcedure;
 	__asm {// Borland's fastcall
-		call F005E0EA8
+		call vcl_System_AnsiString_dtor
 		mov  ecx, ebx
-	//	mov  dword ptr [esp], 0x0043FB70// goto calcImage->SetNewVal("");
+#if 0
+		mov  dword ptr [esp], 0x0043FB70// goto calcImage->SetNewVal("");
+#endif
 		jmp  TMainForm_GoCalcEnter_selectAll
 	}
 }
 
 static __declspec(naked) void __cdecl TMainForm_SetLockVisible_IsLocked(TSSGCtrl* SSGC, TSSGSubject* SSGS) {
-	__asm {
-		// SSGS = TMainForm*->selectSubject
-		mov  edx, [ebx + 0x0524]
-		xchg edx, [esp + 8]
+	__asm {// SSGS = TMainForm*->selectSubject
+		mov  eax, [ebx]TMainForm.selectSubject
+		xchg eax, [esp + 8]
 		jmp  TSSGCtrl_IsLocked
+		ud2
 	}
 }
 
@@ -147,6 +163,7 @@ static __declspec(naked) void __cdecl TMainForm_DrawTreeCell_ModifyNowValueStrin
 		test  eax, eax
 		cmovz edx, ecx
 		jmp   edx
+		ud2
 	}
 }
 #endif
@@ -201,7 +218,23 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPBYTE )0x004026C8 = CALL_REL32;
 	*(LPDWORD)0x004026C9 = (DWORD)TMainForm_FormClose_Header - (0x004026C9 + sizeof(DWORD));
 	*(LPBYTE )0x004026CD = NOP;
-
+#if 0
+	// TMainForm::FormCreate
+	//   StringNowValEdit->SetBounds(8, 32, 200, 20);
+	*(LPWORD )0x00417D9E = BSWAP16(0x6A64);
+	*(LPBYTE )0x00417DA0 =         0x68   ;
+	*(LPDWORD)0x00417DA1 =         320    ;
+	//   StringNewValEdit->SetBounds(8, 54, 200, 20);
+	*(LPWORD )0x00417DBD = BSWAP16(0x6A64);
+	*(LPBYTE )0x00417DBF =         0x68   ;
+	*(LPDWORD)0x00417DC0 =         320    ;
+	*(LPDWORD)0x00417DCB =         360    ;
+	//   StringEnterBtn	->SetBounds(8, 76,  64, 24);
+	*(LPDWORD)0x00417DE7 =         700    ;
+	// TMainForm::PageCtrlResize
+	//   LockCBox   ->Width = W;
+	*(LPDWORD)0x00446CAD = offsetof(TMainForm, StringNewValEdit);
+#endif
 	// TMainForm::~TMainForm
 	*(LPBYTE )0x0045FDE9 = JMP_REL32;
 	*(LPDWORD)0x0045FDEA = (DWORD)TMainForm_dtor - (0x0045FDEA + sizeof(DWORD));
@@ -240,11 +273,11 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPWORD )0x0043A88E = BSWAP16(0x8B8B);// mov ecx, dword ptr [ebx + ...
 	*(LPDWORD)0x0043A890 = offsetof(TMainForm, selectSubject);
 
-	*(LPBYTE )0x0043B075 = CALL_REL32;
-	*(LPDWORD)0x0043B076 = (DWORD)TMainForm_SubjectAccess_CautiousString - (0x0043B076 + sizeof(DWORD));
-	*(LPWORD )0x0043B07A = BSWAP16(0x66C7);
-	*(LPDWORD)0x0043B07C = BSWAP32(0x46104C01);// mov  word ptr [esi+10h],14Ch
-	*(LPDWORD)0x0043B080 = BSWAP32(0x836E1C03);// sub dword ptr [esi+1Ch],3
+	*(LPBYTE )0x0043B075 =         0x66       ;
+	*(LPWORD )0x0043B076 = BSWAP16(0xC746    );// mov  word ptr [esi+10h], 14Ch
+	*(LPDWORD)0x0043B078 = BSWAP32(0x104C01 << 8 | CALL_REL32);
+	*(LPDWORD)0x0043B07C = (DWORD)TMainForm_SubjectAccess_CautiousString - (0x0043B07C + sizeof(DWORD));
+	*(LPDWORD)0x0043B080 = BSWAP32(0x836E1C03);// sub dword ptr [esi+1Ch], 3
 
 	*(LPDWORD)(0x0043B1F5 + 1) = (DWORD)TMainForm_SubjectAccess_break_MultiLBox - (0x0043B1F5 + 1 + sizeof(DWORD));
 
@@ -326,7 +359,9 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 
 	// TMainForm::SetLockVisible
 	*(LPDWORD)(0x004444DB + 1) = (DWORD)Caller_TMainForm_SetLockVisible_ModifyLockName - (0x004444DB + 1 + sizeof(DWORD));
+	*(LPBYTE )(0x004444EA + 2) = 0;// stack size to discard
 	*(LPDWORD)(0x00444619 + 1) = (DWORD)Caller_TMainForm_SetLockVisible_ModifyLockName - (0x00444619 + 1 + sizeof(DWORD));
+	*(LPBYTE )(0x00444628 + 2) = 0;// stack size to discard
 	*(LPDWORD)(0x004447E9 + 1) = (DWORD)TMainForm_SetLockVisible_IsLocked - (0x004447E9 + 1 + sizeof(DWORD));
 
 	// TMainForm::DrawTreeCell

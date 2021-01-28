@@ -5,7 +5,7 @@
 #include "TSSGCtrl.h"
 
 extern const BOOL EnableParserFix;
-extern const DWORD bcb6_std_string_substr;
+extern const DWORD _STL_string_substr;
 
 uint64_t __cdecl InternalParsing(TSSGCtrl* SSGCtrl, TSSGSubject* SSGS, const string* Src, BOOL IsInteger, va_list ArgPtr);
 

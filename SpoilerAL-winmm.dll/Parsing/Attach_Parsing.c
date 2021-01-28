@@ -82,6 +82,7 @@ EXTERN_C void __cdecl TSSGCtrl_OneWrite_with_CheckIO_FEP();
 #define NOP_X2                        (WORD )0x9066
 #define NOP_X4                        (DWORD)0x00401F0F
 #define SHL_EAX_IMM8                  (WORD )0xE0C1
+#define SS_LEAVE                      (WORD )0xC936
 #define CALL_REL32                    (BYTE )0xE8
 #define JMP_REL32                     (BYTE )0xE9
 #define JMP_REL8                      (BYTE )0xEB
@@ -396,7 +397,10 @@ EXTERN_C void __cdecl Attach_Parsing()
 	*(LPDWORD)(0x00503CC7 + 1) = (DWORD)Caller_Parsing - (0x00503CC7 + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::AddressNaming
+#if 0// replaced at "FormatNameString\Attach_FormatNameString.c" - TSSGCtrl_GetNameString
+	//   return GetNameString(SSGS, strD.Join("", *tmpV));
 	*(LPDWORD)(0x0050490D + 1) = (DWORD)TSSGCtrl_AddressNaming_ReplaceDefineDynamic1 - (0x0050490D + 1 + sizeof(DWORD));
+#endif
 
 	// TSSGCtrl::AddressNaming
 	*(LPWORD )0x00504F4E = BSWAP16(0x8D87    );// lea  eax, dword ptr [edi + ...
@@ -409,9 +413,11 @@ EXTERN_C void __cdecl Attach_Parsing()
 	*(LPDWORD)0x00504F72 = (DWORD)TSSGCtrl_OpenProcess - (0x00504F72 + sizeof(DWORD));
 
 	// TSSGCtrl::AddressNaming
+	//   return List->at(Index);
 	*(LPDWORD)(0x00505703 + 1) = (DWORD)TSSGCtrl_AddressNaming_ReplaceDefineDynamic2 - (0x00505703 + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::AddressNaming
+	//   strD.Half(&tmpS,"=")
 	*(LPDWORD)(0x005059A8 + 1) = (DWORD)TSSGCtrl_AddressNaming_ByteArrayReplaceDefine - (0x005059A8 + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::StrToProcessAccessElementVec
@@ -491,6 +497,7 @@ EXTERN_C void __cdecl Attach_Parsing()
 	*(LPDWORD)(0x0052EAB7 + 1) = (DWORD)TSSBundleFloatCalc_Write_OneWrite2 - (0x0052EAB7 + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::GetAddress
+	*(LPWORD )0x00503F9D = SS_LEAVE;
 	*(LPBYTE )0x00503F9F = JMP_REL32;
 	*(LPDWORD)0x00503FA0 = (DWORD)Caller_TSSGCtrl_GetAddress_SaveAddress - (0x00503FA0 + sizeof(DWORD));
 }

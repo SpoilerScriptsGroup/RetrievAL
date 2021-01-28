@@ -17,7 +17,7 @@ unsigned char * __cdecl _mbsichr(const unsigned char *string, unsigned int c)
 	if (c < 0x100)
 	{
 		if ((c | ('a' - 'A')) - 'a' >= 'z' - 'a' + 1)
-			return _mbschr(string, c);
+			return internal_mbschr_single_byte(string, c);
 		return internal_mbsichr_single_byte(string, c);
 	}
 	else
@@ -30,7 +30,7 @@ unsigned char * __cdecl _mbsichr(const unsigned char *string, unsigned int c)
 		if (!IsDBCSLeadByteEx(CP_THREAD_ACP, (unsigned char)(*(unsigned long *)lpCharStr = _byteswap_ulong(c) >> 16)))
 			return NULL;
 		if (!GetStringTypeA(GetThreadLocale(), CT_CTYPE1, lpCharStr, 2, &wCharType) || !(wCharType & (C1_UPPER | C1_LOWER)))
-			return _mbschr(string, c);
+			return internal_mbschr_multi_byte(string, c);
 		return internal_mbsichr_multi_byte(string, c);
 	}
 }

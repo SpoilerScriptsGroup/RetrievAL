@@ -1,7 +1,7 @@
 #include <windows.h>
 #include "TMainForm.h"
 
-static __declspec(naked) void __fastcall TMainForm_DGridDrawCell_DrawTreeCell(int ARow, TDrawGrid *DGrid)
+static __declspec(naked) TMainForm* __fastcall TMainForm_DGridDrawCell_DrawTreeCell(int ARow, TDrawGrid *DGrid)
 {
 	static const LPCVOID listener = NULL;
 	__asm {// Don't change eax!

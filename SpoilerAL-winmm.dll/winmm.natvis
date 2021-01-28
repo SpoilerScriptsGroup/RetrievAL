@@ -2,6 +2,19 @@
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
 	<Type Name="tpid">
 		<DisplayString>{(unsigned char *)this + tpName, s}</DisplayString>
+		<Expand HideRawView="true">
+			<Item Name="[Name]">(unsigned char *)this + tpName, sb</Item>
+			<Item Name="[Mask]">_tpMask</Item>
+			<ExpandedItem Condition="_tpMask &amp; 0x0010">tpPtr</ExpandedItem>
+			<ExpandedItem Condition="_tpMask &amp; 0x0400">tpArr</ExpandedItem>
+			<ExpandedItem Condition="_tpMask &amp; 0x0002">tpClass</ExpandedItem>
+		</Expand>
+	</Type>
+	<Type Name="ERRbc">
+		<Expand>
+			<ExpandedItem>ERRcInfo</ExpandedItem>
+			<ExpandedItem>ERRcXtab->_ctxTbl[(ERRcCCtx-8)/12]</ExpandedItem>
+		</Expand>
 	</Type>
 	<Type Name="_String_base">
 		<DisplayString Condition="_M_end_of_storage == 0">{SubjectStringTable_array[sstIndex]}</DisplayString>
@@ -24,7 +37,7 @@
 		</Expand>
 	</Type>
 	<Type Name="_TSSGSubject">
-		<DisplayString>{stype}</DisplayString>
+		<DisplayString>{stype} {SubjectProperty[propertyIndex]}</DisplayString>
 	</Type>
 	<Type Name="_Vector_PTSSGSubject">
 		<Expand>
@@ -57,18 +70,26 @@
 		</Expand>
 	</Type>
 	<Type Name="_Deque_base">
-		<DisplayString>{_M_finish._M_node - _M_start._M_node}</DisplayString>
+		<DisplayString>[ {_M_finish._M_node - _M_start._M_node} ]</DisplayString>
 		<Expand>
 			<IndexListItems>
 				<Size>_M_finish._M_node - _M_start._M_node</Size>
-				<ValueNode>*(TAdjustmentAttribute **)_M_map[3 + $i] </ValueNode>
+				<ValueNode>*(TAdjustmentAttribute **)_M_start._M_node[$i] </ValueNode>
 			</IndexListItems>
 		</Expand>
 	</Type>
 	<Type Name="_Rb_tree_node">
-		<DisplayString Condition="(*(TAdjustmentAttribute **)_M_value_field)->type &lt; 0x10000">({*(LPDWORD)&amp;_M_value_field[4], X}) [{*(TAdjustmentAttribute **)_M_value_field}]</DisplayString>
-		<DisplayString Condition="*(LPDWORD)_M_value_field &lt; 0x10000">[{(Attribute)*(LPDWORD)_M_value_field}] {(_Deque_base *)&amp;_M_value_field[8]}</DisplayString>
-		<DisplayString>({*(LPDWORD)&amp;_M_value_field[4], X}) [{*(char **)_M_value_field}]</DisplayString>
+		<DisplayString Condition="(*(TAdjustmentAttribute**)_M_value_field)->VTable >= 0x00602000 &amp;&amp; (*(TAdjustmentAttribute**)_M_value_field)->VTable &lt; 0x00650000 &amp;&amp; (*(TAdjustmentAttribute**)_M_value_field)->type &lt; 0x10000">{(*(TAdjustmentAttribute**)_M_value_field), na}</DisplayString>
+		<DisplayString Condition="*(LPDWORD)_M_value_field &lt; 0x10000 &amp;&amp; ((_Deque_base*)&amp;_M_value_field[8])->_M_map >= 0x10000 &amp;&amp; ((_Deque_base*)&amp;_M_value_field[8])->_M_map_size &lt; 0x10000">{(Attribute*)_M_value_field, na}</DisplayString>
+		<DisplayString Condition="((_Rb_tree*)_M_value_field)->_M_header >= 0x10000 &amp;&amp; ((_Rb_tree*)_M_value_field)->_M_node_count &lt; 0x10000">{(_Rb_tree*)_M_value_field, na}</DisplayString>
+		<DisplayString Condition="((_String_base*)_M_value_field)->_M_start >= 0x10000 &amp;&amp; ((_String_base*)_M_value_field)->_M_finish >= 0x10000 &amp;&amp; ((_String_base*)_M_value_field)->_M_end_of_storage >= 0x10000">{(_String_base*)_M_value_field, na}</DisplayString>
+		<DisplayString Condition="*(LPDWORD)_M_value_field &lt; 0x10000">{SubjectStringTable_array[*(LPDWORD)_M_value_field]}</DisplayString>
+		<Expand>
+			<ExpandedItem Condition="*(LPDWORD)_M_value_field &lt; 0x10000 &amp;&amp; ((_Deque_base*)&amp;_M_value_field[8])->_M_map >= 0x10000 &amp;&amp; ((_Deque_base*)&amp;_M_value_field[8])->_M_map_size &lt; 0x10000">(_Deque_base*)&amp;_M_value_field[8]</ExpandedItem>
+			<Item Name="[Key]" Condition="((_Rb_tree*)_M_value_field)->_M_header >= 0x10000 &amp;&amp; ((_Rb_tree*)_M_value_field)->_M_node_count &lt; 0x10000"> (_Rb_tree*     )     _M_value_field</Item>
+			<ExpandedItem      Condition="((_Rb_tree*)_M_value_field)->_M_header >= 0x10000 &amp;&amp; ((_Rb_tree*)_M_value_field)->_M_node_count &lt; 0x10000">*(_Vector_base**)&amp;_M_value_field[sizeof(_Rb_tree)]</ExpandedItem>
+			<ExpandedItem Condition="((_String_base*)_M_value_field)->_M_start >= 0x10000 &amp;&amp; ((_String_base*)_M_value_field)->_M_finish >= 0x10000 &amp;&amp; ((_String_base*)_M_value_field)->_M_end_of_storage >= 0x10000">(_String_base*)_M_value_field</ExpandedItem>
+		</Expand>
 	</Type>
 	<Type Name="_Rb_tree">
 		<DisplayString>{{ {_M_node_count} }}</DisplayString>

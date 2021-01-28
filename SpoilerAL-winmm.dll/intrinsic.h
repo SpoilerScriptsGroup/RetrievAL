@@ -7,6 +7,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#define BOOLEAN _Bool
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310

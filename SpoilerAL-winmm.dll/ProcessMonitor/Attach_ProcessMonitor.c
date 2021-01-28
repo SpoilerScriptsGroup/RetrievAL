@@ -26,7 +26,7 @@ static const char *const _Format = "%d";
 
 static __declspec(naked) LPCVOID /* bcc */__fastcall TMainForm_M_ProcessAddClick_ProcessNameEdit_setText()
 {
-	extern const DWORD F005E0D50;
+	extern const DWORD vcl_System_AnsiString_ctor_sz;
 	__asm {
 		sub  esp, 0x80
 		mov  ecx, esp
@@ -38,7 +38,7 @@ static __declspec(naked) LPCVOID /* bcc */__fastcall TMainForm_M_ProcessAddClick
 		add  esp, 0x10
 		mov  edx, esp
 		lea  eax, [ebp - 0x1C]// AnsiString
-		call F005E0D50
+		call vcl_System_AnsiString_ctor_sz
 		add  esp, 0x80
 		ret
 	}

@@ -3,17 +3,14 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TSSGCtrl.h"
 
-void __fastcall AddressNamingFromUtf8(unsigned long DataSize, char *tmpC, vector_string* tmpV);
-void __fastcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC, vector_string* tmpV);
-void __stdcall AddressNamingFEPNumber(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector *tmpV, unsigned long DataSize, char *tmpC);
-void __stdcall AddressNamingFEPList(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector *tmpV, unsigned long DataSize, char *tmpC);
-void __stdcall AddressNamingFEPFreeList(TSSGCtrl *SSGCtrl, TSSGSubject *SSGS, vector_string *tmpV, unsigned long DataSize, char *tmpC);
+void __fastcall AddressNamingFromUtf8   (unsigned long DataSize, char *tmpC, vector_string *tmpV, TSSGCtrl *SSGCtrl, TSSGSubject *SSGS);
+void __fastcall AddressNamingFromUnicode(unsigned long DataSize, char *tmpC, vector_string *tmpV, TSSGCtrl *SSGCtrl, TSSGSubject *SSGS);
+void __fastcall AddressNamingFEPNumber  (unsigned long DataSize, char *tmpC, vector_string *tmpV, TSSGCtrl *SSGCtrl, TSSGSubject *SSGS);
+void __fastcall AddressNamingFEPList    (unsigned long DataSize, char *tmpC, vector_string *tmpV, TSSGCtrl *SSGCtrl, TSSGSubject *SSGS);
+void __fastcall AddressNamingFEPFreeList(unsigned long DataSize, char *tmpC, vector_string *tmpV, TSSGCtrl *SSGCtrl, TSSGSubject *SSGS);
 
-__declspec(naked) void __cdecl AddressNamingAdditionalType()
+__declspec(naked) void __stdcall AddressNamingAdditionalType(vector_string *tmpV, TSSGCtrl *SSGCtrl, TSSGSubject *SSGS)
 {
-	#define _ReturnAddress 0x00506578
-	static const DWORD ReturnAddress = _ReturnAddress;
-
 	__asm
 	{
 		#define SSGCtrl  (edi)
@@ -22,10 +19,10 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		#define DataSize (ebp - 01ECH)
 		#define tmpC     (ebp - 01E8H)
 
-		mov     eax, dword ptr [esi]
 		mov     edx, dword ptr [tmpC]
-		mov     ecx, dword ptr [eax + 4CH]
-		mov     eax, dword ptr [eax + 48H]                  ;	const char *p = tmpV[3].c_str();
+		mov     eax, dword ptr [tmpV]
+		mov     ecx, [eax + size string * 3]string._M_finish
+		mov     eax, [eax + size string * 3]string._M_start ;	const char *p = tmpV[3].c_str();
 		sub     ecx, eax
 		cmp     ecx, 4                                      ;	switch (tmpV[3].length())
 		ja      L1                                          ;	{
@@ -33,13 +30,10 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		cmp     dword ptr [eax], MASM_BSWAP32('utf8')       ;		if (*(LPDWORD)p != BSWAP32('utf8'))
 		jne     L5                                          ;			break;
 		mov     ecx, dword ptr [tmpV]                       ;		tmpV[3].clear();
-		mov     eax, dword ptr [ecx + size string * 3]      ;		AddressNamingFromUtf8(DataSize, tmpC, tmpV);
-		add     ecx, size string * 3 + 4
+		mov     eax, [ecx + size string * 3]string._M_start ;		AddressNamingFromUtf8(DataSize, tmpC, tmpV, SSGCtrl, SSGS);
 		mov     byte ptr [eax], 0
-		mov     dword ptr [ecx], eax
+		mov     [ecx + size string * 3]string._M_finish, eax
 		mov     ecx, dword ptr [DataSize]
-		push    tmpV
-		push    _ReturnAddress
 		jmp     AddressNamingFromUtf8                       ;		return;
 
 	L1:
@@ -53,13 +47,10 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		cmp     eax, MASM_BSWAP32('ode\0')                  ;			if (*(LPDWORD)(p + 4) != BSWAP32('ode\0'))
 		jne     L5                                          ;				break;
 		mov     ecx, dword ptr [tmpV]                       ;			tmpV[3].clear();
-		mov     eax, dword ptr [ecx + size string * 3]      ;			AddressNamingFromUnicode(DataSize, tmpC, tmpV);
-		add     ecx, size string * 3 + 4
+		mov     eax, [ecx + size string * 3]string._M_start ;			AddressNamingFromUnicode(DataSize, tmpC, tmpV, SSGCtrl, SSGS);
 		mov     byte ptr [eax], 0
-		mov     dword ptr [ecx], eax
+		mov     [ecx + size string * 3]string._M_finish, eax;			return;
 		mov     ecx, dword ptr [DataSize]
-		push    tmpV
-		push    _ReturnAddress                               ;			return;
 		jmp     AddressNamingFromUnicode                    ;		}
 
 	L2:
@@ -67,14 +58,7 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		xor     eax, MASM_BSWAP32('num\0')                  ;			break;
 		or      eax, ecx                                    ;		if (*(LPDWORD)(p + 4) != BSWAP32('num\0'))
 		jnz     L5                                          ;			break;
-		mov     ecx, dword ptr [DataSize]                   ;		AddressNamingFEPNumber(SSGCtrl, SSGS, tmpV, DataSize, tmpC);
-		mov     eax, dword ptr [SSGS]
-		push    edx
-		push    ecx
-		push    tmpV
-		push    eax
-		push    SSGCtrl
-		push    _ReturnAddress
+		mov     ecx, dword ptr [DataSize]                   ;		AddressNamingFEPNumber(DataSize, tmpC, tmpV, SSGCtrl, SSGS);
 		jmp     AddressNamingFEPNumber                      ;		return;
 
 	L3:
@@ -85,14 +69,7 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		                                                    ;			break;
 		cmp     dword ptr [eax + 4], MASM_BSWAP32('list')   ;		if (*(LPDWORD)(p + 4) != BSWAP32('list'))
 		jne     L5                                          ;			break;
-		mov     eax, dword ptr [DataSize]                   ;		AddressNamingFEPList(SSGCtrl, SSGS, tmpV, DataSize, tmpC);
-		mov     ecx, dword ptr [SSGS]
-		push    edx
-		push    eax
-		push    tmpV
-		push    ecx
-		push    SSGCtrl
-		push    _ReturnAddress
+		mov     ecx, dword ptr [DataSize]                   ;		AddressNamingFEPList(DataSize, tmpC, tmpV, SSGCtrl, SSGS);
 		jmp     AddressNamingFEPList                        ;		return;
 
 	L4:
@@ -107,18 +84,11 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		xor     eax, MASM_BSWAP32('_lis')                   ;			break;
 		or      eax, ecx
 		jnz     L5
-		mov     eax, dword ptr [DataSize]                   ;		AddressNamingFEPFreeList(SSGCtrl, SSGS, tmpV, DataSize, tmpC);
-		mov     ecx, dword ptr [SSGS]
-		push    edx
-		push    eax
-		push    tmpV
-		push    ecx
-		push    SSGCtrl
-		push    _ReturnAddress
+		mov     ecx, dword ptr [DataSize]                   ;		AddressNamingFEPFreeList(DataSize, tmpC, tmpV, SSGCtrl, SSGS);
 		jmp     AddressNamingFEPFreeList                    ;		return;
 		                                                    ;	}
 	L5:
-		jmp     dword ptr [ReturnAddress]
+		ret     size PVOID * 3
 
 		#undef SSGCtrl
 		#undef SSGS
@@ -126,5 +96,4 @@ __declspec(naked) void __cdecl AddressNamingAdditionalType()
 		#undef DataSize
 		#undef tmpC
 	}
-	#undef _ReturnAddress
 }

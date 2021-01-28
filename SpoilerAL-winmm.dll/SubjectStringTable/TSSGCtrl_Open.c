@@ -52,7 +52,7 @@ HANDLE __cdecl TSSGCtrl_Open(TSSGCtrl *this, TSSGSubject *SSGS, DWORD Mode)
 	hProcess = (!addressStr || TSSGCtrl_IsRemoteProcess(string_c_str(addressStr))) ?
 		TProcessCtrl_Open(&this->processCtrl, Mode) :
 		GetCurrentProcess();
-	if (this->ssgActionListner && !vector_empty(&this->processCtrl.processNameVec))
+	if (this->ssgActionListner && this->script.ePos)
 		if (hProcess)
 			TSSGActionListner_OnProcessOpen(this->ssgActionListner, SSGS, Mode);
 		else

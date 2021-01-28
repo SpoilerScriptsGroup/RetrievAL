@@ -116,6 +116,8 @@ __declspec(naked) static char * __cdecl strlwruprAVX2(char *string)
 		vmovdqu ymm0, ymmword ptr [maskbit + ecx + 1]       // load the non target bits mask
 		vmovdqa ymm1, ymmword ptr [edx]                     // load 32 bytes
 		vpor    ymm0, ymm0, ymm1                            // fill the non target bits to 1
+		vpcmpeqb ymm3, ymm3, ymm0                           // compare 32 bytes with zero
+		vpaddb  ymm0, ymm0, ymm2                            // all bytes greater than 'Z' if negative
 		jmp     loop_entry2
 
 		align   16
@@ -124,13 +126,12 @@ __declspec(naked) static char * __cdecl strlwruprAVX2(char *string)
 		vmovdqa ymmword ptr [edx], ymm0                     // store 32 bytes
 		add     edx, 32
 	loop_entry1:
-		vmovdqa ymm0, ymmword ptr [edx]                     // load 32 bytes
-		vmovdqa ymm1, ymm0                                  // copy
+		vmovdqa ymm1, ymmword ptr [edx]                     // load 32 bytes
+		vpaddb  ymm0, ymm1, ymm2                            // all bytes greater than 'Z' if negative
+		vpcmpeqb ymm3, ymm3, ymm1                           // compare 32 bytes with zero
 	loop_entry2:
-		vpcmpeqb ymm3, ymm3, ymm0                           // compare 32 bytes with zero
-		vpaddb  ymm0, ymm0, ymm2                            // all bytes greater than 'Z' if negative
-		vpmovmskb ecx, ymm3                                 // get one bit for each byte result
 		vpcmpgtb ymm0, ymm0, ymm4                           // ymm0 = (byte >= 'A' && byte <= 'Z') ? 0xFF : 0x00
+		vpmovmskb ecx, ymm3                                 // get one bit for each byte result
 		vpand   ymm0, ymm0, ymm5                            // assign a mask for the appropriate bytes
 		test    ecx, ecx
 		jz      loop_begin                                  // next 32 bytes

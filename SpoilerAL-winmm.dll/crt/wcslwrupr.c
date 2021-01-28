@@ -120,6 +120,8 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprAVX2(wchar_t *string)
 		vmovdqu ymm0, ymmword ptr [maskbit + ecx + 1]       // load the non target bits mask
 		vmovdqa ymm1, ymmword ptr [edx]                     // load 32 bytes
 		vpor    ymm0, ymm0, ymm1                            // fill the non target bits to 1
+		vpcmpeqw ymm3, ymm3, ymm0                           // compare 16 words with zero
+		vpaddw  ymm0, ymm0, ymm2                            // all words greater than 'Z' if negative
 		jmp     aligned_loop_entry2
 
 		align   16
@@ -128,13 +130,12 @@ __declspec(naked) static wchar_t * __cdecl wcslwruprAVX2(wchar_t *string)
 		vmovdqa ymmword ptr [edx], ymm0                     // store 32 bytes
 		add     edx, 32
 	aligned_loop_entry1:
-		vmovdqa ymm0, ymmword ptr [edx]                     // load 32 bytes
-		vmovdqa ymm1, ymm0                                  // copy
+		vmovdqa ymm1, ymmword ptr [edx]                     // load 32 bytes
+		vpaddw  ymm0, ymm1, ymm2                            // all words greater than 'Z' if negative
+		vpcmpeqw ymm3, ymm3, ymm1                           // compare 16 words with zero
 	aligned_loop_entry2:
-		vpcmpeqw ymm3, ymm3, ymm0                           // compare 16 words with zero
-		vpaddw  ymm0, ymm0, ymm2                            // all words greater than 'Z' if negative
-		vpmovmskb ecx, ymm3                                 // get one bit for each byte result
 		vpcmpgtw ymm0, ymm0, ymm4                           // ymm0 = (word >= 'A' && word <= 'Z') ? 0xFFFF : 0x0000
+		vpmovmskb ecx, ymm3                                 // get one bit for each byte result
 		vpand   ymm0, ymm0, ymm5                            // assign a mask for the appropriate words
 		test    ecx, ecx
 		jz      aligned_loop                                // next 32 bytes

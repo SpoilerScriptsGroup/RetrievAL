@@ -582,10 +582,10 @@ BOOL __fastcall AttachSnapWindow(HWND hWnd)
 	{
 #if !FIXED_ARRAY
 		(*p)->relproc = (ptrdiff_t)WindowProc - (ptrdiff_t)(&(*p)->relproc + 1);
-		FlushInstructionCache(rocess, *p, sizeof(THUNK));
+		FlushInstructionCache(process, *p, sizeof(THUNK));
 #else
 		p->relproc = (ptrdiff_t)WindowProc - (ptrdiff_t)(&p->relproc + 1);
-		FlushInstructionCache(rocess, p, sizeof(THUNK));
+		FlushInstructionCache(process, p, sizeof(THUNK));
 #endif
 	}
 #elif defined(_M_X64)

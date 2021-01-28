@@ -60,6 +60,7 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_ExtractStringStub() {
 		lea  ecx, [ebp - 0x30]       // tmpV
 		call TSSGCtrl_GetSSGDataFile_ExtractString
 		jmp  eax
+		ud2
 	}
 }
 

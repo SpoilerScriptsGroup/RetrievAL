@@ -50,8 +50,8 @@ typedef bcb6_std_map_iterator  map_iterator;
 typedef pbcb6_std_map_iterator pmap_iterator;
 typedef bcb6_std_map           map;
 typedef pbcb6_std_map          pmap;
-#define map_find(map,k)        _Generic(k, const bcb6_std_string *: bcb6_std_map_string_find, default: bcb6_std_map_find)(map, k)
-#define map_lower_bound(map,k) _Generic(k, bcb6_std_string *: bcb6_std_map_string_lower_bound, const unsigned long *: bcb6_std_map_lower_bound)(map, k)
+#define map_find(map,k)        _Generic(k, const struct _String_base *: bcb6_std_map_string_find, default: bcb6_std_map_find)(map, k)
+#define map_lower_bound(map,k) _Generic(k, struct _String_base *: bcb6_std_map_string_lower_bound, const unsigned long *: bcb6_std_map_lower_bound)(map, k)
 #define map_dword_dw_dw_insert bcb6_std_ulong_pair_uu_insert
 #define map_string_quad_insert bcb6_std_string_double_insert
 #define map_begin              bcb6_std_map_begin

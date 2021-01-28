@@ -3,6 +3,7 @@
 #include "ShowErrorMessage/ErrorMessage.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_operator.h"
+#include "TSSGActionListner.h"
 #include "TMainForm.h"
 
 #pragma intrinsic(_ReturnAddress)
@@ -110,7 +111,7 @@ BOOLEAN __cdecl TProcessCtrl_AttachByProcessName(TProcessCtrl *this, string Proc
 		// 成功ならヒープブロック/モジュールまで所得しておく
 		TProcessCtrl_LoadHeapList(this);
 		TProcessCtrl_LoadModuleList(this);
-
+		TSSGActionListner_OnProcessOpen(&MainForm->adjustmentListner, NULL, 0);
 		OnProcessAttach();
 	}
 	string_dtor(&ProcessName);
@@ -129,7 +130,7 @@ BOOLEAN __cdecl TProcessCtrl_Attach(TProcessCtrl *this)
 {
 	void __cdecl OnProcessDetach(TProcessCtrl *proc);
 
-	if ((long)this->entry.th32ProcessID > 0 && (intptr_t)_ReturnAddress() == 0x004A61B0)// TProcessCtrl::Open
+	if ((long)this->entry.th32ProcessID > 0 && (uintptr_t)_ReturnAddress() == 0x004A61B0u)// TProcessCtrl::Open
 	{// reset process infomation when lost target
 		vector_string pnames = this->processNameVec;
 		FreeExternalDependency(this);

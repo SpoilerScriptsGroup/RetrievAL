@@ -16,7 +16,7 @@ static void __fastcall ModifyLockName(TMainForm *this, TSSGSubject *SSGS, string
 	}
 }
 
-__declspec(naked) void __cdecl Caller_TMainForm_SetLockVisible_ModifyLockName(string *dest, string *src)
+__declspec(naked) void __stdcall Caller_TMainForm_SetLockVisible_ModifyLockName(string *dest, string *src)
 {
 	__asm
 	{

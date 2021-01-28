@@ -8,7 +8,7 @@
 
 #pragma function(memcpy)
 
-static intptr_t __fastcall TSSGCtrl_GetSSGDataFile_ExtractString(
+static uintptr_t __fastcall TSSGCtrl_GetSSGDataFile_ExtractString(
 	vector_string * const tmpV,
 	const  string * const EndWord,
 	HANDLE          const SHandle,
@@ -23,7 +23,7 @@ static intptr_t __fastcall TSSGCtrl_GetSSGDataFile_ExtractString(
 	if (len >= 4) switch (*(LPDWORD)string_begin(EndWord)) {
 	case BSWAP32('null'):
 		if (len != 4) break;
-		return 0x004EEE44;
+		return 0x004EEE44u;
 	case BSWAP32('unic'):
 		if (len != 7 || *(LPDWORD)&string_at(EndWord, 4) != BSWAP32('ode\0')) break;
 		for (unsigned long i = 0; i < RowSize; i++, Address += StepSize) {
@@ -32,7 +32,7 @@ static intptr_t __fastcall TSSGCtrl_GetSSGDataFile_ExtractString(
 				break;
 			vector_string_push_back_range(tmpV, SIt, SIt + len - 1);
 		}
-		return 0x004EF33D;
+		return 0x004EF33Du;
 	case BSWAP32('utf8'):
 		if (len != 4) break;
 		for (unsigned long i = 0; i < RowSize; i++, Address += StepSize) {
@@ -41,9 +41,9 @@ static intptr_t __fastcall TSSGCtrl_GetSSGDataFile_ExtractString(
 				break;
 			vector_string_push_back_range(tmpV, SIt, SIt + len - 1);
 		}
-		return 0x004EF33D;
+		return 0x004EF33Du;
 	}
-	return 0x004EEFAC;
+	return 0x004EEFACu;
 }
 
 __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_ExtractStringStub() {

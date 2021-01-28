@@ -436,18 +436,18 @@ static __inline BOOL ModifyResourceSection()
 	// TGuideForm::REdit
 	//__movsb((unsigned char *)0x00664900,
 	//	"\x06\x09" "MS Gothic"
-	//	"\x09" "Font.Size" "\x02\x0A"// 10pt
-	//	"\x09" "PlainText" "\x09"// true
+	//	"\x09" "Font.Size" "\x03\x0A\x00"// 10pt
+	//	"\x08" "WantTabs"  "\x09"// true
 	//	"\x08" "WordWrap", 43);
 	*(LPDWORD)0x00664900 = BSWAP16(0x0609) | ((DWORD)BSWAP16('MS') << 16);
 	*(LPDWORD)0x00664904 = BSWAP32(' Got');
 	*(LPDWORD)0x00664908 = BSWAP24('hic') | (0x09 << 24);
 	*(LPDWORD)0x0066490C = BSWAP32('Font');
 	*(LPDWORD)0x00664910 = BSWAP32('.Siz');
-	*(LPDWORD)0x00664914 = 'e' | (BSWAP24(0x020A09) << 8);
-	*(LPDWORD)0x00664918 = BSWAP32('Plai');
-	*(LPDWORD)0x0066491C = BSWAP32('nTex');
-	*(LPDWORD)0x00664920 = 't' | ((DWORD)BSWAP16(0x0908) << 8) | ((DWORD)'W' << 24);
+	*(LPDWORD)0x00664914 = 'e' | (BSWAP24(0x030A00) << 8);
+	*(LPDWORD)0x00664918 = 0x08 | (BSWAP24('Wan') << 8);
+	*(LPDWORD)0x0066491C = BSWAP32('tTab');
+	*(LPDWORD)0x00664920 = 's' | ((DWORD)BSWAP16(0x0908) << 8) | ((DWORD)'W' << 24);
 	*(LPDWORD)0x00664924 = BSWAP32('ordW');
 	*(LPDWORD)0x00664928 = BSWAP24('rap') | (0x08 << 24);
 #if 0

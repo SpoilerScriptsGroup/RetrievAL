@@ -155,7 +155,7 @@ static void __fastcall TSSGCtrl_MakeLoopSet(
 				{
 					if ((Rel += Size = TProcessAccessElement_GetSize(LastE = *iter, IsTrueMode)) > FullSize)
 						TProcessAccessElement_SetSize(LastE, Size + FullSize - Rel, IsTrueMode);
-					vector_dword_push_back(&LoopElem->surplusVec, (intptr_t)LastE);
+					vector_dword_push_back(&LoopElem->surplusVec, (uintptr_t)LastE);
 				}
 				else
 					delete_TProcessAccessElement(*iter);

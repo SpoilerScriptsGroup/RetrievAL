@@ -24,7 +24,7 @@ extern HANDLE  hHeap;
 static LPSTR  lpszTextBuffer = NULL;
 static size_t nCapacity      = 0;
 static size_t nTextLength    = 0;
-static BOOL   bClear         = FALSE;
+static size_t nStart         = -1;
 
 void __cdecl ClearGuideBuffer()
 {
@@ -49,8 +49,8 @@ void TGuideForm::Guide(const char *Mes, int Flags)
 
 	if (Flags & GUIDE_IS_CLEAR)
 	{
-		bClear = TRUE;
 		nTextLength = 0;
+		nStart = 0;
 	}
 	length = strlen(Mes);
 	required = (nTextLength + length + 2) * sizeof(char);
@@ -102,21 +102,15 @@ void TGuideForm::Guide(const char *Mes, int Flags)
 
 LRESULT __stdcall DrawGuideBuffer(WNDPROC lpPrevWndFunc, HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-	if (nTextLength || bClear)
+	if (nTextLength || !nStart)
 	{
 		HWND const hWnd = TWinControl_GetHandle(MainForm->guideForm->REdit);
-		if (bClear)
-		{
-			bClear = FALSE;
-			SendMessageA(hWnd, WM_SETTEXT, 0, (LPARAM)lpszTextBuffer);
-		}
-		else
-		{
-			SendMessageA(hWnd, EM_SETSEL, -1, -1);
-			SendMessageA(hWnd, EM_REPLACESEL, FALSE, (LPARAM)lpszTextBuffer);
-		}
+		// WM_SETTEXT moves caret to beginning.
+		SendMessageA(hWnd, EM_SETSEL, nStart, -1);
+		SendMessageA(hWnd, EM_REPLACESEL, FALSE, (LPARAM)lpszTextBuffer);
 		PostMessageA(hWnd, WM_VSCROLL, SB_BOTTOM, 0);
 		nTextLength = 0;
+		nStart = -1;
 	}
 	return 0;
 }

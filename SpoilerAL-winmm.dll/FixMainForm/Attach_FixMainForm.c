@@ -12,7 +12,7 @@ EXTERN_C void __cdecl TMainForm_LoadSetting_ListLBox_Font_SetName();
 EXTERN_C void __cdecl TMainForm_LoadSetting_SetUserMode();
 EXTERN_C void __cdecl TMainForm_SubjectAccess_FixDirSameChildren();
 EXTERN_C UINT __stdcall TSSGSubject_Write_WithDrawTree(LPVOID, LPVOID, LPVOID);
-EXTERN_C void __cdecl Caller_TMainForm_SetLockVisible_ModifyLockName();
+EXTERN_C void __stdcall Caller_TMainForm_SetLockVisible_ModifyLockName(void *, void *);
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_DrawHover();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_FixLabelDrawX();
 EXTERN_C void __cdecl TMainForm_DrawTreeCell_ModifySplitRoll();

@@ -48,7 +48,7 @@ typedef struct {
 #endif
 
 #if defined(_M_IX86) || defined(_M_X64)
-__forceinline void InitThunk(THUNK *thunk, LPVOID thisPtr, WNDPROC WindowProc)
+__forceinline static void InitThunk(THUNK *thunk, LPVOID thisPtr, WNDPROC WindowProc)
 {
 #if defined(_M_IX86)
 	/*
@@ -387,7 +387,7 @@ static void __stdcall OnDestroy(SNAPINFO *this)
 	{
 		LPVOID lpMem;
 
-		if (lpMem = HeapReAlloc(hHeap, 0, SnapInfo, sizeof(SNAPINFO) * NumberOfElements))
+		if (lpMem = HeapReAlloc(hHeap, 0, SnapInfo, sizeof(SNAPINFO *) * NumberOfElements))
 			SnapInfo = (SNAPINFO **)lpMem;
 	}
 	else
@@ -446,11 +446,11 @@ static SNAPINFO * __fastcall FindElement(HWND hWnd)
 #if !FIXED_ARRAY
 	SNAPINFO *key, **elem;
 
-	key = (SNAPINFO *)((size_t)&hWnd - offsetof(SNAPINFO, hWnd));
-	elem = (SNAPINFO **)bsearch(&key, SnapInfo, NumberOfElements, sizeof(SNAPINFO), CompareSnapInfo);
+	key = (SNAPINFO *)((char *)&hWnd - offsetof(SNAPINFO, hWnd));
+	elem = (SNAPINFO **)bsearch(&key, SnapInfo, NumberOfElements, sizeof(SNAPINFO *), CompareSnapInfo);
 	return elem ? *elem : NULL;
 #else
-	return (SNAPINFO *)bsearch((void *)((size_t)&hWnd - offsetof(SNAPINFO, hWnd)), SnapInfo, NumberOfElements, sizeof(SNAPINFO), CompareSnapInfo);
+	return (SNAPINFO *)bsearch((void *)((char *)&hWnd - offsetof(SNAPINFO, hWnd)), SnapInfo, NumberOfElements, sizeof(SNAPINFO), CompareSnapInfo);
 #endif
 #else
 	SNAPINFO *p, *end;
@@ -503,7 +503,7 @@ static SNAPINFO * __fastcall AppendElement(HWND hWnd)
 	SNAPINFO *this;
 
 #if !FIXED_ARRAY
-	if (SnapInfo && FindElement(hWnd))
+	if (FindElement(hWnd))
 		return NULL;
 	if (this = (SNAPINFO *)HeapAlloc(hExecutableHeap, 0, sizeof(SNAPINFO)))
 	{
@@ -587,7 +587,11 @@ BOOL __fastcall AttachSnapWindow(HWND hWnd)
 	this->PrevWndProc = (WNDPROC)GetWindowLongPtrA(hWnd, GWLP_WNDPROC);
 #endif
 #if SORTED
+#if !FIXED_ARRAY
+	qsort(SnapInfo, NumberOfElements, sizeof(SNAPINFO *), CompareSnapInfo);
+#else
 	qsort(SnapInfo, NumberOfElements, sizeof(SNAPINFO), CompareSnapInfo);
+#endif
 #if defined(_M_IX86) || defined(_M_X64)
 	process = GetCurrentProcess();
 	for (end = (p = SnapInfo) + NumberOfElements; p != end; p++)

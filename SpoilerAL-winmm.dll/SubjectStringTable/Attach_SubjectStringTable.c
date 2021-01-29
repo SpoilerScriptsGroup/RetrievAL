@@ -333,7 +333,7 @@ void __cdecl    TSSBitList_Read_GetAddressStr();
 #define         TSSToggle_Write_GetAddressStr                               TSSBitList_Read_GetAddressStr
 #define         TSSBundleFloatCalc_Read_GetAddressStr                       TSSBitList_Read_GetAddressStr
 #define         TSSBundleFloatCalc_Write_GetAddressStr                      TSSBitList_Read_GetAddressStr
-void __cdecl    TSSGCtrl_ReadSSG_ctor();
+void __cdecl    TSSGCtrl_OpenSSG_scriptDir_M_append_dispatch();
 void __cdecl    TSSGCtrl_EnumReadSSG_SetCodeAndName();
 void __cdecl    TSSGCtrl_EnumReadSSG_SetCode();
 void __cdecl    TSSGCtrl_EnumReadSSG_SetName();
@@ -1519,9 +1519,9 @@ static __inline void AttachOperator()
 	SET_PROC (0x004CE593, TSSFloatCalc_Write_GetAddressStr);
 
 	// TSSGCtrl::OpenSSG
-	*(LPWORD )0x004FD267 = BSWAP16(0x836E);
-	*(LPBYTE )0x004FD26A = 3;
-	CALL     (0x004FD26B, SubjectStringTable_clear);
+	*(LPBYTE )0x004FD169 = 0x83;// inc => add
+	*(LPBYTE )0x004FD16C = 3;
+	CALL     (0x004FD16D, TSSGCtrl_OpenSSG_scriptDir_M_append_dispatch);
 
 #if 0
 	// TSSGCtrl::EnumReadSSG

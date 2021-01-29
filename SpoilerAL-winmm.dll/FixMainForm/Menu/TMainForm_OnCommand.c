@@ -31,7 +31,7 @@ EXTERN_C void __stdcall TMainForm_OnCommand(HWND hWnd, WORD wNotifyCode, WORD wI
 		return;
 	if (wID >= wBegginerModeId && wID <= wDebuggerModeId)
 	{
-		if (MainForm->userMode < 4)
+		if (MainForm->userMode < 3)// Urge calling UpdateUserModeMenu when debug mode.
 			return;
 		MainForm->userMode = wID - wBegginerModeId;
 		UpdateUserModeMenu();

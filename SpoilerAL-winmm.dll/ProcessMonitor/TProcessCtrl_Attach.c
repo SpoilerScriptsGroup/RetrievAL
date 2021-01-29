@@ -111,7 +111,7 @@ BOOLEAN __cdecl TProcessCtrl_AttachByProcessName(TProcessCtrl *this, string Proc
 		// 成功ならヒープブロック/モジュールまで所得しておく
 		TProcessCtrl_LoadHeapList(this);
 		TProcessCtrl_LoadModuleList(this);
-		TSSGActionListner_OnProcessOpen(&MainForm->adjustmentListner, NULL, 0);
+
 		OnProcessAttach();
 	}
 	string_dtor(&ProcessName);
@@ -162,6 +162,7 @@ static __inline void OnProcessAttach()
 		IsProcessAttached = TRUE;
 		if (!string_empty(&ProcessAttachCode))
 		{
+			TSSGActionListner_OnProcessOpen(&MainForm->adjustmentListner, NULL, 0);
 			dummySSGS.attribute = ProcessAttachAttribute;
 			Parsing(&MainForm->ssgCtrl, &dummySSGS, &ProcessAttachCode, 0);
 			dummySSGS.attribute = NULL;
@@ -176,6 +177,7 @@ void __cdecl OnProcessDetach(TProcessCtrl *const proc)
 		IsProcessAttached = FALSE;
 		if (!string_empty(&ProcessDetachCode))
 		{
+			TSSGActionListner_OnProcessOpen(&MainForm->adjustmentListner, NULL, 0);
 			InProcessDetached = TRUE;
 			dummySSGS.attribute = ProcessDetachAttribute;
 			Parsing(&MainForm->ssgCtrl, &dummySSGS, &ProcessDetachCode, 0);

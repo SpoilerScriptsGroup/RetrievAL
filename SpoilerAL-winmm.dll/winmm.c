@@ -47,7 +47,6 @@ HANDLE         hHeap           = NULL;
 HANDLE         hExecutableHeap = NULL;
 #endif
 HANDLE         hReadOnlyHeap   = NULL;
-HANDLE         hPrivateHeap    = NULL;
 
 #if DISABLE_CRT
 #define DllMain _DllMainCRTStartup
@@ -172,13 +171,6 @@ static BOOL __cdecl Attach()
 #endif
 		if (!(hReadOnlyHeap = HeapCreate(HEAP_NO_SERIALIZE | HEAP_CREATE_ALIGN_16, 0, 0)))
 			goto LAST_ERROR;
-		if (!(hPrivateHeap = HeapCreate(0, 0, 0)))
-			goto LAST_ERROR;
-		else
-		{
-			DWORD HeapInformation = 2;
-			HeapSetInformation(hPrivateHeap, HeapCompatibilityInformation, &HeapInformation, sizeof(HeapInformation));
-		}
 		if (!SetThreadLocale(MAKELCID(MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), SORT_JAPANESE_XJIS)))
 			goto LAST_ERROR;
 		LoadComCtl32();
@@ -502,23 +494,19 @@ static __inline void Detach()
 #endif
 			if (hReadOnlyHeap)
 			{
-				if (hPrivateHeap)
-				{
-					PluginFinalize();
-					DestroyHintWindow();
+				PluginFinalize();
+				DestroyHintWindow();
 #if USE_TOOLTIP
-					DestroyToolTip();
+				DestroyToolTip();
 #endif
 #if !defined(_WIN32_WINNT) || _WIN32_WINNT < _WIN32_WINNT_NT4
-					if (hMsImg32)
-						FreeLibrary(hMsImg32);
+				if (hMsImg32)
+					FreeLibrary(hMsImg32);
 #endif
-					if (hDwmAPI)
-						FreeLibrary(hDwmAPI);
-					if (hComCtl32)
-						FreeLibrary(hComCtl32);
-					HeapDestroy(hPrivateHeap);
-				}
+				if (hDwmAPI)
+					FreeLibrary(hDwmAPI);
+				if (hComCtl32)
+					FreeLibrary(hComCtl32);
 				HeapDestroy(hReadOnlyHeap);
 			}
 #if SNAPWINDOW

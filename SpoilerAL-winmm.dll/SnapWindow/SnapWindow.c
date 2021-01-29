@@ -8,7 +8,11 @@
 
 #define FIXED_ARRAY 4
 #define SNAP_PIXELS 8
+#if defined(_M_IX86) || defined(_M_X64)
 #define SORTED      (!FIXED_ARRAY || FIXED_ARRAY >= 16)
+#else
+#define SORTED      1
+#endif
 
 #ifdef _MSC_VER
 void __cdecl bad_alloc();
@@ -52,10 +56,12 @@ __forceinline void InitThunk(THUNK *thunk, LPVOID thisPtr, WNDPROC WindowProc)
 		jmp     WindowProc                      ; 00000008 _ E9, ????????
 	*/
 	thunk->mov     = 0x042444C7;
-	thunk->thisPtr = thisPtr;
-	thunk->jmp     = 0xE9;
-	thunk->relproc = (ptrdiff_t)WindowProc - (ptrdiff_t)(&thunk->relproc + 1);
 #if !SORTED
+	thunk->thisPtr = thisPtr;
+#endif
+	thunk->jmp     = 0xE9;
+#if !SORTED
+	thunk->relproc = (ptrdiff_t)WindowProc - (ptrdiff_t)(&thunk->relproc + 1);
 	FlushInstructionCache(GetCurrentProcess(), thunk, sizeof(THUNK));
 #endif
 #elif defined(_M_X64)
@@ -67,7 +73,9 @@ __forceinline void InitThunk(THUNK *thunk, LPVOID thisPtr, WNDPROC WindowProc)
 	thunk->mov1    = 0xB848;
 	thunk->wndproc = WindowProc;
 	thunk->mov2    = 0xB948;
+#if !SORTED
 	thunk->thisPtr = thisPtr;
+#endif
 	thunk->jmp     = 0x00E0FF48;
 #if !SORTED
 	FlushInstructionCache(GetCurrentProcess(), thunk, offsetof(THUNK, jmp) + 3);
@@ -403,26 +411,28 @@ static void __stdcall OnDestroy(SNAPINFO *this)
 #if SORTED
 static int __cdecl CompareSnapInfo(const void *elem1, const void *elem2)
 {
+#ifndef _WIN64
+	unsigned int lhs, rhs;
+
 #if !FIXED_ARRAY
-#ifndef _WIN64
-	return (int)(*(SNAPINFO **)elem1)->hWnd - (int)(*(SNAPINFO **)elem2)->hWnd;
+	lhs = (unsigned int)(*(SNAPINFO **)elem1)->hWnd;
+	rhs = (unsigned int)(*(SNAPINFO **)elem2)->hWnd;
 #else
-	if ((unsigned __int64)(*(SNAPINFO **)elem1)->hWnd > (unsigned __int64)(*(SNAPINFO **)elem2)->hWnd)
-		return 1;
-	if ((unsigned __int64)(*(SNAPINFO **)elem1)->hWnd < (unsigned __int64)(*(SNAPINFO **)elem2)->hWnd)
-		return -1;
-	return 0;
+	lhs = (unsigned int)((SNAPINFO *)elem1)->hWnd;
+	rhs = (unsigned int)((SNAPINFO *)elem2)->hWnd;
 #endif
+	return lhs - rhs;
 #else
-#ifndef _WIN64
-	return (int)((SNAPINFO *)elem1)->hWnd - (int)((SNAPINFO *)elem2)->hWnd;
+	unsigned __int64 lhs, rhs;
+
+#if !FIXED_ARRAY
+	lhs = (unsigned __int64)(*(SNAPINFO **)elem1)->hWnd;
+	rhs = (unsigned __int64)(*(SNAPINFO **)elem2)->hWnd;
 #else
-	if ((unsigned __int64)((SNAPINFO *)elem1)->hWnd > (unsigned __int64)((SNAPINFO *)elem2)->hWnd)
-		return 1;
-	if ((unsigned __int64)((SNAPINFO *)elem1)->hWnd < (unsigned __int64)((SNAPINFO *)elem2)->hWnd)
-		return -1;
-	return 0;
+	lhs = (unsigned __int64)((SNAPINFO *)elem1)->hWnd;
+	rhs = (unsigned __int64)((SNAPINFO *)elem2)->hWnd;
 #endif
+	return lhs != rhs ? lhs >= rhs ? 1 : -1 : 0;
 #endif
 }
 #endif
@@ -493,14 +503,8 @@ static SNAPINFO * __fastcall AppendElement(HWND hWnd)
 	SNAPINFO *this;
 
 #if !FIXED_ARRAY
-	if (SnapInfo)
-	{
-		SNAPINFO **p, **end;
-
-		for (end = (p = SnapInfo) + NumberOfElements; p != end; p++)
-			if ((*p)->hWnd == hWnd)
-				return NULL;
-	}
+	if (SnapInfo && FindElement(hWnd))
+		return NULL;
 	if (this = (SNAPINFO *)HeapAlloc(hExecutableHeap, 0, sizeof(SNAPINFO)))
 	{
 		LPVOID lpMem;
@@ -516,6 +520,12 @@ static SNAPINFO * __fastcall AppendElement(HWND hWnd)
 #else
 	if (SnapInfo)
 	{
+#if SORTED
+		if (FindElement(hWnd))
+			return NULL;
+		if (!SnapInfo->hWnd)
+			return SnapInfo;
+#else
 		SNAPINFO *p, *end;
 
 		this = NULL;
@@ -534,6 +544,7 @@ static SNAPINFO * __fastcall AppendElement(HWND hWnd)
 		}
 		if (this)
 			return this;
+#endif
 	}
 	else
 	{
@@ -568,34 +579,34 @@ BOOL __fastcall AttachSnapWindow(HWND hWnd)
 #endif
 	this->hWnd = hWnd;
 	this->Enabled = TRUE;
-#if defined(_M_IX86) || defined(_M_X64)
+#if !defined(_M_IX86) && !defined(_M_X64)
+	this->PrevWndProc = (WNDPROC)SetWindowLongPtrA(hWnd, GWLP_WNDPROC, (LONG_PTR)WindowProc);
+#elif !SORTED
 	this->PrevWndProc = (WNDPROC)SetWindowLongPtrA(hWnd, GWLP_WNDPROC, (LONG_PTR)&this->Thunk);
 #else
-	this->PrevWndProc = (WNDPROC)SetWindowLongPtrA(hWnd, GWLP_WNDPROC, (LONG_PTR)WindowProc);
+	this->PrevWndProc = (WNDPROC)GetWindowLongPtrA(hWnd, GWLP_WNDPROC);
 #endif
 #if SORTED
 	qsort(SnapInfo, NumberOfElements, sizeof(SNAPINFO), CompareSnapInfo);
 #if defined(_M_IX86) || defined(_M_X64)
 	process = GetCurrentProcess();
 	for (end = (p = SnapInfo) + NumberOfElements; p != end; p++)
-#if defined(_M_IX86)
 	{
 #if !FIXED_ARRAY
-		(*p)->relproc = (ptrdiff_t)WindowProc - (ptrdiff_t)(&(*p)->relproc + 1);
-		FlushInstructionCache(process, *p, sizeof(THUNK));
+		this = *p;
 #else
-		p->relproc = (ptrdiff_t)WindowProc - (ptrdiff_t)(&p->relproc + 1);
-		FlushInstructionCache(process, p, sizeof(THUNK));
+		if (!(this = p)->hWnd)
+			continue;
 #endif
-	}
+		this->Thunk.thisPtr = this;
+#if defined(_M_IX86)
+		this->Thunk.relproc = (ptrdiff_t)WindowProc - (ptrdiff_t)(&this->Thunk.relproc + 1);
+		FlushInstructionCache(process, &this->Thunk, sizeof(THUNK));
 #elif defined(_M_X64)
-#if !FIXED_ARRAY
-		FlushInstructionCache(process, *p, offsetof(THUNK, jmp) + 3);
-
-#else
-		FlushInstructionCache(process, p, offsetof(THUNK, jmp) + 3);
+		FlushInstructionCache(process, &this->Thunk, offsetof(THUNK, jmp) + 3);
 #endif
-#endif
+		SetWindowLongPtrA(this->hWnd, GWLP_WNDPROC, (LONG_PTR)&this->Thunk);
+	}
 #endif
 #endif
 	return TRUE;

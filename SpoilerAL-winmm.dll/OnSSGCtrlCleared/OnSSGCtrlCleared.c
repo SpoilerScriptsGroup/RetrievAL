@@ -1,7 +1,7 @@
 #include <windows.h>
-#include "TSSGCtrl.h"
-#include "TSSGSubject.h"
-#include "TProcessCtrl.h"
+#include "TMainForm.h"
+#include "ToolTip/ToolTip.h"
+#include "ApplicationMessage.h"
 #include "SSGSubjectProperty.h"
 
 #define ALLOCATE_SUPPORT 1
@@ -31,6 +31,7 @@ extern PROCESSMEMORYBLOCK *lpProcessMemory;
 extern FILETIME           ftProcessCreationTime;
 extern size_t             nNumberOfCodeCache;
 extern CODECACHE          *lpCodeCache;
+extern void __cdecl ClearGuideBuffer();
 
 void __cdecl OnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl)
 {
@@ -52,7 +53,7 @@ void __cdecl OnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl)
 		lpProcessMemory = NULL;
 	}
 #endif
-	HeapCompact(hPrivateHeap, 0);
+
 	if (lpCodeCache)
 	{
 		if (nNumberOfCodeCache)
@@ -76,4 +77,40 @@ void __cdecl OnSSGCtrlCleared(IN TSSGCtrl *SSGCtrl)
 	}
 
 	TProcessCtrl_Clear(&SSGCtrl->processCtrl);
+
+	{
+		MSG        msg;
+		HWND const hWnd = TWinControl_GetHandle(MainForm);
+		while (PeekMessageA(&msg, hWnd, WM_DRAW_GUIDE_BUFFER, WM_DRAW_GUIDE_BUFFER, PM_REMOVE))
+			DispatchMessageA(&msg);// quasi-DoEvent
+		ClearGuideBuffer();// shrink guiding buffer
+		HeapCompact(hHeap, 0);// Urge deallocation.
+		if (hPrivateHeap)
+		{
+			LPSTR lpBuffer;
+			if (HeapDestroy(hPrivateHeap))
+				hPrivateHeap = NULL;
+			else if (FormatMessageA(
+				FORMAT_MESSAGE_MAX_WIDTH_MASK * !USE_TOOLTIP |
+				FORMAT_MESSAGE_ALLOCATE_BUFFER |
+				FORMAT_MESSAGE_IGNORE_INSERTS |
+				FORMAT_MESSAGE_FROM_SYSTEM,
+				NULL,
+				GetLastError(),
+				0,
+				(LPSTR)&lpBuffer,
+				sizeof(double),
+				NULL))
+			{
+#if USE_TOOLTIP
+				ShowToolTip(lpBuffer, (HICON)TTI_ERROR);
+#else
+				if (TMainForm_GetUserMode(MainForm) != 1)
+					TMainForm_Guide(lpBuffer, 0);
+#endif
+				LocalFree(lpBuffer);
+			}
+
+		}
+	}
 }

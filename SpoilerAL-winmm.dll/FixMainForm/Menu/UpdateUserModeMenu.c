@@ -3,6 +3,7 @@
 #include "TMenuItem.h"
 
 extern WORD wNowValueDrawId;
+extern void __cdecl ClearGuideBuffer();
 
 EXTERN_C void __cdecl UpdateUserModeMenu()
 {
@@ -19,4 +20,5 @@ EXTERN_C void __cdecl UpdateUserModeMenu()
 	}
 	mii.fState = MainForm->isNowValueDraw ? MFS_CHECKED : MFS_UNCHECKED;
 	SetMenuItemInfoA(TMenuItem_GetHandle(MainForm->M_View), wNowValueDrawId, FALSE, &mii);
+	ClearGuideBuffer();// shrink guiding buffer
 }

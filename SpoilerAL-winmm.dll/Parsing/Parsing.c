@@ -8030,6 +8030,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						else
 						{
 							lpProcessMemory[i].Address = lpAddress = HeapAlloc(hPrivateHeap, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, allocSize);
+							if (!lpAddress) goto ALLOC_ERROR;
 						}
 						break;
 					}

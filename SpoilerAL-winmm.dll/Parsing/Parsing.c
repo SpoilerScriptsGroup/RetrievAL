@@ -1580,24 +1580,36 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		    lpMarkup->UnionBlock = 0;
 			break;
 		case '"':
+			p++;
 		DOUBLE_QUOTED_STRING:
 			// double-quoted string
 			bNextIsSeparatedLeft = TRUE;
-			while (++p < end && *p != '"')
+			do
 			{
-				if (!__intrinsic_isleadbyte(*p))
+				BYTE c;
+
+				switch (*(p++))
 				{
-					if (*p != '\\')
-						continue;
-					if (++p >= end)
-						break;
-					if (!__intrinsic_isleadbyte(*p))
-						continue;
-				}
-				if (++p >= end)
+				default:
+					continue;
+				case '"':
 					break;
-			}
-			break;
+				case '\\':
+					if (p >= end)
+						break;
+					c = *(p++);
+					if (!__intrinsic_isleadbyte(c))
+						continue;
+					/* FALLTHROUGH */
+				case_unsigned_leadbyte:
+					if (p >= end)
+						break;
+					p++;
+					continue;
+				}
+				break;
+			} while (p < end);
+			continue;
 		case '%':
 			// "%", "%="
 			bNextIsSeparatedLeft = TRUE;
@@ -3585,7 +3597,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			switch (p[1])
 			{
 			case '"':
-				p++;
+				p += 2;
 				goto DOUBLE_QUOTED_STRING;
 			case '\'':
 				p++;
@@ -3594,7 +3606,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				switch (p[2])
 				{
 				case '"':
-					p += 2;
+					p += 3;
 					goto DOUBLE_QUOTED_STRING;
 				case '\'':
 					p += 2;

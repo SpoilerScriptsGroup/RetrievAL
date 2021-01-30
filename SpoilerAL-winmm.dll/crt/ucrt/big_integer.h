@@ -68,6 +68,9 @@ typedef struct {
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 #if defined(_MSC_VER) && _MSC_VER >= 1310
 #pragma intrinsic(_BitScanReverse)
+#if defined(_M_X64)
+#pragma intrinsic(_BitScanReverse64)
+#endif
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
 __forceinline static unsigned __int64 __reg64return_BitScanReverse(unsigned long Mask)
 {
@@ -174,10 +177,15 @@ __forceinline static uint32_t big_integer_bit_scan_reverse64(const uint64_t valu
 {
 	unsigned long index;
 
+#if !defined(_M_X64)
 	if (_BitScanReverse(&index, (unsigned long)(value >> 32)))
 		return index + 33;
 	if (_BitScanReverse(&index, (unsigned long)value))
 		return index + 1;
+#else
+	if (_BitScanReverse64(&index, value))
+		return index + 1;
+#endif
 	return 0;
 }
 

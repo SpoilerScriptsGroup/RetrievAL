@@ -99,9 +99,11 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		cmp     al, 'F' - '@'
 		je      FormatPrefix
 		jmp     dword ptr [X004FFDC5]
+		ud2
 
 	L1:
 		jmp     dword ptr [X005009A5]
+		ud2
 
 	FormatPrefix:
 
@@ -153,10 +155,10 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		call    TSSGCtrl_TrimString
 		add     esp, 44
 		lea     edx, [ebp - 58H]
-		mov     byte ptr [ebp - 0C5H], 32
+		mov     byte ptr [ebp - 0C5H], rtFORMAT
 		lea     ecx, [ebp - 70H]
 		mov     dword ptr [ebp - 0C4H], edx
-		mov     byte ptr [ebp - 78H], 32
+		mov     byte ptr [ebp - 78H], rtFORMAT
 		call    string_ctor_assign
 		mov     eax, dword ptr [LineList + 8H]
 		lea     edx, [ebp - 78H]

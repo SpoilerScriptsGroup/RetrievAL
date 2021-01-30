@@ -154,7 +154,9 @@ EXTERN_C void __cdecl Attach_CommonList()
 	*(LPDWORD)0x004C67A7 = (DWORD)TMainForm_SubjectAccess_ToULongDef - 0x004C67AB;
 
 	// TSSGCtrl::EnumReadSSR
+#if 0// replaced at "FixRepeat/Attach_FixRepeat.c"
 	*(LPDWORD)(0x004FFDD5 + 1) = (DWORD)TSSGCtrl_EnumReadSSR_SwitchCommonList - (0x004FFDD5 + 1 + sizeof(DWORD));
+#endif
 
 	// TSSGCtrl::LoopSSRFile
 	// Type == ssgCtrl::rtFILE

@@ -57,7 +57,7 @@ static TProcessAccessElementMaskData* __fastcall TSSGCtrl_StrToProcessAccessElem
 			vector_byte_resize(mask, vector_size(mask) + Size);
 			goto L_PUSH_DATA;
 		default:
-			list_dword_push_back(CodeList, (LPDWORD)&NowAE);
+			list_push_back(CodeList, &NowAE);
 			 NowAE = bcb6_operator_new(sizeof(TProcessAccessElementMaskData));
 			*NowAE = (const TProcessAccessElementMaskData) { (LPVOID)0x00627294, atDATA };
 			vector_byte_reserve(TProcessAccessElementData_GetData(NowAE), sizeof(uint64_t));
@@ -150,6 +150,7 @@ __declspec(naked) void __cdecl Caller_ParsingWithRel()
 		call    TSSGCtrl_StrToProcessAccessElementVec_switch_CodeSize
 		mov     dword ptr [NowAE], eax
 		jmp     dword ptr [X0050BC21]	// goto default:
+		ud2
 
 		#undef Data
 		#undef PosEnd

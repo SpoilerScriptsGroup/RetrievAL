@@ -43,7 +43,7 @@ __inline void Attribute_offset_close(TSSGCtrl *this)
 			TReplaceAttribute *replace = *(void **)it._M_cur;
 			if (replace->displace) while (deque_iterator_decrement(&it, void *), !deque_iterator_less_than(&it, &deque_begin(second)))
 			{
-				list_dword_push_back(this->attributeSelector.nowAttributeList, it._M_cur);
+				list_push_back(this->attributeSelector.nowAttributeList, (LPDWORD)it._M_cur);
 				if ((*(TReplaceAttribute **)it._M_cur)->displace) break;
 			}
 		}

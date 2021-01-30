@@ -11,8 +11,8 @@
 extern "C" {
 #endif
 
-unsigned long int CRC32Combine(unsigned long int crc, const void *lpBuffer, unsigned long int nSize);
-#define CRC32(lpBuffer, nSize) CRC32Combine(0, lpBuffer, nSize)
+unsigned long int __fastcall CRC32Combine(unsigned long int uPreviousCrc32, const void *lpBuffer, unsigned long int uSize);
+#define CRC32(lpBuffer, uSize) CRC32Combine(0, lpBuffer, uSize)
 
 #ifdef _WIN32
 
@@ -20,13 +20,13 @@ unsigned long int CRC32Combine(unsigned long int crc, const void *lpBuffer, unsi
 #include <stdio.h>
 #include <io.h>
 
-DWORD CRC32FromFileHandle(IN HANDLE hFile);
+DWORD __fastcall CRC32FromFileHandle(IN HANDLE hFile);
 __inline DWORD CRC32FromFileStruct(IN FILE *file)
 {
 	return CRC32FromFileHandle((HANDLE)_get_osfhandle(_fileno(file)));
 }
-BOOL CRC32FromFileA(IN LPCSTR lpFileName, OUT LPDWORD crc);
-BOOL CRC32FromFileW(IN LPCWSTR lpFileName, OUT LPDWORD crc);
+BOOL __fastcall CRC32FromFileA(IN LPCSTR lpFileName, OUT LPDWORD lpdwCrc);
+BOOL __fastcall CRC32FromFileW(IN LPCWSTR lpFileName, OUT LPDWORD lpdwCrc);
 #ifdef _UNICODE
 #define CRC32FromFile CRC32FromFileW
 #else

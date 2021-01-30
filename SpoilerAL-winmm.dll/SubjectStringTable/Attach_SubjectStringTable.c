@@ -1927,7 +1927,7 @@ static __inline void AttachOperator()
 	NPAD4    (0x0053057C);
 }
 
-static void __cdecl TSSGCtrl_GetSSGDataFile_FileName_assign(
+static string* __cdecl TSSGCtrl_GetSSGDataFile_FileName_assign(
 	string     *const FileName,
 	char       *const _M_start,
 	char       *const _M_finish,
@@ -1936,26 +1936,29 @@ static void __cdecl TSSGCtrl_GetSSGDataFile_FileName_assign(
 	string_begin(FileName) = _M_start;
 	string_end(FileName) = _M_finish;
 	string_end_of_storage(FileName) = _M_end_of_storage;
+	return FileName;
 }
 
-static void __cdecl TSSGCtrl_GetSSGDataFile_string_ctor_assign(string *const Src, string *const __s) {
+static string* __cdecl TSSGCtrl_GetSSGDataFile_string_ctor_assign(string *const Src, string *const __s) {
 	*Src = *__s;
 	string_ctor_null(__s);
+	return Src;
 }
 
-static void __fastcall TSSGCtrl_GetAddress_Trim(string* const Trim, const string* const AddressStr) {
+static string* __fastcall TSSGCtrl_GetAddress_Trim(string* const Trim, const string* const AddressStr) {
 	*Trim = *AddressStr;
 	{
 		register LPCSTR p = string_begin(Trim);
-		while (__intrinsic_isspace(*p)) ++p;
+		while (__intrinsic_isblank(*p)) ++p;
 		string_begin(Trim) = (LPSTR)p;
 	}
 	{
 		register LPCSTR p = string_end(Trim);
-		while (p > string_begin(Trim) && __intrinsic_isspace(p[-1])) --p;
+		while (p > string_begin(Trim) && __intrinsic_isblank(p[-1])) --p;
 		string_end(Trim) = (LPSTR)p;
 	}
 	string_end_of_storage(Trim) = string_begin(Trim);// Non-allocated mark.
+	return Trim;
 }
 
 static void __cdecl TSSGCtrl_GetAddress_tmpS_ctor(string* const tmpS, const string* const Trim) {
@@ -1965,33 +1968,36 @@ static void __cdecl TSSGCtrl_GetAddress_tmpS_ctor(string* const tmpS, const stri
 #endif
 }
 
-static void __fastcall TSSGCtrl_GetAddress_substr(string* const substr, const string* const tmpS) {
+static string* __fastcall TSSGCtrl_GetAddress_substr(string* const substr, const string* const tmpS) {
 	*substr = *tmpS;
 	++string_begin(substr);
 	string_end_of_storage(substr) = string_begin(substr);// Non-allocated mark.
+	return substr;
 }
 
-static void __cdecl TSSGCtrl_AddressAttributeFilter_GetOffsetCode(string* const AddressStr, const string* const offsetCode) {
+static string* __cdecl TSSGCtrl_AddressAttributeFilter_GetOffsetCode(string* const AddressStr, const string* const offsetCode) {
 	*AddressStr = *offsetCode;
 	string_end_of_storage(AddressStr) = string_begin(AddressStr);// Non-allocated mark.
+	return AddressStr;
 }
 
-static void __cdecl TSSGCtrl_AddressNaming_Trim(string* const Trim, TStringDivision const *const strD, const string* const NameStr) {
+static string* __cdecl TSSGCtrl_AddressNaming_Trim(string* const Trim, TStringDivision const *const strD, const string* const NameStr) {
 	*Trim = *NameStr;
 	{
 		register LPCSTR p = string_begin(Trim);
-		while (__intrinsic_isspace(*p)) ++p;
+		while (__intrinsic_isblank(*p)) ++p;
 		string_begin(Trim) = (LPSTR)p;
 	}
 	{
 		register LPCSTR p = string_end(Trim);
-		while (p > string_begin(Trim) && __intrinsic_isspace(p[-1])) --p;
+		while (p > string_begin(Trim) && __intrinsic_isblank(p[-1])) --p;
 		string_end(Trim) = (LPSTR)p;
 	}
 	string_end_of_storage(Trim) = string_begin(Trim);// Non-allocated mark.
+	return Trim;
 }
 
-static void __cdecl TSSGCtrl_StrToProcessAccessElementVec_Code_substr(
+static string* __cdecl TSSGCtrl_StrToProcessAccessElementVec_Code_substr(
 	string       *const substr,
 	string const *const Code,
 	size_t        const __pos,
@@ -1999,13 +2005,15 @@ static void __cdecl TSSGCtrl_StrToProcessAccessElementVec_Code_substr(
 	*substr = *Code;
 	string_end_of_storage(substr) = string_begin(substr) += __pos;// Non-allocated mark.
 	string_end(substr) = string_begin(substr) + __n;
+	return substr;
 }
 
-static void __cdecl TSSGCtrl_IsEnabled_GetCode(
+static string* __cdecl TSSGCtrl_IsEnabled_GetCode(
 	string       *const Src,
 	string const *const code) {
 	*Src = *code;
 	string_end_of_storage(Src) = string_begin(Src);// Non-allocated mark.
+	return Src;
 }
 
 static __inline void AttachStringReference() {

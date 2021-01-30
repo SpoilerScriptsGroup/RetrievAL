@@ -9,6 +9,17 @@
 #include "TSSGAttributeSelector.h"
 #include "TSSGScriptStruct.h"
 
+enum Repeat
+{
+	rtSTRING         = 0,
+	rtNUMBER         = 1,
+	rtREVERSE_ENDIAN = 2,
+	rtFILE           = 4,
+	rtDECIMAL        = 8,
+	rtWORD_REPEAT    = 16,
+	rtFORMAT         = 0x20,
+};
+
 typedef struct _TSSGCtrl
 {
 	struct _TFunctionTimer {

@@ -8,8 +8,8 @@ EXTERN_C DWORD_DWORD __fastcall TSSGCtrl_ReadSSRFile_CheckSignedParam(void *, vo
 EXTERN_C long __fastcall TSSGCtrl_ReadSSRFile_DestReserve(BOOL);
 EXTERN_C void __fastcall TSSGCtrl_ReadSSRFile_CompareLoopCounter(BOOL);
 EXTERN_C void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0();
-EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_FixWordRepeat();
-EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_Format();
+EXTERN_C void*__fastcall TSSGCtrl_LoopSSRFile_FixWordRepeat(void *, void *, unsigned, unsigned);
+EXTERN_C void*__stdcall TSSGCtrl_LoopSSRFile_switch_Type(signed, void *, unsigned, void *);
 EXTERN_C unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, ...);
 
 #if USE_TOOLTIP
@@ -112,12 +112,71 @@ static DWORD_DWORD __stdcall TSSGCtrl_ReadSSRFile_GetSSGDataFile_StepFile(
 	return (DWORD_DWORD) { (DWORD)StepFile, !StepFile };// edx isn't 0 means set Begin, End, Step to 0, 0, 1
 }
 
-#define CALL_REL32  (BYTE)0xE8
+static vector_string* __fastcall TSSGCtrl_ReadSSRFile_return_Data(vector_string *const retVal, vector_string *const Data)
+{
+	*retVal = *Data;
+	vector_ctor(Data);
+	return retVal;
+}
+
+static char __fastcall TSSGCtrl_EnumReadSSR_switch_tmpS(
+	list     *const LineList,
+	string   *const tmpS,
+	TSSGCtrl *const SSGC,
+	vector   *const FormatVec)
+{
+	string     Half, Trim;
+	char const Char = string_at(TStringDivision_Half_WithoutTokenDtor(&Half, &SSGC->strD, tmpS, ",", 1u, 0, dtNEST | etTRIM), 0);
+	if (Char != ',')
+	{
+		Trim._M_start = string_begin(&Half) + 1;
+		while (__intrinsic_isblank(*Trim._M_start)) ++Trim._M_start;
+		Trim._M_finish = string_end(&Half);
+		Trim._M_end_of_storage = Trim._M_start;// Non-allocated mark.
+	}
+	switch (Char)
+	{
+	default:
+		list_push_back(LineList, &((struct pair_byte_string) { rtSTRING,  Half }));
+		/* FALLTHROUGH */
+	case ',':
+		string_dtor(&Half);
+		return string_at(tmpS, 0);
+	case '*':
+	case '+':
+	case '@':
+		list_push_back(LineList, &((struct pair_byte_string) { rtFILE  ,  Char != '@' ? Half : Trim }));
+		list_push_back(LineList, &((struct pair_byte_string) { rtNUMBER, *tmpS }));
+		break;
+	case 'F':
+		list_push_back(LineList, &((struct pair_byte_string) { rtFORMAT,  Trim }));
+		list_push_back(LineList, &((struct pair_byte_string) { rtSTRING, *tmpS }));
+		break;
+	case 'R':
+		list_push_back(LineList, &((struct pair_byte_string) { rtWORD_REPEAT,  Trim }));
+		list_push_back(LineList, &((struct pair_byte_string) { rtSTRING     , *tmpS }));
+		break;
+	}
+	string_dtor(&Half);
+	return '\0';// means processed
+}
+
+static string* __cdecl TSSGCtrl_EnumReadSSR_tmpS_L_substr(
+	string       *const substr,
+	string const *const self,
+	size_t        const __pos,
+	size_t        const __n)
+{
+	*substr = *self;
+	string_end_of_storage(substr) = string_begin(substr) += __pos;// Non-allocated mark.
+	return substr;
+}
+
+#define CMP_AL_IMM8 (BYTE)0x3C
 #define PUSH_EAX    (BYTE)0x50
 #define PUSH_EDX    (BYTE)0x52
 #define PUSH_ESI    (BYTE)0x56
 #define PUSH_EDI    (BYTE)0x57
-#define JMP_REL8    (BYTE)0xEB
 #define POP_EDX     (BYTE)0x5A
 #define POP_EBX     (BYTE)0x5B
 #define POP_EBP     (BYTE)0x5D
@@ -129,11 +188,14 @@ static DWORD_DWORD __stdcall TSSGCtrl_ReadSSRFile_GetSSGDataFile_StepFile(
 #define NOP         (BYTE)0x90
 #define NOP_X2      (WORD)0x9066
 #define NOP_X4     (DWORD)0x00401F0F 
+#define NOP_X8            0x0000000000841F0Full
 #define RET         (BYTE)0xC3
 #define SS_LEAVE    (WORD)0xC936
+#define JE_SHORT    (BYTE)0x74
 #define JECXZ       (BYTE)0xE3
+#define CALL_REL32  (BYTE)0xE8
 #define JMP_REL32   (BYTE)0xE9
-#define JMP_SHORT   (BYTE)0xEB
+#define JMP_REL8    (BYTE)0xEB
 
 EXTERN_C void __cdecl Attach_FixRepeat()
 {
@@ -219,8 +281,18 @@ EXTERN_C void __cdecl Attach_FixRepeat()
 	*(LPDWORD)0x004FF30E = (DWORD)TSSGCtrl_ReadSSRFile_CompareLoopCounter - (0x004FF30E + sizeof(DWORD));
 	*(LPBYTE )0x004FF312 = JECXZ;
 	*(LPBYTE )0x004FF313 = (BYTE)(0x004FF2F1 - (0x004FF313 + sizeof(BYTE)));
-	*(LPBYTE )0x004FF314 = JMP_SHORT;
+	*(LPBYTE )0x004FF314 = JMP_REL8;
 	*(LPBYTE )0x004FF315 = (BYTE)(0x004FF2EC - (0x004FF315 + sizeof(BYTE)));
+
+	// TSSGCtrl::ReadSSRFile
+	*(LPWORD )(0x004FF3EC + 0) = BSWAP16(0x8D55);// lea edx, [ebp - 18h]
+	*(LPWORD )(0x004FF3EC + 2) = BSWAP16(0xE8 << 8 | CALL_REL32);
+	*(LPDWORD)(0x004FF3EF + 1) = (DWORD)TSSGCtrl_ReadSSRFile_return_Data - (0x004FF3EF + 1 + sizeof(DWORD));
+	*(LPBYTE )(0x004FF3F4 + 0) = JMP_REL32;
+	*(LPDWORD)(0x004FF3F4 + 1) = 0x004FF478 - (0x004FF3F4 + 1 + sizeof(DWORD));
+	*(LPBYTE )(0x004FF3F9 + 0) =         0x0F   ;// nop
+	*(LPWORD )(0x004FF3F9 + 1) = BSWAP16(0x1F44);// dword ptr
+	*(LPWORD )(0x004FF3F9 + 3) = BSWAP16(0x0000);// [eax + eax]
 
 	// TSSGCtrl::ReadSSRFile
 	*(LPBYTE )0x004FF5E0 = POP_EDX;
@@ -234,25 +306,73 @@ EXTERN_C void __cdecl Attach_FixRepeat()
 	*(LPWORD )0x004FF9F7 = NOP_X2;
 
 	// TSSGCtrl::EnumReadSSR
+#if 1
+	*(LPWORD )0x004FFD9C = BSWAP16(0x836B);// sub dword ptr [ebx + ...]
+	*(LPBYTE )0x004FFD9F = 3;
+	*(LPDWORD)0x004FFDA0 = BSWAP32(0x8B45EC3B);// mov  eax, [ebp - 14h]
+	*(LPWORD )0x004FFDA4 = BSWAP16(0x45E8    );// cmp  eax, [ebp - 18h]
+	*(LPBYTE )0x004FFDA6 = JE_SHORT;
+	*(LPBYTE )0x004FFDA7 = 0x004FFDD5 - (0x004FFDA7 + sizeof(BYTE));
+	*(LPDWORD)0x004FFDA8 = BSWAP32(0xFF7510FF);// push dword ptr [FormatVec]  
+	*(LPDWORD)0x004FFDAC = BSWAP32(0x75088D55);// push dword ptr [this]  
+	*(LPDWORD)0x004FFDB0 = BSWAP32(0xE88D4DC0);// lea  edx,      [tmpS]
+	*(LPBYTE )0x004FFDB4 = CALL_REL32         ;// lea  ecx,      [LineList]
+	*(LPDWORD)0x004FFDB5 = (DWORD)TSSGCtrl_EnumReadSSR_switch_tmpS - (0x004FFDB5 + sizeof(DWORD));
+	*(LPDWORD)0x004FFDC1 = 0x00500C13 - (0x004FFDC1 + sizeof(DWORD));
+	*(LPBYTE )0x004FFDCD = CMP_AL_IMM8;
+	*(LPBYTE )0x004FFDCE = -0x23 -0x1D -0x0C;// means '\0'
+	*(LPBYTE )0x004FFDD0 = 0x85;// je => jne
+	*(LPDWORD)0x004FFDD1 = 0x00500C13 - (0x004FFDD1 + sizeof(DWORD));
+	*(LPDWORD)0x004FFDD6 = 0x00500DFF - (0x004FFDD6 + sizeof(DWORD));
+#else
 	*(LPBYTE )0x004FFDBD = JMP_REL32;
 	*(LPDWORD)0x004FFDBE = (DWORD)TSSGCtrl_EnumReadSSR_SwitchTmpS_0 - (0x004FFDBE + sizeof(DWORD));
 	*(LPWORD )0x004FFDC2 = NOP_X2;
 	*(LPBYTE )0x004FFDC4 = NOP;
+#endif
+
+	// TSSGCtrl::EnumReadSSR
+	*(LPDWORD)0x00500308 = (DWORD)TSSGCtrl_EnumReadSSR_tmpS_L_substr - (0x00500308 + sizeof(DWORD));
+	*(LPBYTE )0x0050044A = JMP_REL8;// omit dtor substr
 
 	// TSSGCtrl::LoopSSRFile
+#if 1
+	*(LPBYTE )0x00502211 =         0x8D   ;
+	*(LPWORD )0x00502212 = BSWAP16(0x4D88);// lea  ecx,      [tmpS]
+	*(LPWORD )0x00502214 = BSWAP16(0xFF75);// push dword ptr [LoopVal]
+	*(LPBYTE )0x00502216 =         0x14   ;
+	*(LPBYTE )0x00502217 = PUSH_ESI;
+	*(LPBYTE )0x00502218 = CALL_REL32;
+	*(LPDWORD)0x00502219 = (DWORD)TSSGCtrl_LoopSSRFile_FixWordRepeat - (0x00502219 + sizeof(DWORD));
+	*(LPBYTE )0x0050221E = 0xC0;// esi => eax
+	*(LPBYTE )0x00502220 = 0x85;// ecx => eax
+#else
 	*(LPBYTE )0x0050221D = JMP_REL32;
 	*(LPDWORD)0x0050221E = (DWORD)TSSGCtrl_LoopSSRFile_FixWordRepeat - (0x0050221E + sizeof(DWORD));
 	*(LPBYTE )0x00502222 = NOP;
+#endif
 
 	// TSSGCtrl::LoopSSRFile
+#if 0
 	*(LPBYTE )0x00502676 = JMP_REL32;
 	*(LPDWORD)0x00502677 = (DWORD)TSSGCtrl_LoopSSRFile_Format - (0x00502677 + sizeof(DWORD));
 	*(LPBYTE )0x0050267B = NOP;
+#else
+	*(LPWORD )0x00502676 = BSWAP16(0xFFB5    );// push dword ptr [ebp + ...]
+	*(LPDWORD)0x0050267C = BSWAP32(0xFF7514FF);// push dword ptr [LoopVal]  
+	*(LPWORD )0x00502680 = BSWAP16(0x7508    );// push dword ptr [this]
+	*(LPBYTE )0x00502682 = PUSH_EDI;
+	*(LPBYTE )0x00502683 = CALL_REL32;
+	*(LPDWORD)0x00502684 = (DWORD)TSSGCtrl_LoopSSRFile_switch_Type - (0x00502684 + sizeof(DWORD));
+	*(LPWORD )0x00502690 = BSWAP16(0x8985);// mov [ebp + ...], eax
+	*(LPBYTE )0x00502697 =         0x85   ;// edx => eax
+#endif
+	*(UINT64*)0x005026A8 = NOP_X8;
 
 	// TSSGCtrl::LoopSSRFile
 	//   tmpS=""; => tmpS.clear();
 	*(LPWORD )0x0050272A = BSWAP16(0x8B45);
-	*(LPDWORD)0x0050272C = BSWAP32(0x8889458C);
-	*(LPDWORD)0x00502730 = BSWAP32(0xC60000 << 8 | JMP_REL8);
+	*(LPDWORD)0x0050272C = BSWAP32(0x88C60000);
+	*(LPDWORD)0x00502730 = BSWAP32(0x89458C << 8 | JMP_REL8);
 	*(LPBYTE )0x00502734 = 0x00502760 - (0x00502734 + sizeof(BYTE));
 }

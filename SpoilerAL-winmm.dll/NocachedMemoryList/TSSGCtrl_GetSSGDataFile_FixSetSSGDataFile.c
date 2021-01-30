@@ -9,7 +9,7 @@
 extern const DWORD F004185E8;
 extern const DWORD F004185FC;
 extern const DWORD F0044CA38;
-extern const DWORD F0044CCD4;
+extern const DWORD _STL__uninitialized_copy;
 extern const DWORD F00469A5C;
 extern const DWORD F004AE4AC;
 extern const DWORD F004F20E4;
@@ -506,7 +506,7 @@ __declspec(naked) void __cdecl TSSGCtrl_GetSSGDataFile_FixSetSSGDataFile()
 		mov     edx, dword ptr [edx]
 		push    ecx
 		push    edx
-		call    dword ptr [F0044CCD4]
+		call    dword ptr [_STL__uninitialized_copy]
 		mov     dword ptr [ebp - 0E4H], eax
 		lea     eax, [ebp - 100H]
 		add     esp, 16

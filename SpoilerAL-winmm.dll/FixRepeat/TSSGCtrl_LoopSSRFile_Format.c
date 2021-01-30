@@ -1,16 +1,34 @@
-#define USING_NAMESPACE_BCB6_STD
-#include "bcb6_std_string.h"
+#define _CRT_SECURE_NO_WARNINGS
+#include <windows.h>
 #define _NO_CRT_STDIO_INLINE
 #include <stdio.h>
+#define USING_NAMESPACE_BCB6_STD
+#include "TSSGCtrl.h"
 
 void __cdecl Caller_ParsingWithVal();
 void __cdecl TSSGCtrl_LoopSSRFile_LineListLoopContinue();
+uint64_t __cdecl InternalParsing(TSSGCtrl* SSGCtrl, TSSGSubject* SSGS, const string* Src, BOOL IsInteger, va_list ArgPtr);
 
-__declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_Format()
+static list_iterator __fastcall TSSGCtrl_LoopSSRFile_Format(
+	string       *const tmpS,
+	TSSGSubject  *const SSGS,
+	enum Repeat   const Type,
+	TSSGCtrl     *const SSGC,
+	unsigned long const LoopVal,
+	list_iterator       VIt)
+{
+	char           buf[0x0400];
+	size_t   const arg[] = { 3, (size_t)"Val", LoopVal, 0/* highword */, 0/* sentinel */ };
+	uint64_t const value = InternalParsing(SSGC, SSGS, (string *)&VIt->_M_data[__alignof(double)], TRUE, (va_list)arg);
+	int      const width = _snprintf(buf, _countof(buf), string_c_str((string *)&list_iterator_increment(VIt)->_M_data[__alignof(double)]), value);
+	if (width >= 0) string_append_cstr_with_length(tmpS, buf, width);
+	return VIt;
+}
+
+__declspec(naked) list_iterator __stdcall TSSGCtrl_LoopSSRFile_switch_Type(enum Repeat Type, TSSGCtrl *SSGC, unsigned long LoopVal, list_iterator VIt)
 {
 	__asm
 	{
-		#define RT_FORMAT 20H
 		#define this      (ebp + 8H)
 		#define LoopVal   (ebp + 14H)
 		#define VIt       (ebp - 180H)
@@ -18,7 +36,16 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_Format()
 		#define SSGS      (ebp - 60H)
 		#define _Type     edi
 
-		cmp     _Type, RT_FORMAT
+#if 1
+		lea     edx, [SSGS]
+		lea     ecx, [tmpS]
+		cmp     dword ptr [esp + 4], rtFORMAT
+#pragma warning(suppress: 4414)
+		je      TSSGCtrl_LoopSSRFile_Format
+		mov     eax, [esp + 16]
+		ret     4 * 4
+#else
+		cmp     _Type, rtFORMAT
 		jne     L3
 		sub     esp, 256 + 8
 
@@ -65,6 +92,7 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_Format()
 		add     esp, 256 + 8
 	L3:
 		jmp     TSSGCtrl_LoopSSRFile_LineListLoopContinue
+#endif
 
 		#undef buffer
 		#undef outReserved
@@ -80,7 +108,6 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_LineListLoopContinue()
 		mov     eax, dword ptr [VIt]
 		jmp     dword ptr [X0050267C]
 
-		#undef RT_FORMAT
 		#undef this
 		#undef LoopVal
 		#undef VIt

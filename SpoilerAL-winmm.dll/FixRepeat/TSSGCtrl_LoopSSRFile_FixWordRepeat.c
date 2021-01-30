@@ -1,12 +1,37 @@
 #include <windows.h>
+#define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_string.h"
+#include "bcb6_std_list.h"
 
 void __cdecl TSSGCtrl_LoopSSRFile_LineListLoopContinue();
 
 extern BOOL EnableParserFix;
 extern const DWORD F0043CC08;
 
-__declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_FixWordRepeat()
+const string* __fastcall TSSGCtrl_LoopSSRFile_FixWordRepeat(
+	string       *const tmpS,
+	list_iterator const VIt,
+	unsigned long const Count,
+	unsigned long const LoopVal)
 {
+#if 1
+	string const *const Word = (void *)&VIt->_M_data[__alignof(double)];
+	switch (Count)
+	{
+	default:
+		if (EnableParserFix)
+		{
+			string_reserve(tmpS, string_length(tmpS) + string_length(Word) * Count);
+			for (unsigned long i = 0; i < Count; i++)
+				string_append(tmpS, Word);
+			break;
+		}
+		return Word;
+	case 0:
+		break;
+	}
+	return NULL;
+#else
 	static const DWORD X0050222B = 0x0050222B;
 	static const DWORD X00502676 = 0x00502676;
 
@@ -48,4 +73,5 @@ __declspec(naked) void __cdecl TSSGCtrl_LoopSSRFile_FixWordRepeat()
 	L5:
 		jmp     dword ptr [X00502676]
 	}
+#endif
 }

@@ -109,7 +109,7 @@ static TProcessAccessElementMaskData* __fastcall TSSGCtrl_StrToProcessAccessElem
 		vector_byte_push_back(TProcessAccessElementMaskData_GetMask(NowAE), 0x00);
 		goto L_PUSH_DATA;
 	default:
-		list_dword_push_back(CodeList, (LPDWORD)&NowAE);
+		list_push_back(CodeList, &NowAE);
 		 NowAE = bcb6_operator_new(sizeof(TProcessAccessElementMaskData));
 		*NowAE = (const TProcessAccessElementMaskData) { (LPVOID)0x00627294, atDATA };
 		vector_byte_reserve  (TProcessAccessElementData_GetData(NowAE), sizeof(uint64_t));
@@ -131,7 +131,7 @@ static TProcessAccessElementMaskData* __fastcall TSSGCtrl_StrToProcessAccessElem
 		vector_byte_resize   (TProcessAccessElementMaskData_GetMask(NowAE), vector_size    (&data));
 		goto L_PUSH_MASK_DATA;
 	default:
-		list_dword_push_back(CodeList, (LPDWORD)&NowAE);
+		list_push_back(CodeList, &NowAE);
 		 NowAE = bcb6_operator_new(sizeof(TProcessAccessElementMaskData));
 		*NowAE = (const TProcessAccessElementMaskData) { (LPVOID)0x0063FE38, atMASK_DATA };
 		vector_byte_reserve  (TProcessAccessElementData_GetData    (NowAE), sizeof(uint64_t));
@@ -151,6 +151,7 @@ static __declspec(naked) void TSSGCtrl_StrToProcessAccessElementVec_defaultStub(
 #define CodeList (ebp - 0x10)
 #define i         esi
 #define NowAE    (ebp - 0x085C)
+	static const DWORD X0050E100 = 0x0050E100;
 	__asm {
 		push dword ptr [NowAE]
 		mov  eax, dword ptr [Code]
@@ -158,8 +159,8 @@ static __declspec(naked) void TSSGCtrl_StrToProcessAccessElementVec_defaultStub(
 		lea  ecx, dword ptr [CodeList]
 		call TSSGCtrl_StrToProcessAccessElementVec_default
 		mov  dword ptr [NowAE], eax
-		mov  eax, 0x0050E100
-		jmp  eax
+		jmp  X0050E100
+		ud2
 	}
 #undef  NowAE
 #undef  i

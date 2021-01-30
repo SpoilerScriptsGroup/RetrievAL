@@ -1,10 +1,10 @@
 #include <stdlib.h>
 
-#if !defined(__GNUC__)
+#if !defined(_MSC_VER) || _MSC_VER >= 1600
+#include <stdint.h>
+#else
 typedef unsigned char     uint8_t;
 typedef unsigned long int uint32_t;
-#else
-#include <stdint.h>
 #endif
 
 #include "endianness.h"
@@ -17,7 +17,7 @@ typedef unsigned long int uint32_t;
 #elif defined(_MSC_VER) && _MSC_VER >= 1310
 #define bswap32 _byteswap_ulong
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__inline uint32_t bswap32(uint32_t value)
+static __forceinline uint32_t bswap32(uint32_t value)
 {
 	__asm
 	{
@@ -187,45 +187,40 @@ static const uint32_t Crc32Lookup[MAX_SLICE][256] =
 	}
 };
 
-uint32_t CRC32Combine(uint32_t previousCrc32, const void *data, uint32_t length)
+uint32_t __fastcall CRC32Combine(uint32_t uPreviousCrc32, const void *lpBuffer, uint32_t uSize)
 {
-	uint32_t       crc;
-	uint32_t       remainder;
-	const uint32_t *current;
-	const uint8_t  *currentChar;
+	uint32_t      crc;
+	const uint8_t *p;
+	uint32_t      count;
 
-	crc = ~previousCrc32;
-	current = (const uint32_t *)data;
-	remainder = length & (4UL - 1);
-	if (length >>= 2)
-	{
+	crc = uPreviousCrc32 ^ -1;
+	p = (const uint8_t *)lpBuffer;
+	if (count = uSize >> 2)
 		do
 		{
-			uint32_t one;
+			uint32_t dw;
 
 #if defined(__LITTLE_ENDIAN__)
-			one = *(current++) ^ crc;
+			dw = *((*(const uint32_t **)&p)++) ^ crc;
 			crc =
-				Crc32Lookup[0][(one >> 24) & 0xFF] ^
-				Crc32Lookup[1][(one >> 16) & 0xFF] ^
-				Crc32Lookup[2][(one >>  8) & 0xFF] ^
-				Crc32Lookup[3][ one        & 0xFF];
+				Crc32Lookup[0][(dw >> 24) & 0xFF] ^
+				Crc32Lookup[1][(dw >> 16) & 0xFF] ^
+				Crc32Lookup[2][(dw >>  8) & 0xFF] ^
+				Crc32Lookup[3][ dw        & 0xFF];
 #else
-			one = *(current++) ^ bswap32(crc);
+			dw = *((*(const uint32_t **)&p)++) ^ bswap32(crc);
 			crc =
-				Crc32Lookup[0][ one        & 0xFF] ^
-				Crc32Lookup[1][(one >>  8) & 0xFF] ^
-				Crc32Lookup[2][(one >> 16) & 0xFF] ^
-				Crc32Lookup[3][(one >> 24) & 0xFF];
+				Crc32Lookup[0][ dw        & 0xFF] ^
+				Crc32Lookup[1][(dw >>  8) & 0xFF] ^
+				Crc32Lookup[2][(dw >> 16) & 0xFF] ^
+				Crc32Lookup[3][(dw >> 24) & 0xFF];
 #endif
-		} while (--length);
-	}
-	currentChar = (const uint8_t *)current;
-	if (remainder)
+		} while (--count);
+	if (count = uSize & 3)
 		do
-			crc = (crc >> 8) ^ Crc32Lookup[0][(crc & 0xFF) ^ *(currentChar++)];
-		while (--remainder);
-	return ~crc;
+			crc = (crc >> 8) ^ Crc32Lookup[0][(crc & 0xFF) ^ *(p++)];
+		while (--count);
+	return crc ^ -1;
 }
 
 #ifdef _WIN32
@@ -244,7 +239,7 @@ typedef const BYTE *LPCBYTE;
 
 #define CRC32_FILEBUFFER_SIZE (1024 * 1024)
 
-DWORD CRC32FromFileHandle(IN HANDLE hFile)
+DWORD __fastcall CRC32FromFileHandle(IN HANDLE hFile)
 {
 	BYTE   lpStackBuffer[2048];
 	DWORD  crc;
@@ -261,37 +256,33 @@ DWORD CRC32FromFileHandle(IN HANDLE hFile)
 		lpBuffer = lpStackBuffer;
 		nBufferSize = sizeof(lpStackBuffer);
 	}
-	crc = 0xFFFFFFFF;
+	crc = -1;
 	while (ReadFile(hFile, lpBuffer, nBufferSize, &nBytesRead, NULL) && nBytesRead)
 	{
-		DWORD   length;
-		LPDWORD current;
-		LPCBYTE currentChar;
+		LPCBYTE p;
+		DWORD   count;
 
-		current = (LPDWORD)lpBuffer;
-		if (length = nBytesRead >> 2)
-		{
+		p = lpBuffer;
+		if (count = nBytesRead >> 2)
 			do
 			{
-				DWORD one;
+				DWORD dw;
 
-				one = *(current++) ^ crc;
+				dw = *((*(LPDWORD *)&p)++) ^ crc;
 				crc =
-					Crc32Lookup[0][(one >> 24) & 0xFF] ^
-					Crc32Lookup[1][(one >> 16) & 0xFF] ^
-					Crc32Lookup[2][(one >>  8) & 0xFF] ^
-					Crc32Lookup[3][ one        & 0xFF];
-			} while (--length);
-		}
-		currentChar = (LPCBYTE)current;
-		if (length = nBytesRead & (4UL - 1))
+					Crc32Lookup[0][(dw >> 24) & 0xFF] ^
+					Crc32Lookup[1][(dw >> 16) & 0xFF] ^
+					Crc32Lookup[2][(dw >>  8) & 0xFF] ^
+					Crc32Lookup[3][ dw        & 0xFF];
+			} while (--count);
+		if (count = nBytesRead & 3)
 			do
-				crc = (crc >> 8) ^ Crc32Lookup[0][(crc & 0xFF) ^ *(currentChar++)];
-			while (--length);
+				crc = (crc >> 8) ^ Crc32Lookup[0][(crc & 0xFF) ^ *(p++)];
+			while (--count);
 	}
 	if (hHeap != NULL)
 		HeapFree(hHeap, 0, lpBuffer);
-	return ~crc;
+	return crc ^ -1;
 }
 
 typedef HANDLE(WINAPI *LPFNCREATEFILE)(
@@ -303,7 +294,7 @@ typedef HANDLE(WINAPI *LPFNCREATEFILE)(
 	_In_     DWORD                 dwFlagsAndAttributes,
 	_In_opt_ HANDLE                hTemplateFile);
 
-__inline BOOL __inline_CRC32FromFile(IN LPFNCREATEFILE lpfnCreateFile, IN LPCVOID lpFileName, OUT LPDWORD crc)
+static __forceinline BOOL inline_CRC32FromFile(IN LPFNCREATEFILE lpfnCreateFile, IN LPCVOID lpFileName, OUT LPDWORD lpdwCrc)
 {
 	HANDLE hFile;
 
@@ -317,7 +308,7 @@ __inline BOOL __inline_CRC32FromFile(IN LPFNCREATEFILE lpfnCreateFile, IN LPCVOI
 		NULL);
 	if (hFile != INVALID_HANDLE_VALUE)
 	{
-		*crc = CRC32FromFileHandle(hFile);
+		*lpdwCrc = CRC32FromFileHandle(hFile);
 		CloseHandle(hFile);
 		return TRUE;
 	}
@@ -327,14 +318,14 @@ __inline BOOL __inline_CRC32FromFile(IN LPFNCREATEFILE lpfnCreateFile, IN LPCVOI
 	}
 }
 
-BOOL CRC32FromFileA(IN LPCSTR lpFileName, OUT LPDWORD crc)
+BOOL __fastcall CRC32FromFileA(IN LPCSTR lpFileName, OUT LPDWORD lpdwCrc)
 {
-	return __inline_CRC32FromFile(CreateFileA, lpFileName, crc);
+	return inline_CRC32FromFile(CreateFileA, lpFileName, lpdwCrc);
 }
 
-BOOL CRC32FromFileW(IN LPCWSTR lpFileName, OUT LPDWORD crc)
+BOOL __fastcall CRC32FromFileW(IN LPCWSTR lpFileName, OUT LPDWORD lpdwCrc)
 {
-	return __inline_CRC32FromFile(CreateFileW, lpFileName, crc);
+	return inline_CRC32FromFile(CreateFileW, lpFileName, lpdwCrc);
 }
 
 #endif

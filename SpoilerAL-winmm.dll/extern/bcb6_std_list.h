@@ -2,6 +2,16 @@
 
 #include <windows.h>
 #include <intrin.h>
+#include "TProcessAccessElementData.h"
+#include "TSSGAttributeElement.h"
+
+struct pair_byte_string
+{
+	enum Repeat first : 0x08;
+	unsigned  __int32 : 0x18;
+	unsigned  __int32 : 0x20;
+	bcb6_std_string   second;
+};
 
 typedef struct _List_node
 {
@@ -44,15 +54,21 @@ typedef pbcb6_std_list          plist;
 
 EXTERN_C bcb6_std_list_iterator __fastcall bcb6_std_list_erase(bcb6_std_list_iterator it);
 
-// create_node 4 bytes
-__inline bcb6_std_list_iterator list_dword_push_back(bcb6_std_list *const self, const DWORD *const __x)
+typedef struct _List_node *(__cdecl *const _STL_list_M_create_node)(struct _List_base *self, const void *__x);
+
+static _List_iterator __forceinline _STL_list_insert(struct _List_node *const __n, struct _List_node *const __tmp)
 {
-	pbcb6_std_list_node node = ((pbcb6_std_list_node(__cdecl *)(pbcb6_std_list, const void *))0x0050E758)(self, __x),
-		edge = self->_M_node,
-		tail = edge->_M_prev;
-	node->_M_next = edge;
-	node->_M_prev = tail;
-	tail->_M_next = node;
-	edge->_M_prev = node;
-	return node;
+	struct _List_node *const __p = __n->_M_prev;
+	__tmp->_M_next = __n;
+	__tmp->_M_prev = __p;
+	__p->_M_next = __tmp;
+	__n->_M_prev = __tmp;
+	return __tmp;
 }
+
+#define list_push_back(self, __x) _STL_list_insert(bcb6_std_list_end(self), ((_STL_list_M_create_node)_Generic(__x\
+	, struct _TProcessAccessElementMaskData **:0x0050E758\
+	, struct pair_byte_string                *:0x0050123C\
+	, struct _TAdjustmentAttribute    *const *:0x0044E3EC\
+	, unsigned long                          *:0x0044E3EC\
+))(self, __x))

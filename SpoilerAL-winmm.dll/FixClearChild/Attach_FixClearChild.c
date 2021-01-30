@@ -268,7 +268,7 @@ static void __fastcall TSSDir_GetSubjectVec_onOpen(TSSGSubject *const SSGS, TSSG
 			TAdjustmentAttribute *const AElem = *pos;
 #if ABBREV_SELECT
 			TSSGAttributeSelector_PushStack(TSSGCtrl_GetAttributeSelector(SSGC), AElem);
-			list_dword_push_back(TSSGCtrl_GetAttributeSelector(SSGC)->nowAttributeList, (LPDWORD)pos);
+			list_push_back(TSSGCtrl_GetAttributeSelector(SSGC)->nowAttributeList, pos);
 			if (TSSGAttributeElement_GetType(AElem) & multi && AElem->seqElement >= seqElement)
 				seqElement = AElem->seqElement + 1;
 #else

@@ -12,11 +12,13 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchCommonList()
 		cmp     al, '*' - 'R'
 		je      L1
 		jmp     dword ptr [X00500C13]
+		ud2
 
 		align   16
 	L1:
 		push    -1
 		push    0
 		jmp     dword ptr [X005009AF]
+		ud2
 	}
 }

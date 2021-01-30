@@ -21,8 +21,8 @@ EXTERN_C void __cdecl TSSGCtrl_ReadSSRFile_StoreLoopIndex();
 #define PUSH_EDX                   (BYTE )0x52
 #define PUSH_IMM8                  (BYTE )0x6A
 #define NOP                        (BYTE )0x90
-#define NOP_X2                     (WORD )0x9090
-#define NOP_X4                     (DWORD)0x90909090
+#define NOP_X2                     (WORD )0x9066
+#define NOP_X4                     (DWORD)0x00401F0F
 #define CALL_REL32                 (BYTE )0xE8
 #define JMP_REL32                  (BYTE )0xE9
 

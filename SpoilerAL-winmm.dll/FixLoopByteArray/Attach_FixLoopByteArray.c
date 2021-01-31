@@ -40,7 +40,7 @@ EXTERN_C void __cdecl Attach_FixLoopByteArray()
 	// TSSGCtrl::StrToProcessAccessElementVec
 	*(LPBYTE )0x00506F78 = JMP_REL32;
 	*(LPDWORD)0x00506F79 = (DWORD)Caller_StrToProcessAccessElementVecWithoutRel - (0x00506F79 + sizeof(DWORD));
-	*(LPDWORD)0x00506F7D = NOP_X4;
+	*(LPDWORD)0x00506F7D = BSWAP32(0xC8FC0F00);
 
 	// TSSGCtrl::StrToProcessAccessElementVec
 	//   new TProcessAccessElementJump() => new TProcessAccessElementBase()

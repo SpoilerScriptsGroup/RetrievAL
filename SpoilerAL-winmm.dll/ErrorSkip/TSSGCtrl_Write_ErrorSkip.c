@@ -2,6 +2,7 @@
 #include "TMainForm.h"
 #include "TSSGAttributeElement.h"
 
+#if 0
 __declspec(naked) void __cdecl TSSGCtrl_Write_ErrorSkip()
 {
 	__asm
@@ -38,3 +39,4 @@ __declspec(naked) void __cdecl TSSGCtrl_Write_ErrorSkip()
 		#undef result
 	}
 }
+#endif

@@ -19,8 +19,12 @@ static list_iterator __fastcall TSSGCtrl_LoopSSRFile_Format(
 {
 	char           buf[0x0400];
 	size_t   const arg[] = { 3, (size_t)"Val", LoopVal, 0/* highword */, 0/* sentinel */ };
-	uint64_t const value = InternalParsing(SSGC, SSGS, (string *)&VIt->_M_data[__alignof(double)], TRUE, (va_list)arg);
-	int      const width = _snprintf(buf, _countof(buf), string_c_str((string *)&list_iterator_increment(VIt)->_M_data[__alignof(double)]), value);
+	uint64_t const value = InternalParsing(SSGC, SSGS, &((struct pair_byte_string *)VIt->_M_data)->second, TRUE, (va_list)arg);
+	int      const width = _snprintf(
+		buf,
+		_countof(buf),
+		string_c_str(&((struct pair_byte_string *)list_iterator_increment(VIt)->_M_data)->second),
+		value);
 	if (width >= 0) string_append_cstr_with_length(tmpS, buf, width);
 	return VIt;
 }

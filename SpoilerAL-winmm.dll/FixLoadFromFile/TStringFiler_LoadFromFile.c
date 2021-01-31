@@ -114,11 +114,10 @@ static __inline BOOL GetFileObjectIdA(
 		BY_HANDLE_FILE_INFORMATION fileInfo;
 
 		if (GetFileInformationByHandle(hFile, &fileInfo)) {
-			lpFileObjectId->Data1 = fileInfo.nFileIndexLow;
-			lpFileObjectId->Data2 = LOWORD(fileInfo.nFileIndexHigh);
-			lpFileObjectId->Data3 = HIWORD(fileInfo.nFileIndexHigh);
-			*(LPDWORD) lpFileObjectId->Data4    = fileInfo.dwVolumeSerialNumber;
-			*(LPDWORD)&lpFileObjectId->Data4[4] = 0;
+			((LPDWORD)lpFileObjectId)[0] = fileInfo.nFileIndexLow;
+			((LPDWORD)lpFileObjectId)[1] = fileInfo.nFileIndexHigh;
+			((LPDWORD)lpFileObjectId)[2] = fileInfo.dwVolumeSerialNumber;
+			((LPDWORD)lpFileObjectId)[3] = 0;
 #else
 		FILE_OBJECTID_BUFFER buffer;
 		DWORD                dwBytesReturned;
@@ -163,17 +162,11 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 	#define MODE_LINE_FEED  0x0100
 	#define MODE_RECURSIVE  0x0200
 	#define MODE_EXTRACT    (MODE_END_BYTE | MODE_START_BYTE)
-	#define READ_BLOCK_SIZE 0x00010000
 
-	HANDLE    hFile;
-	DWORD     dwFileSize, dwNumberOfBytesToRead, dwNumberOfBytesRead;
-	char      *buffer;
-	size_t    bufferLength, bufferCapacity;
-	ptrdiff_t difference;
-	size_t    position;
-#ifndef __BORLANDC__
-	BOOLEAN   firstLine;
-#endif
+	HANDLE  hFile;
+	DWORD   dwFileSize;
+	HANDLE  hMap;
+	LPCBYTE lpMapViewOfFile, p, end, line, prev;
 
 	assert((Mode & MODE_END_LINE) == 0);
 	assert((Mode & MODE_END_STR) == 0);
@@ -187,185 +180,112 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 		FILE_SHARE_READ,
 		NULL,
 		OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_SEQUENTIAL_SCAN,
+		FILE_ATTRIBUTE_NORMAL,
 		NULL);
-
-	// 読み込みエラー
 	if (hFile == INVALID_HANDLE_VALUE)
+		// 読み込みエラー
 		goto FAILED1;
 
 	dwFileSize = GetFileSize(hFile, NULL);
 	if (dwFileSize == MAXDWORD)
 		goto FAILED2;
 
-	if (dwFileSize == 0)
+	if (!(Mode & MODE_START_BYTE))
+		StartPos = 0;
+	if (!(Mode & MODE_END_BYTE) || EndPos > dwFileSize)
+		EndPos = dwFileSize;
+	if (StartPos >= EndPos)
 		goto DONE;
 
-	if (Mode & MODE_EXTRACT)
- 	{
-		if (EndPos > dwFileSize)
-			EndPos = dwFileSize;
-		// ファイルサイズより大きいよ…
-		if (EndPos <= StartPos)
-			goto DONE;
-#ifdef __BORLANDC__
-		if (SetFilePointer(hFile, StartPos, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
-			goto DONE;
-		position = StartPos;
-	}
-	else
-	{
-		position = 0;
-#endif
-	}
+	hMap = CreateFileMappingA(
+		hFile,
+		NULL,
+		PAGE_READONLY,
+		0,
+		0,
+		NULL);
+	if (!hMap)
+		goto FAILED3;
 
-	bufferCapacity = min(dwFileSize, READ_BLOCK_SIZE * 2 - 1);
-	buffer = (char *)HeapAlloc(hHeap, 0, bufferCapacity + 1);
-	if (!buffer)
-		goto FAILED2;
-	bufferLength = 0;
+	lpMapViewOfFile = (LPCBYTE)MapViewOfFile(
+		hMap,
+		FILE_MAP_READ,
+		0,
+		0,
+		0);
+	if (!lpMapViewOfFile)
+		goto FAILED4;
 
 #ifndef __BORLANDC__
-	firstLine = TRUE;
-	position = 0;
-#endif
-	difference = 0;
-	dwNumberOfBytesToRead = min(READ_BLOCK_SIZE, bufferCapacity);
-	while (ReadFile(hFile, buffer + bufferLength, dwNumberOfBytesToRead, &dwNumberOfBytesRead, NULL) && dwNumberOfBytesRead)
+	end = (p = lpMapViewOfFile) + dwFileSize;
+	do
 	{
-		char   *p, *end, *line;
-		size_t length, index;
-
-		//--------------
-		// 改行で切り分け
-		p = buffer + bufferLength + difference;
-		bufferLength += dwNumberOfBytesRead;
-		end = buffer + bufferLength;
-		*end = '\0';
-
-		line = buffer;
-		while (p < end)
+		switch (*(prev = p++))
 		{
-			char c, *next;
-
-			c = *p;
-			next = p + 1;
-			switch ((unsigned char)c)
-			{
-			case '\r':
-				if (next == end)
-					break;
-				if (*next == '\n')
-					next++;
-				/* FALLTHROUGH */
-			case '\n':
-#ifndef __BORLANDC__
-				if (firstLine)
-				{
-					firstLine = FALSE;
-					if (Mode & MODE_EXTRACT)
-					{
-						CheckSSGVersion(line, p);
-						if (SetFilePointer(hFile, StartPos, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER)
-							goto END_OF_READ;
-						p = end;
-						line = buffer + bufferLength;
-						position = StartPos;
-						break;
-					}
-				}
-#endif
-				vector_string_push_back_range(SList, line, !(Mode & MODE_LINE_FEED) ? p : next);
-				if ((Mode & MODE_EXTRACT) && (position += next - line) >= EndPos)
-					goto END_OF_READ;
-				line = p = next;
-				continue;
-			case '\\':
-			ESCAPE_SEQUENCE:
-				if (next == end)
-					break;
-				c = *(next++);
-				switch ((unsigned char)c)
-				{
-				case ' ':
-				case '\t':
-				case '\v':
-				case '\f':
-					goto ESCAPE_SEQUENCE;
-				case '\r':
-					if (next == end)
-						break;
-					if (*next == '\n')
-						next++;
-					/* FALLTHROUGH */
-				case '\n':
-					memcpy(p, next, end - next + 1);
-					length = next - p;
-					bufferLength -= length;
-					end -= length;
-					continue;
-#if CODEPAGE_SUPPORT
-				default:
-					if (__intrinsic_isleadbyte(p[2]))
-						p++;
-#else
-				case_unsigned_leadbyte:
-					p++;
-					/* FALLTHROUGH */
-				default:
-#endif
-					p += 2;
-					continue;
-				}
-				break;
-#if CODEPAGE_SUPPORT
-			default:
-				if (__intrinsic_isleadbyte(c))
-					next++;
-#else
-			case_unsigned_leadbyte:
-				next++;
-				/* FALLTHROUGH */
-			default:
-#endif
-				p = next;
-				continue;
-			}
+		default:
+			continue;
+		case '\r':
+			if (p < end && *p == '\n')
+				p++;
+			/* FALLTHROUGH */
+		case '\n':
+			CheckSSGVersion(lpMapViewOfFile, prev);
 			break;
+		case_unsigned_leadbyte:
+			if (p >= end)
+				break;
+			p++;
+			continue;
 		}
-		difference = p - end;
+		break;
+	} while (p < end);
+#endif
 
-		index = line - buffer;
-		if (bufferLength -= index)
+	p = lpMapViewOfFile + StartPos;
+	end = lpMapViewOfFile + EndPos;
+
+	//--------------
+	// 改行で切り分け
+	line = p;
+	do
+	{
+		BYTE c;
+
+		switch (*(prev = p++))
 		{
-			size_t require;
-
-			require = bufferLength + READ_BLOCK_SIZE;
-			if (require > bufferCapacity)
-			{
-				void *lpMem;
-
-				if ((ptrdiff_t)++bufferCapacity >= 0)
-					bufferCapacity <<= 1;
-				else
-					bufferCapacity = require + 1;
-				lpMem = HeapReAlloc(hHeap, 0, buffer, bufferCapacity--);
-				if (!lpMem)
-					goto FAILED3;
-				buffer = (char *)lpMem;
-				line = (char *)lpMem + index;
-			}
-			memcpy(buffer, line, bufferLength);
+		default:
+			continue;
+		case '\r':
+			if (p < end && *p == '\n')
+				p++;
+			/* FALLTHROUGH */
+		case '\n':
+			vector_string_push_back_range(SList, line, !(Mode & MODE_LINE_FEED) ? prev : p);
+			line = p;
+			continue;
+		case '\\':
+			if (p >= end)
+				break;
+			if ((c = *(p++)) == '\r' ? p < end && *p == '\n' : __intrinsic_isleadbyte(c))
+				p++;
+			continue;
+		case_unsigned_leadbyte:
+			if (p >= end)
+				break;
+			p++;
+			continue;
 		}
-		//------
-	}
+		break;
+	} while (p < end);
+	//------
 
 	// 最終行を格納
-	if (bufferLength)
-		vector_string_push_back_range(SList, buffer, buffer + bufferLength);
+	if (line < end)
+		vector_string_push_back_range(SList, line, end);
 
-END_OF_READ:
-	HeapFree(hHeap, 0, buffer);
+	UnmapViewOfFile(lpMapViewOfFile);
+	CloseHandle(hMap);
+DONE:
 	CloseHandle(hFile);
 
 	if (!(Mode & MODE_LINE_FEED))
@@ -463,12 +383,10 @@ END_OF_READ:
 
 	return 0;
 
-DONE:
-	CloseHandle(hFile);
-	return 0;
-
+FAILED4:
+	UnmapViewOfFile(lpMapViewOfFile);
 FAILED3:
-	HeapFree(hHeap, 0, buffer);
+	CloseHandle(hMap);
 FAILED2:
 	CloseHandle(hFile);
 FAILED1:
@@ -481,5 +399,4 @@ FAILED1:
 	#undef MODE_LINE_FEED
 	#undef MODE_RECURSIVE
 	#undef MODE_EXTRACT
-	#undef READ_BLOCK_SIZE
 }

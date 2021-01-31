@@ -20,6 +20,7 @@ unsigned long(__cdecl * const TSSGCtrl_CheckIO_FEP)(TSSGCtrl *this, TSSGSubject 
 double(__cdecl * const TSSGCtrl_CheckIO_FEPDouble)(TSSGCtrl *this, TSSGSubject *SSGS, double Val, BOOLEAN IsInput) = (LPVOID)0x00511094;
 vector_string *(__cdecl * const TSSGCtrl_GetSSGDataFile)(TSSGCtrl *this, TSSGSubject *SSGS, string FName, string DefaultExt, string *CurrentDir) = (LPVOID)0x004EDFB8;
 string *(__cdecl * const TSSGCtrl_GetSimpleByteCode)(string *Result, TSSGCtrl *this, TSSGSubject *SSGS, string CodeStr) = (LPVOID)0x00506BAC;
+vector_dword *(__cdecl * const TSSGCtrl_StrToProcessAccessElementVec)(vector_dword *CodeVec, TSSGCtrl *this, TSSGSubject *SSGS, string Code, unsigned long Rel) = (LPVOID)0x00506F7D;
 BOOLEAN(__cdecl * const TSSGCtrl_IsChildRWProhibit)(TSSGCtrl *this, TSSGSubject *SSGS) = (LPVOID)0x00511318;
 BOOLEAN(__cdecl * const TSSGCtrl_OneRead)(TSSGCtrl *this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size) = (LPVOID)0x0051C4D8;
 BOOLEAN(__cdecl * const TSSGCtrl_OneWrite)(TSSGCtrl *this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size) = (LPVOID)0x0051C540;

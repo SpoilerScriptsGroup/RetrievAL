@@ -1478,6 +1478,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 	bIsSeparatedLeft = TRUE;
 	for (p = lpSrc, end = lpSrc + nSrcLength; p < end; bIsSeparatedLeft = bNextIsSeparatedLeft)
 	{
+		BYTE   c, comparand;
 		TAG    iTag;
 		size_t nLength;
 		BYTE   bPriority;
@@ -1544,7 +1545,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		    ((p)[0] != '_' || (p)[1] == ']'))
 
 		bNextIsSeparatedLeft = FALSE;
-		switch (*p)
+		switch (c = *p)
 		{
 		case '\t':
 		case '\n':
@@ -1579,20 +1580,21 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			lpMarkup->Next       = NULL;
 		    lpMarkup->UnionBlock = 0;
 			break;
+		case '\'':
 		case '"':
+			// character literals, string literals
 			p++;
-		DOUBLE_QUOTED_STRING:
-			// double-quoted string
+		STRING_LITERALS:
+		CHARACTER_LITERALS:
 			bNextIsSeparatedLeft = TRUE;
+			comparand = c;
 			do
 			{
-				BYTE c;
-
-				switch (*(p++))
+				switch (c = *(p++))
 				{
 				default:
-					continue;
-				case '"':
+					if (c != comparand)
+						continue;
 					break;
 				case '\\':
 					if (p >= end)
@@ -1631,7 +1633,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				APPEND_TAG_WITH_CONTINUE(TAG_BIT_AND, 1, PRIORITY_BIT_AND, OS_PUSH);
 			}
 		case '\'':
-		SINGLE_QUOTED_CHARACTER:
+		CHARACTER_LITERALS:
 			// single-quoted character
 			bNextIsSeparatedLeft = TRUE;
 			while (++p < end && *p != '\'')
@@ -3594,23 +3596,23 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			// "utof"
 			if (!bIsSeparatedLeft)
 				break;
-			switch (p[1])
+			switch (c = p[1])
 			{
 			case '"':
 				p += 2;
-				goto DOUBLE_QUOTED_STRING;
+				goto STRING_LITERALS;
 			case '\'':
-				p++;
-				goto SINGLE_QUOTED_CHARACTER;
+				p += 2;
+				goto CHARACTER_LITERALS;
 			case '8':
-				switch (p[2])
+				switch (c = p[2])
 				{
 				case '"':
 					p += 3;
-					goto DOUBLE_QUOTED_STRING;
+					goto STRING_LITERALS;
 				case '\'':
-					p += 2;
-					goto SINGLE_QUOTED_CHARACTER;
+					p += 3;
+					goto CHARACTER_LITERALS;
 				}
 				break;
 			case 't':
@@ -3937,14 +3939,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			// "}"
 			bNextIsSeparatedLeft = TRUE;
 			if (bIsSeparatedLeft)
-
-			{
 				APPEND_TAG_WITH_CONTINUE(TAG_BRACE_CLOSE, 1, PRIORITY_BRACE_CLOSE, OS_CLOSE | OS_BRACES);
-			}
 			else
-			{
 				APPEND_TAG_WITH_CONTINUE(TAG_PARSE_ERROR, 1, PRIORITY_NOT_OPERATOR, OS_PUSH);
-			}
 		case '~':
 			// "~", "~]", "~2]", "~3]", "~4]", "~5]", "~6]", "~7]", "~8]"
 			bNextIsSeparatedLeft = TRUE;
@@ -4349,7 +4346,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			{
 				char *p, *end;
 
-				// correct double quoted string
+				// correct string literals
 				switch (lpMarkup[-(lpMarkup != lpMarkupArray)].Tag)
 				{
 				case TAG_PROCEDURE:
@@ -5136,12 +5133,20 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 		// assert(2 == wcslen( L"±") * sizeof(wchar_t));
 		// assert(3 == strlen(u8"±")                  );
 
-		if (nPrefixLength < 1)
+		switch (nPrefixLength)
+		{
+		case 0:
 			nSize = (lpMarkup->Length - 1) * 1 + 15;
-		else if (nPrefixLength == 1)
+			break;
+		case 1:
 			nSize = (lpMarkup->Length - 2) * 2 + 15;
-		else
+			break;
+		case 2:
 			nSize = (lpMarkup->Length - 3) * 3 + 15;
+			break;
+		default:
+			__assume(0);
+		}
 		nSize &= -16;
 		nSizeOfBuffer += nSize;
 	}
@@ -5192,87 +5197,95 @@ static BOOL __fastcall UnescapeConstStrings(IN MARKUP *lpMarkupArray, IN MARKUP 
 		lpMarkup->UnescapedString = nRegion + (p - lpFirst);
 		lpMultiByteStr = lpMarkup->String + nPrefixLength + 1;
 		cbMultiByte = lpMarkup->Length - nPrefixLength - 1;
-		if (nPrefixLength < 1)
+		switch (nPrefixLength)
 		{
-			char *end;
-
-			memcpy(p, lpMultiByteStr, cbMultiByte);
-			end = p + cbMultiByte;
-			while (*(p = UnescapeA(p, &end, FALSE)) == '"')
+		case 0:
 			{
-				char   *next, c;
-				size_t size;
+				BYTE *end;
 
-				if ((next = p + 1) >= end)
-					break;
-				do
-					c = *(next++);
-				while (__intrinsic_isspace(c) && next < end);
-				if (c != '"' || !(size = (end -= next - p) - p))
-					break;
-				memcpy(p, next, size);
-			}
-			*(p++) = '\0';
-		}
-		else if (nPrefixLength == 1)
-		{
-			#define p ((wchar_t *)p)
-
-			size_t  cchWideChar;
-			wchar_t *end;
-
-			cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, p, (LPWSTR)lpLast - p);
-			end = p + cchWideChar;
-			while (*(p = UnescapeW(p, &end, FALSE)) == L'"')
-			{
-				wchar_t *next, c;
-				size_t  size;
-
-				if ((next = p + 1) >= end)
-					break;
-				do
-					c = *(next++);
-				while (__intrinsic_iswspace(c) && next < end);
-				if (c != L'u' || next >= end || *(next++) != L'"' || !(size = ((char *)end -= (char *)next - (char *)p) - (char *)p))
-					break;
-				memcpy(p, next, size);
-			}
-			*(p++) = L'\0';
-
-			#undef p
-		}
-		else
-		{
-			size_t cchWideChar;
-
-			if (cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0))
-			{
-				LPWSTR        lpWideCharStr;
-				size_t        cbUtf8;
-				unsigned char *end;
-
-				if (!(lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, (size_t)cchWideChar + (size_t)cchWideChar)))
-					goto FAILED;
-				MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpWideCharStr, cchWideChar);
-				cbUtf8 = (unsigned int)WideCharToMultiByte(CP_UTF8, 0, lpWideCharStr, cchWideChar, p, lpLast - p, NULL, NULL);
-				HeapFree(hHeap, 0, lpWideCharStr);
-				end = p + cbUtf8;
-				while (*(p = UnescapeU(p, &end, FALSE)) == '"')
+				memcpy(p, lpMultiByteStr, cbMultiByte);
+				end = p + cbMultiByte;
+				while (*(p = UnescapeA(p, &end, FALSE)) == '"')
 				{
-					unsigned char *next, c;
-					size_t        size;
+					BYTE   *next, c;
+					size_t size;
 
 					if ((next = p + 1) >= end)
 						break;
 					do
 						c = *(next++);
 					while (__intrinsic_isspace(c) && next < end);
-					if (c != 'u' || next >= end || *(next++) != '8' || next >= end || *(next++) != '"' || !(size = (end -= next - p) - p))
+					if (c != '"' || !(size = (end -= next - p) - p))
 						break;
 					memcpy(p, next, size);
 				}
+				*(p++) = '\0';
 			}
-			*(p++) = '\0';
+			break;
+		case 1:
+			{
+				#define p ((wchar_t *)p)
+
+				size_t  cchWideChar;
+				wchar_t *end;
+
+				cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, p, (LPWSTR)lpLast - p);
+				end = p + cchWideChar;
+				while (*(p = UnescapeW(p, &end, FALSE)) == L'"')
+				{
+					wchar_t *next, c;
+					size_t  size;
+
+					if ((next = p + 1) >= end)
+						break;
+					do
+						c = *(next++);
+					while (__intrinsic_iswspace(c) && next < end);
+					if (c != L'u' || next >= end || *(next++) != L'"' || !(size = ((char *)end -= (char *)next - (char *)p) - (char *)p))
+						break;
+					memcpy(p, next, size);
+				}
+				*(p++) = L'\0';
+
+				#undef p
+			}
+			break;
+		case 2:
+			{
+				size_t cchWideChar;
+
+				if (cchWideChar = (unsigned int)MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, NULL, 0))
+				{
+					LPWSTR lpWideCharStr;
+					size_t cbUtf8;
+					LPBYTE end;
+
+					if (!(lpWideCharStr = (LPWSTR)HeapAlloc(hHeap, 0, (size_t)cchWideChar + (size_t)cchWideChar)))
+						goto FAILED;
+					MultiByteToWideChar(CP_THREAD_ACP, 0, lpMultiByteStr, cbMultiByte, lpWideCharStr, cchWideChar);
+					cbUtf8 = (unsigned int)WideCharToMultiByte(CP_UTF8, 0, lpWideCharStr, cchWideChar, p, lpLast - p, NULL, NULL);
+					HeapFree(hHeap, 0, lpWideCharStr);
+					end = p + cbUtf8;
+					while (*(p = UnescapeU(p, &end, FALSE)) == '"')
+					{
+						unsigned char *next, c;
+						size_t        size;
+
+						if ((next = p + 1) >= end)
+							break;
+						do
+							c = *(next++);
+						while (__intrinsic_isspace(c) && next < end);
+						if (c != 'u' || next >= end || *(next++) != '8' || next >= end || *(next++) != '"' || !(size = (end -= next - p) - p))
+							break;
+						memcpy(p, next, size);
+					}
+				}
+				*(p++) = '\0';
+			}
+			break;
+		default:
+			__assume(0);
 		}
 		if ((uintptr_t)p & 1)
 			*(p++) = 0;
@@ -5423,6 +5436,7 @@ static unsigned char * __fastcall RemoveComments(unsigned char *first, unsigned 
 		{
 		case '"':
 		case '\'':
+			// character literals, string literals
 			while ((c2 = *(p1++)) != c1 && p1 < last)
 			{
 				if (!__intrinsic_isleadbyte(c2))
@@ -5469,7 +5483,7 @@ static unsigned char * __fastcall RemoveComments(unsigned char *first, unsigned 
 				}
 				break;
 			case '/':
-				// last of line comment
+				// end of line comment
 				p2 = p1;
 				p1--;
 				p2++;
@@ -5837,7 +5851,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 
 		do	/* do { ... } while (0); */
 		{
-			#define BOM BSWAP32(0xEFBBBF00)
+			#define BOM '\xEF\xBB\xBF\x00'
 
 			BOOL               bCaching;
 			size_t             nSizeOfReplace;
@@ -6097,7 +6111,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		if (!lpOperandBuffer)
 			goto ALLOC_ERROR;
 
-		lpVariable = (VARIABLE *)HeapAlloc(hHeap, HEAP_ZERO_MEMORY, sizeof(VARIABLE) * 0x10);
+		lpVariable = (VARIABLE *)HeapAlloc(hPrivateHeap, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, sizeof(VARIABLE) * 0x10);
 		if (!lpVariable)
 			goto ALLOC_ERROR;
 
@@ -6163,7 +6177,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				size_t nBytes;
 
 				nBytes = (nNumberOfVariable + 0x10) * sizeof(VARIABLE);
-				lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
+				lpMem = HeapReAlloc(hPrivateHeap, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, lpVariable, nBytes);
 				if (!lpMem)
 					goto ALLOC_ERROR;
 				lpVariable = (VARIABLE *)lpMem;
@@ -6219,7 +6233,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					size_t nBytes;
 
 					nBytes = (nNumberOfVariable + 0x10) * sizeof(VARIABLE);
-					lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
+					lpMem = HeapReAlloc(hPrivateHeap, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, lpVariable, nBytes);
 					if (!lpMem)
 						goto ALLOC_ERROR;
 					lpVariable = (VARIABLE *)lpMem;
@@ -6254,7 +6268,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					size_t nBytes;
 
 					nBytes = (nNumberOfVariable + 0x10) * sizeof(VARIABLE);
-					lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
+					lpMem = HeapReAlloc(hPrivateHeap, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, lpVariable, nBytes);
 					if (!lpMem)
 						goto ALLOC_ERROR;
 					lpVariable = (VARIABLE *)lpMem;
@@ -6609,7 +6623,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			}
 			continue;
 		case TAG_BREAK:
+#ifdef CLEAR_PER_BREAK
 			OPERAND_CLEAR();
+#endif
 			if (lpMarkup->Jump)
 				lpPostfix = lpMarkup->Jump;
 			else if (lpMarkup->Next)
@@ -7858,7 +7874,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						size_t nBytes;
 
 						nBytes = (nNumberOfVariable + 0x10) * sizeof(VARIABLE);
-						lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
+						lpMem = HeapReAlloc(hPrivateHeap, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, lpVariable, nBytes);
 						if (!lpMem)
 							goto ALLOC_ERROR;
 						lpVariable = (VARIABLE *)lpMem;
@@ -12820,7 +12836,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						size_t nBytes;
 
 						nBytes = (nNumberOfVariable + 0x10) * sizeof(VARIABLE);
-						lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
+						lpMem = HeapReAlloc(hPrivateHeap, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, lpVariable, nBytes);
 						if (!lpMem)
 							goto ALLOC_ERROR;
 						lpVariable = (VARIABLE *)lpMem;
@@ -13002,7 +13018,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 							size_t nBytes;
 
 							nBytes = (nNumberOfVariable + 0x10) * sizeof(VARIABLE);
-							lpMem = HeapReAlloc(hHeap, HEAP_ZERO_MEMORY, lpVariable, nBytes);
+							lpMem = HeapReAlloc(hPrivateHeap, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, lpVariable, nBytes);
 							if (!lpMem)
 								goto ALLOC_ERROR;
 							lpVariable = (VARIABLE *)lpMem;
@@ -13408,7 +13424,7 @@ RELEASE:
 		HeapFree(hHeap, 0, lpVariableStringBuffer);
 #endif
 	if (lpVariable)
-		HeapFree(hHeap, 0, lpVariable);
+		HeapFree(hPrivateHeap, HEAP_NO_SERIALIZE, lpVariable);
 	if (lpOperandBuffer)
 		HeapFree(hHeap, 0, lpOperandBuffer);
 	if (!bCached)

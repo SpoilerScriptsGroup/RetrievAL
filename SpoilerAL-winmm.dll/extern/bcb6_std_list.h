@@ -2,16 +2,7 @@
 
 #include <windows.h>
 #include <intrin.h>
-#include "TProcessAccessElementData.h"
-#include "TSSGAttributeElement.h"
-
-struct pair_byte_string
-{
-	enum Repeat first : 0x08;
-	unsigned  __int32 : 0x18;
-	unsigned  __int32 : 0x20;
-	bcb6_std_string   second;
-};
+#include "bcb6_std_string.h"
 
 typedef struct _List_node
 {
@@ -72,3 +63,11 @@ static _List_iterator __forceinline _STL_list_insert(struct _List_node *const __
 	, struct _TAdjustmentAttribute    *const *:0x0044E3EC\
 	, unsigned long                          *:0x0044E3EC\
 ))(self, __x))
+
+struct pair_byte_string
+{
+	enum Repeat first : 0x08;
+	unsigned  __int32 : 0x18;
+	unsigned  __int32 : 0x20;
+	bcb6_std_string   second;
+};

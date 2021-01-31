@@ -57,12 +57,15 @@
 	<Type Name="_TAdjustmentAttribute">
 		<DisplayString>{type} {c_str, s}</DisplayString>
 	</Type>
+	<Type Name="pair_byte_string">
+		<DisplayString>{first} {second}</DisplayString>
+	</Type>
 	<Type Name="_List_node">
 		<DisplayString Condition="((char*)_M_data)[0] >= 0
 					   &amp;&amp; ((int *)_M_data)[2] >= 0x10000
 					   &amp;&amp; ((int *)_M_data)[3] >= 0x10000
 					   &amp;&amp; ((int *)_M_data)[6] >= 0x10000
-					   ">{(string*)&amp;_M_data[8], na}</DisplayString>
+					   ">{(pair_byte_string *)_M_data, na}</DisplayString>
 	</Type>
 	<Type Name="_List_base">
 		<Expand>
@@ -90,7 +93,7 @@
 							 ">
 				<HeadPointer>_M_node->_M_next</HeadPointer>
 				<NextPointer>_M_next</NextPointer>
-				<ValueNode>(string*)&amp;_M_data[8]</ValueNode>
+				<ValueNode>(pair_byte_string *)_M_data</ValueNode>
 			</LinkedListItems>
 		</Expand>
 	</Type>

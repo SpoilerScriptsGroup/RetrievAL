@@ -1,8 +1,8 @@
 #include <windows.h>
-#define USING_NAMESPACE_BCB6_STD
 #pragma intrinsic(memcmp)
-#include "TSSGCtrl.h"
 #include <mbstring.h>
+#define USING_NAMESPACE_BCB6_STD
+#include "TSSGCtrl.h"
 
 EXTERN_C void*__stdcall FixGetSSGDataFile(void *);
 EXTERN_C void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
@@ -22,7 +22,7 @@ static string * __stdcall TSSGCtrl_GetSSGDataFile_Half(
 
 static BOOL __fastcall FunctionableGroup(string *name, vector_string *func)
 {
-	#define BOM BSWAP32(0xEFBBBF00)
+	#define BOM '\xEF\xBB\xBF\x00'
 
 	static size_t const header[2] = { BOM, -1 };
 	unsigned char *p, *first, *last, *src, *dest, *end;

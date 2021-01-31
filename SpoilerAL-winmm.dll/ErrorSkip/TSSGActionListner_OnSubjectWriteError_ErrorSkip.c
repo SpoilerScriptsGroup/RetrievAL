@@ -3,6 +3,7 @@
 
 extern const DWORD F0057AEDC;
 
+#if 0
 __declspec(naked) void __cdecl TSSGActionListner_OnSubjectWriteError_ErrorSkip()
 {
 	__asm
@@ -30,3 +31,4 @@ __declspec(naked) void __cdecl TSSGActionListner_OnSubjectWriteError_ErrorSkip()
 		#undef SSGS
 	}
 }
+#endif

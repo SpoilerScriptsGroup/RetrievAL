@@ -12,112 +12,156 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 	IN     unsigned long   Index,
 	IN     unsigned long   Option)
 {
-	size_t     srcLength;
-	const char *lastFound, *end, *p;
-	size_t     nest;
-	size_t     length;
+	LPCBYTE lastFound, p;
+	size_t  srcLength, length;
 
 	lastFound = NULL;
-	if (!Src)
-		goto FAILED;
-	if (!TokenLength)
-		goto FAILED;
-	srcLength = string_length(Src);
-	if (srcLength < TokenLength)
-		goto FAILED;
-	p = string_c_str(Src);
-	end = string_end(Src) - TokenLength + 1;
-	nest = 0;
-	do
+	if (Src && TokenLength && (srcLength = string_length(Src)) >= TokenLength)
 	{
-		char c;
+		LPCBYTE end;
+		size_t  nest;
 
-		switch (*p)
+		p = string_c_str(Src);
+		end = string_end(Src) - TokenLength + 1;
+		nest = 0;
+		do
 		{
-		case '(':
-		case '{':
-			nest++;
-			break;
-		case ')':
-		case '}':
-			if (nest)
-				nest--;
-			break;
-		case '\\':
-			if (!(Option & dtESCAPE))
+			LPCBYTE prev;
+			BYTE    c, comparand;
+
+			switch (c = *(prev = p++))
+			{
+			case '\'':
+			case '"':
+				// character literals, string literals
+				for (comparand = c; p < end; )
+				{
+					switch (c = *(p++))
+					{
+					default:
+						if (c != comparand)
+							continue;
+						break;
+					case '\\':
+						if (p >= end)
+							break;
+						c = *(p++);
+						if (!__intrinsic_isleadbyte(c))
+							continue;
+						/* FALLTHROUGH */
+					case_unsigned_leadbyte:
+						if (p >= end)
+							break;
+						p++;
+						continue;
+					}
+					break;
+				}
+				continue;
+			case '(':
+			case '{':
+				// "(", "{"
+				nest++;
+				continue;
+			case ')':
+			case '}':
+				// ")", "}"
+				if (nest)
+					nest--;
+				continue;
+			case '<':
+				// "<#", "#>", "<@", "@>"
+				if (p >= end)
+					break;
+				switch (c = *p)
+				{
+				case '#':
+				case '@':
+					if (++p >= end)
+						break;
+					for (comparand = c; ; )
+					{
+						switch (c = *(p++))
+						{
+						default:
+							if (p >= end)
+								break;
+							if (c != comparand || *p != '>')
+								continue;
+							p++;
+							break;
+						case '\\':
+							if (p >= end)
+								break;
+							if (!(Option & dtESCAPE))
+								continue;
+							c = *(p++);
+							if (p >= end)
+								break;
+							if (!__intrinsic_isleadbyte(c) || ++p < end)
+								continue;
+							break;
+						case_unsigned_leadbyte:
+							if (p < end && ++p < end)
+								continue;
+							break;
+						}
+						break;
+					}
+					continue;
+				default:
+					goto DEFAULT;
+				}
 				break;
-			if (++p < end)
+			case '\\':
+				// escape-sequence
+				if (!(Option & dtESCAPE))
+					continue;
+				if (p >= end)
+					break;
+				c = *(p++);
 				goto CHECK_LEADBYTE;
-			else
-				goto FAILED;
-		case '"':
-			if (++p >= end)
-				goto FAILED;
-			while (*p != '"')
-			{
-				if (*p == '\\' && ++p >= end)
-					goto FAILED;
-				if (__intrinsic_isleadbyte(*p) && ++p >= end)
-					goto FAILED;
-				if (++p >= end)
-					goto FAILED;
-			}
-			break;
-		case '<':
-			if ((c = *(p + 1)) != '#' && c != '@')
-				goto DEFAULT;
-			if ((p += 2) >= end)
-				goto FAILED;
-			while (*p != c || *(p + 1) != '>')
-			{
-				if (*p == '\\' && (Option & dtESCAPE) && ++p >= end)
-					goto FAILED;
-				if (__intrinsic_isleadbyte(*p) && ++p >= end)
-					goto FAILED;
-				if (++p >= end)
-					goto FAILED;
-			}
-			if ((p += 2) < end)
-				continue;
-			else
-				goto FAILED;
-		case '!':
-			if (*(p + 1) == ']' && TokenLength == 2 && *(LPWORD)Token == BSWAP16('!]'))
-				goto MATCHED;
-			/* FALLTHROUGH */
-		default:
-		DEFAULT:
-			if (memcmp(p, Token, TokenLength) != 0)
-				goto CHECK_LEADBYTE;
-			lastFound = p;
-			if (nest)
-				goto CHECK_LEADBYTE;
-		MATCHED:
-			if (!Index)
+			case '!':
+				// "!]"
+				if (p >= end)
+					break;
+				if (*p == ']' && TokenLength == 2 && *(LPWORD)Token == BSWAP16('!]'))
+					goto MATCHED;
+				/* FALLTHROUGH */
+			default:
+			DEFAULT:
+				if ((size_t)(end - prev) < TokenLength || memcmp(prev, Token, TokenLength) != 0)
+					goto CHECK_LEADBYTE;
+				lastFound = prev;
+				if (nest)
+					goto CHECK_LEADBYTE;
+			MATCHED:
+				if (Index--)
+				{
+					if ((p = prev + TokenLength) < end)
+						continue;
+					break;
+				}
+				lastFound = prev;
 				goto SUCCESS;
-			Index--;
-			if ((p += TokenLength) < end)
+			CHECK_LEADBYTE:
+				if (!__intrinsic_isleadbyte(c))
+					continue;
+				if (p >= end)
+					break;
+				p++;
 				continue;
-			else
-				goto FAILED;
-		CHECK_LEADBYTE:
-			if (__intrinsic_isleadbyte(*p) && ++p >= end)
-				goto FAILED;
+			}
 			break;
-		}
-		p++;
-	} while (p < end);
-FAILED:
-	if (*(LPWORD)Token == BSWAP16(':\0') && lastFound)
-	{
-		p = lastFound;
-		goto SUCCESS;
+		} while (p < end);
 	}
+	if (*(LPWORD)Token == BSWAP16(':\0') && lastFound)
+		goto SUCCESS;
 	string_ctor_assign_cstr_with_length(Result, Token, TokenLength);
 	return Result;
 
 SUCCESS:
-	string_ctor_assign_cstr_with_length(Result, string_c_str(Src), p - string_c_str(Src));
+	string_ctor_assign_cstr_with_length(Result, string_c_str(Src), (p = lastFound) - string_c_str(Src));
 	p += TokenLength;
 	length = string_end(Src) - p;
 	string_end(Src) = string_begin(Src) + length;

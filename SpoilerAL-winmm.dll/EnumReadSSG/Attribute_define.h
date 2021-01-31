@@ -43,7 +43,7 @@ __inline void Attribute_define(TSSGCtrl *this, LPVOID ParentStack, LPCSTR Line, 
 	while (--p >= value && ((c = *p) == ' ' || c == '\t'));
 	valueLength = ++p - value;
 
-	if (attribute = TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(this)))
+	if (attribute = TSSGAttributeSelector_GetNowAtteributeVec(&this->attributeSelector))
 	{
 		signed rel;
 		const COORD coord = TSSGAttributeElement_GetViaCoord(atDEFINE, attribute).dwFontSize;

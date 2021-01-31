@@ -31,7 +31,7 @@ __inline void Attribute_undef(TSSGCtrl *this, LPCSTR Line)
 	while ((c = *(--p)) == ' ' || c == '\t');
 	keyLength = ++p - key;
 
-	if (attribute = TSSGAttributeSelector_GetNowAtteributeVec(TSSGCtrl_GetAttributeSelector(this)))
+	if (attribute = TSSGAttributeSelector_GetNowAtteributeVec(&this->attributeSelector))
 	{
 		signed rel;
 		const COORD coord = TSSGAttributeElement_GetViaCoord(atDEFINE, attribute).dwFontSize;

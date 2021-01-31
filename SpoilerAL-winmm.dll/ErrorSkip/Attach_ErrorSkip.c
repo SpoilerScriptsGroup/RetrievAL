@@ -148,18 +148,17 @@ EXTERN_C void __cdecl Attach_ErrorSkip()
 	*(LPBYTE )0x004BF5B5 =         0x85;// test eax, eax
 	*(LPWORD )0x004BF5B6 = BSWAP16(0xC0 << 8 | JZ_SHORT);
 	*(LPBYTE )0x004BF5B8 = 0x004BF5DF - (0x004BF5B8 + sizeof(BYTE));
+
+	// TSSBundleList::Write
 #if 0
-
-	// TSSBundleList::Write
 	*(LPDWORD)(0x004BF899 + 1) = (DWORD)TSSBundleList_Write_ErrorSkip - (0x004BF899 + 1 + sizeof(DWORD));
-#endif
-
-	// TSSBundleList::Write
+#else
 	*(LPBYTE )0x004BF8A1 = CALL_REL32;
 	*(LPDWORD)0x004BF8A2 = (DWORD)TSSGCtrl_One_ErrorOverride - (0x004BF8A2 + sizeof(DWORD));
 	*(LPWORD )0x004BF8A6 = BSWAP16(0x85C0);// test eax, eax
 	*(LPBYTE )0x004BF8A8 = JZ_SHORT;
 	*(LPBYTE )0x004BF8A9 = 0x004BF8D0 - (0x004BF8A9 + sizeof(BYTE));
+#endif
 
 	// TSSBundleToggle::Read
 	*(LPBYTE )0x004C0774 = CALL_REL32;

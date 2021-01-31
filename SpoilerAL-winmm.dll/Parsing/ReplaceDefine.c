@@ -101,8 +101,8 @@ size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LP
 						goto NESTED_BREAK;
 					keyLength = end - p + 1;
 
-					for (TAdjustmentAttribute **it,
-						 **base = &vector_type_at(attributes, TAdjustmentAttribute *, coord.Y),
+					for (TDefineAttribute **it,
+						 **base = &vector_type_at(attributes, TDefineAttribute *, coord.Y),
 						 **apex = base + coord.X;
 						   base < apex; )
 					{
@@ -113,7 +113,7 @@ size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LP
 						signed       hl;
 
 						it = &base[apex - base >> 1];
-						hl = strncmp((*it)->c_str, key, keyLength);
+						hl = strncmp(string_c_str(TIO_FEPAttribute_GetInputCode(*it)), key, keyLength);
 						if (hl < 0)
 						{
 							base = it + 1;
@@ -125,7 +125,7 @@ size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LP
 							continue;
 						}
 
-						outputCode = TIO_FEPAttribute_GetOutputCode((TIO_FEPAttribute *)*it);
+						outputCode = TIO_FEPAttribute_GetOutputCode(*it);
 						valueLength = string_length(outputCode);
 						diff = valueLength - keyLength;
 						if (diff)
@@ -292,8 +292,8 @@ size_t __stdcall ByteArrayReplaceDefineByHeap(vector_TSSGAttributeElement *attri
 						goto NESTED_BREAK;
 					keyLength = end - p + 1;
 
-					for (TAdjustmentAttribute **it,
-						 **base = &vector_type_at(attributes, TAdjustmentAttribute *, coord.Y),
+					for (TIO_FEPAttribute **it,
+						 **base = &vector_type_at(attributes, TIO_FEPAttribute *, coord.Y),
 						 **apex = base + coord.X;
 						   base < apex; )
 					{
@@ -304,7 +304,7 @@ size_t __stdcall ByteArrayReplaceDefineByHeap(vector_TSSGAttributeElement *attri
 						signed       hl;
 
 						it = &base[apex - base >> 1];
-						hl = strncmp((*it)->c_str, key, keyLength);
+						hl = strncmp(string_c_str(TIO_FEPAttribute_GetInputCode(*it)), key, keyLength);
 						if (hl < 0)
 						{
 							base = it + 1;
@@ -316,7 +316,7 @@ size_t __stdcall ByteArrayReplaceDefineByHeap(vector_TSSGAttributeElement *attri
 							continue;
 						}
 
-						outputCode = TIO_FEPAttribute_GetOutputCode((TIO_FEPAttribute *)*it);
+						outputCode = TIO_FEPAttribute_GetOutputCode(*it);
 						valueLength = string_length(outputCode);
 						diff = valueLength - keyLength;
 						if (diff)

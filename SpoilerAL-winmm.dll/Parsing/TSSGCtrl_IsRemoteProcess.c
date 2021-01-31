@@ -62,7 +62,7 @@ __declspec(naked) BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p)
 		cmp     dl, 'L'
 		jne     L4
 		mov     cl, byte ptr [ecx]
-		xor     al, al
+		xor     eax, eax
 		test    cl, cl
 		jle     L4
 		mov     dl, cl
@@ -77,7 +77,7 @@ __declspec(naked) BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p)
 		cmp     cl, '_'
 		jne     L5
 	L4:
-		mov     al, 1
+		mov     eax, 1
 	L5:
 		ret
 	}

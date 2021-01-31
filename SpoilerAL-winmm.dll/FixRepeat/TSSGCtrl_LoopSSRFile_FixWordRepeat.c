@@ -15,7 +15,7 @@ const string* __fastcall TSSGCtrl_LoopSSRFile_FixWordRepeat(
 	unsigned long const LoopVal)
 {
 #if 1
-	string const *const Word = (void *)&VIt->_M_data[__alignof(double)];
+	string const *const Word = &((struct pair_byte_string *)VIt->_M_data)->second;
 	switch (Count)
 	{
 	default:

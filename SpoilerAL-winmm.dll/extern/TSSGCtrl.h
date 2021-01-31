@@ -90,6 +90,7 @@ EXTERN_C bcb6_std_vector_string *(__cdecl * const TSSGCtrl_GetSSGDataFile)(TSSGC
 EXTERN_C bcb6_std_string * __cdecl TSSGCtrl_GetNameString(bcb6_std_string *Result, TSSGCtrl *this, TSSGSubject *SSGS, const bcb6_std_string *NameStr);
 
 EXTERN_C bcb6_std_string *(__cdecl * const TSSGCtrl_GetSimpleByteCode)(bcb6_std_string *Result, TSSGCtrl *this, TSSGSubject *SSGS, bcb6_std_string CodeStr);
+EXTERN_C bcb6_std_vector_dword *(__cdecl * const TSSGCtrl_StrToProcessAccessElementVec)(bcb6_std_vector_dword *CodeVec, TSSGCtrl *this, TSSGSubject *SSGS, bcb6_std_string Code, unsigned long Rel);
 EXTERN_C BOOLEAN(__cdecl * const TSSGCtrl_IsChildRWProhibit)(TSSGCtrl *this, TSSGSubject *SSGS);
 HANDLE __cdecl TSSGCtrl_Open(TSSGCtrl *this, TSSGSubject *SSGS, DWORD Mode);
 EXTERN_C BOOLEAN(__cdecl * const TSSGCtrl_OneRead)(TSSGCtrl *this, TSSGSubject *SSGS, HANDLE ProcessHandle, DWORD Address, LPVOID Data, DWORD Size);

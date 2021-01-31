@@ -1,5 +1,6 @@
 #include <windows.h>
 #include "intrinsic.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "TSSGCtrl.h"
 
 EXTERN_C void __cdecl Caller_Parsing();
@@ -69,6 +70,13 @@ EXTERN_C void __cdecl TSSGCtrl_OneRead_with_CheckIO_FEP();
 EXTERN_C void __cdecl TSSGCtrl_OneWrite_with_CheckIO_FEP();
 
 #define IGNORE_OPEN_ERROR 0
+
+static vector_dword* __fastcall TSSGCtrl_StrToProcessAccessElementVec_return_CodeVec(vector_dword *const retVal, vector_dword *const CodeVec)
+{
+	*retVal = *CodeVec;
+	vector_ctor(CodeVec);
+	return retVal;
+}
 
 #define ADD_EAX_DWORD_PTR_EBX         (WORD )0x0303
 #define CMP_AL_IMM8                   (WORD )0x3C65
@@ -429,11 +437,33 @@ EXTERN_C void __cdecl Attach_Parsing()
 	// TSSGCtrl::StrToProcessAccessElementVec
 	*(LPDWORD)(0x0050B512 + 1) = (DWORD)Caller_Parsing - (0x0050B512 + 1 + sizeof(DWORD));
 
+	// TSSGCtrl::StrToProcessAccessElementVec
+	*(LPBYTE )(0x0050E4C1 + 0) =         0x8D   ;// lea edx, [ebp - 40h]
+	*(LPWORD )(0x0050E4C1 + 1) = BSWAP16(0x55C0);// mov ecx, [ebp + 08h]
+	*(LPDWORD)(0x0050E4C4 + 0) = BSWAP32(0x8B4D08 << 8 | CALL_REL32);
+	*(LPDWORD)(0x0050E4C7 + 1) = (DWORD)TSSGCtrl_StrToProcessAccessElementVec_return_CodeVec - (0x0050E4C7 + 1 + sizeof(DWORD));
+	*(LPBYTE )(0x0050E4CC + 0) = JMP_REL32;
+	*(LPDWORD)(0x0050E4CC + 1) = 0x0050E5B9 - (0x0050E4CC + 1 + sizeof(DWORD));
+	*(LPWORD )(0x0050E4D1 + 0) = NOP_X2;
+
 	// TSSGCtrl::Funneling
 	*(LPDWORD)(0x005102A2 + 1) = (DWORD)TSSGCtrl_Funneling_IsEnabled - (0x005102A2 + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::Funneling
+	//   processCtrl.Open(...) => this->Open(rootSubject, ...)
+	*(LPWORD )(0x005102D4 + 0) = BSWAP16(0xFFB7);// push dword ptr [edi + ...]
+	*(LPDWORD)(0x005102D4 + 2) = offsetof(TSSGCtrl, rootSubject);
+	*(LPBYTE )(0x005102DA + 0) = 0x57;// push edi
+	*(LPDWORD)(0x005102DB + 1) = 0x0051C338 - (0x005102DB + 1 + sizeof(DWORD));
+	*(LPBYTE )(0x005102E0 + 2) = 0x0C;// stack size to discard
+
+	*(LPBYTE )(0x00510308 + 0) = JMP_REL8;// Force continue even if processCtrl.Open failed.
+
+	// TSSGCtrl::Funneling
 	*(LPBYTE )(0x00510429 + 1) = dtNEST;
+
+	// TSSGCtrl::Funneling
+	*(LPDWORD)(0x005104A1 + 1) = (DWORD)TSSGCtrl_Funneling_ReplaceDefineDynamic - (0x005104A1 + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::Funneling
 	*(LPDWORD)(0x00510617 + 1) = (DWORD)TSSGCtrl_Funneling_GetAddress - (0x00510617 + 1 + sizeof(DWORD));
@@ -442,9 +472,6 @@ EXTERN_C void __cdecl Attach_Parsing()
 	*(LPDWORD)(0x00510717 + 1) = (DWORD)TSSGCtrl_Funneling_MakeDataCode - (0x00510717 + 1 + sizeof(DWORD));
 	*(LPDWORD)(0x00510944 + 1) = (DWORD)TSSGCtrl_Funneling_MakeDataCode - (0x00510944 + 1 + sizeof(DWORD));
 	*(LPDWORD)(0x00510B08 + 1) = (DWORD)TSSGCtrl_Funneling_MakeDataCode - (0x00510B08 + 1 + sizeof(DWORD));
-
-	// TSSGCtrl::Funneling
-	*(LPDWORD)(0x005104A1 + 1) = (DWORD)TSSGCtrl_Funneling_ReplaceDefineDynamic - (0x005104A1 + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::Funneling
 	*(LPDWORD)(0x00510A8D + 1) = (DWORD)Caller_ParsingWithVal - (0x00510A8D + 1 + sizeof(DWORD));
@@ -466,7 +493,11 @@ EXTERN_C void __cdecl Attach_Parsing()
 	// TSSGCtrl::ParsingDouble
 	*(LPBYTE )0x005174C0 = JMP_REL32;
 	*(LPDWORD)0x005174C1 = (DWORD)Caller_ParsingDouble - (0x005174C1 + sizeof(DWORD));
-	*(LPDWORD)0x005174C5 = NOP_X4;
+	*(LPDWORD)0x005174C5 = BSWAP32(0xC8F00800);
+
+	// TSSGCtrl::ParsingDouble
+	//   else VIt--; => VIt--;
+	*(LPBYTE )(0x00519E05 + 1) = 0;// rel8
 
 	// TSSBundleFloatCalc::Read
 #if IGNORE_OPEN_ERROR

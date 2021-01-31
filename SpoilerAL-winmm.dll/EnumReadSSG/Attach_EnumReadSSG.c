@@ -145,7 +145,7 @@ EXTERN_C void __cdecl Attach_EnumReadSSG()
 	// TSSGCtrl::EnumReadSSG
 	*(LPBYTE )0x004E5090 = JMP_REL32;
 	*(LPDWORD)0x004E5091 = (DWORD)TSSGCtrl_EnumReadSSG - (0x004E5091 + sizeof(DWORD));
-	*(LPDWORD)0x004E5095 = NOP_X4;
+	*(LPDWORD)0x004E5095 = BSWAP32(0xC8FC0F00);
 
 	// TSSGCtrl::MakeSubjectClass
 	*(LPDWORD)(0x004EC409 + 1) = (DWORD)TSSGCtrl_MakeSubjectType - (0x004EC409 + 1 + sizeof(DWORD));

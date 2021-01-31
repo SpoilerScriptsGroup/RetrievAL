@@ -15,9 +15,9 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 {
 	#define TokenLength 2
 
-	size_t length;
-	LPCSTR p, end;
-	size_t nest;
+	size_t  length;
+	LPCBYTE p, end;
+	size_t  nest;
 
 	assert(string_length(&Token) == 2);
 	assert(
@@ -40,50 +40,100 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 	nest = 0;
 	do
 	{
-		char c;
+		LPCBYTE prev;
+		BYTE    c, comparand;
 
-		switch (*p)
+		switch (c = *(prev = p++))
 		{
-		case '"':
-			while (++p < end && *p != '"')
-			{
-				if (*p == '\\')
-					p++;
-				if (__intrinsic_isleadbyte(*p))
-					p++;
-			}
-			break;
 		case '$':
-			if (*(++p) >= '0' && *p <= '8')
+			// "$1", "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$$"
+			if (c < '1' || c > '8')
+				continue;
+			while (p < end)
 			{
-				while (++p < end - 1 && (*p != '$' || *(p + 1) != '$'))
+				BYTE c;
+
+				switch (*(p++))
 				{
-					if (*p == '\\')
-						p++;
-					if (__intrinsic_isleadbyte(*p))
-						p++;
+				default:
+					continue;
+				case '$':
+					if (p >= end)
+						break;
+					if (*p != '$')
+						continue;
+					p++;
+					break;
+				case '\\':
+					if (p >= end)
+						break;
+					c = *(p++);
+					if (!__intrinsic_isleadbyte(c))
+						continue;
+					/* FALLTHROUGH */
+				case_unsigned_leadbyte:
+					if (p >= end)
+						break;
+					p++;
+					continue;
 				}
-				p += 2;
+				break;
+			}
+			continue;
+		case '\'':
+		case '"':
+			// character literals, string literals
+			for (comparand = c; p < end; )
+			{
+				switch (c = *(p++))
+				{
+				default:
+					if (c != comparand)
+						continue;
+					break;
+				case '\\':
+					if (p >= end)
+						break;
+					c = *(p++);
+					if (!__intrinsic_isleadbyte(c))
+						continue;
+					/* FALLTHROUGH */
+				case_unsigned_leadbyte:
+					if (p >= end)
+						break;
+					p++;
+					continue;
+				}
+				break;
 			}
 			continue;
 		case '(':
+		case '{':
+			// "(", "{"
 			nest++;
-			break;
+			continue;
 		case ')':
+		case '}':
+			// ")", "}"
 			if (nest)
 				nest--;
-			break;
+			continue;
 		case '*':
-			switch (p[1])
+			// "*<", "*[", "*{", "*>", "*]", "*}"
+			if (p >= end)
+				break;
+			switch (p[0])
 			{
 			case '[':
-				switch (p[2])
+				if (p + 1 >= end)
+					break;
+				switch (p[1])
 				{
 				case '.':
 				case ':':
 				case '_':
 				case '~':
-					p += 3;
+					p += 2;
 					continue;
 				}
 				/* FALLTHROUGH */
@@ -96,61 +146,98 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 			case '}':
 				if (nest)
 					nest--;
-				else if (*(LPWORD)p == *(LPWORD)string_begin(&Token))
+				else if (*(LPWORD)prev == *(LPWORD)string_begin(&Token))
 					goto TOKEN_FOUND;
 				break;
 			default:
-				p++;
 				continue;
 			}
-			p += 2;
+			p++;
 			continue;
+		case ':':
+			// "::"
+			if (p >= end)
+				break;
+			if (*p != ':' || nest || *(LPWORD)string_begin(&Token) != BSWAP16('::'))
+				continue;
+			goto TOKEN_FOUND;
 		case '<':
-			switch (c = *(++p))
+			// "<#", "#>", "<@", "@>", "<_"
+			if (p >= end)
+				break;
+			switch (c = *p)
 			{
 			case '#':
 			case '@':
-				while (++p < end - 1 && ((*p != c) || *(p + 1) != '>'))
+				if (++p >= end)
+					break;
+				for (comparand = c; ; )
 				{
-					if (*p == '\\')
+					switch (c = *(p++))
+					{
+					default:
+						if (p >= end)
+							break;
+						if (c != comparand || *p != '>')
+							continue;
 						p++;
-					if (__intrinsic_isleadbyte(*p))
-						p++;
+						break;
+					case '\\':
+						if (p >= end)
+							break;
+						c = *(p++);
+						if (p >= end)
+							break;
+						if (!__intrinsic_isleadbyte(c) || ++p < end)
+							continue;
+						break;
+					case_unsigned_leadbyte:
+						if (p < end && ++p < end)
+							continue;
+						break;
+					}
+					break;
 				}
-				p += 2;
 				continue;
 			case '_':
+				if (++p >= end)
+					break;
 				nest++;
-				break;
+				continue;
 			default:
 				continue;
 			}
 			break;
-		case '\\':
-			p++;
-			goto CHECK_LEADBYTE;
 		case '_':
-			if (p[1] != '>')
+			// "_>"
+			if (p >= end)
 				break;
+			if (*p != '>')
+				continue;
 			if (nest)
 				nest--;
 			else if (*(LPWORD)string_begin(&Token) == BSWAP16('_>'))
 				goto TOKEN_FOUND;
-			p += 2;
+			p++;
 			continue;
+		TOKEN_FOUND:
+			string_dtor(&Token);
+			return prev - string_c_str(Src);
+		case '\\':
+			// escape-sequence
+			if (p >= end)
+				break;
+			c = *(p++);
+			/* FALLTHROUGH */
 		default:
-			if (!nest && *(LPWORD)p == *(LPWORD)string_begin(&Token))
-			{
-			TOKEN_FOUND:
-				string_dtor(&Token);
-				return p - string_c_str(Src);
-			}
-		CHECK_LEADBYTE:
-			if (__intrinsic_isleadbyte(*p))
-				p++;
-			break;
+			if (!__intrinsic_isleadbyte(c))
+				continue;
+			if (p >= end)
+				break;
+			p++;
+			continue;
 		}
-		p++;
+		break;
 	} while (p < end);
 	string_dtor(&Token);
 	return -1;

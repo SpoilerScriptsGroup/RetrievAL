@@ -8,7 +8,8 @@
 EXTERN_C void __cdecl TMainForm_ctor();
 EXTERN_C void __cdecl TMainForm_FormClose_Header();
 EXTERN_C void __cdecl TMainForm_dtor();
-EXTERN_C void __cdecl TMainForm_LoadSetting_ListLBox_Font_SetName();
+EXTERN_C void __cdecl TMainForm_LoadSetting_NoteREdit_Font_setName();
+EXTERN_C void __cdecl TMainForm_LoadSetting_treeBackScreen_Canvas_Font_setName();
 EXTERN_C void __cdecl TMainForm_LoadSetting_SetUserMode();
 EXTERN_C void __cdecl TMainForm_SubjectAccess_FixDirSameChildren();
 EXTERN_C UINT __stdcall TSSGSubject_Write_WithDrawTree(LPVOID, LPVOID, LPVOID);
@@ -241,7 +242,9 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPDWORD)0x0045FDEE = NOP_X4;
 
 	// TMainForm::LoadSetting
-	*(LPDWORD)(0x004307A0 + 1) = (DWORD)TMainForm_LoadSetting_ListLBox_Font_SetName - (0x004307A0 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x004307A0 + 1) = (DWORD)TMainForm_LoadSetting_NoteREdit_Font_setName - (0x004307A0 + 1 + sizeof(DWORD));
+
+	*(LPDWORD)(0x004351B0 + 1) = (DWORD)TMainForm_LoadSetting_treeBackScreen_Canvas_Font_setName - (0x004351B0 + 1 + sizeof(DWORD));
 
 	*(LPBYTE )0x00437E28 = JMP_REL32;
 	*(LPDWORD)0x00437E29 = (DWORD)TMainForm_LoadSetting_SetUserMode - (0x00437E29 + sizeof(DWORD));
@@ -611,18 +614,34 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	// TSSGActionListner::OnParsingError
 	*(LPBYTE )(0x0052F870 + 2) = 0x04;
 
-#if 0
+	// TSSGActionListner::OnParsingProcess
+	*(LPBYTE ) 0x0052FAD1 =         0x48   ;// dec  eax
+	*(LPWORD ) 0x0052FAD2 = BSWAP16(0xA80A);// test al, 0Ah
+	*(LPWORD ) 0x0052FAD4 = BSWAP16(0x0F8A);// jnz  => jp
+
 	// TSSGActionListner::OnParsingDoubleProcess
-	*(LPWORD )0x0052FAD4 = JB_REL32;
-#endif
+	*(LPBYTE ) 0x0052FCDD =         0x48   ;// dec  eax
+	*(LPWORD ) 0x0052FCDE = BSWAP16(0xA80A);// test al, 0Ah
+	*(LPWORD ) 0x0052FCE0 = BSWAP16(0x0F8A);// jnz  => jp
+
+	*(LPDWORD)(0x0052FCF4 + 0) = BSWAP32(0x83EC08DD);// sub  esp, 8 
+	*(LPWORD )(0x0052FCF7 + 1) = BSWAP16(0x1C24    );// fstp qword ptr [esp]
+	*(LPDWORD)(0x0052FCFE + 1) = (DWORD)TStringDivision_ToStringDouble - (0x0052FCFE + 1 + sizeof(DWORD));
+	*(LPBYTE )(0x0052FD03 + 2) = 0x10;// stack size to discard
 
 	// TMainForm::LoadSetting
-	*(LPWORD )0x0060294A = BSWAP16('ゴ');
-	*(LPDWORD)0x0060294C = BSWAP32('シッ');
-	*(LPDWORD)0x00602950 = BSWAP16('ク');
+	*(LPDWORD)0x00602888 = BSWAP32('Fixe');
+	*(LPDWORD)0x0060288C = BSWAP32('dSys');
+	*(LPWORD )0x00602890 = BSWAP16('\0\0');
+
+	*(LPBYTE )0x00602945 =         'M'    ;
+	*(LPWORD )0x00602946 = BSWAP16('S '  );
+	*(LPDWORD)0x00602948 = BSWAP32('Goth');
+	*(LPDWORD)0x0060294C = BSWAP24('ic\0');
 
 	// TMainForm::LoadCLD
-	*(LPWORD )0x00603492 = BSWAP16('ゴ');
-	*(LPDWORD)0x00603494 = BSWAP32('シッ');
-	*(LPDWORD)0x00603498 = BSWAP16('ク');
+	*(LPBYTE )0x0060348D =         'M'    ;
+	*(LPWORD )0x0060348E = BSWAP16('S '  );
+	*(LPDWORD)0x00603490 = BSWAP32('Goth');
+	*(LPDWORD)0x00603494 = BSWAP24('ic\0');
 }

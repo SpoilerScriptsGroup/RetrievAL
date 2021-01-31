@@ -1,6 +1,7 @@
 #include "TSSGCtrl.h"
 #include "TSSGAttributeElement.h"
 
+#if 0
 __declspec(naked) void __cdecl TSSBundleList_Write_ErrorSkip()
 {
 	__asm
@@ -32,3 +33,4 @@ __declspec(naked) void __cdecl TSSBundleList_Write_ErrorSkip()
 		#undef this
 	}
 }
+#endif

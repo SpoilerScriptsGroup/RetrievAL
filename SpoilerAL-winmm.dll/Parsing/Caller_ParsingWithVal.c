@@ -11,25 +11,25 @@ __declspec(naked) void __cdecl Caller_ParsingWithVal()
 
 	__asm
 	{
-		cmp     dword ptr [EnableParserFix], 0
+		cmp     EnableParserFix, FALSE
 		je      L1
-		mov     eax, dword ptr [esp + 16]
-		mov     edx, dword ptr [esp + 12]
+		mov     ecx, dword ptr [esp + 0x04]
+		mov     edx, dword ptr [esp + 0x08]
+		mov     eax, dword ptr [esp + 0x0C]
 		push    0
 		push    0
-		push    eax
+		push    dword ptr [esp + 0x08 + 16]
 		push    offset lpszVal
-		mov     ecx, dword ptr [esp + 24]
-		mov     eax, dword ptr [esp + 20]
 		push    3
+		push    eax
 		push    edx
 		push    ecx
-		push    eax
 		call    Parsing
 		add     esp, 32
 		ret
 
 	L1:
-		jmp     dword ptr [F005113F8]
+		jmp     F005113F8
+		ud2
 	}
 }

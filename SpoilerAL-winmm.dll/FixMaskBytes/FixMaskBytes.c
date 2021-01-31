@@ -15,8 +15,7 @@ static __declspec(naked) void TProcessAccessElementMaskData_Execute_Masking()
 #define MaskedSrc (ebp - 0x50)
 	__asm {
 		mov   ecx, dword ptr [Size]
-		test  ecx, ecx
-		jz    EMPTY
+		jecxz EMPTY
 		// esi is volatile in here
 		mov   esi, dword ptr [mask]
 		mov   edx, dword ptr [tmpV]
@@ -151,7 +150,7 @@ static __declspec(naked) void TSSGCtrl_StrToProcessAccessElementVec_defaultStub(
 #define CodeList (ebp - 0x10)
 #define i         esi
 #define NowAE    (ebp - 0x085C)
-	static const DWORD X0050E100 = 0x0050E100;
+	static const DWORD TSSGCtrl_StrToProcessAccessElementVec_for_continue = 0x0050E100;
 	__asm {
 		push dword ptr [NowAE]
 		mov  eax, dword ptr [Code]
@@ -159,7 +158,7 @@ static __declspec(naked) void TSSGCtrl_StrToProcessAccessElementVec_defaultStub(
 		lea  ecx, dword ptr [CodeList]
 		call TSSGCtrl_StrToProcessAccessElementVec_default
 		mov  dword ptr [NowAE], eax
-		jmp  X0050E100
+		jmp  TSSGCtrl_StrToProcessAccessElementVec_for_continue	
 		ud2
 	}
 #undef  NowAE

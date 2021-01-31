@@ -28,22 +28,6 @@ void(__cdecl * const TProcessAccessElementLoop_MakeLoopSet)(
 	vector_dword              *LoopVec,
 	BOOLEAN                    IsTrueMode) = (LPVOID)0x0048FA48;
 
-__declspec(naked) void __cdecl TSSGCtrl_StrToProcessAccessElementVec(
-	vector_dword *CodeVec,
-	TSSGCtrl     *SSGC,
-	TSSGSubject  *SSGS,
-	string        Code,
-	unsigned long Rel)
-{
-	__asm {
-		push ebp
-		mov  ebp, esp
-		sub  esp, 4092
-		mov  ecx, 0x00506F81
-		jmp  ecx
-	}
-}
-
 static void __fastcall TSSGCtrl_MakeLoopSet(
 	TSSGCtrl    * const SSGC,
 	TSSGSubject * const SSGS,

@@ -13,15 +13,10 @@ __declspec(naked) void __cdecl Caller_Parsing()
 {
 	__asm
 	{
-		cmp     dword ptr [EnableParserFix], 0
-		je      L1
-#if 0
-		jmp     Parsing61
-#else
-		jmp     Parsing
-#endif
-
-	L1:
-		jmp     dword ptr [F005113F8]
+		cmp     EnableParserFix, FALSE
+#pragma warning(suppress: 4414)
+		jne     Parsing
+		jmp     F005113F8
+		ud2
 	}
 }

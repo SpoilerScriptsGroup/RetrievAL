@@ -136,10 +136,15 @@ unsigned long __cdecl TStringDivision_List(
 				/* FALLTHROUGH */
 			default:
 			DEFAULT:
-				if (nest)
-					goto CHECK_LEADBYTE;
-				if ((size_t)(end - prev) < tokenLength || memcmp(prev, token, tokenLength) != 0)
-					goto CHECK_LEADBYTE;
+				if (!nest && (size_t)(end - prev) >= tokenLength && memcmp(prev, token, tokenLength) == 0)
+					goto MATCHED;
+			CHECK_LEADBYTE:
+				if (!__intrinsic_isleadbyte(c))
+					continue;
+				if (p >= end)
+					break;
+				p++;
+				continue;
 			MATCHED:
 				vector_string_push_back_range(List, split, prev);
 				elem = string_end(List) - 1;
@@ -152,13 +157,6 @@ unsigned long __cdecl TStringDivision_List(
 					string_dtor(&s);
 				}
 				split = (p = prev + tokenLength);
-				continue;
-			CHECK_LEADBYTE:
-				if (!__intrinsic_isleadbyte(c))
-					continue;
-				if (p >= end)
-					break;
-				p++;
 				continue;
 			}
 			break;

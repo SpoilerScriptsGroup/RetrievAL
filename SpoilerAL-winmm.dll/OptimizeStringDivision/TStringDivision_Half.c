@@ -133,17 +133,8 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 				if ((size_t)(end - prev) < TokenLength || memcmp(prev, Token, TokenLength) != 0)
 					goto CHECK_LEADBYTE;
 				lastFound = prev;
-				if (nest)
-					goto CHECK_LEADBYTE;
-			MATCHED:
-				if (Index--)
-				{
-					if ((p = prev + TokenLength) < end)
-						continue;
-					break;
-				}
-				lastFound = prev;
-				goto SUCCESS;
+				if (!nest)
+					goto MATCHED;
 			CHECK_LEADBYTE:
 				if (!__intrinsic_isleadbyte(c))
 					continue;
@@ -151,6 +142,14 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 					break;
 				p++;
 				continue;
+			MATCHED:
+				if (Index--)
+					if ((p = prev + TokenLength) < end)
+						continue;
+					else
+						break;
+				lastFound = prev;
+				goto SUCCESS;
 			}
 			break;
 		} while (p < end);

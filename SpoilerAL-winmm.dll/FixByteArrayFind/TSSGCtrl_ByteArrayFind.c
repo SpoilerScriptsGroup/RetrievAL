@@ -228,13 +228,15 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 			if (p >= end)
 				break;
 			c = *(p++);
-			/* FALLTHROUGH */
-		default:
 			if (!__intrinsic_isleadbyte(c))
 				continue;
+			/* FALLTHROUGH */
+		case_unsigned_leadbyte:
 			if (p >= end)
 				break;
 			p++;
+			continue;
+		default:
 			continue;
 		}
 		break;

@@ -1580,9 +1580,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			lpMarkup->Next       = NULL;
 		    lpMarkup->UnionBlock = 0;
 			break;
-		case '\'':
 		case '"':
-			// character literals, string literals
+		case '\'':
+			// string literals, character literals
 			p++;
 		STRING_LITERALS:
 		CHARACTER_LITERALS:
@@ -1632,25 +1632,6 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			default:
 				APPEND_TAG_WITH_CONTINUE(TAG_BIT_AND, 1, PRIORITY_BIT_AND, OS_PUSH);
 			}
-		case '\'':
-		CHARACTER_LITERALS:
-			// single-quoted character
-			bNextIsSeparatedLeft = TRUE;
-			while (++p < end && *p != '\'')
-			{
-				if (!__intrinsic_isleadbyte(*p))
-				{
-					if (*p != '\\')
-						continue;
-					if (++p >= end)
-						break;
-					if (!__intrinsic_isleadbyte(*p))
-						continue;
-				}
-				if (++p >= end)
-					break;
-			}
-			break;
 		case '(':
 			// "("
 			bNextIsSeparatedLeft = TRUE;

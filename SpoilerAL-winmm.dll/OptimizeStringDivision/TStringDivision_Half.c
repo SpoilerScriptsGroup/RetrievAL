@@ -106,7 +106,7 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 				if (*p != ']')
 					break;
 				p++;
-				if (tokenLength != 2 || *(LPWORD)token != BSWAP16('!]'))
+				if (TokenLength != 2 || *(LPWORD)Token != BSWAP16('!]'))
 					break;
 				goto MATCHED;
 			case '\\':

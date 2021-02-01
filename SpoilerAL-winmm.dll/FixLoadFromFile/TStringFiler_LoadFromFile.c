@@ -277,16 +277,19 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 		case '\\':
 			if (p >= end)
 				break;
-			if ((c = *(p++)) != '\r')
+			switch (c = *(p++))
 			{
-				if (__intrinsic_isleadbyte(c))
-					p++;
+			default:
 				continue;
-			}
-			if (p < end)
-			{
+			case '\r':
+				if (p >= end)
+					break;
 				if (*p == '\n')
 					p++;
+				/* FALLTHROUGH */
+			case '\n':
+				if (p >= end)
+					break;
 				if (!s)
 				{
 					vector_string_push_back_range(SList, begin, prev);
@@ -298,10 +301,13 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 				}
 				begin = p;
 				continue;
+			case_unsigned_leadbyte:
+				goto LEADBYTE;
 			}
 			end = prev;
 			break;
 		case_unsigned_leadbyte:
+		LEADBYTE:
 			if (p >= end)
 				break;
 			p++;

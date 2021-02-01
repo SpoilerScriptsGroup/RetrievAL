@@ -53,18 +53,18 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 					}
 					break;
 				}
-				continue;
+				break;
 			case '(':
 			case '{':
 				// "(", "{"
 				nest++;
-				continue;
+				break;
 			case ')':
 			case '}':
 				// ")", "}"
 				if (nest)
 					nest--;
-				continue;
+				break;
 			case '<':
 				// "<#", "<@", "#>", "@>"
 				switch (c = *p)
@@ -93,9 +93,7 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 						}
 						break;
 					}
-					continue;
-				case_unsigned_leadbyte:
-					goto LEADBYTE;
+					break;
 				default:
 					goto DEFAULT;
 				}
@@ -103,14 +101,13 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 			case '\\':
 				// escape-sequence
 				if (!(Option & dtESCAPE))
-					continue;
+					break;
 				c = *(p++);
 				if (!__intrinsic_isleadbyte(c))
-					continue;
+					break;
 #if MULTIBYTE_TOKEN
 				goto LEADBYTE_INCREMENT;
 			case_unsigned_leadbyte:
-			LEADBYTE:
 				// lead byte
 				if (memcmp(prev, Token, TokenLength) != 0)
 					goto LEADBYTE_INCREMENT;
@@ -121,11 +118,10 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 #else
 				/* FALLTHROUGH */
 			case_unsigned_leadbyte:
-			LEADBYTE:
 				// lead byte
 #endif
 				p++;
-				continue;
+				break;
 			case '!':
 				// "!]"
 				if (*p == ']' && TokenLength == 2 && *(LPWORD)Token == BSWAP16('!]'))
@@ -134,21 +130,20 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 			default:
 			DEFAULT:
 				if (memcmp(prev, Token, TokenLength) != 0)
-					continue;
+					break;
 				lastFound = prev;
 				if (nest)
-					continue;
+					break;
 			MATCHED:
 				if (Index)
 				{
 					Index--;
 					p = prev + TokenLength;
-					continue;
+					break;
 				}
 				lastFound = prev;
 				goto SUCCESS;
 			}
-			break;
 		} while (p < end);
 	}
 	if (*(LPWORD)Token == BSWAP16(':\0') && lastFound)

@@ -60,21 +60,21 @@ unsigned long __cdecl TStringDivision_List(
 					}
 					break;
 				}
-				continue;
+				break;
 			case '(':
 			case '{':
 				// "(", "{"
 				// '\x2B' == '+'
 				if (tokenLength != 3 || *(LPDWORD)token != (DWORD)'\'\x2B\'')
 					nest++;
-				continue;
+				break;
 			case ')':
 			case '}':
 				// ")", "}"
 				// '\x2B' == '+'
 				if ((tokenLength != 3 || *(LPDWORD)token != (DWORD)'\'\x2B\'') && nest)
 					nest--;
-				continue;
+				break;
 			case '<':
 				// "<#", "<@", "#>", "@>"
 				switch (c = *p)
@@ -103,9 +103,7 @@ unsigned long __cdecl TStringDivision_List(
 						}
 						break;
 					}
-					continue;
-				case_unsigned_leadbyte:
-					goto LEADBYTE;
+					break;
 				default:
 					goto DEFAULT;
 				}
@@ -113,14 +111,13 @@ unsigned long __cdecl TStringDivision_List(
 			case '\\':
 				// escape-sequence
 				if (!(Option & dtESCAPE))
-					continue;
+					break;
 				c = *(p++);
 				if (!__intrinsic_isleadbyte(c))
-					continue;
+					break;
 #if MULTIBYTE_TOKEN
 				goto LEADBYTE_INCREMENT;
 			case_unsigned_leadbyte:
-			LEADBYTE:
 				// lead byte
 				if (!nest && memcmp(prev, token, tokenLength) == 0)
 					goto MATCHED;
@@ -128,11 +125,10 @@ unsigned long __cdecl TStringDivision_List(
 #else
 				/* FALLTHROUGH */
 			case_unsigned_leadbyte:
-			LEADBYTE:
 				// lead byte
 #endif
 				p++;
-				continue;
+				break;
 			case '[':
 				// "[!"
 				if (*p == '!' && tokenLength == 2 && *(LPWORD)token == BSWAP16('[!'))
@@ -141,7 +137,7 @@ unsigned long __cdecl TStringDivision_List(
 			default:
 			DEFAULT:
 				if (nest || memcmp(prev, token, tokenLength) != 0)
-					continue;
+					break;
 			MATCHED:
 				vector_string_push_back_range(List, split, prev);
 				elem = string_end(List) - 1;
@@ -154,9 +150,8 @@ unsigned long __cdecl TStringDivision_List(
 					string_dtor(&s);
 				}
 				split = (p = prev + tokenLength);
-				continue;
+				break;
 			}
-			break;
 		} while (p < end);
 	}
 	vector_string_push_back_range(List, split, string_end(Src));

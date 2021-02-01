@@ -67,46 +67,48 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 				}
 				break;
 			}
-			continue;
-		case '#':
-		case '@':
-			// "#>", "@>"
-			if (*p != '>')
-				continue;
-			if (nest)
-				nest--;
-			p++;
-			continue;
+			break;
 		case '$':
 			// "$$", "$0", "$1", "$2", "$3", "$4", "$5", "$6", "$7", "$8"
 			switch (*p)
 			{
-			case '$':
-				if (nest)
-					nest--;
-				p++;
-				continue;
 			case '0': case '1': case '2': case '3':
 			case '4': case '5': case '6': case '7':
 			case '8':
-				nest++;
-				p++;
-				continue;
-			default:
-				continue;
+				for (p++; p < end; )
+				{
+					switch (c = *(p++))
+					{
+					default:
+						if (c != '$' || *p != '$')
+							continue;
+						p++;
+						break;
+					case '\\':
+						c = *(p++);
+						if (!__intrinsic_isleadbyte(c))
+							continue;
+						/* FALLTHROUGH */
+					case_unsigned_leadbyte:
+						p++;
+						continue;
+					}
+					break;
+				}
+				break;
 			}
 			break;
 		case '(':
 		case '{':
 			// "(", "{"
 			nest++;
-			continue;
+			break;
 		case ')':
 		case '}':
 			// ")", "}"
 			if (nest)
 				nest--;
-			continue;
+			break;
 		case '*':
 			// "*<", "*[", "*{", "*>", "*]", "*}"
 			switch (p[0])
@@ -119,41 +121,59 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 				case '_':
 				case '~':
 					p += 2;
-					continue;
+					break;
 				}
 				/* FALLTHROUGH */
 			case '<':
 			case '{':
 				nest++;
 				p++;
-				continue;
+				break;
 			case '>':
 			case ']':
 			case '}':
 				if (nest)
 					nest--;
-				else if (nest || *(LPWORD)prev != *(LPWORD)string_begin(&Token))
+				else if (*(LPWORD)prev != *(LPWORD)string_begin(&Token))
 					break;
 				goto TOKEN_FOUND;
-			default:
-				continue;
 			}
 			break;
 		case ':':
 			// "::"
 			if (*p != ':' || nest || *(LPWORD)string_begin(&Token) != BSWAP16('::'))
-				continue;
+				break;
 			goto TOKEN_FOUND;
 		case '<':
-			// "<#", "<@", "<_"
+			// "<#", "<@", "<_", "#>", "@>"
 			switch (*p)
 			{
-			case '#': case '@': case '_':
+			case '#': case '@':
+				for (p++, comparand = c; p < end; )
+				{
+					switch (c = *(p++))
+					{
+					default:
+						if (c != comparand || *p != '>')
+							continue;
+						p++;
+						break;
+					case '\\':
+						c = *(p++);
+						if (!__intrinsic_isleadbyte(c))
+							continue;
+						/* FALLTHROUGH */
+					case_unsigned_leadbyte:
+						p++;
+						continue;
+					}
+					break;
+				}
+				break;
+			case '_':
 				nest++;
 				p++;
-				continue;
-			default:
-				continue;
+				break;
 			}
 			break;
 		case '\\':
@@ -161,11 +181,11 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 			c = *(p++);
 			if (__intrinsic_isleadbyte(c))
 				p++;
-			continue;
+			break;
 		case '_':
 			// "_>"
 			if (*p != '>')
-				continue;
+				break;
 			if (nest)
 				nest--;
 			else if (*(LPWORD)string_begin(&Token) == BSWAP16('_>'))
@@ -174,14 +194,11 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 		case_unsigned_leadbyte:
 			// lead byte
 			p++;
-			continue;
-		default:
-			continue;
+			break;
 		TOKEN_FOUND:
 			string_dtor(&Token);
 			return prev - string_c_str(Src);
 		}
-		break;
 	} while (p < end);
 	string_dtor(&Token);
 	return -1;

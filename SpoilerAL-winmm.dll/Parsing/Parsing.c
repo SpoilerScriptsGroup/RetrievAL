@@ -1549,14 +1549,6 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		bNextIsSeparatedLeft = FALSE;
 		switch (c = *p)
 		{
-		case '\\':
-			memcpy(p, p + 1, end-- - p);
-			if (*p != '\\')
-			{
-				bNextIsSeparatedLeft = bIsSeparatedLeft;
-				continue;
-			}
-			/* FALLTHROUGH */
 		case '\t':
 		case '\n':
 		case '\v':
@@ -1567,6 +1559,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 #if !SCOPE_SUPPORT
 		case '@':
 #endif
+		case '\\':
 		case '`':
 			bNextIsSeparatedLeft = TRUE;
 			break;
@@ -4037,7 +4030,6 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 	}
 
 	lpEndOfTag = lpTagArray + nNumberOfTag;
-	nSrcLength = end - lpSrc;
 
 	// add ternary block
 	if (nFirstTernary != -1)

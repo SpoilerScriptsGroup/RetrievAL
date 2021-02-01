@@ -166,7 +166,8 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 	HANDLE  hFile;
 	DWORD   dwFileSize;
 	HANDLE  hMap;
-	LPCBYTE lpMapViewOfFile, p, end, line, prev;
+	LPCBYTE lpMapViewOfFile, p, end, begin, prev;
+	string  *s;
 
 	assert((Mode & MODE_END_LINE) == 0);
 	assert((Mode & MODE_END_STR) == 0);
@@ -246,7 +247,8 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 
 	//--------------
 	// ‰üs‚ÅØ‚è•ª‚¯
-	line = p;
+	begin = p;
+	s = NULL;
 	do
 	{
 		BYTE c;
@@ -260,15 +262,45 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 				p++;
 			/* FALLTHROUGH */
 		case '\n':
-			vector_string_push_back_range(SList, line, !(Mode & MODE_LINE_FEED) ? prev : p);
-			line = p;
+			if (!s)
+			{
+				vector_string_push_back_range(SList, begin, !(Mode & MODE_LINE_FEED) ? prev : p);
+			}
+			else
+			{
+				string_append_range(s, begin, !(Mode & MODE_LINE_FEED) ? prev : p);
+				string_shrink_to_fit(s);
+				s = NULL;
+			}
+			begin = p;
 			continue;
 		case '\\':
 			if (p >= end)
 				break;
-			if ((c = *(p++)) == '\r' ? p < end && *p == '\n' : __intrinsic_isleadbyte(c))
-				p++;
-			continue;
+			if ((c = *(p++)) != '\r')
+			{
+				if (__intrinsic_isleadbyte(c))
+					p++;
+				continue;
+			}
+			if (p < end)
+			{
+				if (*p == '\n')
+					p++;
+				if (!s)
+				{
+					vector_string_push_back_range(SList, begin, prev);
+					s = vector_end(SList) - 1;
+				}
+				else
+				{
+					string_append_range(s, begin, prev);
+				}
+				begin = p;
+				continue;
+			}
+			end = prev;
+			break;
 		case_unsigned_leadbyte:
 			if (p >= end)
 				break;
@@ -280,8 +312,18 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 	//------
 
 	// ÅIs‚ğŠi”[
-	if (line < end)
-		vector_string_push_back_range(SList, line, end);
+	if (begin < end)
+	{
+		if (!s)
+		{
+			vector_string_push_back_range(SList, begin, end);
+		}
+		else
+		{
+			string_append_range(s, begin, end);
+			string_shrink_to_fit(s);
+		}
+	}
 
 	UnmapViewOfFile(lpMapViewOfFile);
 	CloseHandle(hMap);

@@ -46,6 +46,9 @@ unsigned long __cdecl TStringDivision_List(
 					switch (c = *(p++))
 					{
 					default:
+						continue;
+					case '"':
+					case '\'':
 						if (c != comparand)
 							continue;
 						break;
@@ -86,8 +89,18 @@ unsigned long __cdecl TStringDivision_List(
 						switch (c = *(p++))
 						{
 						default:
+							continue;
+						case '#':
+						case '@':
 							if (c != comparand || *p != '>')
 								continue;
+							p++;
+							break;
+						case '[':
+							if (*p != '!')
+								continue;
+							if (tokenLength == 2 && *(LPWORD)token == BSWAP16('[!'))
+								goto MATCHED;
 							p++;
 							break;
 						case '\\':
@@ -108,6 +121,14 @@ unsigned long __cdecl TStringDivision_List(
 					goto DEFAULT;
 				}
 				break;
+			case '[':
+				// "[!"
+				if (*p != '!')
+					break;
+				if (tokenLength == 2 && *(LPWORD)token == BSWAP16('[!'))
+					goto MATCHED;
+				p++;
+				break;
 			case '\\':
 				// escape-sequence
 				if (!(Option & dtESCAPE))
@@ -116,12 +137,12 @@ unsigned long __cdecl TStringDivision_List(
 				if (!__intrinsic_isleadbyte(c))
 					break;
 #if MULTIBYTE_TOKEN
-				goto LEADBYTE_INCREMENT;
+				p++;
+				break;
 			case_unsigned_leadbyte:
 				// lead byte
 				if (!nest && memcmp(prev, token, tokenLength) == 0)
 					goto MATCHED;
-			LEADBYTE_INCREMENT:
 #else
 				/* FALLTHROUGH */
 			case_unsigned_leadbyte:
@@ -129,11 +150,6 @@ unsigned long __cdecl TStringDivision_List(
 #endif
 				p++;
 				break;
-			case '[':
-				// "[!"
-				if (*p == '!' && tokenLength == 2 && *(LPWORD)token == BSWAP16('[!'))
-					goto MATCHED;
-				/* FALLTHROUGH */
 			default:
 			DEFAULT:
 				if (nest || memcmp(prev, token, tokenLength) != 0)

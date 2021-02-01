@@ -39,6 +39,9 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 					switch (c = *(p++))
 					{
 					default:
+						continue;
+					case '"':
+					case '\'':
 						if (c != comparand)
 							continue;
 						break;
@@ -98,6 +101,14 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 					goto DEFAULT;
 				}
 				break;
+			case '!':
+				// "!]"
+				if (*p != ']')
+					break;
+				p++;
+				if (tokenLength != 2 || *(LPWORD)token != BSWAP16('!]'))
+					break;
+				goto MATCHED;
 			case '\\':
 				// escape-sequence
 				if (!(Option & dtESCAPE))
@@ -111,9 +122,8 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 				// lead byte
 				if (memcmp(prev, Token, TokenLength) != 0)
 					goto LEADBYTE_INCREMENT;
-				lastFound = prev;
-				if (!nest)
-					goto MATCHED;
+				p = prev + TokenLength;
+				goto MATCHED;
 			LEADBYTE_INCREMENT:
 #else
 				/* FALLTHROUGH */
@@ -122,26 +132,15 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 #endif
 				p++;
 				break;
-			case '!':
-				// "!]"
-				if (*p == ']' && TokenLength == 2 && *(LPWORD)Token == BSWAP16('!]'))
-					goto MATCHED;
-				/* FALLTHROUGH */
 			default:
 			DEFAULT:
 				if (memcmp(prev, Token, TokenLength) != 0)
 					break;
-				lastFound = prev;
-				if (nest)
-					break;
+				p = prev + TokenLength;
 			MATCHED:
-				if (Index)
-				{
-					Index--;
-					p = prev + TokenLength;
+				lastFound = p;
+				if (nest || Index--)
 					break;
-				}
-				lastFound = prev;
 				goto SUCCESS;
 			}
 		} while (p < end);

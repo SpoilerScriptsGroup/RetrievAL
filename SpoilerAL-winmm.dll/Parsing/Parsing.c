@@ -1595,6 +1595,9 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				switch (c = *(p++))
 				{
 				default:
+					continue;
+				case '"':
+				case '\'':
 					if (c != comparand)
 						continue;
 					break;
@@ -5426,6 +5429,9 @@ static unsigned char * __fastcall RemoveComments(unsigned char *first, unsigned 
 				switch (c2 = *(p1++))
 				{
 				default:
+					continue;
+				case '"':
+				case '\'':
 					if (c2 != c1)
 						continue;
 					break;

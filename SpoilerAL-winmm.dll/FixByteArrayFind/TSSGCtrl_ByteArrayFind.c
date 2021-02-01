@@ -53,6 +53,9 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 				switch (c = *(p++))
 				{
 				default:
+					continue;
+				case '"':
+				case '\'':
 					if (c != comparand)
 						continue;
 					break;
@@ -80,7 +83,9 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 					switch (c = *(p++))
 					{
 					default:
-						if (c != '$' || *p != '$')
+						continue;
+					case '$':
+						if (*p != '$')
 							continue;
 						p++;
 						break;
@@ -154,6 +159,9 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 					switch (c = *(p++))
 					{
 					default:
+						continue;
+					case '#':
+					case '@':
 						if (c != comparand || *p != '>')
 							continue;
 						p++;

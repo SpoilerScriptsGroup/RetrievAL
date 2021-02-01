@@ -251,8 +251,6 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 	s = NULL;
 	do
 	{
-		BYTE c;
-
 		switch (*(prev = p++))
 		{
 		default:
@@ -277,7 +275,7 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 		case '\\':
 			if (p >= end)
 				break;
-			switch (c = *(p++))
+			switch (*(p++))
 			{
 			default:
 				continue;

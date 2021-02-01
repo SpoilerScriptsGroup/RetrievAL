@@ -11,19 +11,16 @@ unsigned long __cdecl TStringDivision_List(
 	IN     unsigned long   Option)
 {
 	LPCBYTE split;
-	string  *elem;
-	LPCBYTE token;
 	size_t  tokenLength;
 
 	vector_string_clear(List);
 	split = string_c_str(Src);
-	token = string_c_str(&Token);
-	tokenLength = string_length(&Token);
-	if (tokenLength && string_length(Src) >= tokenLength)
+	if ((tokenLength = string_length(&Token)) && string_length(Src) >= tokenLength)
 	{
-		LPCBYTE end, p;
+		LPCBYTE token, end, p;
 		size_t  nest;
 
+		token = string_c_str(&Token);
 		end = string_end(Src) - tokenLength + 1;
 		p = split;
 		nest = 0;
@@ -156,12 +153,11 @@ unsigned long __cdecl TStringDivision_List(
 					break;
 			MATCHED:
 				vector_string_push_back_range(List, split, prev);
-				elem = string_end(List) - 1;
 				if (Option & etSOME_EDIT)
 				{
-					string s;
+					string *elem, s;
 
-					s = *elem;
+					s = *(elem = string_end(List) - 1);
 					TStringDivision_Editing(elem, this, &s, Option);
 					string_dtor(&s);
 				}
@@ -171,12 +167,11 @@ unsigned long __cdecl TStringDivision_List(
 		} while (p < end);
 	}
 	vector_string_push_back_range(List, split, string_end(Src));
-	elem = string_end(List) - 1;
 	if (Option & etSOME_EDIT)
 	{
-		string s;
+		string *elem, s;
 
-		s = *elem;
+		s = *(elem = string_end(List) - 1);
 		TStringDivision_Editing(elem, this, &s, Option);
 		string_dtor(&s);
 	}

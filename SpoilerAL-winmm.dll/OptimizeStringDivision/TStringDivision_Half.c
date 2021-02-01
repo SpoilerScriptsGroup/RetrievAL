@@ -104,11 +104,11 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 			case '!':
 				// "!]"
 				if (*p != ']')
-					break;
+					goto DEFAULT;
+				if (TokenLength == 2 && *(LPWORD)Token == BSWAP16('!]'))
+					goto MATCHED;
 				p++;
-				if (TokenLength != 2 || *(LPWORD)Token != BSWAP16('!]'))
-					break;
-				goto MATCHED;
+				break;
 			case '\\':
 				// escape-sequence
 				if (!(Option & dtESCAPE))
@@ -122,7 +122,6 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 				// lead byte
 				if (memcmp(prev, Token, TokenLength) != 0)
 					goto LEADBYTE_INCREMENT;
-				p = prev + TokenLength;
 				goto MATCHED;
 			LEADBYTE_INCREMENT:
 #else
@@ -136,12 +135,12 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 			DEFAULT:
 				if (memcmp(prev, Token, TokenLength) != 0)
 					break;
-				p = prev + TokenLength;
 			MATCHED:
-				lastFound = p;
-				if (nest || Index--)
-					break;
-				goto SUCCESS;
+				lastFound = prev;
+				if (!nest && !Index--)
+					goto SUCCESS;
+				p = prev + TokenLength;
+				break;
 			}
 		} while (p < end);
 	}
@@ -151,10 +150,8 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 	return Result;
 
 SUCCESS:
-	string_ctor_assign_cstr_with_length(Result, string_c_str(Src), (p = lastFound) - string_c_str(Src));
-	p += TokenLength;
-	length = string_end(Src) - p;
-	string_end(Src) = string_begin(Src) + length;
+	string_ctor_assign_cstr_with_length(Result, string_c_str(Src), lastFound - string_c_str(Src));
+	string_end(Src) = string_begin(Src) + (length = string_end(Src) - (p = lastFound + TokenLength));
 	memcpy(string_begin(Src), p, length + 1);
 	if (Option & etSOME_EDIT)
 	{

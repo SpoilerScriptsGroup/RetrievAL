@@ -47,7 +47,7 @@ __declspec(naked) void __cdecl TMainForm_SubjectAccess_TSSToggle_GetNowValHeadSt
 		#define SSGS (ebp - 2BCH)
 
 		mov     edx, dword ptr [SSGS]
-		lea     ecx, [this + TMainForm.ssgCtrl]
+		lea     ecx, [this]TMainForm.ssgCtrl
 		jmp     TMainForm_FormatNameString
 
 		#undef this
@@ -63,7 +63,7 @@ __declspec(naked) void __cdecl TMainForm_SubjectAccess_TSSString_GetNowValHeadSt
 		#define SSGS (ebp - 2FCH)
 
 		mov     edx, dword ptr [SSGS]
-		lea     ecx, [this + TMainForm.ssgCtrl]
+		lea     ecx, [this]TMainForm.ssgCtrl
 		jmp     TMainForm_FormatNameString
 
 		#undef this
@@ -75,11 +75,11 @@ __declspec(naked) void __cdecl TMainForm_StringEnterBtnClick_TSSString_GetNowVal
 {
 	__asm
 	{
-		#define this ebx
+		#define this esi
 		#define SSGS edi
 
 		mov     edx, SSGS
-		lea     ecx, [this + TMainForm.ssgCtrl]
+		lea     ecx, [this]TMainForm.ssgCtrl
 		jmp     TMainForm_FormatNameString
 
 		#undef this
@@ -95,7 +95,7 @@ __declspec(naked) void __cdecl TMainForm_SetCalcNowValue_TSSCalc_GetNowValHeadSt
 		#define SSGS (ebp - 3B0H)
 
 		mov     edx, dword ptr [SSGS]
-		lea     ecx, [this + TMainForm.ssgCtrl]
+		lea     ecx, [this]TMainForm.ssgCtrl
 		jmp     TMainForm_FormatNameString
 
 		#undef this
@@ -111,7 +111,7 @@ __declspec(naked) void __cdecl TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValH
 		#define SSGS (ebp - 47CH)
 
 		mov     edx, dword ptr [SSGS]
-		lea     ecx, [this + TMainForm.ssgCtrl]
+		lea     ecx, [this]TMainForm.ssgCtrl
 		jmp     TMainForm_FormatNameString
 
 		#undef this

@@ -126,6 +126,7 @@ static char __fastcall TSSGCtrl_EnumReadSSR_switch_tmpS(
 	vector   *const FormatVec)
 {
 	string     Half, Trim;
+	if (string_length(tmpS) == 2 && *(LPWORD)string_begin(tmpS) == BSWAP16('!]')) return '\0';
 	char const Char = string_at(TStringDivision_Half_WithoutTokenDtor(&Half, &SSGC->strD, tmpS, ",", 1u, 0, dtNEST | etTRIM), 0);
 	if (Char != ',')
 	{

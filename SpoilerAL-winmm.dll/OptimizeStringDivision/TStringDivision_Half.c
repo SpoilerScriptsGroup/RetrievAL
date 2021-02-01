@@ -13,10 +13,10 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 	IN     unsigned long   Option)
 {
 	LPCBYTE lastFound, p;
-	size_t  srcLength, length;
+	size_t  length;
 
 	lastFound = NULL;
-	if (Src && TokenLength && (srcLength = string_length(Src)) >= TokenLength)
+	if (Src && TokenLength && string_length(Src) >= TokenLength)
 	{
 		LPCBYTE end;
 		size_t  nest;
@@ -31,9 +31,9 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 
 			switch (c = *(prev = p++))
 			{
-			case '\'':
 			case '"':
-				// character literals, string literals
+			case '\'':
+				// string literals, character literals
 				for (comparand = c; p < end; )
 				{
 					switch (c = *(p++))
@@ -43,15 +43,11 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 							continue;
 						break;
 					case '\\':
-						if (p >= end)
-							break;
 						c = *(p++);
 						if (!__intrinsic_isleadbyte(c))
 							continue;
 						/* FALLTHROUGH */
 					case_unsigned_leadbyte:
-						if (p >= end)
-							break;
 						p++;
 						continue;
 					}
@@ -70,45 +66,36 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 					nest--;
 				continue;
 			case '<':
-				// "<#", "#>", "<@", "@>"
-				if (p >= end)
-					break;
+				// "<#", "<@", "#>", "@>"
 				switch (c = *p)
 				{
 				case '#':
 				case '@':
-					if (++p >= end)
-						break;
-					for (comparand = c; ; )
+					for (p++, comparand = c; p < end; )
 					{
 						switch (c = *(p++))
 						{
 						default:
-							if (p >= end)
-								break;
 							if (c != comparand || *p != '>')
 								continue;
 							p++;
 							break;
 						case '\\':
-							if (p >= end)
-								break;
 							if (!(Option & dtESCAPE))
 								continue;
 							c = *(p++);
-							if (p >= end)
-								break;
-							if (!__intrinsic_isleadbyte(c) || ++p < end)
+							if (!__intrinsic_isleadbyte(c))
 								continue;
-							break;
+							/* FALLTHROUGH */
 						case_unsigned_leadbyte:
-							if (p < end && ++p < end)
-								continue;
-							break;
+							p++;
+							continue;
 						}
 						break;
 					}
 					continue;
+				case_unsigned_leadbyte:
+					goto LEADBYTE;
 				default:
 					goto DEFAULT;
 				}
@@ -117,37 +104,47 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 				// escape-sequence
 				if (!(Option & dtESCAPE))
 					continue;
-				if (p >= end)
-					break;
 				c = *(p++);
-				goto CHECK_LEADBYTE;
+				if (!__intrinsic_isleadbyte(c))
+					continue;
+#if MULTIBYTE_TOKEN
+				goto LEADBYTE_INCREMENT;
+			case_unsigned_leadbyte:
+			LEADBYTE:
+				// lead byte
+				if (memcmp(prev, Token, TokenLength) != 0)
+					goto LEADBYTE_INCREMENT;
+				lastFound = prev;
+				if (!nest)
+					goto MATCHED;
+			LEADBYTE_INCREMENT:
+#else
+				/* FALLTHROUGH */
+			case_unsigned_leadbyte:
+			LEADBYTE:
+				// lead byte
+#endif
+				p++;
+				continue;
 			case '!':
 				// "!]"
-				if (p >= end)
-					break;
 				if (*p == ']' && TokenLength == 2 && *(LPWORD)Token == BSWAP16('!]'))
 					goto MATCHED;
 				/* FALLTHROUGH */
 			default:
 			DEFAULT:
-				if ((size_t)(end - prev) < TokenLength || memcmp(prev, Token, TokenLength) != 0)
-					goto CHECK_LEADBYTE;
-				lastFound = prev;
-				if (!nest)
-					goto MATCHED;
-			CHECK_LEADBYTE:
-				if (!__intrinsic_isleadbyte(c))
+				if (memcmp(prev, Token, TokenLength) != 0)
 					continue;
-				if (p >= end)
-					break;
-				p++;
-				continue;
+				lastFound = prev;
+				if (nest)
+					continue;
 			MATCHED:
-				if (Index--)
-					if ((p = prev + TokenLength) < end)
-						continue;
-					else
-						break;
+				if (Index)
+				{
+					Index--;
+					p = prev + TokenLength;
+					continue;
+				}
 				lastFound = prev;
 				goto SUCCESS;
 			}

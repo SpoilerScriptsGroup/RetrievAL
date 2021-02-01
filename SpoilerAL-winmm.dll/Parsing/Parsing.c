@@ -1250,6 +1250,7 @@ LPBYTE lpConstStringRegion      = NULL;
 
 static const size_t Terminator  = 0;
 
+#if 0
 //---------------------------------------------------------------------
 #define AllocMarkup() \
 	(MARKUP *)HeapAlloc(hHeap, 0, 0x10 * sizeof(MARKUP))
@@ -1271,6 +1272,7 @@ static MARKUP * __fastcall ReAllocMarkup(MARKUP **lplpMarkupArray, size_t *lpnNu
 	*lpnNumberOfMarkup = nNumberOfMarkup + 1;
 	return lpMarkupArray + nNumberOfMarkup;
 }
+#endif
 //---------------------------------------------------------------------
 __forceinline static size_t TrimMarkupString(char **pfirst, const char *last)
 {
@@ -1458,8 +1460,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 	LPVOID  lpMem;
 	size_t  nDepth;
 
-	assert(lpSrc != NULL);
-	assert(!__intrinsic_isspace(*lpSrc));
+	assert(("parameter error", lpSrc != NULL));
+	assert(("parameter error", !__intrinsic_isspace(*lpSrc)));
 
 	// check parameters
 	if (!nSrcLength)
@@ -1483,70 +1485,78 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 		size_t nLength;
 		BYTE   bPriority;
 
-		#define APPEND_TAG(tag, length, priority, type)                                         \
-		do                                                                                      \
-		{                                                                                       \
-		    if ((lpMarkup = lpTagArray + nNumberOfTag++) >= lpEndOfMarkup)                      \
-		        goto FAILED1;                                                                   \
-		    lpMarkup->Tag        = tag;                                                         \
-		    lpMarkup->Type       = type;                                                        \
-		    lpMarkup->String     = p;                                                           \
-		    lpMarkup->Length     = (WORD)(length);                                              \
-		    lpMarkup->Priority   = priority;                                                    \
-		    lpMarkup->Depth      = 0;                                                           \
-		    lpMarkup->Param      = NULL;                                                        \
-		    lpMarkup->Next       = NULL;                                                        \
-		    lpMarkup->UnionBlock = 0;                                                           \
+		#define APPEND_TAG(tag, length, priority, type)                                     \
+		do                                                                                  \
+		{                                                                                   \
+		    lpMarkup = lpTagArray + nNumberOfTag++;                                         \
+		    assert(("allocation error", lpMarkup < lpEndOfMarkup));                         \
+		    lpMarkup->Tag        = tag;                                                     \
+		    lpMarkup->Type       = type;                                                    \
+		    lpMarkup->String     = p;                                                       \
+		    lpMarkup->Length     = (WORD)(length);                                          \
+		    lpMarkup->Priority   = priority;                                                \
+		    lpMarkup->Depth      = 0;                                                       \
+		    lpMarkup->Param      = NULL;                                                    \
+		    lpMarkup->Next       = NULL;                                                    \
+		    lpMarkup->UnionBlock = 0;                                                       \
 		} while (0)
 
-		#define APPEND_TAG_WITH_CONTINUE(tag, length, priority, type)                           \
-		if (1)                                                                                  \
-		{                                                                                       \
-		    APPEND_TAG(tag, length, priority, type);                                            \
-		    p += length;                                                                        \
-		    continue;                                                                           \
+		#define APPEND_TAG_WITH_CONTINUE(tag, length, priority, type)                       \
+		if (1)                                                                              \
+		{                                                                                   \
+		    APPEND_TAG(tag, length, priority, type);                                        \
+		    p += length;                                                                    \
+		    continue;                                                                       \
 		} else do { } while (0)
 
-		#define APPEND_FUNCTION_SINGLE_PARAM(tag, length)                                       \
-		if (1)                                                                                  \
-		{                                                                                       \
-		    if (p[length] == '(' || __intrinsic_isspace(p[length]))                             \
-		        nLength = length;                                                               \
-		    else if (p[length] == ':' && p[length + 1] == ':')                                  \
-		        nLength = length + 2;                                                           \
-		    else                                                                                \
-		        break;                                                                          \
-		    bNextIsSeparatedLeft = TRUE;                                                        \
-		    bCorrectTag = TRUE;                                                                 \
-		    APPEND_TAG_WITH_CONTINUE(tag, nLength, PRIORITY_FUNCTION, OS_PUSH | OS_ANTE);       \
+		#define APPEND_FUNCTION_SINGLE_PARAM(tag, length)                                   \
+		if (1)                                                                              \
+		{                                                                                   \
+		    if (p[length] == '(' || __intrinsic_isspace(p[length]))                         \
+		        nLength = length;                                                           \
+		    else if (p[length] == ':' && p[length + 1] == ':')                              \
+		        nLength = length + 2;                                                       \
+		    else                                                                            \
+		        break;                                                                      \
+		    bNextIsSeparatedLeft = TRUE;                                                    \
+		    bCorrectTag = TRUE;                                                             \
+		    APPEND_TAG_WITH_CONTINUE(tag, nLength, PRIORITY_FUNCTION, OS_PUSH | OS_ANTE);   \
 		} else do { } while (0)
 
-		#define APPEND_FUNCTION_MULTI_PARAM(tag, length)                                        \
-		if (1)                                                                                  \
-		{                                                                                       \
-		    if (p[length] != '(' && !__intrinsic_isspace(p[length]))                            \
-		        break;                                                                          \
-		    bNextIsSeparatedLeft = TRUE;                                                        \
-		    bCorrectTag = TRUE;                                                                 \
-		    APPEND_TAG_WITH_CONTINUE(tag, length, PRIORITY_FUNCTION, OS_PUSH | OS_ANTE);        \
+		#define APPEND_FUNCTION_MULTI_PARAM(tag, length)                                    \
+		if (1)                                                                              \
+		{                                                                                   \
+		    if (p[length] != '(' && !__intrinsic_isspace(p[length]))                        \
+		        break;                                                                      \
+		    bNextIsSeparatedLeft = TRUE;                                                    \
+		    bCorrectTag = TRUE;                                                             \
+		    APPEND_TAG_WITH_CONTINUE(tag, length, PRIORITY_FUNCTION, OS_PUSH | OS_ANTE);    \
 		} else do { } while (0)
 
 		/*
-		#define IS_SEPARATED_LEFT(p) (                                                          \
-		    __intrinsic_isascii((p)[0]) &&                                                      \
-		    !__intrinsic_isalnum((p)[0]) &&                                                     \
-		    ((p)[0] != '_' || ((p) != lpSrc && (p)[-1] == '[')) &&                              \
+		#define IS_SEPARATED_LEFT(p) (                                                      \
+		    __intrinsic_isascii((p)[0]) &&                                                  \
+		    !__intrinsic_isalnum((p)[0]) &&                                                 \
+		    ((p)[0] != '_' || ((p) != lpSrc && (p)[-1] == '[')) &&                          \
 		    (p)[0] != '$')
 		*/
 
-		#define IS_SEPARATED_RIGHT(p) (                                                         \
-		    __intrinsic_isascii((p)[0]) &&                                                      \
-		    !__intrinsic_isalnum((p)[0]) &&                                                     \
+		#define IS_SEPARATED_RIGHT(p) (                                                     \
+		    __intrinsic_isascii((p)[0]) &&                                                  \
+		    !__intrinsic_isalnum((p)[0]) &&                                                 \
 		    ((p)[0] != '_' || (p)[1] == ']'))
 
 		bNextIsSeparatedLeft = FALSE;
 		switch (c = *p)
 		{
+		case '\\':
+			memcpy(p, p + 1, end-- - p);
+			if (*p != '\\')
+			{
+				bNextIsSeparatedLeft = bIsSeparatedLeft;
+				continue;
+			}
+			/* FALLTHROUGH */
 		case '\t':
 		case '\n':
 		case '\v':
@@ -1557,7 +1567,6 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 #if !SCOPE_SUPPORT
 		case '@':
 #endif
-		case '\\':
 		case '`':
 			bNextIsSeparatedLeft = TRUE;
 			break;
@@ -1568,8 +1577,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				APPEND_TAG_WITH_CONTINUE(TAG_NE, 2, PRIORITY_NE, OS_PUSH);
 			else if (!nNumberOfTag || (lpTagArray[nNumberOfTag - 1].Tag != TAG_IMPORT_FUNCTION && lpTagArray[nNumberOfTag - 1].Tag != TAG_IMPORT_REFERENCE))
 				APPEND_TAG_WITH_CONTINUE(TAG_NOT, 1, PRIORITY_NOT, OS_PUSH | OS_ANTE);
-			if ((lpMarkup = lpTagArray + nNumberOfTag++) >= lpEndOfMarkup)
-				goto FAILED1;
+			lpMarkup = lpTagArray + nNumberOfTag++;
+			assert(("allocation error", lpMarkup < lpEndOfMarkup));
 			lpMarkup->Tag        = TAG_MODULENAME;
 			lpMarkup->Length     = p - lpTagArray[nNumberOfTag - 2].String - 1;
 			lpMarkup->String     = lpTagArray[nNumberOfTag - 2].String + 2;
@@ -3958,6 +3967,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 #else
 		case_unsigned_leadbyte:
 #endif
+			// lead byte
 			p += 2;
 			continue;
 		}
@@ -3995,8 +4005,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 							if (!match)
 								break;
 						}
-						if ((lpMarkup = lpTagArray + nNumberOfTag++) >= lpEndOfMarkup)
-							goto FAILED1;
+						lpMarkup = lpTagArray + nNumberOfTag++;
+						assert(("allocation error", lpMarkup < lpEndOfMarkup));
 						bNextIsSeparatedLeft = TRUE;
 						bCorrectTag = TRUE;
 						lpMarkup->Tag             = TAG_PLUGIN;
@@ -4027,6 +4037,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 	}
 
 	lpEndOfTag = lpTagArray + nNumberOfTag;
+	nSrcLength = end - lpSrc;
 
 	// add ternary block
 	if (nFirstTernary != -1)
@@ -4112,8 +4123,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				MARKUP *src;
 
 				(LPBYTE)lpBegin -= (size_t)lpTagArray;
-				if (++nNumberOfTag > nSrcLength)
-					goto FAILED1;
+				nNumberOfTag++;
+				assert(("allocation error", nNumberOfTag <= nSrcLength));
 				size = (size_t)lpEndOfTag - (size_t)lpBegin;
 				(LPBYTE)lpBegin += (size_t)lpTagArray;
 				src = lpBegin++;
@@ -4122,8 +4133,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			}
 			else
 			{
-				if (++nNumberOfTag > nSrcLength)
-					goto FAILED1;
+				nNumberOfTag++;
+				assert(("allocation error", nNumberOfTag <= nSrcLength));
 				memmove(lpTagArray + 1, lpTagArray, (size_t)lpEndOfTag);
 				lpBegin = lpTagArray;
 				lpBegin->String = lpSrc;
@@ -4140,16 +4151,16 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 			{
 				size_t size;
 
-				if (++nNumberOfTag > nSrcLength)
-					goto FAILED1;
+				nNumberOfTag++;
+				assert(("allocation error", nNumberOfTag <= nSrcLength));
 				size = (size_t)lpEndOfTag - (size_t)lpEnd;
 				(LPBYTE)lpEnd += (size_t)(lpTagArray + 1);
 				memmove(lpEnd + 1, lpEnd, size);
 			}
 			else
 			{
-				if ((lpEnd = lpTagArray + nNumberOfTag++) >= lpEndOfMarkup)
-					goto FAILED1;
+				lpEnd = lpTagArray + nNumberOfTag++;
+				assert(("allocation error", lpEnd < lpEndOfMarkup));
 				lpEnd->String = lpSrc + nSrcLength;
 			}
 			(LPBYTE)lpTag1     += (size_t)(lpTagArray + 1);
@@ -5417,23 +5428,29 @@ static unsigned char * __fastcall RemoveComments(unsigned char *first, unsigned 
 		{
 		case '"':
 		case '\'':
-			// character literals, string literals
-			while ((c2 = *(p1++)) != c1 && p1 < last)
+			// string literals, character literals
+			do
 			{
-				if (!__intrinsic_isleadbyte(c2))
+				switch (c2 = *(p1++))
 				{
-					if (c2 != '\\')
+				default:
+					if (c2 != c1)
 						continue;
-					c2 = *(p1++);
+					break;
+				case '\\':
 					if (p1 >= last)
 						break;
 					if (!__intrinsic_isleadbyte(c2))
 						continue;
+					/* FALLTHROUGH */
+				case_unsigned_leadbyte:
+					if (p1 >= last)
+						break;
+					p1++;
+					continue;
 				}
-				if (++p1 >= last)
-					break;
-			}
-			break;
+				break;
+			} while (p1 < last);
 		case '/':
 			switch (*p1)
 			{
@@ -5505,6 +5522,7 @@ static unsigned char * __fastcall RemoveComments(unsigned char *first, unsigned 
 #else
 		case_unsigned_leadbyte:
 #endif
+			// lead byte
 			p1++;
 			break;
 		}

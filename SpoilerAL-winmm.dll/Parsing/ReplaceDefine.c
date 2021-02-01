@@ -39,7 +39,7 @@ size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LP
 		do
 			c = *(++p);
 		while (__intrinsic_isspace(c));
-	if (*p == 'L' && *(++p) == '{')
+	if (*p == 'L' && *(++p) == '{' && !__intrinsic_isspace(p[1]))
 		goto INSERT_SPACE;
 #endif
 	while (c = *p)
@@ -69,7 +69,7 @@ size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LP
 					} while (__intrinsic_isspace(c));
 				if (c != 'L')
 					continue;
-				if (*(++p) != '{')
+				if (*(++p) != '{' || __intrinsic_isspace(p[1]))
 					continue;
 			INSERT_SPACE:
 				if (++length == capacity)

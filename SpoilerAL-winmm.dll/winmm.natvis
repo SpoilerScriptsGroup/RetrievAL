@@ -19,6 +19,7 @@
 	<Type Name="_String_base">
 		<DisplayString Condition="_M_end_of_storage == 0">{SubjectStringTable_array[sstIndex]}</DisplayString>
 		<DisplayString>{_M_finish - _M_start} {_M_start, [_M_finish - _M_start]s}</DisplayString>
+		<StringView>_M_start, [_M_finish - _M_start]</StringView>
 	</Type>
 	<Type Name="_Vector_string">
 		<Expand>

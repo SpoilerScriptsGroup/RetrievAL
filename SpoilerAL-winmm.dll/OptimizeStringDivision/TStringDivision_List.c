@@ -35,8 +35,12 @@ unsigned long __cdecl TStringDivision_List(
 			switch (c = *(prev = p++))
 			{
 			case '\'':
+				// "'+'"
+				if (!nest && tokenLength == 3 && (*(LPDWORD)prev & 0x00FFFFFF) == *(LPDWORD)token)
+					goto MATCHED;
+				/* FALLTHROUGH */
 			case '"':
-				// character literals, string literals
+				// string literals, character literals
 				for (comparand = c; p < end; )
 				{
 					switch (c = *(p++))
@@ -46,15 +50,11 @@ unsigned long __cdecl TStringDivision_List(
 							continue;
 						break;
 					case '\\':
-						if (p >= end)
-							break;
 						c = *(p++);
 						if (!__intrinsic_isleadbyte(c))
 							continue;
 						/* FALLTHROUGH */
 					case_unsigned_leadbyte:
-						if (p >= end)
-							break;
 						p++;
 						continue;
 					}
@@ -76,45 +76,36 @@ unsigned long __cdecl TStringDivision_List(
 					nest--;
 				continue;
 			case '<':
-				// "<#", "#>", "<@", "@>"
-				if (p >= end)
-					break;
+				// "<#", "<@", "#>", "@>"
 				switch (c = *p)
 				{
 				case '#':
 				case '@':
-					if (++p >= end)
-						break;
-					for (comparand = c; ; )
+					for (p++, comparand = c; p < end; )
 					{
 						switch (c = *(p++))
 						{
 						default:
-							if (p >= end)
-								break;
 							if (c != comparand || *p != '>')
 								continue;
 							p++;
 							break;
 						case '\\':
-							if (p >= end)
-								break;
 							if (!(Option & dtESCAPE))
 								continue;
 							c = *(p++);
-							if (p >= end)
-								break;
-							if (!__intrinsic_isleadbyte(c) || ++p < end)
+							if (!__intrinsic_isleadbyte(c))
 								continue;
-							break;
+							/* FALLTHROUGH */
 						case_unsigned_leadbyte:
-							if (p < end && ++p < end)
-								continue;
-							break;
+							p++;
+							continue;
 						}
 						break;
 					}
 					continue;
+				case_unsigned_leadbyte:
+					goto LEADBYTE;
 				default:
 					goto DEFAULT;
 				}
@@ -123,28 +114,34 @@ unsigned long __cdecl TStringDivision_List(
 				// escape-sequence
 				if (!(Option & dtESCAPE))
 					continue;
-				if (p >= end)
-					break;
 				c = *(p++);
-				goto CHECK_LEADBYTE;
+				if (!__intrinsic_isleadbyte(c))
+					continue;
+#if MULTIBYTE_TOKEN
+				goto LEADBYTE_INCREMENT;
+			case_unsigned_leadbyte:
+			LEADBYTE:
+				// lead byte
+				if (!nest && memcmp(prev, token, tokenLength) == 0)
+					goto MATCHED;
+			LEADBYTE_INCREMENT:
+#else
+				/* FALLTHROUGH */
+			case_unsigned_leadbyte:
+			LEADBYTE:
+				// lead byte
+#endif
+				p++;
+				continue;
 			case '[':
 				// "[!"
-				if (p >= end)
-					break;
 				if (*p == '!' && tokenLength == 2 && *(LPWORD)token == BSWAP16('[!'))
 					goto MATCHED;
 				/* FALLTHROUGH */
 			default:
 			DEFAULT:
-				if (!nest && (size_t)(end - prev) >= tokenLength && memcmp(prev, token, tokenLength) == 0)
-					goto MATCHED;
-			CHECK_LEADBYTE:
-				if (!__intrinsic_isleadbyte(c))
+				if (nest || memcmp(prev, token, tokenLength) != 0)
 					continue;
-				if (p >= end)
-					break;
-				p++;
-				continue;
 			MATCHED:
 				vector_string_push_back_range(List, split, prev);
 				elem = string_end(List) - 1;

@@ -5449,6 +5449,7 @@ static unsigned char * __fastcall RemoveComments(unsigned char *first, unsigned 
 				}
 				break;
 			} while (p1 < last);
+			break;
 		case '/':
 			switch (*p1)
 			{
@@ -5460,21 +5461,23 @@ static unsigned char * __fastcall RemoveComments(unsigned char *first, unsigned 
 				for (; ; )
 				{
 					c1 = *(p2++);
-					if (p2 < last)
+					if (p2 >= last)
+						goto TERMINATE;
+					switch (c1)
 					{
-						if (c1 != '*' || *p2 != '/')
-						{
-							if (!__intrinsic_isleadbyte(c1) || ++p2 < last)
-								continue;
-						}
-						else
-						{
-							p2++;
-							memcpy(p1, p2, (last -= p2 - p1) - p1 + 1);
-							break;
-						}
+					default:
+						continue;
+					case '*':
+						if (*p2 != '/')
+							continue;
+						p2++;
+						memcpy(p1, p2, (last -= p2 - p1) - p1 + 1);
+						break;
+					case_unsigned_leadbyte:
+						if (++p2 < last)
+							continue;
+						goto TERMINATE;
 					}
-					*(last = p1) = '\0';
 					break;
 				}
 				break;
@@ -5486,27 +5489,23 @@ static unsigned char * __fastcall RemoveComments(unsigned char *first, unsigned 
 				for (; ; )
 				{
 					c1 = *(p2++);
-					if (p2 < last)
+					if (p2 >= last)
+						goto TERMINATE;
+					switch (c1)
 					{
-						switch (c1)
-						{
-						default:
-							if (!__intrinsic_isleadbyte(c1) || ++p2 < last)
-								continue;
-							*(last = p1) = '\0';
-							break;
-						case '\r':
-							if (*p2 == '\n')
-								p2++;
-							/* FALLTHROUGH */
-						case '\n':
-							memcpy(p1, p2, (last -= p2 - p1) - p1 + 1);
-							break;
-						}
-					}
-					else
-					{
-						*(last = p1) = '\0';
+					default:
+						continue;
+					case '\r':
+						if (*p2 == '\n')
+							p2++;
+						/* FALLTHROUGH */
+					case '\n':
+						memcpy(p1, p2, (last -= p2 - p1) - p1 + 1);
+						break;
+					case_unsigned_leadbyte:
+						if (++p2 < last)
+							continue;
+						goto TERMINATE;
 					}
 					break;
 				}
@@ -5525,6 +5524,10 @@ static unsigned char * __fastcall RemoveComments(unsigned char *first, unsigned 
 			break;
 		}
 	}
+	return (unsigned char *)last;
+
+TERMINATE:
+	*(last = p1) = '\0';
 	return (unsigned char *)last;
 }
 //---------------------------------------------------------------------

@@ -166,7 +166,7 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 	HANDLE  hFile;
 	DWORD   dwFileSize;
 	HANDLE  hMap;
-	LPCBYTE lpMapViewOfFile, p, end, begin, prev;
+	LPCBYTE lpMapViewOfFile, begin, end, p, prev;
 	string  *s;
 
 	assert((Mode & MODE_END_LINE) == 0);
@@ -221,16 +221,13 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 	end = (p = lpMapViewOfFile) + dwFileSize;
 	do
 	{
-		switch (*(prev = p++))
+		switch (*(p++))
 		{
 		default:
 			continue;
 		case '\r':
-			if (p < end && *p == '\n')
-				p++;
-			/* FALLTHROUGH */
 		case '\n':
-			CheckSSGVersion(lpMapViewOfFile, prev);
+			CheckSSGVersion(lpMapViewOfFile, p - 1);
 			break;
 		case_unsigned_leadbyte:
 			if (p >= end)

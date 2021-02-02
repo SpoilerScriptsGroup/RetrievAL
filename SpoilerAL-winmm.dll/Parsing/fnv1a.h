@@ -46,24 +46,24 @@ do                                                              \
 #define FNV1A32COMBINE(result, data, size, hash) FNV1A_MACRO(uint32_t, result, data, size, hash, FNV1A32_PRIME)
 #define FNV1A64COMBINE(result, data, size, hash) FNV1A_MACRO(uint64_t, result, data, size, hash, FNV1A64_PRIME)
 
-__forceinline uint32_t inline_fnv1a32(const void *data, size_t size)
+static __forceinline uint32_t inline_fnv1a32(const void *data, size_t size)
 {
 	uint32_t hash;
 	FNV1A32(hash, data, size);
 	return hash;
 }
-__forceinline uint64_t inline_fnv1a64(const void *data, size_t size)
+static __forceinline uint64_t inline_fnv1a64(const void *data, size_t size)
 {
 	uint64_t hash;
 	FNV1A64(hash, data, size);
 	return hash;
 }
-__forceinline uint32_t inline_fnv1a32combine(const void *data, size_t size, uint32_t hash)
+static __forceinline uint32_t inline_fnv1a32combine(const void *data, size_t size, uint32_t hash)
 {
 	FNV1A32COMBINE(hash, data, size, hash);
 	return hash;
 }
-__forceinline uint64_t inline_fnv1a64combine(const void *data, size_t size, uint64_t hash)
+static __forceinline uint64_t inline_fnv1a64combine(const void *data, size_t size, uint64_t hash)
 {
 	FNV1A64COMBINE(hash, data, size, hash);
 	return hash;

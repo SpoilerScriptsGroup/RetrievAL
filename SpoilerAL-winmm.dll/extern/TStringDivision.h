@@ -139,7 +139,7 @@ EXTERN_C bcb6_std_string * __cdecl TStringDivision_Trim(
 EXTERN_C char * __msfastcall TrimLeftSpace(const char *first);
 EXTERN_C char * __msfastcall TrimRightSpace(const char *first, const char *last);
 EXTERN_C unsigned __int64 __msreturn __msfastcall __reg64return_TrimSpace(const char *first, const char *last);
-__forceinline static char *TrimSpace(char **pfirst, const char *last)
+static __forceinline char *TrimSpace(char **pfirst, const char *last)
 {
 	unsigned __int64 result;
 
@@ -150,7 +150,7 @@ __forceinline static char *TrimSpace(char **pfirst, const char *last)
 EXTERN_C char * __msfastcall TrimLeftBlank(const char *first);
 EXTERN_C char * __msfastcall TrimRightBlank(const char *first, const char *last);
 EXTERN_C unsigned __int64 __msreturn __msfastcall __reg64return_TrimBlank(const char *first, const char *last);
-__forceinline static char *TrimBlank(char **pfirst, const char *last)
+static __forceinline char *TrimBlank(char **pfirst, const char *last)
 {
 	unsigned __int64 result;
 

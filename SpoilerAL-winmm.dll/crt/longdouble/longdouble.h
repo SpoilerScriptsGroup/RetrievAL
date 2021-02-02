@@ -570,7 +570,7 @@ typedef struct _longdouble {
 #pragma pack(pop)
 
 #ifdef _M_IX86
-__forceinline longdouble _fld_r8(const double x)
+static __forceinline longdouble _fld_r8(const double x)
 {
 	longdouble r;
 	__asm
@@ -580,7 +580,7 @@ __forceinline longdouble _fld_r8(const double x)
 	}
 	return r;
 }
-__forceinline longdouble _fld_i2(const int16_t x)
+static __forceinline longdouble _fld_i2(const int16_t x)
 {
 	longdouble r;
 	__asm
@@ -590,7 +590,7 @@ __forceinline longdouble _fld_i2(const int16_t x)
 	}
 	return r;
 }
-__forceinline longdouble _fld_i4(const int32_t x)
+static __forceinline longdouble _fld_i4(const int32_t x)
 {
 	longdouble r;
 	__asm
@@ -600,7 +600,7 @@ __forceinline longdouble _fld_i4(const int32_t x)
 	}
 	return r;
 }
-__forceinline longdouble _fld_i8(const int64_t x)
+static __forceinline longdouble _fld_i8(const int64_t x)
 {
 	longdouble r;
 	__asm
@@ -610,7 +610,7 @@ __forceinline longdouble _fld_i8(const int64_t x)
 	}
 	return r;
 }
-__forceinline longdouble _fld_u8(const uint64_t x)
+static __forceinline longdouble _fld_u8(const uint64_t x)
 {
 	longdouble r;
 	__asm
@@ -631,14 +631,14 @@ __forceinline longdouble _fld_u8(const uint64_t x)
 	}
 	return r;
 }
-__forceinline double _fst_r8(const longdouble x)
+static __forceinline double _fst_r8(const longdouble x)
 {
 	__asm
 	{
 		fld     tbyte ptr [x]
 	}
 }
-__forceinline int16_t _fst_i2(const longdouble x)
+static __forceinline int16_t _fst_i2(const longdouble x)
 {
 	__asm
 	{
@@ -647,7 +647,7 @@ __forceinline int16_t _fst_i2(const longdouble x)
 		mov     ax, word ptr [esp - 4]
 	}
 }
-__forceinline int32_t _fst_i4(const longdouble x)
+static __forceinline int32_t _fst_i4(const longdouble x)
 {
 	__asm
 	{
@@ -656,7 +656,7 @@ __forceinline int32_t _fst_i4(const longdouble x)
 		mov     eax, dword ptr [esp - 4]
 	}
 }
-__forceinline int64_t _fst_i8(const longdouble x)
+static __forceinline int64_t _fst_i8(const longdouble x)
 {
 	__asm
 	{
@@ -666,7 +666,7 @@ __forceinline int64_t _fst_i8(const longdouble x)
 		mov     edx, dword ptr [esp - 4]
 	}
 }
-__forceinline uint64_t _fst_u8(const longdouble x)
+static __forceinline uint64_t _fst_u8(const longdouble x)
 {
 	__asm
 	{
@@ -700,11 +700,11 @@ longdouble _##instruction(const longdouble x, const longdouble y) \
     }                                                             \
     return x;                                                     \
 }
-__forceinline __LONGDOUBLE_PROC1(fadd)
-__forceinline __LONGDOUBLE_PROC1(fsub)
-__forceinline __LONGDOUBLE_PROC1(fmul)
-__forceinline __LONGDOUBLE_PROC1(fdiv)
-__forceinline longdouble _fmod(const longdouble x, const longdouble y)
+static __forceinline __LONGDOUBLE_PROC1(fadd)
+static __forceinline __LONGDOUBLE_PROC1(fsub)
+static __forceinline __LONGDOUBLE_PROC1(fmul)
+static __forceinline __LONGDOUBLE_PROC1(fdiv)
+static __forceinline longdouble _fmod(const longdouble x, const longdouble y)
 {
 	__asm
 	{
@@ -720,7 +720,7 @@ __forceinline longdouble _fmod(const longdouble x, const longdouble y)
 	}
 	return x;
 }
-__forceinline longdouble _finc(const longdouble x)
+static __forceinline longdouble _finc(const longdouble x)
 {
 	__asm
 	{
@@ -731,7 +731,7 @@ __forceinline longdouble _finc(const longdouble x)
 	}
 	return x;
 }
-__forceinline longdouble _fdec(const longdouble x)
+static __forceinline longdouble _fdec(const longdouble x)
 {
 	__asm
 	{
@@ -753,11 +753,11 @@ longdouble _##instruction(const longdouble x) \
     }                                         \
     return x;                                 \
 }
-__forceinline __LONGDOUBLE_PROC2(fabs)
-__forceinline __LONGDOUBLE_PROC2(fchs)
-__forceinline __LONGDOUBLE_PROC2(fsqrt)
-__forceinline __LONGDOUBLE_PROC2(frndint)
-__forceinline longdouble _fxtract(const longdouble x, const longdouble *expptr)
+static __forceinline __LONGDOUBLE_PROC2(fabs)
+static __forceinline __LONGDOUBLE_PROC2(fchs)
+static __forceinline __LONGDOUBLE_PROC2(fsqrt)
+static __forceinline __LONGDOUBLE_PROC2(frndint)
+static __forceinline longdouble _fxtract(const longdouble x, const longdouble *expptr)
 {
 	__asm
 	{
@@ -769,7 +769,7 @@ __forceinline longdouble _fxtract(const longdouble x, const longdouble *expptr)
 	}
 	return x;
 }
-__forceinline uint16_t _fcom(const longdouble x, const longdouble y)
+static __forceinline uint16_t _fcom(const longdouble x, const longdouble y)
 {
 	__asm
 	{
@@ -780,7 +780,7 @@ __forceinline uint16_t _fcom(const longdouble x, const longdouble y)
 		and     ax, X87_SW_C0 | X87_SW_C2 | X87_SW_C3
 	}
 }
-__forceinline uint16_t _fcom_r8(const longdouble x, const double y)
+static __forceinline uint16_t _fcom_r8(const longdouble x, const double y)
 {
 	__asm
 	{
@@ -791,7 +791,7 @@ __forceinline uint16_t _fcom_r8(const longdouble x, const double y)
 		and     ax, X87_SW_C0 | X87_SW_C2 | X87_SW_C3
 	}
 }
-__forceinline uint16_t _fcom_i2(const longdouble x, const int16_t y)
+static __forceinline uint16_t _fcom_i2(const longdouble x, const int16_t y)
 {
 	__asm
 	{
@@ -802,7 +802,7 @@ __forceinline uint16_t _fcom_i2(const longdouble x, const int16_t y)
 		and     ax, X87_SW_C0 | X87_SW_C2 | X87_SW_C3
 	}
 }
-__forceinline uint16_t _fcom_i4(const longdouble x, const int32_t y)
+static __forceinline uint16_t _fcom_i4(const longdouble x, const int32_t y)
 {
 	__asm
 	{
@@ -813,7 +813,7 @@ __forceinline uint16_t _fcom_i4(const longdouble x, const int32_t y)
 		and     ax, X87_SW_C0 | X87_SW_C2 | X87_SW_C3
 	}
 }
-__forceinline uint16_t _fcom_i8(const longdouble x, const int64_t y)
+static __forceinline uint16_t _fcom_i8(const longdouble x, const int64_t y)
 {
 	__asm
 	{
@@ -824,7 +824,7 @@ __forceinline uint16_t _fcom_i8(const longdouble x, const int64_t y)
 		and     ax, X87_SW_C0 | X87_SW_C2 | X87_SW_C3
 	}
 }
-__forceinline uint16_t _fcom_u8(const longdouble x, const uint64_t y)
+static __forceinline uint16_t _fcom_u8(const longdouble x, const uint64_t y)
 {
 	__asm
 	{
@@ -847,7 +847,7 @@ __forceinline uint16_t _fcom_u8(const longdouble x, const uint64_t y)
 		and     ax, X87_SW_C0 | X87_SW_C2 | X87_SW_C3
 	}
 }
-__forceinline uint16_t _ftst(const longdouble x)
+static __forceinline uint16_t _ftst(const longdouble x)
 {
 	__asm
 	{
@@ -858,7 +858,7 @@ __forceinline uint16_t _ftst(const longdouble x)
 		and     ax, X87_SW_C0 | X87_SW_C2 | X87_SW_C3
 	}
 }
-__forceinline uint16_t _fxam(const longdouble x)
+static __forceinline uint16_t _fxam(const longdouble x)
 {
 	__asm
 	{
@@ -869,9 +869,9 @@ __forceinline uint16_t _fxam(const longdouble x)
 		and     ax, X87_SW_C0 | X87_SW_C2 | X87_SW_C3
 	}
 }
-__forceinline __LONGDOUBLE_PROC2(fsin)
-__forceinline __LONGDOUBLE_PROC2(fcos)
-__forceinline longdouble _fptan(const longdouble x)
+static __forceinline __LONGDOUBLE_PROC2(fsin)
+static __forceinline __LONGDOUBLE_PROC2(fcos)
+static __forceinline longdouble _fptan(const longdouble x)
 {
 	__asm
 	{
@@ -882,7 +882,7 @@ __forceinline longdouble _fptan(const longdouble x)
 	}
 	return x;
 }
-__forceinline __LONGDOUBLE_PROC1(fpatan)
+static __forceinline __LONGDOUBLE_PROC1(fpatan)
 #define __LONGDOUBLE_PROC3(instruction) \
 longdouble _##instruction()             \
 {                                       \
@@ -894,13 +894,13 @@ longdouble _##instruction()             \
     }                                   \
     return x;                           \
 }
-__forceinline __LONGDOUBLE_PROC3(fld1)
-__forceinline __LONGDOUBLE_PROC3(fldl2t)
-__forceinline __LONGDOUBLE_PROC3(fldl2e)
-__forceinline __LONGDOUBLE_PROC3(fldpi)
-__forceinline __LONGDOUBLE_PROC3(fldlg2)
-__forceinline __LONGDOUBLE_PROC3(fldln2)
-__forceinline __LONGDOUBLE_PROC3(fldz)
+static __forceinline __LONGDOUBLE_PROC3(fld1)
+static __forceinline __LONGDOUBLE_PROC3(fldl2t)
+static __forceinline __LONGDOUBLE_PROC3(fldl2e)
+static __forceinline __LONGDOUBLE_PROC3(fldpi)
+static __forceinline __LONGDOUBLE_PROC3(fldlg2)
+static __forceinline __LONGDOUBLE_PROC3(fldln2)
+static __forceinline __LONGDOUBLE_PROC3(fldz)
 #define __LONGDOUBLE_PROC4(instruction)                           \
 longdouble _##instruction(const longdouble x, const longdouble y) \
 {                                                                 \
@@ -913,10 +913,10 @@ longdouble _##instruction(const longdouble x, const longdouble y) \
     }                                                             \
     return x;                                                     \
 }
-__forceinline __LONGDOUBLE_PROC4(fyl2x)
-__forceinline __LONGDOUBLE_PROC4(fyl2xp1)
-__forceinline __LONGDOUBLE_PROC2(f2xm1)
-__forceinline longdouble _fscale(const longdouble x, const longdouble exp)
+static __forceinline __LONGDOUBLE_PROC4(fyl2x)
+static __forceinline __LONGDOUBLE_PROC4(fyl2xp1)
+static __forceinline __LONGDOUBLE_PROC2(f2xm1)
+static __forceinline longdouble _fscale(const longdouble x, const longdouble exp)
 {
 	__asm
 	{
@@ -928,7 +928,7 @@ __forceinline longdouble _fscale(const longdouble x, const longdouble exp)
 	}
 	return x;
 }
-__forceinline longdouble __ldexp(const longdouble x, const int exp)
+static __forceinline longdouble __ldexp(const longdouble x, const int exp)
 {
 	__asm
 	{
@@ -940,21 +940,21 @@ __forceinline longdouble __ldexp(const longdouble x, const int exp)
 	}
 	return x;
 }
-__forceinline void _fclex()
+static __forceinline void _fclex()
 {
 	__asm
 	{
 		fclex
 	}
 }
-__forceinline void _fldcw(const uint16_t cw)
+static __forceinline void _fldcw(const uint16_t cw)
 {
 	__asm
 	{
 		fldcw   word ptr [cw]
 	}
 }
-__forceinline uint16_t _fstcw()
+static __forceinline uint16_t _fstcw()
 {
 	__asm
 	{
@@ -968,31 +968,31 @@ __forceinline uint16_t _fstcw()
 #undef __LONGDOUBLE_PROC4
 #endif
 
-__forceinline longdouble _fld_r4(const float x)
+static __forceinline longdouble _fld_r4(const float x)
 {
 	return _fld_r8(x);
 }
-__forceinline longdouble _fld_i1(const int8_t x)
+static __forceinline longdouble _fld_i1(const int8_t x)
 {
 	return _fld_i2(x);
 }
-__forceinline longdouble _fld_u1(const uint8_t x)
+static __forceinline longdouble _fld_u1(const uint8_t x)
 {
 	return _fld_i2(x);
 }
-__forceinline longdouble _fld_u2(const uint16_t x)
+static __forceinline longdouble _fld_u2(const uint16_t x)
 {
 	return _fld_i4(x);
 }
-__forceinline longdouble _fld_u4(const uint32_t x)
+static __forceinline longdouble _fld_u4(const uint32_t x)
 {
 	return _fld_i8(x);
 }
-__forceinline float _fst_r4(const longdouble x)
+static __forceinline float _fst_r4(const longdouble x)
 {
 	return (float)_fst_r8(x);
 }
-__forceinline int8_t _fst_i1(const longdouble x)
+static __forceinline int8_t _fst_i1(const longdouble x)
 {
 	int16_t r = _fst_i2(x);
 	if (r > INT8_MAX)
@@ -1001,7 +1001,7 @@ __forceinline int8_t _fst_i1(const longdouble x)
 		return INT8_MIN;
 	return (int8_t)r;
 }
-__forceinline uint8_t _fst_u1(const longdouble x)
+static __forceinline uint8_t _fst_u1(const longdouble x)
 {
 	int16_t r = _fst_i2(x);
 	if (r > UINT8_MAX)
@@ -1010,7 +1010,7 @@ __forceinline uint8_t _fst_u1(const longdouble x)
 		return (uint8_t)INT8_MIN;
 	return (uint8_t)r;
 }
-__forceinline uint16_t _fst_u2(const longdouble x)
+static __forceinline uint16_t _fst_u2(const longdouble x)
 {
 	int32_t r = _fst_i4(x);
 	if (r > UINT16_MAX)
@@ -1019,7 +1019,7 @@ __forceinline uint16_t _fst_u2(const longdouble x)
 		return (uint16_t)INT16_MIN;
 	return (uint16_t)r;
 }
-__forceinline uint32_t _fst_u4(const longdouble x)
+static __forceinline uint32_t _fst_u4(const longdouble x)
 {
 	int64_t r = _fst_i8(x);
 	if (r > UINT32_MAX)
@@ -1028,23 +1028,23 @@ __forceinline uint32_t _fst_u4(const longdouble x)
 		return (uint32_t)INT32_MIN;
 	return (uint32_t)r;
 }
-__forceinline uint16_t _fcom_r4(const longdouble x, const float y)
+static __forceinline uint16_t _fcom_r4(const longdouble x, const float y)
 {
 	return _fcom_r8(x, y);
 }
-__forceinline uint16_t _fcom_i1(const longdouble x, const int8_t y)
+static __forceinline uint16_t _fcom_i1(const longdouble x, const int8_t y)
 {
 	return _fcom_i2(x, y);
 }
-__forceinline uint16_t _fcom_u1(const longdouble x, const uint8_t y)
+static __forceinline uint16_t _fcom_u1(const longdouble x, const uint8_t y)
 {
 	return _fcom_i2(x, y);
 }
-__forceinline uint16_t _fcom_u2(const longdouble x, const uint16_t y)
+static __forceinline uint16_t _fcom_u2(const longdouble x, const uint16_t y)
 {
 	return _fcom_i4(x, y);
 }
-__forceinline uint16_t _fcom_u4(const longdouble x, const uint32_t y)
+static __forceinline uint16_t _fcom_u4(const longdouble x, const uint32_t y)
 {
 	return _fcom_i8(x, y);
 }

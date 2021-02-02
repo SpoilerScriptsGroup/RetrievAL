@@ -33,7 +33,7 @@ typedef unsigned __int64 uint64_t;
 // Internal functions.
 //
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-__forceinline static int internal_signbit(const double *x)
+static __forceinline int internal_signbit(const double *x)
 {
 	return *(int64_t *)x < 0;
 }
@@ -151,7 +151,7 @@ errno_t __fastcall fltintrn_fp_strflt_to_string(
 // conditions is true:  [1] the mantissa buffer is exhausted, [2] sufficient
 // digits have been generated for a %f specifier with the requested precision,
 // or [3] all remaining digits are known to be zero.
-__forceinline static void convert_to_fos_high_precision(
+static __forceinline void convert_to_fos_high_precision(
 	const double   *value,
 	const uint32_t precision,
 	int            *exponent,
@@ -402,7 +402,7 @@ void __fastcall fltintrn_fltout(
 // If distance is negative, the string is shifted to the left.
 // The C String pointed to by string and all shifting operations must be
 // contained within buffer_base or buffer_count.
-__forceinline static void shift_bytes(
+static __forceinline void shift_bytes(
 	char         *buffer_base,
 	const size_t buffer_count,
 	char         *string,
@@ -420,7 +420,7 @@ __forceinline static void shift_bytes(
 // NaN and Infinity Formatting
 //
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-__forceinline static errno_t fp_format_nan_or_infinity(
+static __forceinline errno_t fp_format_nan_or_infinity(
 	const uint32_t classification,
 	const bool     is_negative,
 	char           *result_buffer,
@@ -509,7 +509,7 @@ __forceinline static errno_t fp_format_nan_or_infinity(
 #if USE_PRINTF
 static errno_t __fastcall fp_format_e_internal(
 #else
-__forceinline static errno_t fp_format_e_internal(
+static __forceinline errno_t fp_format_e_internal(
 #endif
 	char               *result_buffer,
 	const size_t       result_buffer_count,
@@ -683,7 +683,7 @@ static errno_t __fastcall fp_format_e(
 // be 'precision' hex digits following the decimal point.  If the precision is
 // less than or equal to zero, no decimal point will appear.  If 'capitals' is
 // true, then the number will appear as [-]0xH.HHHHP(+/-)d.
-__forceinline static errno_t fp_format_a(
+static __forceinline errno_t fp_format_a(
 	const double       *value,
 	char               *result_buffer,
 	const size_t       result_buffer_count,
@@ -909,7 +909,7 @@ __forceinline static errno_t fp_format_a(
 #if USE_PRINTF
 static errno_t __fastcall fp_format_f_internal(
 #else
-__forceinline static errno_t fp_format_f_internal(
+static __forceinline errno_t fp_format_f_internal(
 #endif
 	char           *buffer,
 	const size_t   buffer_count,
@@ -980,7 +980,7 @@ __forceinline static errno_t fp_format_f_internal(
 	return 0;
 }
 
-__forceinline static errno_t fp_format_f(
+static __forceinline errno_t fp_format_f(
 	const double   *value,
 	char           *result_buffer,
 	const size_t   result_buffer_count,
@@ -1021,7 +1021,7 @@ __forceinline static errno_t fp_format_f(
 // than 'precision', otherwise %f will be used.  The 'precision' always specifies
 // the number of digits following the decimal point.  The low order digit is
 // appropriately rounded.
-__forceinline static errno_t fp_format_g(
+static __forceinline errno_t fp_format_g(
 	const double       *value,
 	char               *result_buffer,
 	const size_t       result_buffer_count,
@@ -1182,4 +1182,3 @@ errno_t __fastcall fltintrn_fp_format(
 	}
 #endif
 }
-

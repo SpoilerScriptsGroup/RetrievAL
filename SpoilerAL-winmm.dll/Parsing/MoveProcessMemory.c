@@ -12,47 +12,7 @@ DWORD __stdcall GetProcessId(IN HANDLE Process);
 #pragma function(memcpy, memmove)
 #endif
 
-static NTSTATUS __stdcall InternalMoveProcessMemory(
-	IN          BOOL    bHandleOverlapRegions,
-	IN OPTIONAL HANDLE  hDestProcess,
-	IN          LPVOID  lpDest,
-	IN OPTIONAL HANDLE  hSrcProcess,
-	IN          LPCVOID lpSrc,
-	IN          size_t  nSize);
-
-__declspec(naked) NTSTATUS __stdcall CopyProcessMemory(
-	IN OPTIONAL HANDLE  hDestProcess,
-	IN          LPVOID  lpDest,
-	IN OPTIONAL HANDLE  hSrcProcess,
-	IN          LPCVOID lpSrc,
-	IN          size_t  nSize)
-{
-	__asm
-	{
-		pop     eax
-		push    FALSE
-		push    eax
-		jmp     InternalMoveProcessMemory
-	}
-}
-
-__declspec(naked) NTSTATUS __stdcall MoveProcessMemory(
-	IN OPTIONAL HANDLE  hDestProcess,
-	IN          LPVOID  lpDest,
-	IN OPTIONAL HANDLE  hSrcProcess,
-	IN          LPCVOID lpSrc,
-	IN          size_t  nSize)
-{
-	__asm
-	{
-		pop     eax
-		push    TRUE
-		push    eax
-		jmp     InternalMoveProcessMemory
-	}
-}
-
-static NTSTATUS __stdcall InternalMoveProcessMemory(
+NTSTATUS __stdcall InternalMoveProcessMemory(
 	IN          BOOL    bHandleOverlapRegions,
 	IN OPTIONAL HANDLE  hDestProcess,
 	IN          LPVOID  lpDest,

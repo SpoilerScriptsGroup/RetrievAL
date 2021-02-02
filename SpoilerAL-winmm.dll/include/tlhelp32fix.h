@@ -26,11 +26,11 @@ typedef PROCESSENTRY32A * LPPROCESSENTRY32A;
 #ifdef _UNICODE
 #undef Process32First
 #undef Process32Next
-__forceinline BOOL Process32FirstA(HANDLE hSnapshot, LPPROCESSENTRY32A lppe)
+static __forceinline BOOL Process32FirstA(HANDLE hSnapshot, LPPROCESSENTRY32A lppe)
 {
 	return Process32First(hSnapshot, lppe);
 }
-__forceinline BOOL Process32NextA(HANDLE hSnapshot, LPPROCESSENTRY32A lppe)
+static __forceinline BOOL Process32NextA(HANDLE hSnapshot, LPPROCESSENTRY32A lppe)
 {
 	return Process32Next(hSnapshot, lppe);
 }
@@ -56,11 +56,11 @@ typedef MODULEENTRY32A * LPMODULEENTRY32A;
 #ifdef _UNICODE
 #undef Module32First
 #undef Module32Next
-__forceinline BOOL Module32FirstA(HANDLE hSnapshot, LPMODULEENTRY32A lpme)
+static __forceinline BOOL Module32FirstA(HANDLE hSnapshot, LPMODULEENTRY32A lpme)
 {
 	return Module32First(hSnapshot, lpme);
 }
-__forceinline BOOL Module32NextA(HANDLE hSnapshot, LPMODULEENTRY32A lpme)
+static __forceinline BOOL Module32NextA(HANDLE hSnapshot, LPMODULEENTRY32A lpme)
 {
 	return Module32Next(hSnapshot, lpme);
 }

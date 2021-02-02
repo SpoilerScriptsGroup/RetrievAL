@@ -305,19 +305,19 @@ enum OS
      strdec          wcsdec          mbsdec
      strninc         wcsninc         mbsninc
      strnextc        wcsnextc        mbsnextc
-     strlen          wcslen                          mbslen
-     strnlen         wcsnlen                         mbsnlen
-                                     mbsnbcnt        mbsnccnt
+     strlen          wcslen          mbslen
+     strnlen         wcsnlen         mbsnlen
+                                     mbsnccnt        mbsnbcnt
      strcmp          wcscmp
-     strncmp         wcsncmp                         mbsncmp
+     strncmp         wcsncmp         mbsncmp
      stricmp         wcsicmp         mbsicmp
-     strnicmp        wcsnicmp        mbsnbicmp       mbsnicmp
+     strnicmp        wcsnicmp        mbsnicmp        mbsnbicmp
      strcpy          wcscpy
      stpcpy          wcpcpy
      strcat          wcscat
-     strncpy         wcsncpy         mbsnbcpy        mbsncpy
+     strncpy         wcsncpy         mbsncpy         mbsnbcpy
      stpncpy         wcpncpy
-     strncat         wcsncat         mbsnbcat        mbsncat
+     strncat         wcsncat         mbsncat         mbsnbcat
      strlcpy         wcslcpy
      strlcat         wcslcat
      strchr          wcschr          mbschr
@@ -333,7 +333,7 @@ enum OS
      strcspn         wcscspn         mbscspn
      strpbrk         wcspbrk         mbspbrk
      strset          wcsset          mbsset
-     strnset         wcsnset         mbsnbset        mbsnset
+     strnset         wcsnset         mbsnset         mbsnbset
      strtok          wcstok          mbstok
      strlwr          wcslwr          mbslwr
      strupr          wcsupr          mbsupr
@@ -1274,7 +1274,7 @@ static MARKUP * __fastcall ReAllocMarkup(MARKUP **lplpMarkupArray, size_t *lpnNu
 }
 #endif
 //---------------------------------------------------------------------
-__forceinline static size_t TrimMarkupString(char **pfirst, const char *last)
+static __forceinline size_t TrimMarkupString(char **pfirst, const char *last)
 {
 	unsigned __int64 result;
 
@@ -10339,11 +10339,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						if (uFlags & NULL_TERMINATED)
 							if ((nSrcLength = StringLength(hSrcProcess, lpAddress = (LPVOID)lpSrc, nCount, uFlags)) == -1)
 								goto READ_ERROR;
-						Status =
-							(!(uFlags & HANDLE_OVERLAP_REGIONS) ?
-								CopyProcessMemory :
-								MoveProcessMemory)
-							(hDestProcess, lpDest, hSrcProcess, lpSrc, SIZE_OF_STRING(nSrcLength, uFlags));
+						Status = InternalMoveProcessMemory(uFlags & HANDLE_OVERLAP_REGIONS, hDestProcess, lpDest, hSrcProcess, lpSrc, SIZE_OF_STRING(nSrcLength, uFlags));
 						if (NT_SUCCESS(Status) && (uFlags & NULL_TERMINATED))
 						{
 							if (!(uFlags & CONCATENATE))

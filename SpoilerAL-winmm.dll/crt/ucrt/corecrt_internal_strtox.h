@@ -51,7 +51,7 @@ unsigned int __fastcall strtox_parse_digit(const unsigned int c);
 // test for alphabetic characters).
 bool __fastcall strtox_is_digit_or_nondigit(const unsigned int c);
 
-__forceinline static bool is_space(const TCHAR c)
+static __forceinline bool is_space(const TCHAR c)
 {
 #ifndef _UNICODE
 	return c == ' ' || (unsigned char)(c - '\t') < '\r' - '\t' + 1;
@@ -214,7 +214,7 @@ static floating_point_parse_result __fastcall parse_floating_point_possible_nan(
 	return FLOATING_POINT_PARSE_RESULT_QNAN;
 }
 
-__forceinline static floating_point_parse_result parse_floating_point_from_source(
+static __forceinline floating_point_parse_result parse_floating_point_from_source(
 	const TCHAR           **source,
 	floating_point_string *fp_string)
 {
@@ -484,7 +484,7 @@ SLD_STATUS __fastcall strtox_parse_floating_point_write_result(
 	const floating_point_string       *fp_string,
 	double                            *result);
 
-__forceinline static SLD_STATUS parse_floating_point(
+static __forceinline SLD_STATUS parse_floating_point(
 	const TCHAR **source,
 	double      *result)
 {

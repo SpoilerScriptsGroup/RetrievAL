@@ -2,7 +2,7 @@
    A C-program for MT19937, with initialization improved 2002/1/26.
    Coded by Takuji Nishimura and Makoto Matsumoto.
 
-   Before using, initialize the state by using srand(seed).
+   Before using, initialize the state by using srandom(seed).
 
    Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
    All rights reserved.
@@ -752,7 +752,7 @@ __declspec(naked) static void sfmt_gen_rand_all_cpu_dispatch()
 /* This function initializes the internal state array with a 32-bit
    integer seed. */
 #if !defined(_M_IX86)
-void __cdecl srand(unsigned int seed)
+void __cdecl srandom(unsigned int seed)
 {
 	uint32_t x;
 	size_t i;
@@ -801,7 +801,7 @@ void __cdecl srand(unsigned int seed)
 #endif
 }
 #else
-__declspec(naked) void __cdecl srand(unsigned int seed)
+__declspec(naked) void __cdecl srandom(unsigned int seed)
 {
 #if SFMT_PARITY1
 	#define PARITY_WORD  SFMT_PARITY1
@@ -922,25 +922,10 @@ __declspec(naked) void __cdecl srand(unsigned int seed)
 }
 #endif
 
-int __cdecl rand()
-{
-	return rand32() & 0x00007FFF;
-}
-
-uint8_t __cdecl rand8()
-{
-	return (uint8_t)rand32();
-}
-
-uint16_t __cdecl rand16()
-{
-	return (uint16_t)rand32();
-}
-
 /* This function generates and returns 32-bit pseudorandom number.
-   srand must be called before this function. */
+   srandom must be called before this function. */
 #if !defined(_M_IX86)
-uint32_t __cdecl rand32()
+long int __cdecl random()
 {
 	if (idx == IDX32(SFMT_N32)) {
 		sfmt_gen_rand_all();
@@ -949,7 +934,7 @@ uint32_t __cdecl rand32()
 	return sfmt32[LE_POST_INC(idx)];
 }
 #else
-__declspec(naked) uint32_t __cdecl rand32()
+__declspec(naked) long int __cdecl random()
 {
 	__asm
 	{
@@ -978,7 +963,7 @@ __declspec(naked) uint32_t __cdecl rand32()
 #endif
 
 /* This function generates and returns 64-bit pseudorandom number.
-   srand must be called before this function. */
+   srandom must be called before this function. */
 #if !defined(_M_IX86)
 uint64_t __msreturn __cdecl rand64()
 {
@@ -1071,7 +1056,7 @@ __declspec(naked) uint32_t __cdecl internal_randf32()
 	__asm
 	{
 	loop1:
-		call    rand32
+		call    random
 		mov     ecx, eax
 		add     eax, eax
 		cmp     eax, 0x7F800000 * 2
@@ -1115,7 +1100,7 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64()
 
 		align   16
 	loop1:
-		call    rand32
+		call    random
 		mov     edx, eax
 		pop     eax
 		push    edx
@@ -1142,7 +1127,7 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64()
 
 		align   16
 	loop1:
-		call    rand32
+		call    random
 		mov     ecx, esi
 		mov     edx, esi
 		add     ecx, ecx
@@ -1175,7 +1160,7 @@ __declspec(naked) uint32_t __cdecl internal_randf32ge0lt1()
 	__asm
 	{
 	loop1:
-		call    rand32
+		call    random
 		cmp     eax, 0x3F800000 * 4
 		jae     loop1
 
@@ -1203,7 +1188,7 @@ __declspec(naked) uint32_t __cdecl internal_randf32gt0le1()
 	__asm
 	{
 	loop1:
-		call    rand32
+		call    random
 		cmp     eax, 0x3F800000 * 4
 		jae     loop1
 
@@ -1232,7 +1217,7 @@ __declspec(naked) uint32_t __cdecl internal_randf32gt0lt1()
 	__asm
 	{
 	loop1:
-		call    rand32
+		call    random
 		cmp     eax, (0x3F800000 - 1) * 4
 		jae     loop1
 
@@ -1281,7 +1266,7 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64ge0lt1()
 #endif
 
 	loop1:
-		call    rand32
+		call    random
 #if defined(__LITTLE_ENDIAN__)
 		mov     edx, eax
 		mov     eax, esi
@@ -1339,7 +1324,7 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64gt0le1()
 #endif
 
 	loop1:
-		call    rand32
+		call    random
 #if defined(__LITTLE_ENDIAN__)
 		mov     edx, eax
 		mov     eax, esi
@@ -1397,7 +1382,7 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64gt0lt1()
 		jb      done
 
 	loop1:
-		call    rand32
+		call    random
 #if defined(__LITTLE_ENDIAN__)
 		mov     ecx, esi
 		mov     esi, eax

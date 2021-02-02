@@ -72,7 +72,7 @@ typedef struct {
 #pragma intrinsic(_BitScanReverse64)
 #endif
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__forceinline static unsigned __int64 __reg64return_BitScanReverse(unsigned long Mask)
+static __forceinline unsigned __int64 __reg64return_BitScanReverse(unsigned long Mask)
 {
 	__asm
 	{
@@ -80,14 +80,14 @@ __forceinline static unsigned __int64 __reg64return_BitScanReverse(unsigned long
 		setnz   al
 	}
 }
-__forceinline static unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
+static __forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
 {
 	unsigned __int64 x = __reg64return_BitScanReverse(Mask);
 	*Index = (unsigned long)(x >> 32);
 	return (unsigned char)x;
 }
 #else
-__forceinline static unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
+static __forceinline unsigned char _BitScanReverse(unsigned long *Index, unsigned long Mask)
 {
 	unsigned long i;
 
@@ -106,26 +106,26 @@ __forceinline static unsigned char _BitScanReverse(unsigned long *Index, unsigne
 // point <=> decimal string conversion functions.
 //
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-__forceinline static big_integer *big_integer_clear(big_integer *x)
+static __forceinline big_integer *big_integer_clear(big_integer *x)
 {
 	x->used = 0;
 	return x;
 }
 
-__forceinline static big_integer *big_integer_assign(big_integer *x, const big_integer *value)
+static __forceinline big_integer *big_integer_assign(big_integer *x, const big_integer *value)
 {
 	memcpy(x->data, value->data, (x->used = value->used) * sizeof(uint32_t));
 	return x;
 }
 
-__forceinline static big_integer *big_integer_assign_uint32(big_integer *x, const uint32_t value)
+static __forceinline big_integer *big_integer_assign_uint32(big_integer *x, const uint32_t value)
 {
 	x->used = 1;
 	x->data[0] = (uint32_t)value;
 	return x;
 }
 
-__forceinline static big_integer *big_integer_assign_uint64(big_integer* x, const uint64_t value)
+static __forceinline big_integer *big_integer_assign_uint64(big_integer* x, const uint64_t value)
 {
 	uint32_t high;
 
@@ -137,7 +137,7 @@ __forceinline static big_integer *big_integer_assign_uint64(big_integer* x, cons
 	return x;
 }
 
-__forceinline static bool big_integer_equals(const big_integer *lhs, const big_integer *rhs)
+static __forceinline bool big_integer_equals(const big_integer *lhs, const big_integer *rhs)
 {
 	return
 		lhs->used == rhs->used &&
@@ -146,7 +146,7 @@ __forceinline static bool big_integer_equals(const big_integer *lhs, const big_i
 
 bool __fastcall big_integer_less_than(const big_integer *lhs, const big_integer *rhs);
 
-__forceinline static big_integer *big_integer_power_of_two(big_integer *x, const uint32_t power)
+static __forceinline big_integer *big_integer_power_of_two(big_integer *x, const uint32_t power)
 {
 	uint32_t element_index;
 	uint32_t bit_index;
@@ -159,12 +159,12 @@ __forceinline static big_integer *big_integer_power_of_two(big_integer *x, const
 	return x;
 }
 
-__forceinline static bool big_integer_is_zero(big_integer *value)
+static __forceinline bool big_integer_is_zero(big_integer *value)
 {
 	return value->used == 0;
 }
 
-__forceinline static uint32_t big_integer_bit_scan_reverse32(const uint32_t value)
+static __forceinline uint32_t big_integer_bit_scan_reverse32(const uint32_t value)
 {
 	unsigned long index;
 
@@ -173,7 +173,7 @@ __forceinline static uint32_t big_integer_bit_scan_reverse32(const uint32_t valu
 	return 0;
 }
 
-__forceinline static uint32_t big_integer_bit_scan_reverse64(const uint64_t value)
+static __forceinline uint32_t big_integer_bit_scan_reverse64(const uint64_t value)
 {
 	unsigned long index;
 
@@ -189,7 +189,7 @@ __forceinline static uint32_t big_integer_bit_scan_reverse64(const uint64_t valu
 	return 0;
 }
 
-__forceinline static uint32_t big_integer_bit_scan_reverse(const big_integer *x)
+static __forceinline uint32_t big_integer_bit_scan_reverse(const big_integer *x)
 {
 	if (x->used == 0)
 		return 0;

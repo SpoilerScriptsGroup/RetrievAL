@@ -154,7 +154,7 @@ bool __fastcall big_integer_add(big_integer *x, const uint32_t value)
 	return true;
 }
 
-__forceinline static uint32_t add_multiply_carry(uint32_t *u_add, const uint32_t u_mul_1, const uint32_t u_mul_2, const uint32_t u_carry)
+static __forceinline uint32_t add_multiply_carry(uint32_t *u_add, const uint32_t u_mul_1, const uint32_t u_mul_2, const uint32_t u_carry)
 {
 	uint64_t uu_res;
 
@@ -163,7 +163,7 @@ __forceinline static uint32_t add_multiply_carry(uint32_t *u_add, const uint32_t
 	return ((uint32_t *)&uu_res)[1];
 }
 
-__forceinline static uint32_t multiply_core(uint32_t *multiplicand, const uint32_t multiplicand_count, const uint32_t multiplier)
+static __forceinline uint32_t multiply_core(uint32_t *multiplicand, const uint32_t multiplicand_count, const uint32_t multiplier)
 {
 	uint32_t carry;
 	uint32_t i;
@@ -568,7 +568,7 @@ void generate_table()
 */
 
 // Computes the number of zeroes higher than the most significant set bit in 'u'
-__forceinline static uint32_t count_sequential_high_zeroes(const uint32_t u)
+static __forceinline uint32_t count_sequential_high_zeroes(const uint32_t u)
 {
 	unsigned long result;
 
@@ -583,7 +583,7 @@ __forceinline static uint32_t count_sequential_high_zeroes(const uint32_t u)
 // for general 64-bit x 64-bit multiplication, and [2] is inlineable, allowing the
 // compile to elide the extreme overhead of calling the _allmul function.
 #if defined(_M_IX86) && !defined(_M_HYBRID_X86_ARM64)
-__forceinline static uint64_t multiply_64_32(const uint64_t multiplicand, const uint32_t multiplier)
+static __forceinline uint64_t multiply_64_32(const uint64_t multiplicand, const uint32_t multiplier)
 {
 	__asm
 	{
@@ -830,4 +830,3 @@ uint64_t __fastcall big_integer_divide(big_integer *numerator, const big_integer
 
 	return quotient;
 }
-

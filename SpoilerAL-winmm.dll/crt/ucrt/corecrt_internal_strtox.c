@@ -48,7 +48,7 @@ bool __fastcall strtox_is_digit_or_nondigit(const unsigned int c)
 //-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 // Stores a positive or negative zero into the result object
-__forceinline static void assemble_floating_point_zero(const bool is_negative, double *result)
+static __forceinline void assemble_floating_point_zero(const bool is_negative, double *result)
 {
 	/*
 		floating_traits *components;
@@ -64,7 +64,7 @@ __forceinline static void assemble_floating_point_zero(const bool is_negative, d
 }
 
 // Stores a positive or negative infinity into the result object
-__forceinline static void assemble_floating_point_infinity(const bool is_negative, double *result)
+static __forceinline void assemble_floating_point_infinity(const bool is_negative, double *result)
 {
 	/*
 		floating_traits *components;
@@ -80,7 +80,7 @@ __forceinline static void assemble_floating_point_infinity(const bool is_negativ
 }
 
 // Stores a positive or negative quiet NaN into the result object
-__forceinline static void assemble_floating_point_qnan(const bool is_negative, double *result)
+static __forceinline void assemble_floating_point_qnan(const bool is_negative, double *result)
 {
 	/*
 		floating_traits *components;
@@ -96,7 +96,7 @@ __forceinline static void assemble_floating_point_qnan(const bool is_negative, d
 }
 
 // Stores a positive or negative signaling NaN into the result object
-__forceinline static void assemble_floating_point_snan(const bool is_negative, double *result)
+static __forceinline void assemble_floating_point_snan(const bool is_negative, double *result)
 {
 	/*
 		floating_traits *components;
@@ -112,7 +112,7 @@ __forceinline static void assemble_floating_point_snan(const bool is_negative, d
 }
 
 // Stores an indeterminate into the result object (the indeterminate is "negative")
-__forceinline static void assemble_floating_point_ind(double *result)
+static __forceinline void assemble_floating_point_ind(double *result)
 {
 	/*
 		floating_traits *components;
@@ -138,7 +138,7 @@ __forceinline static void assemble_floating_point_ind(double *result)
 // mantissa.  (Note that this means that if we need to round a negative value to
 // the next largest representable value, we return false, because the next
 // largest representable value has a smaller magnitude.)
-__forceinline static bool should_round_up(
+static __forceinline bool should_round_up(
 	const bool is_negative,
 	const bool lsb_bit,
 	const bool round_bit,
@@ -200,7 +200,7 @@ __forceinline static bool should_round_up(
 // rounding mode.  By the time we call this function, we will already have
 // discarded most digits.  The caller must pass true for has_zero_tail if
 // all discarded bits were zeroes.
-__forceinline static uint64_t right_shift_with_rounding(
+static __forceinline uint64_t right_shift_with_rounding(
 	const bool     is_negative,
 	const uint64_t value,
 	const uint32_t shift,
@@ -245,7 +245,7 @@ __forceinline static uint64_t right_shift_with_rounding(
 // possible, the caller should provide a mantissa with at least one more bit of
 // precision than is required, to ensure that the mantissa is correctly rounded.
 // (The caller should not round the mantissa before calling this function.)
-__forceinline static SLD_STATUS assemble_floating_point_value_t(
+static __forceinline SLD_STATUS assemble_floating_point_value_t(
 	const bool     is_negative,
 	const int32_t  exponent,
 	const uint64_t mantissa,
@@ -564,7 +564,7 @@ static void __fastcall accumulate_decimal_digits_into_big_integer(
 // subject string was determined to be a decimal string, the object is passed to
 // this function.  This function converts the decimal real value to floating
 // point.
-__forceinline static SLD_STATUS convert_decimal_string_to_floating_type_common(
+static __forceinline SLD_STATUS convert_decimal_string_to_floating_type_common(
 	const floating_point_string *data,
 	floating_traits             *result)
 {
@@ -771,14 +771,14 @@ __forceinline static SLD_STATUS convert_decimal_string_to_floating_type_common(
 	return assemble_floating_point_value(complete_mantissa, final_exponent, data->is_negative, has_zero_tail, result);
 }
 
-__forceinline static SLD_STATUS convert_decimal_string_to_floating_type(
+static __forceinline SLD_STATUS convert_decimal_string_to_floating_type(
 	const floating_point_string *data,
 	double                      *result)
 {
 	return convert_decimal_string_to_floating_type_common(data, (floating_traits *)result);
 }
 
-__forceinline static SLD_STATUS convert_hexadecimal_string_to_floating_type_common(
+static __forceinline SLD_STATUS convert_hexadecimal_string_to_floating_type_common(
 	const floating_point_string *data,
 	floating_traits             *result)
 {
@@ -814,7 +814,7 @@ __forceinline static SLD_STATUS convert_hexadecimal_string_to_floating_type_comm
 	return assemble_floating_point_value(mantissa, exponent, data->is_negative, has_zero_tail, result);
 }
 
-__forceinline static SLD_STATUS convert_hexadecimal_string_to_floating_type(
+static __forceinline SLD_STATUS convert_hexadecimal_string_to_floating_type(
 	const floating_point_string *data,
 	double                      *result)
 {
@@ -847,4 +847,3 @@ SLD_STATUS __fastcall strtox_parse_floating_point_write_result(
 		return SLD_NODIGITS;
 	}
 }
-

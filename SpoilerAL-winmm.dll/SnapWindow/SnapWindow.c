@@ -48,7 +48,7 @@ typedef struct {
 #endif
 
 #if defined(_M_IX86) || defined(_M_X64)
-__forceinline static void InitThunk(THUNK *thunk, LPVOID thisPtr, WNDPROC WindowProc)
+static __forceinline void InitThunk(THUNK *thunk, LPVOID thisPtr, WNDPROC WindowProc)
 {
 #if defined(_M_IX86)
 	/*

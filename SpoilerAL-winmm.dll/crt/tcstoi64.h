@@ -23,7 +23,7 @@ typedef int errno_t;
 #endif
 
 #ifdef __BORLANDC__
-#define __forceinline static __inline
+#define __forceinline __inline
 #endif
 
 #if defined(_MSC_VER) && _MSC_VER >= 1310
@@ -32,7 +32,7 @@ typedef int errno_t;
 #pragma intrinsic(_addcarry_u32)
 #define _add_u32(a, b, out) _addcarry_u32(0, a, b, out)
 #elif defined(_MSC_VER) && _MSC_VER < 1310 && defined(_M_IX86)
-__forceinline unsigned __int64 __emulu(unsigned int a, unsigned int b)
+static __forceinline unsigned __int64 __emulu(unsigned int a, unsigned int b)
 {
 	__asm
 	{
@@ -41,7 +41,7 @@ __forceinline unsigned __int64 __emulu(unsigned int a, unsigned int b)
 		mul     edx
 	}
 }
-__forceinline unsigned __int64 __reg64return_add_u32(unsigned int a, unsigned int b)
+static __forceinline unsigned __int64 __reg64return_add_u32(unsigned int a, unsigned int b)
 {
 	__asm
 	{
@@ -51,7 +51,7 @@ __forceinline unsigned __int64 __reg64return_add_u32(unsigned int a, unsigned in
 		setc    al
 	}
 }
-__forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsigned int *out)
+static __forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsigned int *out)
 {
 	unsigned __int64 x = __reg64return_add_u32(a, b);
 	*out = x >> 32;
@@ -59,7 +59,7 @@ __forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsigned in
 }
 #else
 #define __emulu(a, b) ((unsigned __int64)(unsigned int)(a) * (unsigned int)(b))
-__forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsigned int *out)
+static __forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsigned int *out)
 {
 	return (*out = a + b) < b;
 }

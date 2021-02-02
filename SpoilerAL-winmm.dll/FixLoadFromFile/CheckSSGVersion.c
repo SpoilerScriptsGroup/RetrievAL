@@ -6,7 +6,10 @@
 
 extern HANDLE hHeap;
 
-const char lpSSGVersion[4] = { VERSION_MAJOR + '0', '.', VERSION_MINOR + '0', '\0' };
+#define OLD_VERSION_LENGTH 3
+#define SSG_VERSION_LENGTH 3
+
+const char lpSSGVersion[SSG_VERSION_LENGTH + 1] = { VERSION_MAJOR + '0', '.', VERSION_MINOR + '0', '\0' };
 
 BOOL EnableParserFix = FALSE;
 BOOL FixTheProcedure = FALSE;
@@ -16,13 +19,10 @@ BOOL ExtensionTSSDir = FALSE;
 
 void __fastcall CheckSSGVersion(const char *p, size_t size)
 {
-	#define VERSION_LENGTH      3	// strlen("6.2"), strlen("6.3")
-	#define LAST_VERSION_LENGTH 3	// strlen(lpSSGVersion), (sizeof(lpSSGVersion) - 1)
-
 	EnableParserFix = FALSE;
 	FixTheProcedure = FALSE;
 	ExtensionTSSDir = FALSE;
-	if (size >= 21 + VERSION_LENGTH &&
+	if (size >= 21 + OLD_VERSION_LENGTH &&
 		*(LPDWORD) p       == BSWAP32('SSG ') &&
 		*(LPDWORD)(p +  4) == BSWAP32('for ') &&
 		*(LPDWORD)(p +  8) == BSWAP32('Spoi') &&
@@ -31,21 +31,22 @@ void __fastcall CheckSSGVersion(const char *p, size_t size)
 		*(LPBYTE )(p + 20) ==         'r')
 	{
 		const char *last;
+		char       c;
 
-		last = p + size - VERSION_LENGTH;
-		p += 21;
-		while (*p == ' ' || *p == '\t')
-			if (p++ >= last)
+		last = p + size - OLD_VERSION_LENGTH;
+		p += 21 - 1;
+		while ((c = *(++p)) == ' ' || c == '\t')
+			if (p >= last)
 				return;
-		if (memcmp(p, "6.2", VERSION_LENGTH) >= 0)
+		if (memcmp(p, "6.2", OLD_VERSION_LENGTH) >= 0)
 		{
-			if (memcmp(p, "6.3", VERSION_LENGTH) >= 0)
+			if (memcmp(p, "6.3", OLD_VERSION_LENGTH) >= 0)
 			{
-#if LAST_VERSION_LENGTH > VERSION_LENGTH
-				if (last - p >= LAST_VERSION_LENGTH - VERSION_LENGTH &&
-					memcmp(p, lpSSGVersion, LAST_VERSION_LENGTH) >= 0)
+#if SSG_VERSION_LENGTH > OLD_VERSION_LENGTH
+				if (last - p >= SSG_VERSION_LENGTH - OLD_VERSION_LENGTH &&
+					memcmp(p, lpSSGVersion, SSG_VERSION_LENGTH) >= 0)
 #else
-				if (memcmp(p, lpSSGVersion, LAST_VERSION_LENGTH) >= 0)
+				if (memcmp(p, lpSSGVersion, SSG_VERSION_LENGTH) >= 0)
 #endif
 				{
 					// SSG for SpoilerAL ver 6.4
@@ -58,7 +59,4 @@ void __fastcall CheckSSGVersion(const char *p, size_t size)
 			EnableParserFix = TRUE;
 		}
 	}
-
-	#undef VERSION_LENGTH
-	#undef LAST_VERSION_LENGTH
 }

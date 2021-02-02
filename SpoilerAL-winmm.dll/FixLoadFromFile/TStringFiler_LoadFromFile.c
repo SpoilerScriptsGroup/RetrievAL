@@ -163,11 +163,10 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 	#define MODE_RECURSIVE  0x0200
 	#define MODE_EXTRACT    (MODE_END_BYTE | MODE_START_BYTE)
 
-	HANDLE  hFile;
+	HANDLE  hFile, hMap;
 	DWORD   dwFileSize;
-	HANDLE  hMap;
-	LPCBYTE lpMapViewOfFile, begin, end, p, prev;
-	string  *s;
+	LPCBYTE lpMapViewOfFile, p, begin, end;
+	string  *it;
 
 	assert((Mode & MODE_END_LINE) == 0);
 	assert((Mode & MODE_END_STR) == 0);
@@ -191,10 +190,10 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 	if (dwFileSize == MAXDWORD)
 		goto FAILED2;
 
-	if (!(Mode & MODE_START_BYTE))
-		StartPos = 0;
 	if (!(Mode & MODE_END_BYTE) || EndPos > dwFileSize)
 		EndPos = dwFileSize;
+	if (!(Mode & MODE_START_BYTE))
+		StartPos = 0;
 	if (StartPos >= EndPos)
 		goto DONE;
 
@@ -218,25 +217,20 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 		goto FAILED4;
 
 #ifndef __BORLANDC__
-	end = (p = lpMapViewOfFile) + dwFileSize;
-	do
+	if (!(Mode & MODE_RECURSIVE))
 	{
-		switch (*(p++))
+		end = (p = lpMapViewOfFile) + dwFileSize;
+		do
 		{
-		default:
-			continue;
-		case '\r':
-		case '\n':
-			CheckSSGVersion(lpMapViewOfFile, p - 1);
-			break;
-		case_unsigned_leadbyte:
-			if (p >= end)
+			BYTE c;
+
+			if ((c = *(p++)) == '\r' || c == '\n')
+			{
+				CheckSSGVersion(lpMapViewOfFile, p - 1);
 				break;
-			p++;
-			continue;
-		}
-		break;
-	} while (p < end);
+			}
+		} while (p < end);
+	}
 #endif
 
 	p = lpMapViewOfFile + StartPos;
@@ -245,9 +239,11 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 	//--------------
 	// â¸çsÇ≈êÿÇËï™ÇØ
 	begin = p;
-	s = NULL;
+	it = NULL;
 	do
 	{
+		LPCBYTE prev;
+
 		switch (*(prev = p++))
 		{
 		default:
@@ -257,47 +253,48 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 				p++;
 			/* FALLTHROUGH */
 		case '\n':
-			if (!s)
+			if (!it)
 			{
 				vector_string_push_back_range(SList, begin, !(Mode & MODE_LINE_FEED) ? prev : p);
 			}
 			else
 			{
-				string_append_range(s, begin, !(Mode & MODE_LINE_FEED) ? prev : p);
-				string_shrink_to_fit(s);
-				s = NULL;
+				string_append_range(it, begin, !(Mode & MODE_LINE_FEED) ? prev : p);
+				string_shrink_to_fit(it);
+				it = NULL;
 			}
 			begin = p;
 			continue;
 		case '\\':
-			if (p >= end)
-				break;
-			switch (*(p++))
+			if (p < end)
 			{
-			default:
-				continue;
-			case '\r':
-				if (p >= end)
-					break;
-				if (*p == '\n')
-					p++;
-				/* FALLTHROUGH */
-			case '\n':
-				if (p >= end)
-					break;
-				if (!s)
+				switch (*(p++))
 				{
-					vector_string_push_back_range(SList, begin, prev);
-					s = vector_end(SList) - 1;
+				default:
+					continue;
+				case '\r':
+					if (p >= end)
+						break;
+					if (*p == '\n')
+						p++;
+					/* FALLTHROUGH */
+				case '\n':
+					if (p >= end)
+						break;
+					if (!it)
+					{
+						vector_string_push_back_range(SList, begin, prev);
+						it = vector_end(SList) - 1;
+					}
+					else
+					{
+						string_append_range(it, begin, prev);
+					}
+					begin = p;
+					continue;
+				case_unsigned_leadbyte:
+					goto LEADBYTE;
 				}
-				else
-				{
-					string_append_range(s, begin, prev);
-				}
-				begin = p;
-				continue;
-			case_unsigned_leadbyte:
-				goto LEADBYTE;
 			}
 			end = prev;
 			break;
@@ -315,14 +312,14 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 	// ç≈èIçsÇäiî[
 	if (begin < end)
 	{
-		if (!s)
+		if (!it)
 		{
 			vector_string_push_back_range(SList, begin, end);
 		}
 		else
 		{
-			string_append_range(s, begin, end);
-			string_shrink_to_fit(s);
+			string_append_range(it, begin, end);
+			string_shrink_to_fit(it);
 		}
 	}
 
@@ -337,7 +334,6 @@ DONE:
 		vector_GUID   *loadedFiles;
 		unsigned long recursiveMode;
 		GUID          fileObjectId;
-		string        *it;
 
 		recursiveMode = Mode;
 		if (recursiveMode & MODE_RECURSIVE)

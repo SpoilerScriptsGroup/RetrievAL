@@ -29,10 +29,19 @@ void __fastcall CheckSSGVersion(const char *begin, const char *end)
 		while (*begin == ' ' || *begin == '\t')
 			begin++;
 		if (strcmp(begin, "6.2") >= 0)
+		{
+			if (strcmp(begin, "6.3") >= 0)
+			{
+				if (strcmp(begin, lpSSGVersion) >= 0)
+				{
+					// SSG for SpoilerAL ver 6.4
+					ExtensionTSSDir = TRUE;
+				}
+				// SSG for SpoilerAL ver 6.3
+				FixTheProcedure = TRUE;
+			}
+			// SSG for SpoilerAL ver 6.2
 			EnableParserFix = TRUE;
-		if (strcmp(begin, "6.3") >= 0)
-			FixTheProcedure = TRUE;
-		if (strcmp(begin, lpSSGVersion) >= 0)
-			ExtensionTSSDir = TRUE;
+		}
 	}
 }

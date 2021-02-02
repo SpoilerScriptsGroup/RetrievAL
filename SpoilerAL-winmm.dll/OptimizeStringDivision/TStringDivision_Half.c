@@ -3,6 +3,8 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TStringDivision.h"
 
+#pragma intrinsic(memcmp)
+
 string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 	OUT    string          *Result,
 	IN     TStringDivision *this,
@@ -116,19 +118,9 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 				c = *(p++);
 				if (!__intrinsic_isleadbyte(c))
 					break;
-#if MULTIBYTE_TOKEN
-				goto LEADBYTE_INCREMENT;
-			case_unsigned_leadbyte:
-				// lead byte
-				if (memcmp(prev, Token, TokenLength) != 0)
-					goto LEADBYTE_INCREMENT;
-				goto MATCHED;
-			LEADBYTE_INCREMENT:
-#else
 				/* FALLTHROUGH */
 			case_unsigned_leadbyte:
 				// lead byte
-#endif
 				p++;
 				break;
 			default:

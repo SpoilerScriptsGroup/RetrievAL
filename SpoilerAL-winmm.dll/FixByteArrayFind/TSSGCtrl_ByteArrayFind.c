@@ -72,7 +72,7 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 			}
 			break;
 		case '$':
-			// "$$", "$0", "$1", "$2", "$3", "$4", "$5", "$6", "$7", "$8"
+			// "$0", "$1", "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$$"
 			switch (*p)
 			{
 			case '0': case '1': case '2': case '3':

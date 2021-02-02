@@ -3,6 +3,8 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TStringDivision.h"
 
+#pragma intrinsic(memcmp)
+
 unsigned long __cdecl TStringDivision_List(
 	IN     TStringDivision *this,
 	IN     const string    *Src,
@@ -76,7 +78,7 @@ unsigned long __cdecl TStringDivision_List(
 					nest--;
 				break;
 			case '<':
-				// "<#", "<@", "#>", "@>"
+				// "<#", "<@", "#>", "@>", "[!"
 				switch (c = *p)
 				{
 				case '#':
@@ -133,18 +135,9 @@ unsigned long __cdecl TStringDivision_List(
 				c = *(p++);
 				if (!__intrinsic_isleadbyte(c))
 					break;
-#if MULTIBYTE_TOKEN
-				p++;
-				break;
-			case_unsigned_leadbyte:
-				// lead byte
-				if (!nest && memcmp(prev, token, tokenLength) == 0)
-					goto MATCHED;
-#else
 				/* FALLTHROUGH */
 			case_unsigned_leadbyte:
 				// lead byte
-#endif
 				p++;
 				break;
 			default:
@@ -155,13 +148,13 @@ unsigned long __cdecl TStringDivision_List(
 				vector_string_push_back_range(List, split, prev);
 				if (Option & etSOME_EDIT)
 				{
-					string *elem, s;
+					string *it, s;
 
-					s = *(elem = string_end(List) - 1);
-					TStringDivision_Editing(elem, this, &s, Option);
+					s = *(it = string_end(List) - 1);
+					TStringDivision_Editing(it, this, &s, Option);
 					string_dtor(&s);
 				}
-				split = (p = prev + tokenLength);
+				split = p = prev + tokenLength;
 				break;
 			}
 		} while (p < end);
@@ -169,10 +162,10 @@ unsigned long __cdecl TStringDivision_List(
 	vector_string_push_back_range(List, split, string_end(Src));
 	if (Option & etSOME_EDIT)
 	{
-		string *elem, s;
+		string *it, s;
 
-		s = *(elem = string_end(List) - 1);
-		TStringDivision_Editing(elem, this, &s, Option);
+		s = *(it = string_end(List) - 1);
+		TStringDivision_Editing(it, this, &s, Option);
 		string_dtor(&s);
 	}
 	string_dtor(&Token);

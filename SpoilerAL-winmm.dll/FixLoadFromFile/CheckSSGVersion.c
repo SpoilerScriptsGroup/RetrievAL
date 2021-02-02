@@ -12,27 +12,41 @@ BOOL EnableParserFix = FALSE;
 BOOL FixTheProcedure = FALSE;
 BOOL ExtensionTSSDir = FALSE;
 
-void __fastcall CheckSSGVersion(const char *begin, const char *end)
+#pragma intrinsic(memcmp)
+
+void __fastcall CheckSSGVersion(const char *p, size_t size)
 {
+	#define VERSION_LENGTH      3	// strlen("6.2"), strlen("6.3")
+	#define LAST_VERSION_LENGTH 3	// strlen(lpSSGVersion), (sizeof(lpSSGVersion) - 1)
+
 	EnableParserFix = FALSE;
 	FixTheProcedure = FALSE;
 	ExtensionTSSDir = FALSE;
-	if (end - begin > 21 &&
-		*(LPDWORD) begin       == BSWAP32('SSG ') &&
-		*(LPDWORD)(begin +  4) == BSWAP32('for ') &&
-		*(LPDWORD)(begin +  8) == BSWAP32('Spoi') &&
-		*(LPDWORD)(begin + 12) == BSWAP32('lerA') &&
-		*(LPDWORD)(begin + 16) == BSWAP32('L ve') &&
-		*(LPBYTE )(begin + 20) ==         'r')
+	if (size >= 21 + VERSION_LENGTH &&
+		*(LPDWORD) p       == BSWAP32('SSG ') &&
+		*(LPDWORD)(p +  4) == BSWAP32('for ') &&
+		*(LPDWORD)(p +  8) == BSWAP32('Spoi') &&
+		*(LPDWORD)(p + 12) == BSWAP32('lerA') &&
+		*(LPDWORD)(p + 16) == BSWAP32('L ve') &&
+		*(LPBYTE )(p + 20) ==         'r')
 	{
-		begin += 21;
-		while (*begin == ' ' || *begin == '\t')
-			begin++;
-		if (strcmp(begin, "6.2") >= 0)
+		const char *last;
+
+		last = p + size - VERSION_LENGTH;
+		p += 21;
+		while (*p == ' ' || *p == '\t')
+			if (p++ >= last)
+				return;
+		if (memcmp(p, "6.2", VERSION_LENGTH) >= 0)
 		{
-			if (strcmp(begin, "6.3") >= 0)
+			if (memcmp(p, "6.3", VERSION_LENGTH) >= 0)
 			{
-				if (strcmp(begin, lpSSGVersion) >= 0)
+#if LAST_VERSION_LENGTH > VERSION_LENGTH
+				if (last - p >= LAST_VERSION_LENGTH - VERSION_LENGTH &&
+					memcmp(p, lpSSGVersion, LAST_VERSION_LENGTH) >= 0)
+#else
+				if (memcmp(p, lpSSGVersion, LAST_VERSION_LENGTH) >= 0)
+#endif
 				{
 					// SSG for SpoilerAL ver 6.4
 					ExtensionTSSDir = TRUE;
@@ -44,4 +58,7 @@ void __fastcall CheckSSGVersion(const char *begin, const char *end)
 			EnableParserFix = TRUE;
 		}
 	}
+
+	#undef VERSION_LENGTH
+	#undef LAST_VERSION_LENGTH
 }

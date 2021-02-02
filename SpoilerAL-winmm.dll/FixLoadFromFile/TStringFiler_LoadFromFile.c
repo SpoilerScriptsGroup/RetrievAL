@@ -40,7 +40,7 @@
 extern HANDLE hHeap;
 
 #ifndef __BORLANDC__
-EXTERN_C void __fastcall CheckSSGVersion(const char *begin, const char *end);
+EXTERN_C void __fastcall CheckSSGVersion(const char *p, size_t size);
 #endif
 
 static __inline BOOL GetIncludeFileName(
@@ -218,19 +218,7 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 
 #ifndef __BORLANDC__
 	if (!(Mode & MODE_RECURSIVE))
-	{
-		end = (p = lpMapViewOfFile) + dwFileSize;
-		do
-		{
-			BYTE c;
-
-			if ((c = *(p++)) == '\r' || c == '\n')
-			{
-				CheckSSGVersion(lpMapViewOfFile, p - 1);
-				break;
-			}
-		} while (p < end);
-	}
+		CheckSSGVersion(lpMapViewOfFile, dwFileSize);
 #endif
 
 	p = lpMapViewOfFile + StartPos;

@@ -1,8 +1,6 @@
 .486
 .model flat, c
 
-includelib dwmapi.lib
-
 extrn _imp__GetModuleHandleA@4:dword
 extrn _imp__GetProcAddress@8:dword
 

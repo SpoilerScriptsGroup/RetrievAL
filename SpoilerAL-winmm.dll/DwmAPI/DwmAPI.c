@@ -1,6 +1,5 @@
 #include <windows.h>
 #include <dwmapi.h>
-#pragma comment(lib, "dwmapi.lib")
 
 extern DWORD __stdcall GetOSMajorVersion();
 

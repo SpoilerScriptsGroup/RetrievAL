@@ -1147,7 +1147,7 @@ uint32_t __cdecl internal_randf32ge0le1()
 {
 	uint32_t x;
 
-	while ((x = rand32()) >= 0x3F800001 * 4);
+	while ((x = rand32()) >= (0x3F800000 + 1) * 4);
 	return x >> 2;
 }
 #else
@@ -1157,7 +1157,7 @@ __declspec(naked) uint32_t __cdecl internal_randf32ge0le1()
 	{
 	loop1:
 		call    random
-		cmp     eax, 0x3F800001 * 4
+		cmp     eax, (0x3F800000 + 1) * 4
 		jae     loop1
 
 		shr     eax, 2
@@ -1231,11 +1231,13 @@ __declspec(naked) uint32_t __cdecl internal_randf32gt0lt1()
 #if !defined(_M_IX86)
 uint64_t __msreturn __cdecl internal_randf64ge0lt1()
 {
-	uint64_t x, y;
+	uint64_t x;
+	uint32_t y, z;
 
-	x = (y = rand64()) & 0x3FFFFFFFFFFFFFFF;
-	while (x >= 0x3FF0000000000000)
-		x = (y = ((uint64_t)rand32() << 32) | (x >> 32)) & 0x3FFFFFFFFFFFFFFF;
+	y = (uint32_t)((x = rand64()) >> 32);
+	while ((x &= 0x3FFFFFFFFFFFFFFF) >= 0x3FF0000000000000)
+		x = ((uint64_t)(z = rand32()) << 32) | y, y = z;
+	return x;
 }
 #else
 __declspec(naked) uint64_t __msreturn __cdecl internal_randf64ge0lt1()
@@ -1273,11 +1275,12 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64ge0lt1()
 #if !defined(_M_IX86)
 uint64_t __msreturn __cdecl internal_randf64ge0le1()
 {
-	uint64_t x, y;
+	uint64_t x;
+	uint32_t y, z;
 
-	x = (y = rand64()) & 0x3FFFFFFFFFFFFFFF;
-	while (x >= 0x3FF0000000000001)
-		x = (y = ((uint64_t)rand32() << 32) | (x >> 32)) & 0x3FFFFFFFFFFFFFFF;
+	y = (uint32_t)((x = rand64()) >> 32);
+	while ((x &= 0x3FFFFFFFFFFFFFFF) >= 0x3FF0000000000000 + 1)
+		x = ((uint64_t)(z = rand32()) << 32) | y, y = z;
 	return x;
 }
 #else
@@ -1320,11 +1323,12 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64ge0le1()
 #if !defined(_M_IX86)
 uint64_t __msreturn __cdecl internal_randf64gt0le1()
 {
-	uint64_t x, y;
+	uint64_t x;
+	uint32_t y, z;
 
-	x = (y = rand64()) & 0x3FFFFFFFFFFFFFFF;
-	while (x >= 0x3FF0000000000000)
-		x = (y = ((uint64_t)rand32() << 32) | (x >> 32)) & 0x3FFFFFFFFFFFFFFF;
+	y = (uint32_t)((x = rand64()) >> 32);
+	while ((x &= 0x3FFFFFFFFFFFFFFF) >= 0x3FF0000000000000)
+		x = ((uint64_t)(z = rand32()) << 32) | y, y = z;
 	return x + 1;
 }
 #else
@@ -1365,11 +1369,12 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64gt0le1()
 #if !defined(_M_IX86)
 uint64_t __msreturn __cdecl internal_randf64gt0lt1()
 {
-	uint64_t x, y;
+	uint64_t x;
+	uint32_t y, z;
 
-	x = (y = rand64()) & 0x3FFFFFFFFFFFFFFF;
-	while (x >= 0x3FF0000000000000 - 1)
-		x = (y = ((uint64_t)rand32() << 32) | (x >> 32)) & 0x3FFFFFFFFFFFFFFF;
+	y = (uint32_t)((x = rand64()) >> 32);
+	while ((x &= 0x3FFFFFFFFFFFFFFF) >= 0x3FF0000000000000 - 1)
+		x = ((uint64_t)(z = rand32()) << 32) | y, y = z;
 	return x + 1;
 }
 #else

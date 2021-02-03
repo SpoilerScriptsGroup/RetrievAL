@@ -24,6 +24,7 @@ extern "C" {
 
 void __cdecl srandom(unsigned int seed);
 long int __cdecl random();
+long long __msreturn __cdecl random64();
 
 #define srand   srandom
 #define rand    (int)(random() & 0x00007FFF)
@@ -31,8 +32,7 @@ long int __cdecl random();
 #define rand8   (uint8_t)random
 #define rand16  (uint16_t)random
 #define rand32  (uint32_t)random
-
-uint64_t __msreturn __cdecl rand64();
+#define rand64  (uint64_t)random64
 
 /**
  * This function generates and returns single precision pseudorandom
@@ -64,6 +64,17 @@ static __forceinline float randf32ge0lt1()
 {
 	uint32_t __cdecl internal_randf32ge0lt1();
 	uint32_t x = internal_randf32ge0lt1();
+	return *(float *)&x;
+}
+
+/**
+ * This function generates and returns single precision pseudorandom
+ * number which distributes uniformly in the range [0, 1].
+ */
+static __forceinline float randf32ge0le1()
+{
+	uint32_t __cdecl internal_randf32ge0le1();
+	uint32_t x = internal_randf32ge0le1();
 	return *(float *)&x;
 }
 
@@ -107,6 +118,17 @@ static __forceinline double randf64ge0lt1()
 {
 	uint64_t __msreturn __cdecl internal_randf64ge0lt1();
 	uint64_t x = internal_randf64ge0lt1();
+	return *(double *)&x;
+}
+
+/**
+ * This function generates and returns double precision pseudorandom
+ * number which distributes uniformly in the range [0, 1].
+ */
+static __forceinline double randf64ge0le1()
+{
+	uint64_t __msreturn __cdecl internal_randf64ge0le1();
+	uint64_t x = internal_randf64ge0le1();
 	return *(double *)&x;
 }
 

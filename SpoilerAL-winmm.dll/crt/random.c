@@ -238,7 +238,7 @@ do {                                                \
  * integers.
  * @param sfmt SFMT internal state
  */
-static void sfmt_gen_rand_all_avx2(sfmt_t *sfmt)
+static void sfmt_gen_rand_all_avx2()
 {
 	__m256i r4, r5;
 	ptrdiff_t offset;
@@ -949,7 +949,7 @@ __declspec(naked) long int __cdecl random()
 		test    ecx, ecx
 		jns     get_dword
 		call    dword ptr [sfmt_gen_rand_all]
-		mov     ecx, SFMT_N32 - 1
+		mov     ecx, IDX32(0)
 #endif
 
 		align   16
@@ -965,7 +965,7 @@ __declspec(naked) long int __cdecl random()
 /* This function generates and returns 64-bit pseudorandom number.
    srandom must be called before this function. */
 #if !defined(_M_IX86)
-uint64_t __msreturn __cdecl rand64()
+long long __msreturn __cdecl random64()
 {
 	uint64_t x;
 
@@ -990,7 +990,7 @@ uint64_t __msreturn __cdecl rand64()
 	return x;
 }
 #else
-__declspec(naked) uint64_t __msreturn __cdecl rand64()
+__declspec(naked) long long __msreturn __cdecl random64()
 {
 	__asm
 	{
@@ -1017,14 +1017,14 @@ __declspec(naked) uint64_t __msreturn __cdecl rand64()
 		jnz     generate
 		push    eax
 		call    dword ptr [sfmt_gen_rand_all]
-		mov     ecx, SFMT_N32 - 1
+		mov     ecx, IDX32(0)
 		pop     eax
 		jmp     get_high
 
 		align   16
 	generate:
 		call    dword ptr [sfmt_gen_rand_all]
-		mov     ecx, SFMT_N32 - 1
+		mov     ecx, IDX32(0)
 #endif
 	get_qword:
 		mov     eax, dword ptr [state + ecx * 4]
@@ -1040,14 +1040,14 @@ __declspec(naked) uint64_t __msreturn __cdecl rand64()
 
 /**
  * This function generates and returns single precision pseudorandom
- * number which distributes uniformly in the range [0, FLT_MAX).
+ * number which distributes uniformly in the range [-FLT_MAX, FLT_MAX).
  */
 #if !defined(_M_IX86)
 uint32_t __cdecl internal_randf32()
 {
 	uint32_t x;
 
-	while (((x = rand32()) & 0x7FFFFFFF) >= 0x7F800000);
+	while ((x = rand32()) * 2 >= 0x7F800000 * 2);
 	return x;
 }
 #else
@@ -1070,7 +1070,7 @@ __declspec(naked) uint32_t __cdecl internal_randf32()
 
 /**
  * This function generates and returns double precision pseudorandom
- * number which distributes uniformly in the range [0, DBL_MAX).
+ * number which distributes uniformly in the range [-DBL_MAX, DBL_MAX).
  */
 #if !defined(_M_IX86)
 uint64_t __msreturn __cdecl internal_randf64()
@@ -1078,21 +1078,16 @@ uint64_t __msreturn __cdecl internal_randf64()
 	uint64_t x;
 
 	x = rand64();
-	while ((x & 0x7FFFFFFFFFFFFFFF) >= 0x7FF0000000000000)
-#if defined(__LITTLE_ENDIAN__)
+	while (x * 2 >= 0x7FF0000000000000 * 2)
 		x = ((uint64_t)rand32() << 32) | (x >> 32);
-#else
-		x = rand32() | (x << 32);
-#endif
 	return x;
 }
 #else
 __declspec(naked) uint64_t __msreturn __cdecl internal_randf64()
 {
-#if defined(__LITTLE_ENDIAN__)
 	__asm
 	{
-		call    rand64
+		call    random64
 		push    edx
 		add     edx, edx
 		cmp     edx, 0x7FF00000 * 2
@@ -1112,33 +1107,6 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64()
 		pop     edx
 		ret
 	}
-#else
-	__asm
-	{
-		call    rand64
-		mov     ecx, edx
-		push    esi
-		add     ecx, ecx
-		mov     esi, eax
-		cmp     ecx, 0x7FF00000 * 2
-		jae     loop1
-		pop     esi
-		ret
-
-		align   16
-	loop1:
-		call    random
-		mov     ecx, esi
-		mov     edx, esi
-		add     ecx, ecx
-		mov     esi, eax
-		cmp     ecx, 0x7FF00000 * 2
-		jae     loop1
-
-		pop     esi
-		ret
-	}
-#endif
 }
 #endif
 
@@ -1162,6 +1130,34 @@ __declspec(naked) uint32_t __cdecl internal_randf32ge0lt1()
 	loop1:
 		call    random
 		cmp     eax, 0x3F800000 * 4
+		jae     loop1
+
+		shr     eax, 2
+		ret
+	}
+}
+#endif
+
+/**
+ * This function generates and returns single precision pseudorandom
+ * number which distributes uniformly in the range [0, 1].
+ */
+#if !defined(_M_IX86)
+uint32_t __cdecl internal_randf32ge0le1()
+{
+	uint32_t x;
+
+	while ((x = rand32()) >= 0x3F800001 * 4);
+	return x >> 2;
+}
+#else
+__declspec(naked) uint32_t __cdecl internal_randf32ge0le1()
+{
+	__asm
+	{
+	loop1:
+		call    random
+		cmp     eax, 0x3F800001 * 4
 		jae     loop1
 
 		shr     eax, 2
@@ -1235,46 +1231,30 @@ __declspec(naked) uint32_t __cdecl internal_randf32gt0lt1()
 #if !defined(_M_IX86)
 uint64_t __msreturn __cdecl internal_randf64ge0lt1()
 {
-	uint64_t x;
+	uint64_t x, y;
 
-	x = rand64() & 0x3FFFFFFFFFFFFFFF;
+	x = (y = rand64()) & 0x3FFFFFFFFFFFFFFF;
 	while (x >= 0x3FF0000000000000)
-#if defined(__LITTLE_ENDIAN__)
-		x = ((uint64_t)(rand32() & 0x3FFFFFFF) << 32) | (x >> 32);
-#else
-		x = rand32() | ((x & 0x3FFFFFFF) << 32);
-#endif
-	return x;
+		x = (y = ((uint64_t)rand32() << 32) | (x >> 32)) & 0x3FFFFFFFFFFFFFFF;
 }
 #else
 __declspec(naked) uint64_t __msreturn __cdecl internal_randf64ge0lt1()
 {
 	__asm
 	{
-		call    rand64
-#if defined(__LITTLE_ENDIAN__)
+		call    random64
 		mov     ecx, edx
-#endif
 		and     edx, 0x3FFFFFFF
 		cmp     edx, 0x3FF00000
 		jb      done
 		push    esi
-#if defined(__LITTLE_ENDIAN__)
 		mov     esi, ecx
-#else
-		mov     esi, eax
-#endif
 
 	loop1:
 		call    random
-#if defined(__LITTLE_ENDIAN__)
 		mov     edx, eax
 		mov     eax, esi
 		mov     esi, edx
-#else
-		mov     edx, esi
-		mov     esi, eax
-#endif
 		and     edx, 0x3FFFFFFF
 		cmp     edx, 0x3FF00000
 		jae     loop1
@@ -1288,20 +1268,63 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64ge0lt1()
 
 /**
  * This function generates and returns double precision pseudorandom
+ * number which distributes uniformly in the range [0, 1].
+ */
+#if !defined(_M_IX86)
+uint64_t __msreturn __cdecl internal_randf64ge0le1()
+{
+	uint64_t x, y;
+
+	x = (y = rand64()) & 0x3FFFFFFFFFFFFFFF;
+	while (x >= 0x3FF0000000000001)
+		x = (y = ((uint64_t)rand32() << 32) | (x >> 32)) & 0x3FFFFFFFFFFFFFFF;
+	return x;
+}
+#else
+__declspec(naked) uint64_t __msreturn __cdecl internal_randf64ge0le1()
+{
+	__asm
+	{
+		call    random64
+		mov     ecx, edx
+		push    esi
+		and     ecx, 0x3FFFFFFF
+		cmp     eax, 1
+		sbb     ecx, 0x3FF00000
+		jb      done
+		mov     esi, edx
+
+	loop1:
+		call    random
+		mov     ecx, esi
+		mov     esi, eax
+		and     eax, 0x3FFFFFFF
+		cmp     ecx, 1
+		sbb     eax, 0x3FF00000
+		jae     loop1
+
+		mov     edx, esi
+		mov     eax, ecx
+	done:
+		and     edx, 0x3FFFFFFF
+		pop     esi
+		ret
+	}
+}
+#endif
+
+/**
+ * This function generates and returns double precision pseudorandom
  * number which distributes uniformly in the range (0, 1].
  */
 #if !defined(_M_IX86)
 uint64_t __msreturn __cdecl internal_randf64gt0le1()
 {
-	uint64_t x;
+	uint64_t x, y;
 
-	x = rand64() & 0x3FFFFFFFFFFFFFFF;
+	x = (y = rand64()) & 0x3FFFFFFFFFFFFFFF;
 	while (x >= 0x3FF0000000000000)
-#if defined(__LITTLE_ENDIAN__)
-		x = ((uint64_t)(rand32() & 0x3FFFFFFF) << 32) | (x >> 32);
-#else
-		x = rand32() | ((x & 0x3FFFFFFF) << 32);
-#endif
+		x = (y = ((uint64_t)rand32() << 32) | (x >> 32)) & 0x3FFFFFFFFFFFFFFF;
 	return x + 1;
 }
 #else
@@ -1309,30 +1332,19 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64gt0le1()
 {
 	__asm
 	{
-		call    rand64
-#if defined(__LITTLE_ENDIAN__)
+		call    random64
 		mov     ecx, edx
-#endif
 		and     edx, 0x3FFFFFFF
 		cmp     edx, 0x3FF00000
 		jb      done
 		push    esi
-#if defined(__LITTLE_ENDIAN__)
 		mov     esi, ecx
-#else
-		mov     esi, eax
-#endif
 
 	loop1:
 		call    random
-#if defined(__LITTLE_ENDIAN__)
 		mov     edx, eax
 		mov     eax, esi
 		mov     esi, edx
-#else
-		mov     edx, esi
-		mov     esi, eax
-#endif
 		and     edx, 0x3FFFFFFF
 		cmp     edx, 0x3FF00000
 		jae     loop1
@@ -1353,15 +1365,11 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64gt0le1()
 #if !defined(_M_IX86)
 uint64_t __msreturn __cdecl internal_randf64gt0lt1()
 {
-	uint64_t x;
+	uint64_t x, y;
 
-	x = rand64() & 0x3FFFFFFFFFFFFFFF;
+	x = (y = rand64()) & 0x3FFFFFFFFFFFFFFF;
 	while (x >= 0x3FF0000000000000 - 1)
-#if defined(__LITTLE_ENDIAN__)
-		x = ((uint64_t)(rand32() & 0x3FFFFFFF) << 32) | (x >> 32);
-#else
-		x = rand32() | ((x & 0x3FFFFFFF) << 32);
-#endif
+		x = (y = ((uint64_t)rand32() << 32) | (x >> 32)) & 0x3FFFFFFFFFFFFFFF;
 	return x + 1;
 }
 #else
@@ -1369,13 +1377,9 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64gt0lt1()
 {
 	__asm
 	{
-		call    rand64
+		call    random64
 		push    esi
-#if defined(__LITTLE_ENDIAN__)
 		mov     esi, edx
-#else
-		mov     esi, eax
-#endif
 		and     edx, 0x3FFFFFFF
 		sub     eax, 0xFFFFFFFF	// (0x3FF0000000000000 - 1) & UINT32_MAX
 		sbb     edx, 0x3FEFFFFF	// (0x3FF0000000000000 - 1) >> 32
@@ -1383,25 +1387,15 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64gt0lt1()
 
 	loop1:
 		call    random
-#if defined(__LITTLE_ENDIAN__)
 		mov     ecx, esi
 		mov     esi, eax
 		and     eax, 0x3FFFFFFF
 		sub     ecx, 0xFFFFFFFF	// (0x3FF0000000000000 - 1) & UINT32_MAX
 		sbb     eax, 0x3FEFFFFF	// (0x3FF0000000000000 - 1) >> 32
-#else
-		mov     edx, esi
-		mov     esi, eax
-		and     edx, 0x3FFFFFFF
-		sub     eax, 0xFFFFFFFF	// (0x3FF0000000000000 - 1) & UINT32_MAX
-		sbb     edx, 0x3FEFFFFF	// (0x3FF0000000000000 - 1) >> 32
-#endif
 		jae     loop1
 
-#if defined(__LITTLE_ENDIAN__)
 		mov     edx, eax
 		mov     eax, ecx
-#endif
 	done:
 		add     edx, 0x3FF00000	// 0x3FF0000000000000 >> 32
 		pop     esi

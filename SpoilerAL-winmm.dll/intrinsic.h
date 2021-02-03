@@ -1050,7 +1050,8 @@ static __forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsi
 }
 static __forceinline unsigned char _addcarry_u32(unsigned char c_in, unsigned int a, unsigned int b, unsigned int *_out)
 {
-	return ((*_out = a + b) < b) | (c_in && !++(*_out));
+	*_out = a;
+	return (c_in && !++b) || ((*_out += b) < b);
 }
 #endif
 
@@ -1098,11 +1099,12 @@ unsigned char __fastcall _subborrow_u32(unsigned char b_in, unsigned int a, unsi
 #else
 static __forceinline unsigned char _sub_u32(unsigned int a, unsigned int b, unsigned int *_out)
 {
-	return (*_out = a - b) > a;
+	return a < (*_out = a - b);
 }
 static __forceinline unsigned char _subborrow_u32(unsigned char b_in, unsigned int a, unsigned int b, unsigned int *_out)
 {
-	return ((*_out = a - b) > a) | (b_in && !(*_out)--);
+	*_out = a;
+	return (b_in && !++b) || (a < (*_out -= b));
 }
 #endif
 
@@ -1182,7 +1184,8 @@ static __forceinline unsigned char _add_u64(uint64_t a, uint64_t b, uint64_t *_o
 }
 static __forceinline unsigned char _addcarry_u64(unsigned char c_in, uint64_t a, uint64_t b, uint64_t *_out)
 {
-	return ((*_out = a + b) < b) | (c_in && !++(*_out));
+	*_out = a;
+	return (c_in && !++b) || ((*_out += b) < b);
 }
 #endif
 
@@ -1258,11 +1261,12 @@ unsigned char __fastcall _subborrow_u64(unsigned char b_in, uint64_t a, uint64_t
 #else
 static __forceinline unsigned char _sub_u64(uint64_t a, uint64_t b, uint64_t *_out)
 {
-	return (*_out = a - b) > a;
+	return a < (*_out = a - b);
 }
 static __forceinline unsigned char _subborrow_u64(unsigned char b_in, uint64_t a, uint64_t b, uint64_t *_out)
 {
-	return ((*_out = a - b) > a) | (b_in && !(*_out)--);
+	*_out = a;
+	return (b_in && !++b) || (a < (*_out -= b));
 }
 #endif
 

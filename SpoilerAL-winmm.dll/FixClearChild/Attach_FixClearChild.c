@@ -220,6 +220,7 @@ void __stdcall TSSGAttributeSelector_MakeNowAttributeVec_attributeSetMap_insert(
 	NewVec->tblIndex = SubjectStringTable_insert((string *)&index);
 }
 
+static_assert(sizeof(CONSOLE_FONT_INFO) <= 8, "CONSOLE_FONT_INFO is greater than 8 bytes.");
 CONSOLE_FONT_INFO __fastcall TSSGAttributeElement_GetViaCoord(AeType const Type, const vector *const AttrV)
 {
 	DWORD Index;

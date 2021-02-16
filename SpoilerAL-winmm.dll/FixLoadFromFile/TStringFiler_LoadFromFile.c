@@ -217,7 +217,7 @@ unsigned long __cdecl TStringFiler_LoadFromFile(
 		goto FAILED4;
 
 #ifndef __BORLANDC__
-	if (!(Mode & MODE_RECURSIVE))
+	if (Mode & MODE_START_BYTE)
 		CheckSSGVersion(lpMapViewOfFile, dwFileSize);
 #endif
 

@@ -18,7 +18,7 @@ string * __cdecl TStringDivision_TrimDefault(
 
 	first = string_begin(Src);
 	last = string_end(Src);
-	if (first > last)
+	if (first < last)
 	{
 		char c;
 
@@ -114,7 +114,7 @@ string * __cdecl TStringDivision_TrimFull(
 
 	first = string_begin(Src);
 	last = string_end(Src);
-	if (first > last)
+	if (first < last)
 	{
 		char c;
 

@@ -4205,16 +4205,18 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 				#define TAG_ADD_SUB_LENGTH 1
 
 				char *p, *end, *next;
+				UINT bound;
 
 				if (lpTag >= lpEndOfTag)
 					goto INC_MARKUP;
-#if 0
-				if (lpTag[0].Tag == TAG_PARENTHESIS_OPEN)
+#if 1
+				if (lpTag->Tag == TAG_PARENTHESIS_OPEN && length > 1 && *lpMarkup->String == '$')
 				{
-					// function
+					// variable function
 					lpMarkup->Tag      = TAG_FUNCTION;
+					lpMarkup->Type     = OS_PUSH | OS_ANTE | OS_YIELD_OPERAND;
 					lpMarkup->Priority = PRIORITY_FUNCTION;
-					lpMarkup->Type     = OS_PUSH | OS_ANTE;
+					bCorrectTag = TRUE;
 				}
 				else
 #endif
@@ -4223,18 +4225,16 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					lpTag[0].String == lpMarkup->String + lpMarkup->Length &&
 					lpTag[1].Tag == TAG_AT &&
 					lpTag[1].String == lpTag[0].String + lpTag[0].Length &&
-					(lpTag[2].Tag == TAG_PARENTHESIS_OPEN ||
-					 lpTag[3].Tag == TAG_PARENTHESIS_OPEN && lpTag[2].String == lpTag[1].String + lpTag[1].Length) &&
-					(end = TrimRightSpace(lpTag[1].String + lpTag[1].Length,
-										  lpTag[2 + (lpTag[2].Tag != TAG_PARENTHESIS_OPEN)].String)) >= lpTag[1].String + lpTag[1].Length)
+					(bound = 2 + (lpTag[2].String == lpTag[1].String + lpTag[1].Length), lpTag[bound].Tag == TAG_PARENTHESIS_OPEN) &&
+					(end = TrimRightSpace(lpTag[1].String + lpTag[1].Length, lpTag[bound].String)) > lpTag[1].String + lpTag[1].Length)
 				{
 					// function
 					lpMarkup->Tag      = TAG_FUNCTION;
+					lpMarkup->Type     = OS_PUSH | OS_ANTE;
 					lpMarkup->Length   = end - lpMarkup->String;
 					lpMarkup->Priority = PRIORITY_FUNCTION;
-					lpMarkup->Type     = OS_PUSH | OS_ANTE;
-					lpTag += 2 + (lpTag[2].Tag != TAG_PARENTHESIS_OPEN);
 					bCorrectTag = TRUE;
+					lpTag += bound;
 				}
 				else if ((lpTag[0].Tag == TAG_ADD || lpTag[0].Tag == TAG_SUB) &&
 					!(lpTag[0].Type & OS_LEFT_ASSIGN) &&
@@ -4962,8 +4962,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					break;
 			// negative operator
 			lpMarkup->Tag = TAG_NEG;
-			lpMarkup->Priority = PRIORITY_NEG;
 			lpMarkup->Type = OS_PUSH | OS_ANTE;
+			lpMarkup->Priority = PRIORITY_NEG;
 			break;
 		case TAG_MUL:
 			if (lpMarkup->Type & OS_LEFT_ASSIGN)
@@ -4974,14 +4974,14 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					break;
 			// indirection operator
 			lpMarkup->Tag = TAG_INDIRECTION;
-			lpMarkup->Priority = PRIORITY_INDIRECTION;
 			lpMarkup->Type = OS_PUSH | OS_ANTE;
+			lpMarkup->Priority = PRIORITY_INDIRECTION;
 			break;
 		case TAG_BIT_AND:
 			if (lpMarkup + 1 >= lpEndOfMarkup)
 				break;
 			if (lpMarkup[1].Tag != TAG_NOT_OPERATOR)
-					break;
+				break;
 			if (lpMarkup->Type & OS_LEFT_ASSIGN)
 				break;
 			if (lpMarkup != lpMarkupArray)
@@ -4990,8 +4990,8 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 					break;
 			// address-of operator
 			lpMarkup->Tag = TAG_ADDRESS_OF;
-			lpMarkup->Priority = PRIORITY_ADDRESS_OF;
 			lpMarkup->Type = OS_PUSH | OS_ANTE;
+			lpMarkup->Priority = PRIORITY_ADDRESS_OF;
 			break;
 		case TAG_MODULENAME:
 			lpMarkup->Length--;
@@ -12630,21 +12630,44 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				string        FName, DefaultExt;
 				PARAMETER     *lpParams;
 				const string  *Source, *Finish;
-				size_t        count, extra = 0;
+				BOOL          Lexical;
+				size_t        count, extra = 0, nLength = lpMarkup->Length;
+				const char    *sFName = lpMarkup->String;
 				TSSGSubject   *Object = SSGS;
-				const BOOL    Lexical = *lpMarkup->String == '@';
 
 				if ((lpOperandTop = lpEndOfOperand - lpMarkup->NumberOfOperand) <= lpOperandBuffer)
 					goto PARSING_ERROR;
 				lpEndOfOperand = lpOperandTop + 1;
+				if (lpMarkup->Type & OS_YIELD_OPERAND)
 				{
-					string_ctor_assign_cstr_with_length(&FName, lpMarkup->String + Lexical, lpMarkup->Length - Lexical);
+					VARIABLE *element = NULL;
+					size_t length = lpMarkup->Length - 1;
+					LPVOID p = lpMarkup->String + 1;
+					for (size_t i = 0; i < nNumberOfVariable; i++)
+					{
+						if (lpVariable[i].Length != length)
+							continue;
+						if (memcmp(lpVariable[i].String, p, length) != 0)
+							continue;
+						element = lpVariable + i;
+						break;
+					}
+					if (!element || !element->Value.Quad)
+						goto PARSING_ERROR;
+					lpAddress = !IsInteger ? (void *)(uint64_t)element->Value.Real : (void *)element->Value.Quad;
+					if (IsBadReadPtr(lpAddress, sizeof(char)))
+						goto READ_ERROR;
+					nLength = strlen(sFName = lpAddress);
+				}
+				{
+					Lexical = *sFName == '@';
+					string_ctor_assign_cstr_with_length(&FName, sFName + Lexical, nLength - Lexical);
 					string_ctor_assign_cstr_with_length(&DefaultExt, ".CHN", 4);
 					File = TSSGCtrl_GetSSGDataFile(this, SSGS, FName, DefaultExt, NULL);
 					if (!File || vector_empty(File))
 						goto PARSING_ERROR;
 					Source = vector_begin(File);
-					Finish = vector_end(File);
+					Finish = vector_end  (File);
 				}
 #if EMBED_BREADTH
 				if (Lexical)
@@ -12702,13 +12725,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						((ScopeVariant *)pair_first(v->Node))->Quad = v->Value.Quad;
 					}
 #endif
-				if (this->ssgActionListner && lpMarkup->Length + 10 < 1024) switch (TMainForm_GetUserMode(MainForm))
+				if (this->ssgActionListner && nLength + 10 < 1024) switch (TMainForm_GetUserMode(MainForm))
 				{
 				case 3:
 				case 4:
 					CHAR Mes[0x0400] = "Step in `";
-					__movsb(&Mes[9], lpMarkup->String, lpMarkup->Length);
-					*(LPWCH)&Mes[9 + lpMarkup->Length] = L'`';
+					__movsb(&Mes[9], sFName, nLength);
+					*(LPWCH)&Mes[9 + nLength] = L'`';
 					TMainForm_Guide(Mes, 0);
 				}
 				lpOperandTop->Quad = InternalParsing(this, Object, Source, IsInteger, lpParams ? (va_list)lpParams : (va_list)&Terminator);
@@ -12749,8 +12772,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					size_t prefixLength;
 					size_t i;
 
-					if (!length || lpNext && (lpNext->Tag <= TAG_MNAME && lpNext->Tag >= TAG_MODULENAME || lpNext->Tag == TAG_GOTO))
+					if (!length ||
+						lpNext && (lpNext->Tag <= TAG_MNAME && lpNext->Tag >= TAG_MODULENAME || lpNext->Tag == TAG_GOTO))
+					{
+						endptr = end;
+						operand = (VARIAUNT) { { 0, 0 }, !IsInteger };
 						break;// Operand is always immediate string.
+					}
 					if (p[prefixLength = 0] != '\'' && (p[0] != 'u' ||
 						p[prefixLength = 1] != '\'' && (p[1] != '8' ||
 						p[prefixLength = 2] != '\'')))
@@ -12817,7 +12845,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						break;
 					}
 				} while (0);
-				if (!element && length && (
+				if (!element && length && endptr != end && (
 #if SCOPE_SUPPORT
 					p[0] == SCOPE_PREFIX ||
 #endif

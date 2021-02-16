@@ -1,9 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+	<Type Name="tpClass">
+		<DisplayString>{tpcFlags}</DisplayString>
+		<Expand>
+			<Item Name="[Voff]">tpcVptrOffs</Item>
+			<Item Name="[Flag]">tpcFlags</Item>
+			<Item Name="[GUID]">guid</Item>
+			<CustomListItems>
+				<Variable Name="baseListPtr" InitialValue="(tpid **)((LPBYTE)this - 8 + tpcBaseList)" />
+				<Loop>
+					<Break Condition="!*baseListPtr"/>
+					<Item Name="{*(LPDWORD)(baseListPtr + 2)}b{*(LPDWORD)(baseListPtr + 1), Xb}">*baseListPtr</Item>
+					<Exec>baseListPtr += 3</Exec>
+				</Loop>
+			</CustomListItems>
+			<CustomListItems>
+				<Variable Name="baseListPtr" InitialValue="(tpid **)((LPBYTE)this - 8 + tpcVbasList)" />
+				<Loop>
+					<Break Condition="!*baseListPtr"/>
+					<Item Name="{*(LPDWORD)(baseListPtr + 2)}v{*(LPDWORD)(baseListPtr + 1), Xb}">*baseListPtr</Item>
+					<Exec>baseListPtr += 3</Exec>
+				</Loop>
+			</CustomListItems>
+			<CustomListItems>
+				<Variable Name="dMemListPtr" InitialValue="(tpid **)((LPBYTE)this - 8 + tpcDtMembers)" />
+				<Loop>
+					<Break Condition="!*dMemListPtr"/>
+					<Item Name="0m{*(LPDWORD)(dMemListPtr + 1), Xb}">*dMemListPtr</Item>
+					<Exec>dMemListPtr += 2</Exec>
+				</Loop>
+			</CustomListItems>
+		</Expand>
+	</Type>
 	<Type Name="tpid">
-		<DisplayString>{(unsigned char *)this + tpName, s}</DisplayString>
+		<DisplayString>{(LPSTR)this + tpName, s}</DisplayString>
 		<Expand HideRawView="true">
-			<Item Name="[Name]">(unsigned char *)this + tpName, sb</Item>
+			<Item Name="[Name]">(LPSTR)this + tpName, sb</Item>
+			<Item Name="[Size]">tpSize</Item>
 			<Item Name="[Mask]">_tpMask</Item>
 			<ExpandedItem Condition="_tpMask &amp; 0x0010">tpPtr</ExpandedItem>
 			<ExpandedItem Condition="_tpMask &amp; 0x0400">tpArr</ExpandedItem>

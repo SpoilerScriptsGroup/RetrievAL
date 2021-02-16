@@ -93,6 +93,8 @@ typedef struct {
 	BOOL    Enabled;
 	POINTS  EnterSizeMovePos;
 	RECT    EnterSizeMoveRect;
+	BOOL    HasMargin;
+	RECT    Margin;
 } SNAPINFO;
 
 #if !FIXED_ARRAY
@@ -116,20 +118,27 @@ static void __stdcall OnEnterSizeMove(SNAPINFO *this)
 {
 	*(LPDWORD)&this->EnterSizeMovePos = GetMessagePos();
 	GetWindowRectangle(this->hWnd, &this->EnterSizeMoveRect);
+	this->HasMargin = GetWindowMargin(this->hWnd, &this->Margin);
 }
 
 static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 {
-	HMONITOR hMonitor;
-	RECT     rcMargin;
 #if !FIXED_ARRAY
 	SNAPINFO **p, **end;
 #else
 	SNAPINFO *p, *end;
 #endif
+	HMONITOR hMonitor;
 
 	if (!this->Enabled)
 		return;
+	if (this->HasMargin)
+	{
+		pRect->left   -= this->Margin.left  ;
+		pRect->top    -= this->Margin.top   ;
+		pRect->right  -= this->Margin.right ;
+		pRect->bottom -= this->Margin.bottom;
+	}
 	for (end = (p = SnapInfo) + NumberOfElements; p != end; p++)
 	{
 		#define HORZ 1
@@ -154,14 +163,14 @@ static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 				if (fwSide == WMSZ_LEFT || fwSide == WMSZ_TOPLEFT || fwSide == WMSZ_BOTTOMLEFT)
 					if (pRect->left >= rect.left - SNAP_PIXELS && pRect->left < rect.left + SNAP_PIXELS)
 						pRect->left = rect.left;
-					else if (pRect->left >= rect.right - SNAP_PIXELS && pRect->left < rect.right + SNAP_PIXELS)
+					else if (pRect->left >= rect.right - (SNAP_PIXELS - 1) + 1 && pRect->left < rect.right + (SNAP_PIXELS + 1))
 						pRect->left = rect.right;
 					else
 						break;
 				else if (fwSide == WMSZ_RIGHT || fwSide == WMSZ_TOPRIGHT || fwSide == WMSZ_BOTTOMRIGHT)
 					if (pRect->right >= rect.left - SNAP_PIXELS && pRect->right < rect.left + SNAP_PIXELS)
 						pRect->right = rect.left;
-					else if (pRect->right >= rect.right - SNAP_PIXELS && pRect->right < rect.right + SNAP_PIXELS)
+					else if (pRect->right >= rect.right - (SNAP_PIXELS - 1) && pRect->right < rect.right + (SNAP_PIXELS + 1))
 						pRect->right = rect.right;
 					else
 						break;
@@ -174,14 +183,14 @@ static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 			if (fwSide >= WMSZ_TOP && fwSide <= WMSZ_TOPRIGHT)
 				if (pRect->top >= rect.top - SNAP_PIXELS && pRect->top < rect.top + SNAP_PIXELS)
 					pRect->top = rect.top;
-				else if (pRect->top >= rect.bottom - SNAP_PIXELS && pRect->top < rect.bottom + SNAP_PIXELS)
+				else if (pRect->top >= rect.bottom - (SNAP_PIXELS - 1) && pRect->top < rect.bottom + (SNAP_PIXELS + 1))
 					pRect->top = rect.bottom;
 				else
 					break;
 			else if (fwSide >= WMSZ_BOTTOM && fwSide <= WMSZ_BOTTOMRIGHT)
 				if (pRect->bottom >= rect.top - SNAP_PIXELS && pRect->bottom < rect.top + SNAP_PIXELS)
 					pRect->bottom = rect.top;
-				else if (pRect->bottom >= rect.bottom - SNAP_PIXELS && pRect->bottom < rect.bottom + SNAP_PIXELS)
+				else if (pRect->bottom >= rect.bottom - (SNAP_PIXELS - 1) && pRect->bottom < rect.bottom + (SNAP_PIXELS + 1))
 					pRect->bottom = rect.bottom;
 				else
 					break;
@@ -191,17 +200,6 @@ static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 
 		#undef HORZ
 		#undef VERT
-	}
-	if (GetWindowMargin(this->hWnd, &rcMargin))
-	{
-		if (fwSide == WMSZ_LEFT || fwSide == WMSZ_TOPLEFT || fwSide == WMSZ_BOTTOMLEFT)
-			pRect->left -= rcMargin.left;
-		else if (fwSide == WMSZ_RIGHT || fwSide == WMSZ_TOPRIGHT || fwSide == WMSZ_BOTTOMRIGHT)
-			pRect->right += rcMargin.right;
-		if (fwSide >= WMSZ_TOP && fwSide <= WMSZ_TOPRIGHT)
-			pRect->top -= rcMargin.top;
-		else if (fwSide >= WMSZ_BOTTOM && fwSide <= WMSZ_BOTTOMRIGHT)
-			pRect->bottom += rcMargin.bottom;
 	}
 	hMonitor = MonitorFromWindow(this->hWnd, MONITOR_DEFAULTTONEAREST);
 	if (hMonitor)
@@ -218,7 +216,7 @@ static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 			}
 			else if (fwSide == WMSZ_RIGHT || fwSide == WMSZ_TOPRIGHT || fwSide == WMSZ_BOTTOMRIGHT)
 			{
-				if (pRect->right >= mi.rcWork.right - SNAP_PIXELS && pRect->right < mi.rcWork.right + SNAP_PIXELS)
+				if (pRect->right >= mi.rcWork.right - (SNAP_PIXELS - 1) && pRect->right < mi.rcWork.right + (SNAP_PIXELS + 1))
 					pRect->right = mi.rcWork.right;
 			}
 			if (fwSide >= WMSZ_TOP && fwSide <= WMSZ_TOPRIGHT)
@@ -228,10 +226,17 @@ static void __stdcall OnSizing(SNAPINFO *this, UINT fwSide, LPRECT pRect)
 			}
 			else if (fwSide >= WMSZ_BOTTOM && fwSide <= WMSZ_BOTTOMRIGHT)
 			{
-				if (pRect->bottom >= mi.rcWork.bottom - SNAP_PIXELS && pRect->bottom < mi.rcWork.bottom + SNAP_PIXELS)
+				if (pRect->bottom >= mi.rcWork.bottom - (SNAP_PIXELS - 1) && pRect->bottom < mi.rcWork.bottom + (SNAP_PIXELS + 1))
 					pRect->bottom = mi.rcWork.bottom;
 			}
 		}
+	}
+	if (this->HasMargin)
+	{
+		pRect->left   += this->Margin.left  ;
+		pRect->top    += this->Margin.top   ;
+		pRect->right  += this->Margin.right ;
+		pRect->bottom += this->Margin.bottom;
 	}
 }
 
@@ -244,7 +249,6 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 #else
 	SNAPINFO *p, *end;
 #endif
-	RECT     rcMargin;
 	HMONITOR hMonitor;
 
 	if (!this->Enabled)
@@ -282,7 +286,7 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 					pRect->right += rect.left - pRect->left;
 					pRect->left = rect.left;
 				}
-				else if (pRect->left >= rect.right - SNAP_PIXELS && pRect->left < rect.right + SNAP_PIXELS)
+				else if (pRect->left >= rect.right - (SNAP_PIXELS - 1) && pRect->left < rect.right + (SNAP_PIXELS + 1))
 				{
 					pRect->right += rect.right - pRect->left;
 					pRect->left = rect.right;
@@ -292,7 +296,7 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 					pRect->left += rect.left - pRect->right;
 					pRect->right = rect.left;
 				}
-				else if (pRect->right >= rect.right - SNAP_PIXELS && pRect->right < rect.right + SNAP_PIXELS)
+				else if (pRect->right >= rect.right - (SNAP_PIXELS - 1) && pRect->right < rect.right + (SNAP_PIXELS + 1))
 				{
 					pRect->left += rect.right - pRect->right;
 					pRect->right = rect.right;
@@ -308,7 +312,7 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 				pRect->bottom += rect.top - pRect->top;
 				pRect->top = rect.top;
 			}
-			else if (pRect->top >= rect.bottom - SNAP_PIXELS && pRect->top < rect.bottom + SNAP_PIXELS)
+			else if (pRect->top >= rect.bottom - (SNAP_PIXELS - 1) && pRect->top < rect.bottom + (SNAP_PIXELS + 1))
 			{
 				pRect->bottom += rect.bottom - pRect->top;
 				pRect->top = rect.bottom;
@@ -318,7 +322,7 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 				pRect->top += rect.top - pRect->bottom;
 				pRect->bottom = rect.top;
 			}
-			else if (pRect->bottom >= rect.bottom - SNAP_PIXELS && pRect->bottom < rect.bottom + SNAP_PIXELS)
+			else if (pRect->bottom >= rect.bottom - (SNAP_PIXELS - 1) && pRect->bottom < rect.bottom + (SNAP_PIXELS + 1))
 			{
 				pRect->top += rect.bottom - pRect->bottom;
 				pRect->bottom = rect.bottom;
@@ -343,7 +347,7 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 				pRect->right += mi.rcWork.left - pRect->left;
 				pRect->left = mi.rcWork.left;
 			}
-			else if (pRect->right >= mi.rcWork.right - SNAP_PIXELS && pRect->right < mi.rcWork.right + SNAP_PIXELS)
+			else if (pRect->right >= mi.rcWork.right - (SNAP_PIXELS - 1) && pRect->right < mi.rcWork.right + (SNAP_PIXELS + 1))
 			{
 				pRect->left += mi.rcWork.right - pRect->right;
 				pRect->right = mi.rcWork.right;
@@ -353,19 +357,19 @@ static void __stdcall OnMoving(SNAPINFO *this, LPRECT pRect)
 				pRect->bottom += mi.rcWork.top - pRect->top;
 				pRect->top = mi.rcWork.top;
 			}
-			else if (pRect->bottom >= mi.rcWork.bottom - SNAP_PIXELS && pRect->bottom < mi.rcWork.bottom + SNAP_PIXELS)
+			else if (pRect->bottom >= mi.rcWork.bottom - (SNAP_PIXELS - 1) && pRect->bottom < mi.rcWork.bottom + (SNAP_PIXELS + 1))
 			{
 				pRect->top += mi.rcWork.bottom - pRect->bottom;
 				pRect->bottom = mi.rcWork.bottom;
 			}
 		}
 	}
-	if (GetWindowMargin(this->hWnd, &rcMargin))
+	if (this->HasMargin)
 	{
-		pRect->left   -= rcMargin.left  ;
-		pRect->top    -= rcMargin.top   ;
-		pRect->right  += rcMargin.right ;
-		pRect->bottom += rcMargin.bottom;
+		pRect->left   += this->Margin.left  ;
+		pRect->top    += this->Margin.top   ;
+		pRect->right  += this->Margin.right ;
+		pRect->bottom += this->Margin.bottom;
 	}
 }
 
@@ -455,11 +459,10 @@ static SNAPINFO * __fastcall FindElement(HWND hWnd)
 #else
 	SNAPINFO *p, *end;
 
-	if (!SnapInfo || !hWnd)
-		return NULL;
-	for (end = (p = SnapInfo) + NumberOfElements; p != end; p++)
-		if (p->hWnd == hWnd)
-			return p;
+	if ((p = SnapInfo) && hWnd)
+		for (end = p + NumberOfElements; p != end; p++)
+			if (p->hWnd == hWnd)
+				return p;
 	return NULL;
 #endif
 }
@@ -505,7 +508,7 @@ static SNAPINFO * __fastcall AppendElement(HWND hWnd)
 #if !FIXED_ARRAY
 	if (FindElement(hWnd))
 		return NULL;
-	if (this = (SNAPINFO *)HeapAlloc(hExecutableHeap, 0, sizeof(SNAPINFO)))
+	if (this = (SNAPINFO *)HeapAlloc(hExecutableHeap, HEAP_ZERO_MEMORY, sizeof(SNAPINFO)))
 	{
 		LPVOID lpMem;
 
@@ -543,7 +546,7 @@ static SNAPINFO * __fastcall AppendElement(HWND hWnd)
 			}
 		}
 		if (this)
-			return this;
+			return (SNAPINFO *)memset(this, 0, sizeof(SNAPINFO));
 #endif
 	}
 	else

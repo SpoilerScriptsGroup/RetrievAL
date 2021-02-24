@@ -1,11 +1,9 @@
 #include <windows.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
-#include "TProcessCtrl.h"
+#include "TSSGCtrl.h"
 #include "TSSGActionListner.h"
 #include "SubjectStringOperator.h"
-
-BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p);
 
 static __inline const string *GetAddressStrPointer(TSSGSubject *SSGS)
 {
@@ -52,7 +50,7 @@ HANDLE __cdecl TSSGCtrl_Open(TSSGCtrl *this, TSSGSubject *SSGS, DWORD Mode)
 	hProcess = (!addressStr || TSSGCtrl_IsRemoteProcess(string_c_str(addressStr))) ?
 		TProcessCtrl_Open(&this->processCtrl, Mode) :
 		GetCurrentProcess();
-	if (this->ssgActionListner && this->script.ePos)
+	if (this->ssgActionListner && this->script.sPos)
 		if (hProcess)
 			TSSGActionListner_OnProcessOpen(this->ssgActionListner, SSGS, Mode);
 		else

@@ -3,8 +3,13 @@
 setlocal EnableDelayedExpansion
 if not defined inProcessing (
 	set inProcessing=1
-	echo Creating winmm.def...
-	%0 >winmm.def
+	if "%~1" == "" (
+		set FileName=winmm.def
+	) else (
+		set FileName=%1
+	)
+	echo Creating %FileName%...
+	%0 >%FileName%
 	endlocal
 	goto :eof
 )
@@ -84,7 +89,7 @@ goto :eof
 	if defined tmp (
 		set len=1
 		for %%i in (4096 2048 1024 512 256 128 64 32 16 8 4 2 1) do (
-			if "!tmp:~%%i,1!" neq "" (
+			if not "!tmp:~%%i,1!" == "" (
 				set /a len+=%%i
 				set tmp=!tmp:~%%i!
 			)

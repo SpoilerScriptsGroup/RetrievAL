@@ -133,7 +133,6 @@ static void __fastcall TMainForm_GoCalcEnter_selectAll(TMainForm* mainForm) {
 }
 
 static void __declspec(naked) __fastcall TMainForm_GoCalcEnter_destroyMessage(string* this, DWORD two) {
-	extern BOOL FixTheProcedure;
 	__asm {// Borland's fastcall
 		call vcl_System_AnsiString_dtor
 		mov  ecx, ebx

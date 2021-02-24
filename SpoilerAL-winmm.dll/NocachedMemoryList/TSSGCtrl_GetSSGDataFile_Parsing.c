@@ -19,9 +19,9 @@ static DWORD_DWORD __fastcall TSSGCtrl_GetSSGDataFile_Parsing(
 	static const char VarName[] = "List";
 	unsigned     long StrSize;
 
-	 StrSize  = Parsing(SSGC, SSGS, &tmpV[2], sizeof(VarName) - sizeof(*VarName), VarName, (uint64_t)Address, 0);
-	*RowSize  = Parsing(SSGC, SSGS, &tmpV[3], sizeof(VarName) - sizeof(*VarName), VarName, (uint64_t)Address, 0);
-	*StepSize = Parsing(SSGC, SSGS, &tmpV[4], sizeof(VarName) - sizeof(*VarName), VarName, (uint64_t)Address, 0);
+	 StrSize  = Parsing(SSGC, SSGS, &tmpV[2], _countof(VarName) - 1, VarName, (uint64_t)Address, 0);
+	*RowSize  = Parsing(SSGC, SSGS, &tmpV[3], _countof(VarName) - 1, VarName, (uint64_t)Address, 0);
+	*StepSize = Parsing(SSGC, SSGS, &tmpV[4], _countof(VarName) - 1, VarName, (uint64_t)Address, 0);
 	return (DWORD_DWORD) { Address, StrSize };// can be changed by return different value
 }
 

@@ -29,7 +29,7 @@ TSSGSubjectProperty * __fastcall GrowSubjectProperty(DWORD *lpdwIndex)
 	{
 		if (SubjectPropertyCount)
 		{
-			if (MainForm->ssgCtrl.script.ePos)
+			if (MainForm->ssgCtrl.script.sPos)
 			{
 				DWORD i = SubjectPropertyCount;
 				do if (SubjectProperty[--i].RepeatDepth == -1)

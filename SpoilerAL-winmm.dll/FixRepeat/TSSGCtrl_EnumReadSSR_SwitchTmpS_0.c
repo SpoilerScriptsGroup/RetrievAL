@@ -129,7 +129,7 @@ __declspec(naked) void __cdecl TSSGCtrl_EnumReadSSR_SwitchTmpS_0()
 		call    string_ctor_assign_cstr
 		push    -1
 		push    1
-		push    0
+		push    FALSE
 		push    0
 		sub     esp, 24
 		mov     edx, 00631BFBH

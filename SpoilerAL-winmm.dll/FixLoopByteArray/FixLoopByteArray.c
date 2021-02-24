@@ -53,7 +53,7 @@ static void __fastcall TSSGCtrl_MakeLoopSet(
 		if (init == '$' && Size >= 1 && Size <= 8 && dd + 2 == string_end(&Code))
 		{// specialization for single code
 			static char const lpszRel[] = "Rel";
-			size_t ArgPtr[] = { sizeof(lpszRel) - 1, (size_t)lpszRel, Rel, 0/* high dword */, 0/* sentinel */ };
+			size_t ArgPtr[] = { _countof(lpszRel) - 1, (size_t)lpszRel, Rel, 0/* high dword */, 0/* sentinel */ };
 			vector_byte* data;
 
 			TProcessAccessElement_dtor(LoopElem, 0x02);
@@ -233,7 +233,7 @@ __declspec(naked) void __cdecl TSSGCtrl_MakeDataCode_MakeLoopSet(
 {
 	#define Code (esp + 0x18)
 	__asm {
-		cmp  EnableParserFix, 0
+		cmp  EnableParserFix, FALSE
 		je   MakeLoopSet
 		// Normalizes Code in advance for inspection
 		lea  ecx, [Code]

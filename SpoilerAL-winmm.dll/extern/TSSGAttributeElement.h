@@ -359,12 +359,12 @@ typedef struct _TChildRWAttribute {
 #define TChildRWAttribute_VTable  ((void *)_TChildRWAttribute_VTable)
 __inline TChildRWAttribute * TChildRWAttribute_ctor(TChildRWAttribute *this)
 {
-	extern BOOL ExtensionTSSDir;
+	extern UINT ExtensionTSSDir;
 
 	this->VTable = TChildRWAttribute_VTable;
 	this->type = atCHILD_RW;
 	*(BOOL *)&this->prohibit = FALSE;
-	this->spAccept = ExtensionTSSDir;
+	this->spAccept = !!ExtensionTSSDir;
 	this->spIgnore = TRUE;
 	return this;
 }
@@ -373,7 +373,7 @@ __inline void TChildRWAttribute_dtor(TChildRWAttribute *this)
 }
 EXTERN_C TChildRWAttribute * __cdecl new_TChildRWAttribute();
 EXTERN_C void __fastcall delete_TChildRWAttribute(TChildRWAttribute *this);
-EXTERN_C void __cdecl TChildRWAttribute_Setting(TChildRWAttribute *this, void *StrD, const char *Code);
+EXTERN_C void __cdecl TChildRWAttribute_Setting(TChildRWAttribute *this, TStringDivision *StrD, const char *Code);
 //----------------------------------------------------------------------------
 //「注意事項指定属性クラス」
 //----------------------------------------------------------------------------

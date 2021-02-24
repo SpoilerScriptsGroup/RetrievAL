@@ -80,8 +80,9 @@ EXTERN_C void __cdecl Attach_NocachedMemoryList()
 	*(LPBYTE )0x004EE11B = PUSH_IMM8;
 	*(LPDWORD)0x004EE11C = 0x401F0F00;
 	*(LPBYTE )0x004EE120 = 0x00;// nop
-#endif
+
 	*(LPBYTE )(0x004EE127 + 1) = dtNEST;
+#endif
 
 	*(LPDWORD)(0x004EE180 + 1) = (DWORD)Caller_TSSGCtrl_GetSSGDataFile_CheckNocacheParam - (0x004EE180 + 1 + sizeof(DWORD));
 

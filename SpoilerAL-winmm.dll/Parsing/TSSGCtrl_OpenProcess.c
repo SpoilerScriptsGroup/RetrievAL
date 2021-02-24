@@ -1,7 +1,5 @@
 #include <windows.h>
-#include "TProcessCtrl.h"
-
-BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p);
+#include "TSSGCtrl.h"
 
 HANDLE __stdcall TSSGCtrl_OpenProcess(TProcessCtrl *processCtrl, DWORD Mode, LPCSTR addressStr)
 {

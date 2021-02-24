@@ -33,8 +33,12 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 
 			switch (c = *(prev = p++))
 			{
-			case '"':
 			case '\'':
+				if (!nest && (TokenLength == 1 && *(LPBYTE)Token == ':' && Option & dtESCAPE ||
+							  TokenLength == 2 && *(LPWORD)Token == BSWAP16('!]')))
+					break;// treat as apostrophe
+				/* FALLTHROUGH */
+			case '"':
 				// string literals, character literals
 				for (comparand = c; p < end; )
 				{
@@ -55,6 +59,39 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 					case_unsigned_leadbyte:
 						p++;
 						continue;
+					}
+					break;
+				}
+				break;
+			case '$':
+				if (!(Option & dtBYTEARRAY)) goto DEFAULT;
+				// "$0", "$1", "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$$"
+				switch (*p)
+				{
+				case '0':
+				case '1': case '2': case '3': case '4':
+				case '5': case '6': case '7': case '8':
+					for (p++; p < end; )
+					{
+						switch (c = *(p++))
+						{
+						default:
+							continue;
+						case '$':
+							if (*p != '$')
+								continue;
+							p++;
+							break;
+						case '\\':
+							c = *(p++);
+							if (!__intrinsic_isleadbyte(c))
+								continue;
+							/* FALLTHROUGH */
+						case_unsigned_leadbyte:
+							p++;
+							continue;
+						}
+						break;
 					}
 					break;
 				}

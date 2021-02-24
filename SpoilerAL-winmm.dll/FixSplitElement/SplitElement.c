@@ -18,6 +18,7 @@
 extern HANDLE hHeap;
 size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity);
 
+#if 0
 #ifdef __BORLANDC__
 string __cdecl SplitElement(LPVOID SSGC_strD, string *Src, string Token, DWORD Index, DWORD Option)
 #else
@@ -183,3 +184,4 @@ FOUND_TOKEN:
 #endif
 	return Result;
 }
+#endif

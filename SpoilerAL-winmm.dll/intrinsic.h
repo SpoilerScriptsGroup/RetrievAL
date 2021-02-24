@@ -928,9 +928,9 @@ static __forceinline unsigned __int64 __shiftleft128(unsigned __int64 LowPart, u
 {
 	if (Shift &= 63)
 		if (Shift < 32)
-			HighPart = ((__ll_lshift(HighPart, Shift) >> 32) << 32) | (__ll_lshift((LowPart >> 32) | (HighPart << 32), Shift) >> 32);
+			HighPart = (__ll_lshift(HighPart, Shift) & 0xFFFFFFFF00000000) | (__ll_lshift((LowPart >> 32) | (HighPart << 32), Shift) >> 32);
 		else if (Shift &= 31)
-			HighPart = ((__ll_lshift((LowPart >> 32) | (HighPart << 32), Shift) >> 32) << 32) | (__ll_lshift(LowPart, Shift) >> 32);
+			HighPart = (__ll_lshift((LowPart >> 32) | (HighPart << 32), Shift) & 0xFFFFFFFF00000000) | (__ll_lshift(LowPart, Shift) >> 32);
 		else
 			HighPart = (LowPart >> 32) | (HighPart << 32);
 	return HighPart;

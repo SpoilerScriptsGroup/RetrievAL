@@ -8,8 +8,8 @@
 #include "SubjectStringOperator.h"
 
 extern unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
-extern BOOL  FixTheProcedure;
-extern BOOL  ExtensionTSSDir;
+extern UINT  ExtensionTSSDir;
+extern UINT  MultiStageAttrs;
 extern DWORD RepeatDepth;
 extern void __stdcall repeat_ReadSSRFile(
 	TSSGCtrl     *this,
@@ -239,11 +239,15 @@ static void __fastcall TSSDir_GetSubjectVec_onOpen(TSSGSubject *const SSGS, TSSG
 	const string *Code = SubjectStringTable_GetString(&SSGS->code);
 	if (string_empty(Code))
 		return;
-	else if (TStringDivision_List(&SSGC->strD, Code, *string_ctor_assign_char(&Token, ','), &tmpV, dtNEST) > 1)
+	else if (TStringDivision_List(&SSGC->strD, Code, *string_ctor_assign_char(&Token, ','), &tmpV, FALSE
+#if 0
+								  | dtNEST
+#endif
+	) > 1)
 	{
 		TSSDir *const this = (void *)SSGS;
 		vector *const attr = TSSGSubject_GetAttribute(SSGS);
-		AeType const multi = atREPLACE | FixTheProcedure << 4 | FixTheProcedure << 5 | atENABLED
+		AeType const multi = atREPLACE | MultiStageAttrs | atENABLED
 #if !ABBREV_SELECT
 			| atDEFINE
 #endif
@@ -323,8 +327,8 @@ static void __declspec(naked) TSSGCtrl_ChangeDirectorySubject_GetSubjectVec(TSSD
 {
 	static DWORD const TSSDir_GetSubjectVec = 0x004C2D64;
 	__asm {// ecx is TSSDir* already
-		cmp  ExtensionTSSDir, 0
-		je   PASS
+		cmp  ExtensionTSSDir, 1
+		jne  PASS
 		mov  edx, edi
 		call TSSDir_GetSubjectVec_onOpen
 	PASS:

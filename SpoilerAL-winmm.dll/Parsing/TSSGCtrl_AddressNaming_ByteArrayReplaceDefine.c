@@ -1,10 +1,10 @@
 #include "TStringDivision.h"
 
-void __stdcall ByteArrayReplaceDefine(void *SSGS, void *line);
+void __stdcall ReplaceDefineDynamic(void *SSGS, void *line);
 
 extern BOOL EnableParserFix;
 
-__declspec(naked) void __cdecl TSSGCtrl_AddressNaming_ByteArrayReplaceDefine()
+__declspec(naked) void __cdecl TSSGCtrl_AddressNaming_ReplaceDefineDynamic3()
 {
 	__asm
 	{
@@ -18,7 +18,7 @@ __declspec(naked) void __cdecl TSSGCtrl_AddressNaming_ByteArrayReplaceDefine()
 		push    tmpS
 		push    edx
 		push    offset TStringDivision_Half
-		jmp     ByteArrayReplaceDefine
+		jmp     ReplaceDefineDynamic
 
 	L1:
 		jmp     TStringDivision_Half

@@ -58,6 +58,7 @@ extern HANDLE hHeap;
 
 static CRITICAL_SECTION          cs;
 static BOOL             volatile bInitialized          = FALSE;
+static HANDLE           volatile hObjectToSignal       = NULL;
 static HANDLE           volatile hMonitorThread        = NULL;
 static size_t           volatile nMonitorPIDsCapacity  = 0;
 static LPDWORD          volatile lpdwMonitorPIDs       = NULL;
@@ -68,6 +69,7 @@ static LPBYTE           volatile lpMonitorNames        = NULL;
 void __cdecl InitializeProcessMonitor()
 {
 	InitializeCriticalSection(&cs);
+	hObjectToSignal = CreateEventW(NULL, FALSE, FALSE, NULL);
 	if (SUCCEEDED(CoInitializeEx(0, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE)))
 	{
 		CoInitializeSecurity(
@@ -89,6 +91,7 @@ void __cdecl InitializeProcessMonitor()
 void __cdecl DeleteProcessMonitor()
 {
 	StopProcessMonitor();
+	CloseHandle(hObjectToSignal);
 	DeleteCriticalSection(&cs);
 	bInitialized = FALSE;
 }
@@ -174,7 +177,10 @@ static BOOL __cdecl EnumProcessId()
 			HANDLE const hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, *lpdwProcessId);
 			if (hProcess)
 			{
-				dwLength = GetModuleBaseNameA(hProcess, NULL, lpBaseName + sizeof(DWORD), MAX_PATH);
+				WCHAR lpFilename[MAX_PATH];
+				dwLength = GetModuleBaseNameW(hProcess, NULL, lpFilename, _countof(lpFilename));
+				if (dwLength && (dwLength = WideCharToMultiByte(CP_ACP, 0, lpFilename, dwLength + 1, lpBaseName + sizeof(DWORD), MAX_PATH, NULL, NULL)))
+					dwLength--;
 				CloseHandle(hProcess);
 			}
 			*(LPDWORD)lpBaseName = dwLength;
@@ -272,7 +278,7 @@ static IWbemObjectSinkVtbl SinkVtbl = {
 	SetStatus
 };
 
-static DWORD WINAPI ProcessMonitor(LPVOID lpParameter)
+static DWORD WINAPI ProcessMonitor(HANDLE hObjectToSignal)
 {
 #if 1
 	if (SUCCEEDED(CoInitializeEx(0, COINIT_MULTITHREADED | COINIT_DISABLE_OLE1DDE)))
@@ -349,7 +355,7 @@ static DWORD WINAPI ProcessMonitor(LPVOID lpParameter)
 						(void *)&esDel
 					)))
 					{
-						SleepEx(INFINITE, TRUE);
+						SignalObjectAndWait(hObjectToSignal, GetCurrentProcess(), INFINITE, TRUE);
 						pSvc->lpVtbl->CancelAsyncCall(pSvc, (void *)&esDel);
 						pSvc->lpVtbl->CancelAsyncCall(pSvc, (void *)&esNew);
 					}
@@ -365,6 +371,7 @@ static DWORD WINAPI ProcessMonitor(LPVOID lpParameter)
 		SysFreeString(bsRES);
 		CoUninitialize();
 	}
+	PulseEvent(hObjectToSignal);
 #else
 	HQUERY hQuery;
 
@@ -640,7 +647,8 @@ DWORD __stdcall FindProcessId(
 		{
 			DWORD dwThreadId;
 
-			hMonitorThread = CreateThread(NULL, 0, ProcessMonitor, NULL, 0, &dwThreadId);
+			hMonitorThread = CreateThread(NULL, 0, ProcessMonitor, hObjectToSignal, 0, &dwThreadId);
+			WaitForSingleObject(hObjectToSignal, INFINITE);
 		}
 	}
 	else
@@ -657,14 +665,17 @@ DWORD_DWORD __fastcall TProcessAddForm_ReLoadBtnClick_GetFirstModule(
 	MODULEENTRY32A         *const lpME,
 	PROCESSENTRY32A        *const VIt)
 {
+	WCHAR lpFilename[MAX_PATH];
 	DWORD        dwLength = 0;
 	HANDLE const hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, VIt->th32ProcessID);
 	if (hProcess)
 	{
-		dwLength = GetModuleFileNameExA(hProcess, NULL, lpME->szExePath, MAX_PATH);
+		dwLength = GetModuleFileNameExW(hProcess, NULL, lpFilename, _countof(lpFilename));
 		CloseHandle(hProcess);
 	}
 	if (!dwLength)
 		memmove(VIt, VIt + 1, (size_t)--vector_end(processVec) - (size_t)VIt);
+	else if (dwLength = WideCharToMultiByte(CP_ACP, 0, lpFilename, dwLength + 1, lpME->szExePath, sizeof(lpME->szExePath), NULL, NULL))
+		dwLength--;
 	return (DWORD_DWORD) { dwLength, (DWORD)vector_end(processVec) };
 }

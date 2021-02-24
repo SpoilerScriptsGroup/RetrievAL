@@ -28,7 +28,7 @@ static unsigned long __fastcall TSSGCtrl_ReadSSRFile_Parsing(
 {
 	unsigned long   Step;
 	bcb6_std_string *end = &vector_at(tmpV, 2);
-	if (!SSGC->script.ePos)
+	if (!SSGC->script.sPos)
 	{
 		*Begin = TStringDivision_ToULongDef(&vector_at(tmpV, 1), 0);
 		*End   = TStringDivision_ToULongDef(&vector_at(tmpV, 2), 0);
@@ -86,7 +86,7 @@ static DWORD_DWORD __stdcall TSSGCtrl_ReadSSRFile_GetSSGDataFile_StepFile(
 {
 	LPSTR lpBuffer;
 	DWORD const dwErrCode = GetLastError();
-	if (!bActive && this->script.ePos
+	if (!bActive && this->script.sPos
 		&& (!StepFile || dwErrCode && dwErrCode != ERROR_NO_MORE_FILES)
 		&& FormatMessageA(
 			FORMAT_MESSAGE_MAX_WIDTH_MASK |
@@ -119,15 +119,19 @@ static vector_string* __fastcall TSSGCtrl_ReadSSRFile_return_Data(vector_string 
 	return retVal;
 }
 
-static char __fastcall TSSGCtrl_EnumReadSSR_switch_tmpS(
+static unsigned __fastcall TSSGCtrl_EnumReadSSR_switch_tmpS(
 	list     *const LineList,
 	string   *const tmpS,
 	TSSGCtrl *const SSGC,
 	vector   *const FormatVec)
 {
 	string     Half, Trim;
-	if (string_length(tmpS) == 2 && *(LPWORD)string_begin(tmpS) == BSWAP16('!]')) return '\0';
-	char const Char = string_at(TStringDivision_Half_WithoutTokenDtor(&Half, &SSGC->strD, tmpS, ",", 1u, 0, dtNEST | etTRIM), 0);
+	if (string_length(tmpS) == 2 && *(LPWORD)string_c_str(tmpS) == BSWAP16('!]')) return '\0';
+	char const Char = *TStringDivision_Half_WithoutTokenDtor(&Half, &SSGC->strD, tmpS, ",", 1u, 0,
+#if 0
+															 dtNEST |
+#endif
+															 etTRIM)->_M_start;
 	if (Char != ',')
 	{
 		Trim._M_start = string_begin(&Half) + 1;
@@ -140,6 +144,7 @@ static char __fastcall TSSGCtrl_EnumReadSSR_switch_tmpS(
 	default:
 		list_push_back(LineList, &((struct pair_byte_string) { rtSTRING,  Half }));
 		/* FALLTHROUGH */
+	case '\0':
 	case ',':
 		string_dtor(&Half);
 		return string_at(tmpS, 0);
@@ -201,7 +206,11 @@ static string* __cdecl TSSGCtrl_EnumReadSSR_tmpS_L_substr(
 EXTERN_C void __cdecl Attach_FixRepeat()
 {
 	// TSSGCtrl::ReadSSRFile
-	*(LPBYTE )0x004FEB85 = dtNEST | etTRIM;
+	*(LPBYTE )0x004FEB85 =
+#if 0
+		dtNEST |
+#endif
+		etTRIM;
 
 	// TSSGCtrl::ReadSSRFile
 	//   tmpV.resize(4,"_");

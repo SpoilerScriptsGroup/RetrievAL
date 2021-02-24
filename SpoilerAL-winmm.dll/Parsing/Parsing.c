@@ -12630,7 +12630,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				string        FName, DefaultExt;
 				PARAMETER     *lpParams;
 				const string  *Source, *Finish;
-				BOOL          Lexical;
 				size_t        count, extra = 0, nLength = lpMarkup->Length;
 				const char    *sFName = lpMarkup->String;
 				TSSGSubject   *Object = SSGS;
@@ -12660,7 +12659,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					nLength = strlen(sFName = lpAddress);
 				}
 				{
-					Lexical = *sFName == '@';
+					const BOOL Lexical = *sFName == '@';
 					string_ctor_assign_cstr_with_length(&FName, sFName + Lexical, nLength - Lexical);
 					string_ctor_assign_cstr_with_length(&DefaultExt, ".CHN", 4);
 					File = TSSGCtrl_GetSSGDataFile(this, SSGS, FName, DefaultExt, NULL);
@@ -12668,15 +12667,15 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 						goto PARSING_ERROR;
 					Source = vector_begin(File);
 					Finish = vector_end  (File);
-				}
 #if EMBED_BREADTH
-				if (Lexical)
-				{
-					const TSSGSubjectProperty *prop;
-					if (!(prop = GetSubjectProperty(SSGS)) || !(Object = &prop->ParentEntry->super))
-						goto PARSING_ERROR;
-				}
+					if (Lexical)
+					{
+						const TSSGSubjectProperty *prop;
+						if (!(prop = GetSubjectProperty(SSGS)) || !(Object = &prop->ParentEntry->super))
+							goto PARSING_ERROR;
+					}
 #endif
+				}
 				lpParams = NULL;
 				if (count = lpMarkup->NumberOfOperand)
 				{
@@ -13320,7 +13319,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			HeapFree(hHeap, 0, lpBuffer1);
 	OPEN_ERROR:
 		if (this->ssgActionListner &&
-			this->script.ePos &&
+			this->script.sPos &&
 			TMainForm_GetUserMode(MainForm) >= 3 &&
 			FormatMessageA(
 				FORMAT_MESSAGE_MAX_WIDTH_MASK |
@@ -13415,7 +13414,7 @@ FAILED:
 	if (lpEndOfPostfix && this->ssgActionListner && TMainForm_GetUserMode(MainForm) < 5)
 		TSSGActionListner_OnProcessOpen(this->ssgActionListner, SSGS, 0);
 	if ((nNumberOfProcessMemory || nNumberOfHeapBuffer)
-		&& this->script.ePos
+		&& this->script.sPos
 		&& TMainForm_GetUserMode(MainForm) >= 3
 		&& !HeapValidate(hPrivateHeap, HEAP_NO_SERIALIZE, NULL)) {
 		CHAR lpText[0x0100];

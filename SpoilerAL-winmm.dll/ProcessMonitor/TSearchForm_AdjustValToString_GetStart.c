@@ -13,5 +13,6 @@ void __declspec(naked) __cdecl TSearchForm_AdjustValToString_GetStart(LPVOID act
 
 	GetStart:
 		jmp     dword ptr [X004D1858]
+		ud2
 	}
 }

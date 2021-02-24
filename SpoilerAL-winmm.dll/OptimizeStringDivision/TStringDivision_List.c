@@ -34,9 +34,12 @@ unsigned long __cdecl TStringDivision_List(
 			switch (c = *(prev = p++))
 			{
 			case '\'':
-				// "'+'"
-				if (!nest && tokenLength == 3 && (*(LPDWORD)prev & 0x00FFFFFF) == *(LPDWORD)token)
-					goto MATCHED;
+				if (tokenLength == 3 && (*(LPDWORD)prev & 0x00FFFFFF) == *(LPDWORD)token)
+					goto MATCHED;// "'+'"
+				if (!nest && (tokenLength == 1 && *(LPBYTE )token == '/' && Option & dtESCAPE ||
+							  tokenLength == 2 && *(LPWORD )token == BSWAP16('[!') ||
+							  tokenLength == 3 && *(LPDWORD)token == '\'\x2B\''))// "'+'"
+					break;// treat as apostrophe
 				/* FALLTHROUGH */
 			case '"':
 				// string literals, character literals
@@ -66,15 +69,12 @@ unsigned long __cdecl TStringDivision_List(
 			case '(':
 			case '{':
 				// "(", "{"
-				// '\x2B' == '+'
-				if (tokenLength != 3 || *(LPDWORD)token != (DWORD)'\'\x2B\'')
-					nest++;
+				nest++;
 				break;
 			case ')':
 			case '}':
 				// ")", "}"
-				// '\x2B' == '+'
-				if ((tokenLength != 3 || *(LPDWORD)token != (DWORD)'\'\x2B\'') && nest)
+				if (nest)
 					nest--;
 				break;
 			case '<':

@@ -8,8 +8,8 @@ void __declspec(naked) __cdecl TSearchForm_AddressLBoxDblClick_SubjectAccess(TMa
 	__asm
 	{
 		mov     eax, dword ptr [esp + 8]
-		cmp     byte ptr [eax + 5], 1
-		je      NO_ACCESS	// type == ssgCtrl::stDIR
+		cmp     [eax]TSSGSubject.type, stDIR
+		je      NO_ACCESS
 		jmp     dword ptr [F00439F10]
 
 	NO_ACCESS:

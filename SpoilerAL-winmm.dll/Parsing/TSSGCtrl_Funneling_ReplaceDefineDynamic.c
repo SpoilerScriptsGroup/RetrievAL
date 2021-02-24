@@ -2,7 +2,7 @@
 #define USING_NAMESPACE_BCB6_STD
 #include "TStringDivision.h"
 
-void __stdcall ReplaceDefineDynamic(void *SSGS, void *line);
+void __stdcall ByteArrayReplaceDefine(void *SSGS, void *line);
 
 extern BOOL EnableParserFix;
 
@@ -21,7 +21,7 @@ __declspec(naked) void __cdecl TSSGCtrl_Funneling_ReplaceDefineDynamic()
 		call    string_ctor_assign
 		push    esp
 		push    dword ptr [SSGS]
-		call    ReplaceDefineDynamic
+		call    ByteArrayReplaceDefine
 		mov     eax, esp
 		mov     edx, dword ptr [eax + 24 + 4]
 		movups xmm0, [eax + 24 + 12]

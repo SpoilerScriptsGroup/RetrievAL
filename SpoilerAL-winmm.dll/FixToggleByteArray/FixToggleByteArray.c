@@ -6,6 +6,7 @@
 
 extern HANDLE hHeap;
 
+#if 0
 string * __cdecl FixToggleByteArray(string *Result, TStringDivision *strD, string *Src, string Token, unsigned long Index, unsigned long Option)
 {
 	LPSTR lpFind, lpPtr;
@@ -94,3 +95,4 @@ string * __cdecl FixToggleByteArray(string *Result, TStringDivision *strD, strin
 	}
 	return Result;
 }
+#endif

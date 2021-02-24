@@ -36,7 +36,6 @@ EXTERN_C void __fastcall AddressNamingFEPFreeList(
 			index = TSSGCtrl_CheckIO_FEP(SSGCtrl, SSGS, index, FALSE);
 			for (it = vector_begin(vec); it != vector_end(vec); it++)
 			{
-				string        Token;
 				string        tmpS;
 				char          *endptr;
 				unsigned long value;
@@ -44,14 +43,14 @@ EXTERN_C void __fastcall AddressNamingFEPFreeList(
 
 				string_assign(&vector_at(tmpV, 3), it);
 				ReplaceDefineDynamic(SSGS, &vector_at(tmpV, 3));
-				string_ctor_assign_cstr_with_length(&Token, "=", 1);
-				TStringDivision_Half(
+				TStringDivision_Half_WithoutTokenDtor(
 					&tmpS,
 					&SSGCtrl->strD,
 					&vector_at(tmpV, 3),
-					Token,
+					"=",
+					1u,
 					0,
-					0);
+					FALSE);
 				if (!string_empty(&tmpS))
 				{
 					value = strtoul(string_c_str(&tmpS), &endptr, 0);

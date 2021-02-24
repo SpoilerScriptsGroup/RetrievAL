@@ -4,9 +4,10 @@
 #include "TSSGCtrl.h"
 #include "SSGSubjectProperty.h"
 
-EXTERN_C BOOL FixTheProcedure;
+EXTERN_C UINT MultiStageAttrs;
 EXTERN_C DWORD_DWORD __fastcall TSSGCtrl_ReadSSG_rootSubject_SetAttribute(void *, void *, void *, void *);
 EXTERN_C unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const bcb6_std_string *Src, ...);
+EXTERN_C double __cdecl ParsingDouble(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, IN double Val);
 
 static DWORD_DWORD __stdcall TSSGCtrl_AddressAttributeFilter_GetAddress(TReplaceAttribute const *const *const it, LPCVOID const Address, va_list fp)
 {
@@ -51,11 +52,11 @@ static TFunnelAttribute *__fastcall TSSGCtrl_CheckFunnel_MultiStage(va_list args
 static __declspec(naked) TSSGAttributeElement *TSSGCtrl_CheckFunnel_GetAttribute(TSSGCtrl *this, TSSGSubject *SSGS, AeType Type)
 {
 	__asm {// edx is SSGS already
-		lea ecx, [ebp + 8]// "this" on frame
-		cmp FixTheProcedure, 0
+		lea  ecx, [ebp + 8]// "this" on frame
+		test MultiStageAttrs, atFUNNEL
 #pragma warning(suppress: 4414)
-		jne TSSGCtrl_CheckFunnel_MultiStage
-		jmp TSSGCtrl_GetAttribute
+		jnz  TSSGCtrl_CheckFunnel_MultiStage
+		jmp  TSSGCtrl_GetAttribute
 		ud2
 	}
 }
@@ -74,12 +75,12 @@ static TIO_FEPAttribute *__fastcall TSSGCtrl_CheckIO_FEP_MultiStage(va_list args
 				for (TIO_FEPAttribute **cur  = &vector_type_at(SSGS->attribute, TIO_FEPAttribute *, coord.Y), **apex = cur + coord.X;
 					 cur < apex;
 					 cur++)
-					*Val = Parsing(this, SSGS, &(*cur)->outputCode, sizeof(VarName) - sizeof(*VarName), VarName, (uint64_t)*Val, 0);
+					*Val = Parsing(this, SSGS, TIO_FEPAttribute_GetOutputCode(*cur), _countof(VarName) - 1, VarName, (uint64_t)*Val, 0);
 			else
 				for (TIO_FEPAttribute **base = &vector_type_at(SSGS->attribute, TIO_FEPAttribute *, coord.Y),
 					 **cur  = base + coord.X;
 					 --cur >= base; )
-					*Val = Parsing(this, SSGS, &(*cur)->inputCode , sizeof(VarName) - sizeof(*VarName), VarName, (uint64_t)*Val, 0);
+					*Val = Parsing(this, SSGS, TIO_FEPAttribute_GetInputCode(*cur) , _countof(VarName) - 1, VarName, (uint64_t)*Val, 0);
 		}
 	}
 	return NULL;// means processed
@@ -88,11 +89,47 @@ static TIO_FEPAttribute *__fastcall TSSGCtrl_CheckIO_FEP_MultiStage(va_list args
 static __declspec(naked) TSSGAttributeElement *TSSGCtrl_CheckIO_FEP_GetAttribute(TSSGCtrl *this, TSSGSubject *SSGS, AeType Type)
 {
 	__asm {// edx is SSGS already
-		lea ecx, [ebp + 8]// "this" on frame
-		cmp FixTheProcedure, 0
+		lea  ecx, [ebp + 8]// "this" on frame
+		test MultiStageAttrs, atIO_FEP
 #pragma warning(suppress: 4414)
-		jne TSSGCtrl_CheckIO_FEP_MultiStage
-		jmp TSSGCtrl_GetAttribute
+		jnz  TSSGCtrl_CheckIO_FEP_MultiStage
+		jmp  TSSGCtrl_GetAttribute
+		ud2
+	}
+}
+
+static TIO_FEPAttribute *__fastcall TSSGCtrl_CheckIO_FEPDouble_MultiStage(va_list args, TSSGSubject *SSGS)
+{
+	if (SSGS->attribute)
+	{
+		const COORD coord = TSSGAttributeElement_GetViaCoord(atIO_FEP, SSGS->attribute).dwFontSize;
+		if (coord.X)
+		{
+			TSSGCtrl *this = va_arg(args, void *);
+			double *Val = (va_arg(args, void *), &va_arg(args, double));
+			if (!va_arg(args, bool))
+				for (TIO_FEPAttribute **cur  = &vector_type_at(SSGS->attribute, TIO_FEPAttribute *, coord.Y), **apex = cur + coord.X;
+					 cur < apex;
+					 cur++)
+					*Val = ParsingDouble(this, SSGS, TIO_FEPAttribute_GetOutputCode(*cur), *Val);
+			else
+				for (TIO_FEPAttribute **base = &vector_type_at(SSGS->attribute, TIO_FEPAttribute *, coord.Y),
+					 **cur  = base + coord.X;
+					 --cur >= base; )
+					*Val = ParsingDouble(this, SSGS, TIO_FEPAttribute_GetInputCode(*cur) , *Val);
+		}
+	}
+	return NULL;// means processed
+}
+
+static __declspec(naked) TSSGAttributeElement *TSSGCtrl_CheckIO_FEPDouble_GetAttribute(TSSGCtrl *this, TSSGSubject *SSGS, AeType Type)
+{
+	__asm {// edx is SSGS already
+		lea  ecx, [ebp + 8]// "this" on frame
+		test MultiStageAttrs, atIO_FEP
+#pragma warning(suppress: 4414)
+		jnz  TSSGCtrl_CheckIO_FEPDouble_MultiStage
+		jmp  TSSGCtrl_GetAttribute
 		ud2
 	}
 }
@@ -191,6 +228,9 @@ EXTERN_C void __cdecl Attach_EnumReadSSG()
 
 	// TSSGCtrl::CheckIO_FEP
 	*(LPDWORD)(0x00510F69 + 1) = (DWORD)TSSGCtrl_CheckIO_FEP_GetAttribute - (0x00510F69 + 1 + sizeof(DWORD));
+
+	// TSSGCtrl::CheckIO_FEPDouble
+	*(LPDWORD)(0x005110B1 + 1) = (DWORD)TSSGCtrl_CheckIO_FEPDouble_GetAttribute - (0x005110B1 + 1 + sizeof(DWORD));
 
 	// THeapAdjustmentAttribute::~THeapAdjustmentAttribute
 #ifdef map_string_quad_insert

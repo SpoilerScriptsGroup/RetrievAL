@@ -19,6 +19,7 @@ typedef enum Dealt
 	etTRIM_R    = 0x00000008,
 	etREPLACE   = 0x00000010,
 	etREVERSE_REPLACE = 0x20,
+	dtBYTEARRAY = 0x00000040,
 } DealType;
 
 #define etTRIM      (etTRIM_L | etTRIM_R )

@@ -1,7 +1,10 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 #include "intrinsic.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "TSSGCtrl.h"
+#include "version.h"
+#include "BuildDate.h"
 
 EXTERN_C void __cdecl Caller_Parsing();
 EXTERN_C void __cdecl Caller_ParsingWithVal();
@@ -33,8 +36,8 @@ EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_ReplaceDefine();
 EXTERN_C void __cdecl TSSGCtrl_LoopSSRFile_ReplaceDefine_Release();
 EXTERN_C void __cdecl TSSGCtrl_AddressNaming_ReplaceDefineDynamic1();
 EXTERN_C void __cdecl TSSGCtrl_AddressNaming_ReplaceDefineDynamic2();
-EXTERN_C void __cdecl TSSGCtrl_AddressNaming_ByteArrayReplaceDefine();
-EXTERN_C void __cdecl TSSGCtrl_StrToProcessAccessElementVec_ByteArrayReplaceDefine();
+EXTERN_C void __cdecl TSSGCtrl_AddressNaming_ReplaceDefineDynamic3();
+EXTERN_C void*__cdecl TSSGCtrl_StrToProcessAccessElementVec_ByteArrayReplaceDefine();
 EXTERN_C void*__stdcall TSSGCtrl_IsEnabled_GetAttribute(va_list);
 EXTERN_C void __cdecl TSSGCtrl_Funneling_IsEnabled();
 EXTERN_C void __cdecl TSSGCtrl_Funneling_GetAddress();
@@ -79,7 +82,9 @@ static vector_dword* __fastcall TSSGCtrl_StrToProcessAccessElementVec_return_Cod
 }
 
 #define ADD_EAX_DWORD_PTR_EBX         (WORD )0x0303
-#define CMP_AL_IMM8                   (WORD )0x3C65
+#define SEG_SS                        (BYTE )0x36
+#define SEG_DS                        (BYTE )0x3E
+#define CMP_BYTE_PTR_EAX_IMM8         (WORD )0x3880
 #define PUSH_EAX                      (BYTE )0x50
 #define PUSH_EBP                      (BYTE )0x55
 #define PUSH_IMM8                     (BYTE )0x6A
@@ -94,13 +99,16 @@ static vector_dword* __fastcall TSSGCtrl_StrToProcessAccessElementVec_return_Cod
 #define CALL_REL32                    (BYTE )0xE8
 #define JMP_REL32                     (BYTE )0xE9
 #define JMP_REL8                      (BYTE )0xEB
+#define JE_REL32                      (WORD )0x840F
 
-extern const char lpSSGVersion[4];
+char lpVersion[0x80];
 
 EXTERN_C void __cdecl Attach_Parsing()
 {
 	// TSSGCtrl::GetVersion
-	*(LPDWORD)(0x0041583D + 1) = (DWORD)lpSSGVersion;
+	*(LPDWORD)(0x0041583D + 1) = (DWORD)&strncpy(lpVersion,
+		"version : " VERSION_STRING,
+		_countof(lpVersion))[10];
 
 	// TSSBundleCalc::Read
 #if IGNORE_OPEN_ERROR
@@ -426,13 +434,14 @@ EXTERN_C void __cdecl Attach_Parsing()
 
 	// TSSGCtrl::AddressNaming
 	//   strD.Half(&tmpS,"=")
-	*(LPDWORD)(0x005059A8 + 1) = (DWORD)TSSGCtrl_AddressNaming_ByteArrayReplaceDefine - (0x005059A8 + 1 + sizeof(DWORD));
+	*(LPDWORD)(0x005059A8 + 1) = (DWORD)TSSGCtrl_AddressNaming_ReplaceDefineDynamic3 - (0x005059A8 + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::StrToProcessAccessElementVec
+	//   Code[0] == 's'
 	*(LPBYTE )0x00507170 = CALL_REL32;
 	*(LPDWORD)0x00507171 = (DWORD)TSSGCtrl_StrToProcessAccessElementVec_ByteArrayReplaceDefine - (0x00507171 + sizeof(DWORD));
-	*(LPBYTE )0x00507175 = NOP;
-	*(LPWORD )0x00507176 = CMP_AL_IMM8;
+	*(LPBYTE )0x00507175 = SEG_DS;
+	*(LPWORD )0x00507176 = CMP_BYTE_PTR_EAX_IMM8;
 
 	// TSSGCtrl::StrToProcessAccessElementVec
 	*(LPDWORD)(0x0050B512 + 1) = (DWORD)Caller_Parsing - (0x0050B512 + 1 + sizeof(DWORD));
@@ -451,16 +460,18 @@ EXTERN_C void __cdecl Attach_Parsing()
 
 	// TSSGCtrl::Funneling
 	//   processCtrl.Open(...) => this->Open(rootSubject, ...)
-	*(LPWORD )(0x005102D4 + 0) = BSWAP16(0xFFB7);// push dword ptr [edi + ...]
+	*(LPWORD )(0x005102D4 + 0) = BSWAP16(0xFFB7);// push  dword ptr [edi + ...]
 	*(LPDWORD)(0x005102D4 + 2) = offsetof(TSSGCtrl, rootSubject);
-	*(LPBYTE )(0x005102DA + 0) = 0x57;// push edi
+	*(LPBYTE )(0x005102DA + 0) = 0x57;// push  this
 	*(LPDWORD)(0x005102DB + 1) = 0x0051C338 - (0x005102DB + 1 + sizeof(DWORD));
 	*(LPBYTE )(0x005102E0 + 2) = 0x0C;// stack size to discard
 
 	*(LPBYTE )(0x00510308 + 0) = JMP_REL8;// Force continue even if processCtrl.Open failed.
 
 	// TSSGCtrl::Funneling
+#if 0
 	*(LPBYTE )(0x00510429 + 1) = dtNEST;
+#endif
 
 	// TSSGCtrl::Funneling
 	*(LPDWORD)(0x005104A1 + 1) = (DWORD)TSSGCtrl_Funneling_ReplaceDefineDynamic - (0x005104A1 + 1 + sizeof(DWORD));
@@ -477,7 +488,15 @@ EXTERN_C void __cdecl Attach_Parsing()
 	*(LPDWORD)(0x00510A8D + 1) = (DWORD)Caller_ParsingWithVal - (0x00510A8D + 1 + sizeof(DWORD));
 
 	// TSSGCtrl::Funneling
-	*(LPDWORD)(0x00510C69 + 1) = (DWORD)TSSGCtrl_Funneling_Write - (0x00510C69 + 1 + sizeof(DWORD));
+	*(LPWORD )(0x00510C47 + 0) = JE_REL32;
+	*(LPDWORD)(0x00510C47 + 2) = 0x00510DD4 - (0x00510C47 + 2 + sizeof(DWORD));
+	*(LPBYTE )(0x00510C4D + 0) =         0x8B   ;// mov ecx,
+	*(LPWORD )(0x00510C4D + 1) = BSWAP16(0x4DCC);// dword ptr [tmpV]
+	*(LPBYTE )(0x00510C50 + 0) = CALL_REL32;
+	*(LPDWORD)(0x00510C50 + 1) = (DWORD)TSSGCtrl_Funneling_Write - (0x00510C50 + 1 + sizeof(DWORD));
+
+	*(LPWORD ) 0x00510C60      = NOP_X2;
+	*(LPBYTE ) 0x00510C62      = SEG_SS;
 
 	// TSSGCtrl::CheckIO_FEP
 	*(LPDWORD)(0x00510FE6 + 1) = (DWORD)Caller_ParsingWithVal - (0x00510FE6 + 1 + sizeof(DWORD));

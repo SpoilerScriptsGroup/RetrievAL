@@ -34,7 +34,7 @@ extern void __stdcall repeat_ReadSSRFile(
 	DWORD        OuterRepeat,
 	TSSGSubject  *SSGS);
 
-extern BOOL   FixTheProcedure;
+extern UINT   MultiStageAttrs;
 extern DWORD  RepeatDepth;
 extern string ProcessAttachCode;
 extern vector *ProcessAttachAttribute;
@@ -664,8 +664,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 					if (!string_empty(code))
 					{
 						vector_string tmpV = { NULL };
-						string_ctor_assign_char(&Tag, ',');
-						SSGS->isRepeatable = TStringDivision_List(&this->strD, code, Tag, &tmpV, dtNEST) > 1;
+						SSGS->isRepeatable = TStringDivision_List(&this->strD, code, *string_ctor_assign_char(&Tag, ','), &tmpV, dtNEST) > 1;
 						vector_string_dtor(&tmpV);
 					}
 #endif
@@ -783,7 +782,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 				// [adjustment]‘®«‚ð•t‰Á
 				string_ctor_assign_cstr_with_length(&LineS, p, string_end(it) - p);
 				ReplaceDefine(&this->attributeSelector, &LineS);
-				TStringDivision_Half_WithoutTokenDtor(&tmpS, &this->strD, &LineS, ",", 1, 0, 0);
+				TStringDivision_Half_WithoutTokenDtor(&tmpS, &this->strD, &LineS, ",", 1, 0, FALSE);
 				NewAElem = TSSGCtrl_MakeAdjustmentClass(&tmpS);
 				string_dtor(&tmpS);
 				if (NewAElem != NULL)
@@ -835,7 +834,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 				NewAElem = new_TFunnelAttribute();
 				TFunnelAttribute_Setting(NewAElem, &LineS);
 				string_dtor(&LineS);
-				if (FixTheProcedure)
+				if (MultiStageAttrs & atFUNNEL)
 					TSSGAttributeSelector_AddElement (&this->attributeSelector, NewAElem);
 				else
 					TSSGAttributeSelector_PushElement(&this->attributeSelector, NewAElem);
@@ -845,7 +844,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 		// [/funnel]
 		case FUNNEL_CLOSE:
 			// [funnel]‘®«‚ðœ‹Ž
-			if (FixTheProcedure)
+			if (MultiStageAttrs & atFUNNEL)
 				TSSGAttributeSelector_EraseElementByType(&this->attributeSelector, atFUNNEL);
 			else
 				TSSGAttributeSelector_PopElementByType  (&this->attributeSelector, atFUNNEL);
@@ -876,7 +875,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 				NewAElem = new_TIO_FEPAttribute(); // io_fep
 				TIO_FEPAttribute_Setting(NewAElem, &this->strD, string_c_str(&LineS));
 				string_dtor(&LineS);
-				if (FixTheProcedure)
+				if (MultiStageAttrs & atIO_FEP)
 					TSSGAttributeSelector_AddElement (&this->attributeSelector, NewAElem);
 				else
 					TSSGAttributeSelector_PushElement(&this->attributeSelector, NewAElem);
@@ -886,7 +885,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 		// [/io_fep]
 		case IO_FEP_CLOSE:
 			// [io_fep]‘®«‚ðœ‹Ž
-			if (FixTheProcedure)
+			if (MultiStageAttrs & atIO_FEP)
 				TSSGAttributeSelector_EraseElementByType(&this->attributeSelector, atIO_FEP);
 			else
 				TSSGAttributeSelector_PopElementByType  (&this->attributeSelector, atIO_FEP);
@@ -1153,7 +1152,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 
 				string_ctor_assign_cstr_with_length(&LineS, p, string_end(it) - p);
 				ReplaceDefine(&this->attributeSelector, &LineS);
-				TStringDivision_Half_WithoutTokenDtor(&tmpS, &this->strD, &LineS, ",", 1, tag != TOGGLE ? 1 : 3, 0);
+				TStringDivision_Half_WithoutTokenDtor(&tmpS, &this->strD, &LineS, ",", 1, tag != TOGGLE ? 1 : 3, FALSE);
 				if (tag == CALC)
 					SSGS = &new_TSSCalc()->super;
 				else if (tag == TOGGLE)
@@ -1386,8 +1385,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 
 				string_ctor_assign_cstr_with_length(&LineS, p, string_end(it) - p);
 				ReplaceDefine(&this->attributeSelector, &LineS);
-				string_ctor_assign_char(&Token, ',');
-				TStringDivision_List(&this->strD, &LineS, Token, &tmpV, dtESCAPE | etREPLACE);
+				TStringDivision_List(&this->strD, &LineS, *string_ctor_assign_char(&Token, ','), &tmpV, dtESCAPE | etREPLACE);
 				vector_string_resize(&tmpV, 3);
 				string_dtor(&LineS);
 

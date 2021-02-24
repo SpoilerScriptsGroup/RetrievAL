@@ -71,6 +71,9 @@
       <IncludePaths>$(ProjectDir)crt\include;$(ProjectDir)include</IncludePaths>
       <PreprocessorDefinitions>_WIN32_WINNT=0x0500;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </MASM>
+    <PreBuildEvent>
+      <Command>"$(ProjectDir)datetime_h.bat"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -110,6 +113,9 @@
     <PostBuildEvent>
       <Command>"$(ProjectDir)EditBinEx\Release\EditBinEx.exe" /WaitForFileUnlock /subsystem:windows,5 /OperatingSystemVersion:5.0 /TimeDateStamp:0 "$(TargetPath)"&gt;nul</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>"$(ProjectDir)datetime_h.bat"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AddEntryModule\AddEntryModule.c" />

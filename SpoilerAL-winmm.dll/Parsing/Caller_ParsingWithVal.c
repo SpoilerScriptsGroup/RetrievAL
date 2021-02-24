@@ -20,7 +20,7 @@ __declspec(naked) void __cdecl Caller_ParsingWithVal()
 		push    0
 		push    dword ptr [esp + 0x08 + 16]
 		push    offset lpszVal
-		push    3
+		push    length lpszVal - 1
 		push    eax
 		push    edx
 		push    ecx

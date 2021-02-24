@@ -2,18 +2,16 @@
 #include "intrinsic.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_vector_string.h"
-#include "version.h"
 
 extern HANDLE hHeap;
 
 #define OLD_VERSION_LENGTH 3
-#define SSG_VERSION_LENGTH 3
-
-const char lpSSGVersion[SSG_VERSION_LENGTH + 1] = { VERSION_MAJOR + '0', '.', VERSION_MINOR + '0', '\0' };
+#define SSG_VERSION_LENGTH 13
 
 BOOL EnableParserFix = FALSE;
 BOOL FixTheProcedure = FALSE;
-BOOL ExtensionTSSDir = FALSE;
+UINT ExtensionTSSDir = 0;
+UINT MultiStageAttrs = 0;
 
 #pragma intrinsic(memcmp)
 
@@ -21,7 +19,8 @@ void __fastcall CheckSSGVersion(const char *p, size_t size)
 {
 	EnableParserFix = FALSE;
 	FixTheProcedure = FALSE;
-	ExtensionTSSDir = FALSE;
+	ExtensionTSSDir = 0;
+	MultiStageAttrs = 0;
 	if (size >= 21 + OLD_VERSION_LENGTH &&
 		*(LPDWORD) p       == BSWAP32('SSG ') &&
 		*(LPDWORD)(p +  4) == BSWAP32('for ') &&
@@ -42,15 +41,10 @@ void __fastcall CheckSSGVersion(const char *p, size_t size)
 		{
 			if (memcmp(p, "6.3", OLD_VERSION_LENGTH) >= 0)
 			{
-#if SSG_VERSION_LENGTH > OLD_VERSION_LENGTH
-				if (last - p >= SSG_VERSION_LENGTH - OLD_VERSION_LENGTH &&
-					memcmp(p, lpSSGVersion, SSG_VERSION_LENGTH) >= 0)
-#else
-				if (memcmp(p, lpSSGVersion, SSG_VERSION_LENGTH) >= 0)
-#endif
+				if (memcmp(p, "6.4", OLD_VERSION_LENGTH) >= 0)
 				{
 					// SSG for SpoilerAL ver 6.4
-					ExtensionTSSDir = TRUE;
+					ExtensionTSSDir = 1u;
 				}
 				// SSG for SpoilerAL ver 6.3
 				FixTheProcedure = TRUE;

@@ -111,7 +111,7 @@ __declspec(naked) void __cdecl Caller_ParsingWithRel()
 	L2:
 		push    eax
 		push    offset lpszRel
-		push    size lpszRel - type lpszRel[0]
+		push    length lpszRel - 1
 #pragma endregion
 		mov     edx, esp
 #pragma region Src

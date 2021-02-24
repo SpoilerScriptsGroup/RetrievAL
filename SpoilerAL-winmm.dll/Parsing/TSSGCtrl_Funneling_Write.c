@@ -1,24 +1,22 @@
 #include <windows.h>
-
-BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p);
+#include "TSSGCtrl.h"
 
 __declspec(naked) void __cdecl TSSGCtrl_Funneling_Write()
 {
 	__asm
 	{
-		#define TSSGCtrl_Write 0051C408H
+		#define SHandle (ebp - size PVOID)
 
-		mov     ecx, dword ptr [ebp - 34H]
-		push    TSSGCtrl_Write
-		mov     ecx, dword ptr [ecx + 18H]
+		mov     ecx, dword ptr [ecx + size bcb6_std_string]
 		call    TSSGCtrl_IsRemoteProcess
+		mov     edx, dword ptr [SHandle]
 		test    al, al
 		jnz     L1
 		call    GetCurrentProcess
-		mov     dword ptr [esp + 16], eax
+		mov     edx, eax
 	L1:
 		ret
 
-		#undef TSSGCtrl_Write
+		#undef SHandle
 	}
 }

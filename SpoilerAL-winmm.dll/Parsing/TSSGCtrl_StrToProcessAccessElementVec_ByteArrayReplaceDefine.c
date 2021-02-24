@@ -1,10 +1,11 @@
 #include <windows.h>
+#include "bcb6_std_string.h"
 
 void __stdcall ByteArrayReplaceDefine(void *SSGS, void *line);
 
 extern BOOL EnableParserFix;
 
-__declspec(naked) void __cdecl TSSGCtrl_StrToProcessAccessElementVec_ByteArrayReplaceDefine()
+__declspec(naked) char*__cdecl TSSGCtrl_StrToProcessAccessElementVec_ByteArrayReplaceDefine()
 {
 	__asm
 	{
@@ -13,14 +14,12 @@ __declspec(naked) void __cdecl TSSGCtrl_StrToProcessAccessElementVec_ByteArrayRe
 
 		cmp     EnableParserFix, FALSE
 		je      L1
-		mov     eax, dword ptr [SSGS]
-		lea     ecx, [Code]
-		push    ecx
-		push    eax
+		lea     edx, [Code]
+		push    edx
+		push    dword ptr [SSGS]
 		call    ByteArrayReplaceDefine
 	L1:
-		mov     eax, dword ptr [Code]
-		movzx   eax, byte  ptr [eax]
+		mov     eax, [Code]bcb6_std_string._M_start
 		ret
 
 		#undef SSGS

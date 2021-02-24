@@ -14,7 +14,7 @@ static void __fastcall CheckAddress(LPCSTR p);
 static void __fastcall CheckAddressWithStringDtor(string *s);
 
 #ifndef _M_IX86
-BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p)
+BOOL __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p)
 {
 	char c;
 
@@ -34,7 +34,7 @@ BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p)
 	return TRUE;
 }
 #else
-__declspec(naked) BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p)
+__declspec(naked) BOOL __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p)
 {
 	__asm
 	{

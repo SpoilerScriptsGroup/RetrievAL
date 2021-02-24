@@ -83,7 +83,7 @@ EXTERN_C BOOLEAN(__cdecl * const TSSGCtrl_Funneling)(TSSGCtrl *this, TSSGSubject
 EXTERN_C unsigned long(__cdecl * const TSSGCtrl_CheckIO_FEP)(TSSGCtrl *this, TSSGSubject *SSGS, unsigned long Val, BOOLEAN IsInput);
 EXTERN_C double(__cdecl * const TSSGCtrl_CheckIO_FEPDouble)(TSSGCtrl *this, TSSGSubject *SSGS, double Val, BOOLEAN IsInput);
 
-EXTERN_C BOOLEAN __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p);
+EXTERN_C BOOL __fastcall TSSGCtrl_IsRemoteProcess(LPCSTR p);
 
 EXTERN_C bcb6_std_vector_string *(__cdecl * const TSSGCtrl_GetSSGDataFile)(TSSGCtrl *this, TSSGSubject *SSGS, bcb6_std_string FName, bcb6_std_string DefaultExt, bcb6_std_string *CurrentDir);
 

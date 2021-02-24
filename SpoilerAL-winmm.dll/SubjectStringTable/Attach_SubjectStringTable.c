@@ -53,7 +53,7 @@ static __declspec(naked) void __cdecl TFindNameForm_EnumSubjectNameFind_StrD_Get
 	unsigned long    Option) {
 	__asm {// ecx is StrD already
 		mov  edx, [ebp - 0x0104]// SSGS
-		cmp  FixTheProcedure, 0
+		cmp  FixTheProcedure, FALSE
 		jne  GetSubjectName
 
 		lea  ecx, [edx]TSSGSubject.subjectName
@@ -89,23 +89,15 @@ static DWORD_DWORD __fastcall TSSToggle_Setting_GetAddress(
 #endif
 	vector_string *const tmpV)
 {
-	extern string* __cdecl FixToggleByteArray(
-		string          *Result,
-		TStringDivision *strD,
-		string          *Src,
-		string           Token,
-		unsigned long    Index,
-		unsigned long    Option);
-
 	string
 #if !TOGGLE_SIZE_POSTPONE
-		AddressStr, Token,
+		AddressStr, 
 #endif
 		*addressStr = &vector_at(tmpV, 0);
 #if !TOGGLE_SIZE_POSTPONE
-	if (FixTheProcedure && !SSGC->script.ePos && string_at(addressStr, 0) == '_' && string_at(addressStr, 1) != 'L')
+	if (FixTheProcedure && !SSGC->script.sPos && string_at(addressStr, 0) == '_' && string_at(addressStr, 1) != 'L')
 	{
-		FixToggleByteArray(&AddressStr, &SSGC->strD, &vector_at(tmpV, 1), *string_ctor_assign_char(&Token, '-'), 0, dtESCAPE);
+		TStringDivision_Half_WithoutTokenDtor(&AddressStr, &SSGC->strD, &vector_at(tmpV, 1), "-", 1u, 0, dtESCAPE | dtBYTEARRAY);
 		if (string_at(&AddressStr, 0) == '-')
 			addressStr = &vector_at(&SubjectStringTable_array, 0);
 		string_dtor(&AddressStr);
@@ -333,7 +325,7 @@ void __cdecl    TSSBitList_Read_GetAddressStr();
 #define         TSSToggle_Write_GetAddressStr                               TSSBitList_Read_GetAddressStr
 #define         TSSBundleFloatCalc_Read_GetAddressStr                       TSSBitList_Read_GetAddressStr
 #define         TSSBundleFloatCalc_Write_GetAddressStr                      TSSBitList_Read_GetAddressStr
-void __cdecl    TSSGCtrl_OpenSSG_scriptDir_M_append_dispatch();
+void __fastcall TSSGCtrl_ReadSSG_attributeSelector_StartElementCheck(void *, void *);
 void __cdecl    TSSGCtrl_EnumReadSSG_SetCodeAndName();
 void __cdecl    TSSGCtrl_EnumReadSSG_SetCode();
 void __cdecl    TSSGCtrl_EnumReadSSG_SetName();
@@ -1518,10 +1510,10 @@ static __inline void AttachOperator()
 	// TSSFloatCalc::Write
 	SET_PROC (0x004CE593, TSSFloatCalc_Write_GetAddressStr);
 
-	// TSSGCtrl::OpenSSG
-	*(LPBYTE )0x004FD169 = 0x83;// inc => add
-	*(LPBYTE )0x004FD16C = 3;
-	CALL     (0x004FD16D, TSSGCtrl_OpenSSG_scriptDir_M_append_dispatch);
+	// TSSGCtrl::ReadSSG
+	*(LPBYTE )0x004E45C1 = 0x8B;// mov edx,
+	*(LPBYTE )0x004E45C2 = 0xD5;//     ebp
+	CALL     (0x004E45C3, TSSGCtrl_ReadSSG_attributeSelector_StartElementCheck);
 
 #if 0
 	// TSSGCtrl::EnumReadSSG

@@ -45,6 +45,8 @@ set /a time_millisecond=1%time_fff%-1000
 >>%FileName% echo #define __TIME_SS__           %time_ss%
 >>%FileName% echo #define __TIME_FFF__          %time_fff%
 >>%FileName% echo.
+>>%FileName% echo #define __DATE_MDD__          %date_month%%date_dd%
+>>%FileName% echo.
 >>%FileName% echo #define __DATETIME_TIME_T__ (                                                       \
 >>%FileName% echo     (                                                                               \
 >>%FileName% echo           (__DATE_YEAR__ - (__DATE_MONTH__ ^< 3)) * 365 - 365                        \

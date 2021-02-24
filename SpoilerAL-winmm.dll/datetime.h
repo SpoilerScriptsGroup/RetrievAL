@@ -21,6 +21,8 @@
 #define __TIME_SS__           00
 #define __TIME_FFF__          000
 
+#define __DATE_MDD__          101
+
 #define __DATETIME_TIME_T__ (                                                       \
     (                                                                               \
           (__DATE_YEAR__ - (__DATE_MONTH__ < 3)) * 365 - 365                        \

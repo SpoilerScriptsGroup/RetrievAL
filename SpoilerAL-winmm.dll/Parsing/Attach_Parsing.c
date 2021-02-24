@@ -106,9 +106,11 @@ char lpVersion[0x80];
 EXTERN_C void __cdecl Attach_Parsing()
 {
 	// TSSGCtrl::GetVersion
-	*(LPDWORD)(0x0041583D + 1) = (DWORD)&strncpy(lpVersion,
-		"version : " VERSION_STRING,
-		_countof(lpVersion))[10];
+	*(LPDWORD)(0x0041583D + 1) = (DWORD)&strncpy(lpVersion, (const char[]) {
+		'v', 'e', 'r', 's', 'i', 'o', 'n', ' ', ':', ' ',
+		VERSION_MAJOR + '0', '.', VERSION_MINOR + '0', '.',
+		BUILD_YEAR_ARRAY, '.', BUILD_MONTH_ARRAY, BUILD_DAY_ARRAY, '\0'
+	}, _countof(lpVersion))[10];
 
 	// TSSBundleCalc::Read
 #if IGNORE_OPEN_ERROR

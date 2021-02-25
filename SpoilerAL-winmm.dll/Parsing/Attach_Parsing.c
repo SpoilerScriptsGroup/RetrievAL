@@ -3,8 +3,6 @@
 #include "intrinsic.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "TSSGCtrl.h"
-#include "version.h"
-#include "BuildDate.h"
 
 EXTERN_C void __cdecl Caller_Parsing();
 EXTERN_C void __cdecl Caller_ParsingWithVal();
@@ -101,16 +99,12 @@ static vector_dword* __fastcall TSSGCtrl_StrToProcessAccessElementVec_return_Cod
 #define JMP_REL8                      (BYTE )0xEB
 #define JE_REL32                      (WORD )0x840F
 
-char lpVersion[0x80];
+extern const char lpVersion[];
 
 EXTERN_C void __cdecl Attach_Parsing()
 {
 	// TSSGCtrl::GetVersion
-	*(LPDWORD)(0x0041583D + 1) = (DWORD)&strncpy(lpVersion, (const char[]) {
-		'v', 'e', 'r', 's', 'i', 'o', 'n', ' ', ':', ' ',
-		VERSION_MAJOR + '0', '.', VERSION_MINOR + '0', '.',
-		BUILD_YEAR_ARRAY, '.', BUILD_MONTH_ARRAY, BUILD_DAY_ARRAY, '\0'
-	}, _countof(lpVersion))[10];
+	*(LPDWORD)(0x0041583D + 1) = (DWORD)&lpVersion[10];
 
 	// TSSBundleCalc::Read
 #if IGNORE_OPEN_ERROR

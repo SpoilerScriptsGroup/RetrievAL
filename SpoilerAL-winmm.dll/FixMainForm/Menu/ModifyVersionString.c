@@ -5,9 +5,9 @@
 #include "TMenuItem.h"
 #include "version.h"
 
+const char lpVersion[] = "version : " VERSION_STRING;
+
 void __stdcall ModifyVersionString(TMainForm *MainForm)
 {
-	extern const char lpVersion[];
-
 	TMenuItem_SetCaption(MainForm->M_Version, lpVersion);
 }

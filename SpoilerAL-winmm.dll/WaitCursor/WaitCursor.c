@@ -67,11 +67,11 @@ static DWORD WINAPI WaitCursorProc(LPVOID lpParameter)
 EXTERN_C void __cdecl InitializeWaitCursor()
 {
 	InitializeCriticalSection(&cs);
-#if 0
+#if defined(_DEBUG)
 	hThread = NULL;
-	return;
-#endif
+#else
 	hThread = CreateThread(NULL, 0, WaitCursorProc, (LPVOID)GetCurrentThreadId(), 0, (LPDWORD)&dwThreadId);
+#endif
 	if (!hThread)
 		dwThreadId = 0;
 	hOldCursor = NULL;

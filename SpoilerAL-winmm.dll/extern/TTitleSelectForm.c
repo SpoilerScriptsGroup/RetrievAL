@@ -21,7 +21,7 @@ __declspec(naked) string * __cdecl TTitleSelectForm_CnvString(string *Result, TT
 		#define Locale (esp + 8)
 
 		mov     eax, dword ptr [this]
-		mov     eax, dword ptr [eax + TTitleSelectForm.sortLCID]
+		mov     eax, [eax]TTitleSelectForm.sortLCID
 		mov     dword ptr [Locale], eax
 		jmp     CnvString
 
@@ -38,7 +38,7 @@ __declspec(naked) string * __cdecl TFindNameForm_CnvString(string *Result, TFind
 		#define Locale (esp + 8)
 
 		mov     eax, dword ptr [this]
-		mov     eax, dword ptr [eax + TFindNameForm.findLCID]
+		mov     eax, [eax]TFindNameForm.findLCID
 		mov     dword ptr [Locale], eax
 		jmp     CnvString
 

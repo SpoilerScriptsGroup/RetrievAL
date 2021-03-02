@@ -1,4 +1,5 @@
 #include <windows.h>
+#include "bcb6_operator.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "TWinControl.h"
 #include "TMainForm.h"
@@ -39,6 +40,8 @@ __declspec(naked) void __cdecl TMainForm_dtor()
 static void __fastcall dtor(TMainForm *this)
 {
 	verbose(VRB_INFO, "TMainForm::dtor - begin");
+	vector_string_dtor(this->DistractionVec);
+	bcb6_operator_delete(this->DistractionVec);
 
 	ClearGuideBuffer();
 	DeleteWaitCursor();

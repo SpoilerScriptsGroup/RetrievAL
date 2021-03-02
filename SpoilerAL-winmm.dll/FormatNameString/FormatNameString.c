@@ -17,7 +17,7 @@
 EXTERN_C HANDLE hHeap;
 EXTERN_C const DWORD F00504284;
 
-void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
+void __stdcall ReplaceDefineByAttributeVector(vector *attributes, string *line);
 uint64_t __cdecl InternalParsing(TSSGCtrl* SSGCtrl, TSSGSubject* SSGS, const string* Src, BOOL IsInteger, va_list ArgPtr);
 unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 double __cdecl ParsingDouble(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, IN double Val);
@@ -34,28 +34,28 @@ __declspec(naked) string * __cdecl TSSGCtrl_GetNameString(string *Result, TSSGCt
 		#define NameStr (esp + 16)
 
 		mov     edx, dword ptr [NameStr]
-		sub     esp, 24
+		sub     esp, size bcb6_std_string
 		mov     ecx, esp
 		call    string_ctor_assign
-		mov     edx, dword ptr [SSGS   + 24]
-		mov     ecx, dword ptr [this   + 24]
+		mov     edx, dword ptr [SSGS   + size bcb6_std_string]
+		mov     ecx, dword ptr [this   + size bcb6_std_string]
 		push    esp
 		push    edx
 		push    ecx
 		call    FormatNameString
-		mov     eax, dword ptr [SSGS   + 24]
+		mov     edx, dword ptr [SSGS   + size bcb6_std_string]
+		mov     ecx, dword ptr [this   + size bcb6_std_string]
+		mov     eax, dword ptr [Result + size bcb6_std_string]
 		push    esp
-		push    eax
-		mov     edx, dword ptr [this   + 32]
-		mov     ecx, dword ptr [Result + 32]
 		push    edx
 		push    ecx
+		push    eax
 		call    dword ptr [F00504284]
 		add     esp, 16
 		mov     ecx, esp
 		call    string_dtor
-		mov     eax, dword ptr [Result + 24]
-		add     esp, 24
+		add     esp, size bcb6_std_string
+		mov     eax, dword ptr [Result]
 		ret
 
 		#undef Result
@@ -232,15 +232,18 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 	#define NUMBER_CLOSE      (WORD)(NUMBER_IDENTIFIER | (WORD)BRACKET_CLOSE << 8)
 	#define LIST_CLOSE        (WORD)(LIST_IDENTIFIER   | (WORD)BRACKET_CLOSE << 8)
 
+	extern BOOL EnableParserFix;
 	char stackBuffer[256];
 	char *bracketBegin;
+	vector *attributes;
 
-	ReplaceDefineDynamic(SSGS, s);
-	bracketBegin = FindBracketOpen(string_c_str(s));
-	while (bracketBegin)
+	if (!EnableParserFix) return;
+	if (attributes = TSSGSubject_GetAttribute(SSGS))
+		ReplaceDefineByAttributeVector(attributes, s);
+	else// Static mode, already {define} has been replaced in TSSGCtrl_EnumReadSSG.
+		attributes = TSSGAttributeSelector_GetNowAtteributeVec(&this->attributeSelector);
+	for (char *bracketEnd = string_begin(s); bracketBegin = FindBracketOpen(bracketEnd); )
 	{
-		char *bracketEnd;
-
 		if (bracketBegin[1] == NUMBER_IDENTIFIER)
 		{
 			#define FEP  0x01
@@ -593,7 +596,7 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 					index = prop->RepeatIndex;
 				}
 				string_ctor_assign(&src, &vector_at(file, index % count));
-				ReplaceDefineDynamic(SSGS, &src);
+				ReplaceDefineByAttributeVector(attributes, &src);
 				begin = string_begin(&src);
 				end = string_end(&src);
 				if (prefix == '+')
@@ -613,10 +616,7 @@ void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s)
 			}
 		}
 		else
-		{
 			bracketEnd = bracketBegin + 1;
-		}
-		bracketBegin = FindBracketOpen(bracketEnd);
 	}
 
 	#undef NUMBER_IDENTIFIER

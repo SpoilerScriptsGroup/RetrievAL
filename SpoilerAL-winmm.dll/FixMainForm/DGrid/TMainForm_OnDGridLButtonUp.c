@@ -1,7 +1,7 @@
 #include <windows.h>
 #include "TMainForm.h"
 
-extern const DWORD F00439F10;
+extern const DWORD _TMainForm_SubjectAccess;
 extern const DWORD _TMainForm_M_TitleSelectClick;
 extern const DWORD F00559D94;
 extern const DWORD F00559DB8;
@@ -182,7 +182,7 @@ __declspec(naked) void __stdcall TMainForm_OnDGridLButtonUp(TMainForm *this, LPA
 		mov     dword ptr [ebx + 1316], ecx
 		push    ecx
 		push    ebx
-		call    dword ptr [F00439F10]
+		call    dword ptr [_TMainForm_SubjectAccess]
 		add     esp, 8
 		jmp     L3
 

@@ -8,7 +8,7 @@
 
 #define JMP_REL32 (BYTE)0xE9
 #define NOP       (BYTE)0x90
-#define NOP_X2    (WORD)0x9090
+#define NOP_X2    (WORD)0x9066
 
 static __inline void __cdecl OptimizeString()
 {

@@ -134,7 +134,7 @@ BOOL __stdcall ProcessInfoValidation(
 #else
 							TRUE
 #endif
-							: !_mbsstr(_mbsupr(cmd), lpCmdLineArg);
+							: !_mbsstr(_mbslwr(cmd), lpCmdLineArg);
 					}
 					HeapFree(hHeap, 0, cmd);
 				}

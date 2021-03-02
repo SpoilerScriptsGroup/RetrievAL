@@ -40,6 +40,7 @@ EXTERN_C void __fastcall TDrawGrid_SetDefaultColWidth(TDrawGrid *DrawGrid, const
 EXTERN_C void __fastcall TDrawGrid_SetRowCount(TDrawGrid *DrawGrid, const int RowCount);
 EXTERN_C int __fastcall TDrawGrid_GetRowHeights(TDrawGrid *DrawGrid, const int Index);
 EXTERN_C void __fastcall TDrawGrid_SetRowHeights(TDrawGrid *DrawGrid, const int Index, const int RowHeights);
+EXTERN_C void __fastcall TDrawGrid_SetRow(TDrawGrid *DrawGrid, const int Row);
 EXTERN_C void __fastcall TDrawGrid_SetTopRow(TDrawGrid *DrawGrid, const int TopRow);
 EXTERN_C void __fastcall _TDrawGrid_MouseToCell(TDrawGrid *DrawGrid, int X, int Y, int *ARow, int *ACol);
 #define TDrawGrid_MouseToCell(DrawGrid, X, Y, ACol, ARow) _TDrawGrid_MouseToCell(DrawGrid, X, Y, ARow, ACol)

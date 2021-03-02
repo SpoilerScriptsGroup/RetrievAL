@@ -5,18 +5,22 @@
 #include "TSSGCtrl.h"
 
 EXTERN_C void*__stdcall FixGetSSGDataFile(void *);
-EXTERN_C void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line);
+EXTERN_C void __stdcall FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS, string *s);
 
 static string * __stdcall TSSGCtrl_GetSSGDataFile_Half(
-	TSSGSubject  *const SSGS,
-	string       *const FName,
+	va_list    register pFrame,
+	// These was passed Token constructor.
 	string const *const Token,
 	char   const *const __s,
 	void   const *const __a)
 {
 	extern BOOL EnableParserFix;
-	if (EnableParserFix && SSGS)
-		ReplaceDefineDynamic(SSGS, FName);
+
+	TSSGCtrl    *const This  = (va_arg(pFrame, void *), va_arg(pFrame, void *), va_arg(pFrame, void *));
+	TSSGSubject *const SSGS  =  va_arg(pFrame, void *);
+	string      *const FName = &va_arg(pFrame, string);
+	if (SSGS)
+		FormatNameString(This, SSGS, FName);
 	return FName;
 }
 
@@ -188,18 +192,16 @@ static void __cdecl TSSGCtrl_SetSSGDataFile_insert(
 }
 
 #define PUSH_EAX  (BYTE)0x50
+#define PUSH_EBP  (BYTE)0x55
 #define CALL_REL  (BYTE)0xE8
 #define JMP_REL32 (BYTE)0xE9
 
 EXTERN_C void __cdecl Attach_FixGetSSGDataFile()
 {
 	// TSSGCtrl::GetSSGDataFile
-	*(LPBYTE )(0x004EF8C3 + 0) =         0x8D   ;// lea  edx, [ebp + 0x10]
-	*(LPWORD )(0x004EF8C3 + 1) = BSWAP16(0x5510);// push edx
-	*(LPWORD ) 0x004EF8C6      = BSWAP16(0x5257);// push edi
+	*(LPWORD ) 0x004EF8C7      = PUSH_EBP;
 	*(LPBYTE )(0x004EF8C8 + 0) = CALL_REL;
 	*(LPDWORD)(0x004EF8C8 + 1) = (DWORD)TSSGCtrl_GetSSGDataFile_Half - (0x004EF8C8 + 1 + sizeof(DWORD));
-	*(LPBYTE )(0x004EF8E5 + 3) = 0;
 
 	*(LPDWORD) 0x004EF8F1      = PUSH_EAX;
 	*(LPDWORD)(0x004EF8F2 + 0) = CALL_REL;

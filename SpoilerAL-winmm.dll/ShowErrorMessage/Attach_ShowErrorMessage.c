@@ -94,8 +94,8 @@ static __declspec(naked) void __stdcall CloseHandleIgnoreInvalid(HANDLE hObject)
 #define JMP_REL32     (BYTE )0xE9
 #define JMP_REL8      (BYTE )0xEB
 #define NOP           (BYTE )0x90
-#define NOP_X2        (WORD )0x9090
-#define NOP_X4        (DWORD)0x90909090
+#define NOP_X2        (WORD )0x9066
+#define NOP_X4        (DWORD)0x00401F0F
 #define INT3          (BYTE )0xCC
 
 EXTERN_C void __cdecl Attach_ShowErrorMessage()

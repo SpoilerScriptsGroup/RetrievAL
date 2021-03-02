@@ -9,7 +9,7 @@ EXTERN_C void __cdecl TStringDivision_IsLeadByteAtLowerUpper();
 #define JZ_REL32   (WORD )0x840F
 #define JBE_REL8   (BYTE )0x76
 #define NOP        (BYTE )0x90
-#define NOP_X4     (DWORD)0x90909090
+#define NOP_X4     (DWORD)0x00401F0F
 
 EXTERN_C void __cdecl OptimizeStringDivision()
 {

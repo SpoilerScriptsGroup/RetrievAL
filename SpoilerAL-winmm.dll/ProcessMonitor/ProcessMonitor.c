@@ -38,6 +38,7 @@
 #include <regex.h>
 #endif
 
+#include "TDrawGrid.h"
 #include "ProcessMonitor.h"
 #include "GetFileTitlePointer.h"
 #include "ProcessContainsModule.h"
@@ -512,34 +513,12 @@ DWORD __stdcall FindProcessId(
 	EnterCriticalSection(&cs);
 	if (!bIsRegex)
 	{
-		if (lpProcessName)
+		LPCSTR lpBaseName = (void *)lpMonitorNames;
+		for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
 		{
-			LPCSTR lpBaseName;
-
-			lpBaseName = (LPCSTR)lpMonitorNames;
-			for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
-			{
-				DWORD dwLength;
-
-				dwLength = *(LPDWORD)lpBaseName;
-				lpBaseName += sizeof(DWORD);
-				if (dwLength == nProcessNameLength)
-				{
-					if (_mbsicmp(lpProcessName, lpBaseName) == 0)
-					{
-						if (ProcessInfoValidation(*lpdwProcessId, FALSE, lpModuleName ? lpWideCharStr : NULL, lpCmdLineArg))
-						{
-							dwProcessId = *lpdwProcessId;
-							break;
-						}
-					}
-				}
-				lpBaseName += dwLength + __alignof(DWORD)/* included \0 */ & -(signed)__alignof(DWORD);
-			}
-		}
-		else
-		{
-			for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
+			DWORD dwLength = *(LPDWORD)lpBaseName;
+			lpBaseName += sizeof(DWORD);
+			if (dwLength && (!lpProcessName || dwLength == nProcessNameLength && _mbsicmp(lpBaseName, lpProcessName) == 0))
 			{
 				if (ProcessInfoValidation(*lpdwProcessId, FALSE, lpModuleName ? lpWideCharStr : NULL, lpCmdLineArg))
 				{
@@ -547,6 +526,7 @@ DWORD __stdcall FindProcessId(
 					break;
 				}
 			}
+			lpBaseName += dwLength + __alignof(DWORD)/* included \0 */ & -(signed)__alignof(DWORD);
 		}
 	}
 #if USING_REGEX
@@ -585,36 +565,12 @@ DWORD __stdcall FindProcessId(
 			{
 				if (!lpCmdLineArg || regcomp(&reCmdLineArg, lpCmdLineArg, REG_EXTENDED | REG_NOSUB) == 0)
 				{
-					if (lpProcessName)
+					LPCSTR lpBaseName = (void *)lpMonitorNames;
+					for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
 					{
-						LPCSTR lpBaseName;
-
-						lpBaseName = (LPCSTR)lpMonitorNames;
-						for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
-						{
-							DWORD dwLength;
-
-							dwLength = *(LPDWORD)lpBaseName;
-							lpBaseName += sizeof(DWORD);
-							if (regexec(&reProcessName, lpBaseName, 0, NULL, 0) == 0)
-							{
-								if (ProcessInfoValidation(
-									*lpdwProcessId,
-									TRUE,
-									lpModuleName ? &reModuleName : NULL,
-									lpCmdLineArg ? &reCmdLineArg : NULL
-								))
-								{
-									dwProcessId = *lpdwProcessId;
-									break;
-								}
-							}
-							lpBaseName += dwLength + __alignof(DWORD)/* included \0 */ & -(signed)__alignof(DWORD);
-						}
-					}
-					else
-					{
-						for (lpdwProcessId = lpdwMonitorPIDs; lpdwProcessId != lpdwMonitorEndOfPIDs; lpdwProcessId++)
+						DWORD dwLength = *(LPDWORD)lpBaseName;
+						lpBaseName += sizeof(DWORD);
+						if (dwLength && (!lpProcessName || regexec(&reProcessName, lpBaseName, 0, NULL, 0) == 0))
 						{
 							if (ProcessInfoValidation(
 								*lpdwProcessId,
@@ -627,6 +583,7 @@ DWORD __stdcall FindProcessId(
 								break;
 							}
 						}
+						lpBaseName += dwLength + __alignof(DWORD)/* included \0 */ & -(signed)__alignof(DWORD);
 					}
 					if (lpCmdLineArg)
 						regfree(&reCmdLineArg);
@@ -678,4 +635,21 @@ DWORD_DWORD __fastcall TProcessAddForm_ReLoadBtnClick_GetFirstModule(
 	else if (dwLength = WideCharToMultiByte(CP_ACP, 0, lpFilename, dwLength + 1, lpME->szExePath, sizeof(lpME->szExePath), NULL, NULL))
 		dwLength--;
 	return (DWORD_DWORD) { dwLength, (DWORD)vector_end(processVec) };
+}
+
+DWORD_DWORD __fastcall TProcessAddForm_ReLoadBtnClick_ProcessDGrid_Repaint(
+	vector_PROCESSENTRY32A *const processVec,
+	TWinControl      const *const ProcessAddForm)
+{
+	void *const lpProcessDGrid = (LPBYTE)ProcessAddForm + 0x0304;
+	int   const pid = MainForm->ssgCtrl.processCtrl.entry.th32ProcessID;
+	if (pid > 0) for (ptrdiff_t i = vector_size(processVec); --i >= 0; )
+	{
+		if (vector_at(processVec, i).th32ProcessID == pid)
+		{
+			TDrawGrid_SetRow(*(TDrawGrid **)lpProcessDGrid, vector_size(processVec) - i);
+			break;
+		}
+	}
+	return (DWORD_DWORD) { (DWORD)ProcessAddForm, (DWORD)ProcessAddForm->VTable };
 }

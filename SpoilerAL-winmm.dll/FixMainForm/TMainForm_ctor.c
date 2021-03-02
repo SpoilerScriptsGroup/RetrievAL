@@ -1,4 +1,6 @@
 #include <windows.h>
+#include "bcb6_operator.h"
+#define USING_NAMESPACE_BCB6_STD
 #include "TWinControl.h"
 #include "TMainForm.h"
 #undef MainForm
@@ -46,5 +48,7 @@ static void __fastcall ctor(TMainForm *this)
 	AttachSnapWindow(TWinControl_GetHandle(this));
 #endif
 
+	this->DistractionVec = bcb6_operator_new(sizeof(vector_string));
+	vector_ctor(this->DistractionVec);
 	verbose(VRB_INFO, "TMainForm::ctor - end");
 }

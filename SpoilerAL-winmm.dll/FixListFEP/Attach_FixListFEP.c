@@ -40,7 +40,7 @@ static __declspec(naked) unsigned long __fastcall TSSBundleCalc_Read_TotalVal(un
 #define PUSH_EBX   (BYTE)0x53
 #define PUSH_IMM8  (BYTE)0x6A
 #define NOP        (BYTE)0x90
-#define NOP_X4     (DWORD)0x00401F0F
+#define NOP_X4    (DWORD)0x00401F0F
 #define CDQ        (BYTE)0x99
 #define CALL_REL32 (BYTE)0xE8
 #define JMP_REL32  (BYTE)0xE9

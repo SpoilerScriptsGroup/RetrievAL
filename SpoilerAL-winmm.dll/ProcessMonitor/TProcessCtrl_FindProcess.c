@@ -208,7 +208,7 @@ unsigned long __cdecl TProcessCtrl_FindProcess(LPVOID this, string *ProcessName,
 				}
 			}
 			if (lpCmdLineArg && !bIsRegex)
-				_mbsupr(lpCmdLineArg);
+				_mbslwr(lpCmdLineArg);
 			if (lpProcessName || ((lpModuleName || lpCmdLineArg) && !lpClassName && !lpWindowName))
 			{
 				dwProcessId = FindProcessId(bIsRegex, lpProcessName, lpProcessName ? strlen(lpProcessName) : 0, lpModuleName, lpCmdLineArg);

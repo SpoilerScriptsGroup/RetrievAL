@@ -565,31 +565,24 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 		// [elif], [else]
 		case ELIF:
 		case ELSE:
-			if (invalid > 1)
-				break;
-			invalid = condition;
-			condition ^= 1;
-			if (tag == ELSE)
+			if (invalid > TRUE || (invalid = condition) || tag == ELSE)
 				break;
 			/* FALLTHROUGH */
 
 		// [if]
 		case IF:
 			if (!invalid)
-			{
-				LPSTR Code[2];
-
-				string_begin((string *)Code) = p;
-				string_end((string *)Code) = string_end(it);
-				invalid = (condition = !!Parsing(this, &dummySSGS, (const string *)Code, 0)) ^ 1;
-				break;
-			}
-			invalid++;
+				invalid = !(condition = !!Parsing(this, &dummySSGS, &(string) { p, string_end(it), NULL, NULL, p, -1 }, 0));
+			else
+				invalid++;
 			break;
 
 		// [endif]
 		case ENDIF:
-			condition = !(invalid -= !!invalid);
+			if (invalid <= TRUE)
+				invalid = FALSE, condition = TRUE;
+			else
+				invalid--;
 			break;
 
 		// [subject], [input]
@@ -724,7 +717,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 
 				string_ctor_assign(&FName, &NewAElem->fileName);
 				string_ctor_assign_cstr_with_length(&DefaultExt, ".SSC", 4);
-				tmpL = TSSGCtrl_GetSSGDataFile(this, NULL, FName, DefaultExt, NULL);
+				tmpL = TSSGCtrl_GetSSGDataFile(this, &dummySSGS, FName, DefaultExt, NULL);
 				if (tmpL == NULL)
 				{
 					delete_TReplaceAttribute(NewAElem);

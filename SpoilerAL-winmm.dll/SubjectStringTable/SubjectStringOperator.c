@@ -37,7 +37,28 @@ static void __fastcall SetCode(TSSGSubject *SSGS, string *s)
 	SSGS->code.sstIndex = SubjectStringTable_insert(s);
 }
 
-static void __fastcall TMainForm_FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS);
+__declspec(naked)
+static void __fastcall TMainForm_FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS
+#ifdef _M_IX86
+												  , string *retVal, const string* nowValHeadStr
+#endif
+)
+{
+	__asm
+	{
+		mov     eax,      [esp + 8]// nowValHeadStr
+		push    dword ptr [esp + 4]// retVal
+		push    edx
+		push    ecx
+		mov     ecx, eax
+		call    SubjectStringTable_GetString
+		mov     edx, eax
+		mov     ecx, dword ptr [esp + 8]
+		call    string_ctor_assign
+		call    FormatNameString
+		ret     0// don't discard stack
+	}
+}
 
 __declspec(naked) void __cdecl TMainForm_SubjectAccess_TSSToggle_GetNowValHeadStr()
 {
@@ -119,41 +140,18 @@ __declspec(naked) void __cdecl TMainForm_SetCalcNowValue_TSSFloatCalc_GetNowValH
 	}
 }
 
-__declspec(naked) static void __fastcall TMainForm_FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS)
-{
-	__asm
-	{
-		mov     eax, dword ptr [esp + 4]
-		push    eax
-		push    edx
-		push    ecx
-		push    eax
-		mov     ecx, dword ptr [esp + 16 + 8]
-		call    SubjectStringTable_GetString
-		mov     edx, eax
-		pop     ecx
-		call    string_ctor_assign
-		call    FormatNameString
-		ret
-	}
-}
-
 static void __fastcall ModifySplit(
 	TMainForm    *const this,
 	TSSGSubject  *const SSGS,
 	string       *const dest,
 	string const *const src)
 {
-	if (!string_empty(src))
-	{
-		string_ctor_assign(dest, src);
-		ReplaceDefineDynamic(SSGS, dest);
-		FormatNameString(&this->ssgCtrl, SSGS, dest);
-	}
-	else
-	{
+	extern BOOL EnableParserFix;
+
+	if (EnableParserFix && string_empty(src))
 		TSSGSubject_GetSubjectName(dest, SSGS, &this->ssgCtrl);
-	}
+	else
+		FormatNameString(&this->ssgCtrl, SSGS, string_ctor_assign(dest, src));
 }
 
 __declspec(naked) void __stdcall TMainForm_DrawTreeCell_GetStrParam(string *const tmpS, string const *strParam)

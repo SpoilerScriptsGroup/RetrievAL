@@ -4,7 +4,7 @@
 #include "TSSGCtrl.h"
 
 extern BOOL FixTheProcedure;
-extern const DWORD TSSGCtrl_MakeDataCode;
+extern const DWORD _TSSGCtrl_MakeDataCode;
 
 __declspec(naked) bool __cdecl TSSGCtrl_Funneling_IsEnabled(TSSGCtrl *SSGC, TSSGSubject *SSGS)
 {
@@ -63,7 +63,7 @@ __declspec(naked) vector* __cdecl TSSGCtrl_Funneling_MakeDataCode(
 		mov     dword ptr [ebp - 0x0148], eax   // Address
 		mov     dword ptr [esp + 0x30  ], eax   // StartAddress
 	MakeDataCode:
-		jmp     TSSGCtrl_MakeDataCode
+		jmp     dword ptr [_TSSGCtrl_MakeDataCode]
 		ud2
 	}
 }

@@ -74,6 +74,16 @@ __declspec(naked) void __fastcall TDrawGrid_SetRowHeights(TDrawGrid *DrawGrid, c
 	}
 }
 
+__declspec(naked) void __fastcall TDrawGrid_SetRow(TDrawGrid *DrawGrid, const int Row)
+{
+	__asm
+	{
+		mov     eax, ecx
+		mov     ecx, 0055929CH
+		jmp     ecx
+	}
+}
+
 __declspec(naked) void __fastcall TDrawGrid_SetTopRow(TDrawGrid *DrawGrid, const int TopRow)
 {
 	__asm

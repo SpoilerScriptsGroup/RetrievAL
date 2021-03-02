@@ -26,7 +26,7 @@ typedef vector vector_TSSGAttributeElement;
 
 extern HANDLE hHeap;
 
-static void __stdcall ReplaceDefineByAttributeVector(vector_TSSGAttributeElement *attributes, string *line);
+void __stdcall ReplaceDefineByAttributeVector(vector_TSSGAttributeElement *attributes, string *line);
 
 size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity)
 {
@@ -193,7 +193,7 @@ void __stdcall ReplaceDefineDynamic(TSSGSubject *SSGS, string *line)
 	ReplaceDefineByAttributeVector(attributes, line);
 }
 
-static void __stdcall ReplaceDefineByAttributeVector(vector_TSSGAttributeElement *attributes, string *line)
+void __stdcall ReplaceDefineByAttributeVector(vector_TSSGAttributeElement *attributes, string *line)
 {
 	LPCSTR        begin;
 	size_t        length, capacity;

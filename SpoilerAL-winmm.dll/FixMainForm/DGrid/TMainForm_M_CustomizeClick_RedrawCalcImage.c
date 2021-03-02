@@ -1,6 +1,6 @@
 #include <windows.h>
 
-extern const DWORD F00439F10;
+extern const DWORD _TMainForm_SubjectAccess;
 extern const DWORD F0048292C;
 extern const DWORD F00483678;
 extern const DWORD F004836B4;
@@ -39,7 +39,7 @@ __declspec(naked) void __fastcall TMainForm_M_CustomizeClick_RedrawCalcImage(voi
 		mov     edx, dword ptr [ebx + 524H]
 		push    edx
 		push    ebx
-		call    dword ptr [F00439F10]
+		call    dword ptr [_TMainForm_SubjectAccess]
 		add     esp, 8
 	L3:
 		pop     esi

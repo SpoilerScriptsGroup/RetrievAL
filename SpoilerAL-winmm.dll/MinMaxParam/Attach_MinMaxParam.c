@@ -37,7 +37,7 @@ __declspec(naked) void __cdecl TProcessAccessElementSignedNumData_fixSetSize(
 }
 
 #define NOP        (BYTE )0x90
-#define NOP_X4     (DWORD)0x90909090
+#define NOP_X4     (DWORD)0x00401F0F
 #define CALL_REL32 (BYTE )0xE8
 #define JMP_REL32  (BYTE )0xE9
 

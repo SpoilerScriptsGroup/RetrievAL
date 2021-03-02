@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <windows.h>
 #include "bcb6_std_vector.h"
 #include "bcb6_std_string.h"
@@ -12,10 +13,11 @@
 #include "TGuideForm.h"
 #include "TSSGSubject.h"
 
+#pragma pack(push, 1)
 typedef struct _TMainForm
 {
 	LPVOID           *VTable;
-	BYTE             padding1[748];
+	BYTE             padding[748];
 	LPVOID           MainMenu1;
 	LPVOID           M_File;
 	LPVOID           M_Exit;
@@ -101,21 +103,22 @@ typedef struct _TMainForm
 	long             shadowColor;
 	long             shadowMode;
 	long             shadowOffset;
-	BOOLEAN          isAutoSaveAdjustVal;
-	BOOLEAN          isNowValueDraw;
+	bool             isAutoSaveAdjustVal;
+	bool             isNowValueDraw;
+	BYTE             padding1[2];
 	long             userMode;
 	LPVOID           panelG;
 	LPVOID           backG;
-	BYTE             padding2[4];
+	bcb6_std_vector_string *DistractionVec;// distinction
 	bcb6_std_string  backGPath;
 	bcb6_std_string  panelGPath;
 	bcb6_std_string  calcFreeName;
 	bcb6_std_string  calcPushName;
 	bcb6_std_string  splashPath;
-	BOOLEAN          isCalcHex;
-	BOOLEAN          isBackGUse;
-	BOOLEAN          isPanelGUse;
-	BOOLEAN          isSplashUse;
+	bool             isCalcHex;
+	bool             isBackGUse;
+	bool             isPanelGUse;
+	bool             isSplashUse;
 	BYTE             greatTopModeKey;
 	BYTE             padding3[3];
 	TSSGScriptStruct selectScript;
@@ -150,11 +153,13 @@ typedef struct _TMainForm
 	long             titleFindHeight;
 	long             titleSelectWindowWidth;
 	long             titleSelectWindowHeight;
-	BOOLEAN          isTitleFindUp;
-	BOOLEAN          isAdjustGuideUse;
+	bool             isTitleFindUp;
+	bool             isAdjustGuideUse;
+	BYTE             padding4[2];
 	bcb6_std_string  sortKey;
-	BOOLEAN          nowAdjusting;
-	BOOLEAN          canChange;
+	bool             nowAdjusting;
+	bool             canChange;
+	BYTE             padding5[2];
 	long             wheelDeltaCount;
 	BYTE             topManager[8];
 	BYTE             topManagerListner[168];
@@ -164,12 +169,13 @@ typedef struct _TMainForm
 	TSSGCtrl         ssgCtrl;
 	bcb6_std_string  exeDir;
 	BYTE             searchMode;
-	BYTE             padding4[7];
+	BYTE             padding6[7];
 	bcb6_std_vector  keyToIndexMap;
 	bcb6_std_vector  scriptVec;
 	bcb6_std_vector  toScriptVec;
 	bcb6_std_vector_PTSSGSubject treeSubjectVec;
 } TMainForm;
+#pragma pack(pop)
 
 #define _MainForm 0x0064CE2C
 #define MainForm (*(TMainForm **)_MainForm)
@@ -180,7 +186,7 @@ EXTERN_C void(__cdecl * const TMainForm_GoCalcEnter)(TMainForm *this);
 
 EXTERN_C void __cdecl TMainForm_CalcButtonPushFunc(TMainForm *this, long BtnNum);
 
-EXTERN_C void(__cdecl * const TMainForm_SetLockVisible)(TMainForm *this, TSSGSubject *SSGS, BOOLEAN MustVisible);
+EXTERN_C void(__cdecl * const TMainForm_SetLockVisible)(TMainForm *this, TSSGSubject *SSGS, bool MustVisible);
 EXTERN_C void(__cdecl * const TMainForm_DrawTreeCell)(TMainForm *this, LPVOID DestCanvas, int ARow, RECT *Rect);
 EXTERN_C void(__cdecl * const TMainForm_ChangeSubjectPanel)(TMainForm *this, long Type);
 EXTERN_C void(__cdecl * const TMainForm_GoCalcHexChange)(TMainForm *this, boolean IsCalcHex);
@@ -196,16 +202,16 @@ TMainForm_DrawTree(TMainForm *this, LPVOID DestCanvas, long LeftOffset, long Top
 #endif
 );
 
-EXTERN_C void __fastcall _TMainForm_FormMouseWheel(TMainForm *this, LPVOID Sender, WORD Shift, BOOLEAN *Handled, POINT *MousePos, int WheelDelta);
+EXTERN_C void __fastcall _TMainForm_FormMouseWheel(TMainForm *this, LPVOID Sender, WORD Shift, bool *Handled, POINT *MousePos, int WheelDelta);
 #define TMainForm_FormMouseWheel(this, Sender, Shift, Handled, MousePos, WheelDelta) TMainForm_FormMouseWheel(this, Sender, Shift, WheelDelta, MousePos, Handled)
 
-EXTERN_C void __cdecl TMainForm_CheckTreeSize(TMainForm *this, BOOLEAN AllWidthCheck);
+EXTERN_C void __cdecl TMainForm_CheckTreeSize(TMainForm *this, bool AllWidthCheck);
 
 EXTERN_C void __fastcall TMainForm_HotKeyEditKeyDown(TMainForm *this, LPVOID Sender, WORD *Key, WORD Shift);
 
 EXTERN_C void __stdcall TMainForm_Guide(const char *Mes, int Flags);
 
-EXTERN_C void __fastcall _TMainForm_DGridSelectCell(TMainForm *this, LPVOID Sender, int ACol, BOOLEAN *CanSelect, int ARow);
+EXTERN_C void __fastcall _TMainForm_DGridSelectCell(TMainForm *this, LPVOID Sender, int ACol, bool *CanSelect, int ARow);
 #define TMainForm_DGridSelectCell(this, Sender, ACol, ARow, CanSelect) _TMainForm_DGridSelectCell(this, Sender, ACol, CanSelect, ARow)
 
 #define TMainForm_GetUserMode(this) (this)->userMode

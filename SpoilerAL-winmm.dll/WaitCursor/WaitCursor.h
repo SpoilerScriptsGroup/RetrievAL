@@ -11,7 +11,7 @@
 extern "C" {
 #endif
 
-void __cdecl InitializeWaitCursor();
+BOOL __cdecl InitializeWaitCursor();
 void __cdecl DeleteWaitCursor();
 void __cdecl BeginWaitCursor();
 void __cdecl EndWaitCursor();

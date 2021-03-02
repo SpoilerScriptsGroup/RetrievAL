@@ -10,6 +10,7 @@
 #include "TProcessSearchReportListnerBase.h"
 
 EXTERN_C DWORD_DWORD __fastcall TProcessAddForm_ReLoadBtnClick_GetFirstModule(LPVOID, LPVOID, LPVOID);
+EXTERN_C DWORD_DWORD __fastcall TProcessAddForm_ReLoadBtnClick_ProcessDGrid_Repaint(LPVOID, LPVOID);
 EXTERN_C void __cdecl TSearchReportListner_OnReport_InvokeDrawProgress(WPARAM searchForm, unsigned long Pos);
 EXTERN_C void __cdecl TSearchForm_AdjustValToString_GetStart(LPVOID activeElement, LPVOID ssgCtrl);
 EXTERN_C void __fastcall TSearchForm_DrawCanvas(TProcessSearchReportListnerBase *reportListner, long ImageWidth, unsigned long Pos, TCanvas *Canv);
@@ -161,6 +162,12 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 	*(LPWORD )0x004874B2 = BSWAP16(0xFFC0);// inc  eax
 
 	*(LPDWORD)0x004874C9 = SHGFI_ICON | SHGFI_USEFILEATTRIBUTES | SHGFI_SMALLICON;
+	
+	*(LPDWORD)0x004879C4 = BSWAP32(0x8B56FC8D);// mov edx, dword ptr [this]
+	*(LPBYTE )0x004879C8 =         0x8A       ;// lea ecx, [edx]TProcessAddForm.processVec
+	*(LPDWORD)0x004879C9 = 0x000003A0;
+	*(LPBYTE )0x004879CD = CALL_REL;
+	*(LPDWORD)0x004879CE = (DWORD)TProcessAddForm_ReLoadBtnClick_ProcessDGrid_Repaint - (0x004879CE + sizeof(DWORD));
 
 	// TProcessAddForm::ProcessDGridClick
 	*(LPDWORD)0x0048855E = (DWORD)TProcessAddForm_ProcessDGridClick_GetBack - (0x0048855E + sizeof(DWORD));

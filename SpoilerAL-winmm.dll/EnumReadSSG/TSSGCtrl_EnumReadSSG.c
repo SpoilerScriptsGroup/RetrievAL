@@ -40,6 +40,7 @@ extern string ProcessAttachCode;
 extern vector *ProcessAttachAttribute;
 extern string ProcessDetachCode;
 extern vector *ProcessDetachAttribute;
+extern DWORD  IndexRoot, IndexTemp;
 
 TSSGSubject dummySSGS = {
 	TSSGSubject_VTable,                     // SubjectVtbl     *VTable;
@@ -67,15 +68,13 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 {
 	extern unsigned long __cdecl Parsing(IN TSSGCtrl *this, IN TSSGSubject *SSGS, IN const string *Src, ...);
 
-	size_t invalid, condition;
-
 	#define stack_PTSSDir_size(Stack)        stack_size((stack *)(Stack), void *)
 	#define stack_PTSSDir_top(Stack)         stack_top((stack *)(Stack), TSSDir *)[0]
 	#define stack_PTSSDir_push(Stack, Value) stack_ptr_push((stack_ptr *)(Stack), Value)
 	#define stack_PTSSDir_pop(Stack)         stack_ptr_pop((stack_ptr *)(Stack))
 
-	invalid = 0;
-	condition = 1;
+	TSSGSubjectProperty *prop;
+	size_t invalid = FALSE, condition = TRUE;
 	for (string *it = vector_begin(SSGFile); it != vector_end(SSGFile); ++it)
 	{
 		typedef enum {
@@ -572,7 +571,33 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 		// [if]
 		case IF:
 			if (!invalid)
-				invalid = !(condition = !!Parsing(this, &dummySSGS, &(string) { p, string_end(it), NULL, NULL, p, -1 }, 0));
+			{
+				if (prop = GetSubjectProperty(&dummySSGS))
+				{
+					if (RepeatDepth)
+					{
+						prop->OuterRepeat = OuterRepeat;
+						prop->RepeatDepth = RepeatDepth;
+						prop->RepeatIndex = RepeatIndex;
+					}
+#if EMBED_BREADTH
+					prop->ParentEntry = stack_PTSSDir_top(ParentStack);
+#endif
+				}
+				invalid = !(condition = !!Parsing(this, &dummySSGS, &(string) { p, string_end(it), NULL, NULL, p, MAXDWORD }, 0));
+				if (prop)
+				{
+					if (RepeatDepth)
+					{
+						prop->OuterRepeat = MAXDWORD;
+						prop->RepeatDepth = 0;
+						prop->RepeatIndex = 0;
+					}
+#if EMBED_BREADTH
+					prop->ParentEntry = NULL;
+#endif
+				}
+			}
 			else
 				invalid++;
 			break;
@@ -607,7 +632,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 				string_dtor(&Tag);
 				if (SSGS)
 				{
-					if (tag == INPUT)
+					if (SSGS->isAdjustment = tag == INPUT)
 					{
 						string  tmpS;
 						BOOLEAN CanUnknown;
@@ -633,9 +658,8 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 
 				vector_push_back(&stack_PTSSDir_top(ParentStack)->childVec, SSGS);
 				TSSGSubject_SetAttribute(SSGS, TSSGAttributeSelector_GetNowAtteributeVec(&this->attributeSelector));
-				TSSGSubject_Setting(SSGS, this);
 
-				if (prop = GetSubjectProperty(SSGS))
+				if (!ADJElem && (prop = AppendSubjectProperty(SSGS)))
 				{
 					if (RepeatDepth)
 					{
@@ -644,31 +668,19 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 						prop->RepeatIndex = RepeatIndex;
 					}
 #if EMBED_BREADTH
-					if (!ADJElem)
-						prop->ParentEntry = stack_PTSSDir_top(ParentStack);
+					prop->ParentEntry = stack_PTSSDir_top(ParentStack);
 #endif
 				}
 
 				if (SSGS->type == stDIR)
-				{
-					TDirAttribute *NewAElem;
-#ifdef DECIDE_DURING_DECLARED
-					string  const *code = SubjectStringTable_GetString(&SSGS->code);
-					if (!string_empty(code))
-					{
-						vector_string tmpV = { NULL };
-						SSGS->isRepeatable = TStringDivision_List(&this->strD, code, *string_ctor_assign_char(&Tag, ','), &tmpV, dtNEST) > 1;
-						vector_string_dtor(&tmpV);
-					}
-#endif
-
-					// dir
-					NewAElem = new_TDirAttribute();
+				{// dir
+					TDirAttribute *const  NewAElem = new_TDirAttribute();
 					TDirAttribute_Setting(NewAElem, TSSGCtrl_GetDirLevel(this, SSGS) + 1);
 					TSSGAttributeSelector_PushElement(&this->attributeSelector, NewAElem);
+					stack_PTSSDir_push(ParentStack, &SSGS);
+				}// change parent
 
-					stack_PTSSDir_push(ParentStack, &SSGS);	// e‚ÌØ‚è‘Ö‚¦
-				}
+				TSSGSubject_Setting(SSGS, this);
 			}
 			break;
 
@@ -717,7 +729,19 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 
 				string_ctor_assign(&FName, &NewAElem->fileName);
 				string_ctor_assign_cstr_with_length(&DefaultExt, ".SSC", 4);
+				if (prop = IndexTemp == MAXDWORD ? NULL : SubjectProperty + IndexTemp)
+				{
+					prop->OuterRepeat = OuterRepeat;
+					prop->RepeatDepth = RepeatDepth;
+					prop->RepeatIndex = RepeatIndex;
+#if EMBED_BREADTH
+					prop->ParentEntry = stack_PTSSDir_top(ParentStack);
+#endif
+				}
+				dummySSGS.propertyIndex = IndexTemp;
 				tmpL = TSSGCtrl_GetSSGDataFile(this, &dummySSGS, FName, DefaultExt, NULL);
+				dummySSGS.propertyIndex = IndexRoot;
+				if (prop && map_end(prop)) TSSGSubjectProperty_dtor(prop, TRUE);
 				if (tmpL == NULL)
 				{
 					delete_TReplaceAttribute(NewAElem);
@@ -1164,16 +1188,16 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 				string_end(&LineS) += 2;
 				TSSGSubject_SetCode_stdstr(SSGS, &LineS);
 				string_dtor(&LineS);
-				TSSGSubject_Setting(SSGS, this);
-				vector_push_back(&stack_PTSSDir_top(ParentStack)->childVec, SSGS);
-				TSSGSubject_SetAttribute(SSGS, TSSGAttributeSelector_GetNowAtteributeVec(&this->attributeSelector));
-
+				SSGS->isAdjustment = TRUE;
 				if (RepeatDepth && (prop = GetSubjectProperty(SSGS)))
-				{
+				{// No appending properties because not destructed via TSSDir::ClearChild.
 					prop->OuterRepeat  = OuterRepeat;
 					prop->RepeatDepth  = RepeatDepth;
 					prop->RepeatIndex  = RepeatIndex;
 				}
+				TSSGSubject_Setting(SSGS, this);
+				vector_push_back(&stack_PTSSDir_top(ParentStack)->childVec, SSGS);
+				TSSGSubject_SetAttribute(SSGS, TSSGAttributeSelector_GetNowAtteributeVec(&this->attributeSelector));
 			}
 			break;
 
@@ -1386,7 +1410,31 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 				NewAElem->VTable    = TReplaceAttribute_VTable;
 				NewAElem->type      = atFORMAT;
 				NewAElem->displace  = FALSE;
+				if (prop = GetSubjectProperty(&dummySSGS))
+				{
+					if (RepeatDepth)
+					{
+						prop->OuterRepeat = OuterRepeat;
+						prop->RepeatDepth = RepeatDepth;
+						prop->RepeatIndex = RepeatIndex;
+					}
+#if EMBED_BREADTH
+					prop->ParentEntry = stack_PTSSDir_top(ParentStack);
+#endif
+				}
 				NewAElem->offsetNum = Parsing(this, &dummySSGS, &vector_at(&tmpV, 0), specifier);
+				if (prop)
+				{
+					if (RepeatDepth)
+					{
+						prop->OuterRepeat = MAXDWORD;
+						prop->RepeatDepth = 0;
+						prop->RepeatIndex = 0;
+					}
+#if EMBED_BREADTH
+					prop->ParentEntry = NULL;
+#endif
+				}
 				string_ctor_assign(&NewAElem->offsetCode , &vector_at(&tmpV, 1));
 				string_ctor_assign(&NewAElem->fileName   , &vector_at(&tmpV, 2));
 				vector_dtor(&tmpV);

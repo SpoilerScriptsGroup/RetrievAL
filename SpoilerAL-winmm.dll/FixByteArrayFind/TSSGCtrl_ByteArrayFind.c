@@ -21,20 +21,21 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 
 	assert(string_length(&Token) == 2);
 	assert(
-		*(LPWORD)string_begin(&Token) == BSWAP16('*>') ||
-		*(LPWORD)string_begin(&Token) == BSWAP16('*]') ||
-		*(LPWORD)string_begin(&Token) == BSWAP16('*}') ||
-		*(LPWORD)string_begin(&Token) == BSWAP16('_>') ||
-		*(LPWORD)string_begin(&Token) == BSWAP16('::'));
+//		*(LPWORD)string_c_str(&Token) == BSWAP16('$$') ||
+		*(LPWORD)string_c_str(&Token) == BSWAP16('::') ||
+		*(LPWORD)string_c_str(&Token) == BSWAP16('*>') ||
+		*(LPWORD)string_c_str(&Token) == BSWAP16('_>') ||
+		*(LPWORD)string_c_str(&Token) == BSWAP16('*]') ||
+		*(LPWORD)string_c_str(&Token) == BSWAP16('*}'));
 
 	if (FromIndex >= ToIndex)
 		return -1;
-	length = string_length(Src);
+	length = string_size(Src);
 	if (length <= FromIndex || length - FromIndex < TokenLength)
 		return -1;
-	p = string_c_str(Src) + FromIndex;
-	end = string_c_str(Src) + ToIndex;
-	if (end < string_c_str(Src))
+	p = string_begin(Src) + FromIndex;
+	end = string_begin(Src) + ToIndex;
+	if (end < string_begin(Src))
 		end = string_end(Src);
 	end -= TokenLength - 1;
 	nest = 0;
@@ -122,9 +123,10 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 			break;
 		case '*':
 			// "*<", "*[", "*{", "*>", "*]", "*}"
-			switch (p[0])
+			switch (*p)
 			{
 			case '[':
+#if 0
 				switch (p[1])
 				{
 				case '.':
@@ -135,6 +137,7 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 					break;
 				}
 				/* FALLTHROUGH */
+#endif
 			case '<':
 			case '{':
 				nest++;
@@ -143,18 +146,18 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 			case '>':
 			case ']':
 			case '}':
-				if (nest)
+				if (p++, nest)
 					nest--;
-				else if (*(LPWORD)prev != *(LPWORD)string_begin(&Token))
-					break;
-				goto TOKEN_FOUND;
+				else if (*(LPWORD)prev == *(LPWORD)string_c_str(&Token))
+					goto TOKEN_FOUND;
+				break;
 			}
 			break;
 		case ':':
 			// "::"
-			if (*p != ':' || nest || *(LPWORD)string_begin(&Token) != BSWAP16('::'))
-				break;
-			goto TOKEN_FOUND;
+			if (*p == ':' && (p++, !nest) && *(LPWORD)string_c_str(&Token) == BSWAP16('::'))
+				goto TOKEN_FOUND;
+			break;
 		case '<':
 			// "<#", "<@", "<_", "#>", "@>"
 			switch (*p)
@@ -200,18 +203,18 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 			// "_>"
 			if (*p != '>')
 				break;
-			if (nest)
+			if (p++, nest)
 				nest--;
-			else if (*(LPWORD)string_begin(&Token) == BSWAP16('_>'))
+			else if (*(LPWORD)string_c_str(&Token) == BSWAP16('_>'))
 				goto TOKEN_FOUND;
-			/* FALLTHROUGH */
+			break;
 		case_unsigned_leadbyte:
 			// lead byte
 			p++;
 			break;
 		TOKEN_FOUND:
 			string_dtor(&Token);
-			return prev - string_c_str(Src);
+			return prev - string_begin(Src);
 		}
 	} while (p < end);
 	string_dtor(&Token);

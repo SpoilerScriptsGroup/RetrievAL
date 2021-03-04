@@ -79,6 +79,20 @@ static __declspec(naked) void __cdecl TFindNameForm_EnumSubjectNameFind_StrD_Get
 	}
 }
 
+static BOOL __fastcall TSearchForm_DGridDrawCell_atBOOL_GetInputed(string *const SName, bool isBlank)
+{
+	string        Token;
+	vector_string tmpV = { NULL };
+	if (TStringDivision_List(&MainForm->ssgCtrl.strD, SName, *string_ctor_assign_char(&Token, ','), &tmpV, FALSE) > 1)
+	{
+		string_dtor(SName);
+		*SName = vector_at(&tmpV, 0);
+		string_ctor_null(&vector_at(&tmpV, 0));
+	}
+	vector_string_dtor(&tmpV);
+	return !isBlank;
+}
+
 #define TOGGLE_SIZE_POSTPONE 0
 
 static DWORD_DWORD __fastcall TSSToggle_Setting_GetAddress(
@@ -95,11 +109,15 @@ static DWORD_DWORD __fastcall TSSToggle_Setting_GetAddress(
 #endif
 		*addressStr = &vector_at(tmpV, 0);
 #if !TOGGLE_SIZE_POSTPONE
-	if (FixTheProcedure && !SSGC->script.sPos && string_at(addressStr, 0) == '_' && string_at(addressStr, 1) != 'L')
+	if (SSGC->script.sPos
+		? string_length(addressStr) == 1 && string_at(addressStr, 0) == '0'
+		: FixTheProcedure && string_at(addressStr, 0) == '_' && string_at(addressStr, 1) != 'L')
 	{
 		TStringDivision_Half_WithoutTokenDtor(&AddressStr, &SSGC->strD, &vector_at(tmpV, 1), "-", 1u, 0, dtESCAPE | dtBYTEARRAY);
 		if (string_at(&AddressStr, 0) == '-')
 			addressStr = &vector_at(&SubjectStringTable_array, 0);
+		else if (SSGC->script.sPos)// Avoids calculating bad size for TMainForm::AutoDialogAdjustment.
+			string_assign(addressStr, &AddressStr);
 		string_dtor(&AddressStr);
 	}
 #else
@@ -968,11 +986,20 @@ static __inline void AttachOperator()
 	SET_PROC (0x00485237, TFindNameForm_EnumSubjectNameFind_StrD_Get);
 
 	// TSearchForm::Init
+	*(LPBYTE )0x00491CB6 = offsetof(TSSGSubject, subjectName);
 	SET_PROC (0x00491CBC, TSearchForm_Init_GetName);
+	*(LPBYTE )0x00491DA0 = offsetof(TSSGSubject, subjectName);
 	SET_PROC (0x00491DA6, TSearchForm_Init_GetName);
 
 	// TSearchForm::DGridSelectCell
+	*(LPBYTE )0x0049C223 = offsetof(TSSGSubject, subjectName);
 	SET_PROC (0x0049C22C, TSearchForm_DGridSelectCell_GetName);
+
+	// TSearchForm::DGridDrawCell
+	SET_REL8 (0x0049AB73, 0x0049AB8A);
+	*(LPWORD )0x0049AB8A = BSWAP16(0x0F96    );// setbe dl
+	*(LPDWORD)0x0049AB8C = BSWAP32(0xC28D4DE8);// lea   ecx, [ebp-18h]
+	CALL     (0x0049AB90, TSearchForm_DGridDrawCell_atBOOL_GetInputed);
 
 	// TSSBitList::Setting
 	SET_PROC (0x004B829C, TSSBitList_Setting_GetCode);

@@ -14,14 +14,21 @@ typedef struct _Rb_tree_node
 	BYTE                  _M_value_field[];
 } *_Rb_tree_iterator, bcb6_std_map_node, *bcb6_std_map_iterator, **pbcb6_std_map_iterator;
 
+#define EMBED_BREADTH 1
+
 typedef struct _Rb_tree
 {
-	LPCVOID               _M_node_allocator_type[2];
+	INT                   OuterRepeat;
+	INT32                 RepeatDepth;
 	struct _Rb_tree_node *_M_header;
-	LPCVOID               padding2;
+	DWORD                 RepeatIndex;
 	size_t                _M_node_count;
-	LPCVOID               padding3;
-	const void *const     _M_key_compare[2];
+#if EMBED_BREADTH
+	struct _TSSDir       *ParentEntry;
+#else
+	LONG                  Breadth;
+#endif
+	const void           *_M_key_compare[2];
 } bcb6_std_map, *pbcb6_std_map;
 
 EXTERN_C void(__cdecl *const _Rb_global_Rebalance)(_Rb_tree_iterator __x, struct _Rb_tree_node **__root);

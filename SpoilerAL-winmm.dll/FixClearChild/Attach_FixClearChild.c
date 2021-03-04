@@ -78,15 +78,16 @@ static __declspec(naked) uint64_t __cdecl TSSGAttributeSelector_StartElementChec
 
 static BOOL __fastcall TSSGAttributeSelector_EndElementCheck_delete_attributeSetMap(TSSGAttributeSelector *const this, BOOL const clear)
 {// delete attributeSetMap if return TRUE
-	static void(__cdecl *const tree_ptr_erase)(struct _Rb_tree *this, struct _Rb_tree_node *__x) = (void *)0x004D399C;
+	static void(__cdecl *const tree_ptr_M_erase)(struct _Rb_tree *this, struct _Rb_tree_node *__x) = (void *)0x004D399C;
 
 	if (this->nowAttributeList)
 	{
 		if (this->AESet->_M_node_count)
-			tree_ptr_erase(this->AESet, set_end(this->AESet)->_M_parent);
-		node_alloc_deallocate(set_end(this->AESet)
+			tree_ptr_M_erase(this->AESet, set_end(this->AESet)->_M_parent);
+		node_alloc_deallocate(
+			set_end(this->AESet)
 #if !OPTIMIZE_ALLOCATOR
-							  , sizeof(bcb6_std_set_node)
+			, sizeof(bcb6_std_set_node)
 #endif
 		);
 		bcb6_operator_delete(this->AESet);
@@ -223,10 +224,17 @@ void __stdcall TSSGAttributeSelector_MakeNowAttributeVec_attributeSetMap_insert(
 static_assert(sizeof(CONSOLE_FONT_INFO) <= 8, "CONSOLE_FONT_INFO is greater than 8 bytes.");
 CONSOLE_FONT_INFO __fastcall TSSGAttributeElement_GetViaCoord(AeType const Type, const vector *const AttrV)
 {
+	TSSGAttributeElement const *AElem;
 	DWORD Index;
 	_BitScanForward(&Index, Type);
 	COORD coord = vector_type_at(&vector_at(&SubjectStringTable_array, AttrV->tblIndex), COORD, Index);
-	return (CONSOLE_FONT_INFO) { coord.X ? vector_type_at(AttrV, DWORD, coord.Y) : 0, coord };
+	return coord.X ?// Give consideration to had been added attribute by TMainForm::AutoDialogAdjustment.
+		(CONSOLE_FONT_INFO) { vector_type_at(AttrV, DWORD, coord.Y), coord } :
+		TSSGAttributeElement_GetType(AElem = vector_type_at(
+			AttrV,
+			TSSGAttributeElement *,
+			Index = vector_size_by_type(AttrV, void *) - 1
+		)) != Type ? (CONSOLE_FONT_INFO) { 0, coord } : (CONSOLE_FONT_INFO) { (DWORD)AElem, { 1, (WORD)Index } };
 }
 
 static void __fastcall TSSDir_GetSubjectVec_onOpen(TSSGSubject *const SSGS, TSSGCtrl *const SSGC)

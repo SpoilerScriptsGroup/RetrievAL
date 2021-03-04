@@ -2,7 +2,7 @@
 #include <intrin.h>
 #include "ShowErrorMessage/ErrorMessage.h"
 #define USING_NAMESPACE_BCB6_STD
-#include "bcb6_operator.h"
+#include "bcb6_std_allocator.h"
 #include "TSSGActionListner.h"
 #include "TMainForm.h"
 
@@ -185,7 +185,7 @@ void __cdecl OnProcessDetach(TProcessCtrl *const proc)
 			InProcessDetached = FALSE;
 		}
 		{
-			static void(__cdecl *const tree_string_vecstr_erase)(struct _Rb_tree *this, struct _Rb_tree_node *__x) = (void *)0x00469A5C;
+			static void(__cdecl *const tree_string_vecstr_M_erase)(struct _Rb_tree *this, struct _Rb_tree_node *__x) = (void *)0x00469A5C;
 
 			map *const dataFileMap = &MainForm->ssgCtrl.dataFileMap;
 			map_iterator it = map_begin(dataFileMap);
@@ -198,18 +198,20 @@ void __cdecl OnProcessDetach(TProcessCtrl *const proc)
 					map *const tmpM = pair_second_aligned(node, string);
 
 					if (tmpM->_M_node_count)
-						tree_string_vecstr_erase(tmpM, map_end(tmpM)->_M_parent);
-					node_alloc_deallocate(map_end(tmpM)
+						tree_string_vecstr_M_erase(tmpM, map_end(tmpM)->_M_parent);
+					node_alloc_deallocate(
+						map_end(tmpM)
 #if !OPTIMIZE_ALLOCATOR
-										  , sizeof(bcb6_std_set_node) + sizeof(string) + sizeof(vector_string)
+						, sizeof(bcb6_std_set_node) + sizeof(string) + sizeof(vector_string)
 #endif
 					);
 					string_dtor(pair_first(node));
 
 					map_iterator_increment(it);
-					node_alloc_deallocate(node
+					node_alloc_deallocate(
+						node
 #if !OPTIMIZE_ALLOCATOR
-										  , sizeof(bcb6_std_set_node) + sizeof(string) + sizeof(map)
+						, sizeof(bcb6_std_set_node) + sizeof(string) + sizeof(map)
 #endif
 					);
 				}

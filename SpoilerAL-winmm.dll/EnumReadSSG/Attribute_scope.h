@@ -64,11 +64,11 @@ __inline void Attribute_scope_open(TSSGCtrl *const this, string *const code)
 			BOOL assign = string_at(&label, 0) != '=';
 			string *var = assign ? &label : tmpS;
 			LPSTR start = &string_at(var, string_at(var, 0) == SCOPE_PREFIX);
-			ScopeVariant sv = { { start, string_end(var), NULL, NULL, start, -1 }, 0, 0 };
+			ScopeVariant sv = { { start, string_end(var), NULL, NULL, start, MAXDWORD }, 0, 0 };
 			map_iterator it = map_lower_bound(&scope->heapMap, &sv.Identifier);
 			if (it == map_end(&scope->heapMap) || !string_equals(&((ScopeVariant *)pair_first(it))->Identifier, &sv.Identifier))
 				map_string_quad_insert(&it, &scope->heapMap, it, &sv);
-			((ScopeVariant *)pair_first(it))->Identifier.sstIndex = -1;
+			((ScopeVariant *)pair_first(it))->Identifier.sstIndex = MAXDWORD;
 			if (assign)
 			{
 				char *endptr;

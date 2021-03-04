@@ -15,7 +15,7 @@
 #include "Unescape.h"
 
 EXTERN_C HANDLE hHeap;
-EXTERN_C const DWORD F00504284;
+EXTERN_C const DWORD _TSSGCtrl_GetNameString;
 
 void __stdcall ReplaceDefineByAttributeVector(vector *attributes, string *line);
 uint64_t __cdecl InternalParsing(TSSGCtrl* SSGCtrl, TSSGSubject* SSGS, const string* Src, BOOL IsInteger, va_list ArgPtr);
@@ -50,7 +50,7 @@ __declspec(naked) string * __cdecl TSSGCtrl_GetNameString(string *Result, TSSGCt
 		push    edx
 		push    ecx
 		push    eax
-		call    dword ptr [F00504284]
+		call    dword ptr [_TSSGCtrl_GetNameString]
 		add     esp, 16
 		mov     ecx, esp
 		call    string_dtor

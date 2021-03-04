@@ -8,7 +8,7 @@ if "%~1" == "" (
 :LOOPHEAD
 set current_date=%date%
 set current_time=%time%
-if not "%current_date%" == "%date%" goto LOOPHEAD
+if not "%current_date%" == "%date%" goto :LOOPHEAD
 set date_yyyy=%current_date:~0,4%
 set date_mm=%current_date:~5,2%
 set date_dd=%current_date:~8,2%

@@ -29,11 +29,11 @@ void(__cdecl * const TProcessAccessElementLoop_MakeLoopSet)(
 	BOOLEAN                    IsTrueMode) = (LPVOID)0x0048FA48;
 
 static void __fastcall TSSGCtrl_MakeLoopSet(
-	TSSGCtrl    * const SSGC,
-	TSSGSubject * const SSGS,
-	TProcessAccessElementLoop* const LoopElem,
+	TSSGCtrl     *const SSGC,
+	TSSGSubject  *const SSGS,
+	TProcessAccessElementLoop *const LoopElem,
 	unsigned long const FullSize,
-	vector_dword* const LoopVec,// not constructed, will be destructed in caller when after return.
+	vector_dword *const LoopVec,// not constructed, will be destructed in caller when after return.
 	BOOLEAN       const IsTrueMode,
 	unsigned long const ParentRel,// reserved
 	string              Code)
@@ -54,17 +54,17 @@ static void __fastcall TSSGCtrl_MakeLoopSet(
 		{// specialization for single code
 			static char const lpszRel[] = "Rel";
 			size_t ArgPtr[] = { _countof(lpszRel) - 1, (size_t)lpszRel, Rel, 0/* high dword */, 0/* sentinel */ };
-			vector_byte* data;
+			vector_byte *data;
 
 			TProcessAccessElement_dtor(LoopElem, 0x02);
-			*(NowAE = (void*)LoopElem) = (const TProcessAccessElementMaskData) { (LPVOID)0x00627294, atDATA };
+			*(NowAE = (void *)LoopElem) = (const TProcessAccessElementMaskData) { (LPVOID)0x00627294, atDATA };
 			vector_byte_reserve(data = &NowAE->data, FullSize + sizeof(uint64_t));
 
 			string_begin(&code) = string_begin(&Code) + 2;
 			*(string_end(&code) = (LPSTR)dd) = '\0';
 			string_end_of_storage(&code) = string_begin(&code);
 			do
-				*(uint64_t*)&vector_at(data, Rel) = InternalParsing(SSGC, SSGS, &code, TRUE, (va_list)ArgPtr);
+				*(uint64_t *)&vector_at(data, Rel) = InternalParsing(SSGC, SSGS, &code, TRUE, (va_list)ArgPtr);
 			while ((ArgPtr[2] = (Rel += Size)) < FullSize);
 
 			vector_end(data) += FullSize;
@@ -75,7 +75,7 @@ static void __fastcall TSSGCtrl_MakeLoopSet(
 			string_ctor_assign(&code, &Code);
 			TSSGCtrl_StrToProcessAccessElementVec(LoopVec, SSGC, SSGS, code, Rel);
 
-			if (!(Size = (edge = (void*)vector_end(LoopVec)) - (iter = (void*)vector_begin(LoopVec))))
+			if (!(Size = (edge = (void *)vector_end(LoopVec)) - (iter = (void *)vector_begin(LoopVec))))
 				break;// unexpected syntax
 			else if (LastE)
 			{// since second loop
@@ -107,7 +107,7 @@ static void __fastcall TSSGCtrl_MakeLoopSet(
 			}// else first loop
 			else if (Size == 1) switch (TProcessAccessElement_GetType(NowAE = *iter))
 			{// Expected to be all elements are binary data
-				vector_byte* data;
+				vector_byte *data;
 			case atMASK_DATA:
 				data = TProcessAccessElementMaskData_GetMask(NowAE);
 				if (vector_size(data) < FullSize)
@@ -123,15 +123,17 @@ static void __fastcall TSSGCtrl_MakeLoopSet(
 					vector_end(data) = vector_begin(data) + FullSize;
 
 				TProcessAccessElement_dtor(LoopElem, 0x02);
-				*(LastE = (void*)LoopElem) = *NowAE;
+				*(LastE = (void *)LoopElem) = *NowAE;
 				bcb6_operator_delete(NowAE);
 				continue;
 			default:
 				goto FALLBACK;
 			}
 			else// not completely vectorizable, adjust reservation
-				FALLBACK: vector_dword_reserve(&LoopElem->surplusVec,
-											   FullSize / TProcessAccessElement_GetSize(*iter, IsTrueMode) + 1);
+				FALLBACK: vector_dword_reserve(
+					&LoopElem->surplusVec,
+					FullSize / TProcessAccessElement_GetSize(*iter, IsTrueMode) + 1
+				);
 
 			for (; iter < edge; iter++)
 			{
@@ -154,13 +156,13 @@ static void __fastcall TSSGCtrl_MakeLoopSet(
 		TSSGCtrl_StrToProcessAccessElementVec(LoopVec, SSGC, SSGS, Code, 0);
 		switch (vector_size(LoopVec))
 		{
-			TProcessAccessElementMaskData* NowAE;
+			TProcessAccessElementMaskData *NowAE;
 		case 0:// unexpected syntax
 			break;
 		case 1:// inspects in case single element
-			switch (TProcessAccessElement_GetType(NowAE = (void*)vector_at(LoopVec, 0)))
+			switch (TProcessAccessElement_GetType(NowAE = (void *)vector_at(LoopVec, 0)))
 			{
-				register vector_byte* data;
+				register vector_byte *data;
 				register size_t size;
 			case atMASK_DATA:
 				data = TProcessAccessElementMaskData_GetMask(NowAE);
@@ -186,7 +188,7 @@ static void __fastcall TSSGCtrl_MakeLoopSet(
 					vector_end(data) = vector_begin(data) + FullSize;
 
 					TProcessAccessElement_dtor(LoopElem, 0x02);
-					*(TProcessAccessElementMaskData*)LoopElem = *NowAE;
+					*(TProcessAccessElementMaskData *)LoopElem = *NowAE;
 					bcb6_operator_delete(NowAE);
 				}
 				else

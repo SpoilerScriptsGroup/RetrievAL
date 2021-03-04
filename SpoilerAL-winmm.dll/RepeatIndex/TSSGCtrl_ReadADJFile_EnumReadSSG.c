@@ -2,6 +2,7 @@
 
 extern DWORD RepeatDepth;
 
+#ifdef ADJ_USE_JMP
 __declspec(naked) void __cdecl TSSGCtrl_ReadADJFile_EnumReadSSG()
 {
 	__asm
@@ -29,3 +30,4 @@ __declspec(naked) void __cdecl TSSGCtrl_ReadADJFile_EnumReadSSG()
 		#undef ParentStack
 	}
 }
+#endif

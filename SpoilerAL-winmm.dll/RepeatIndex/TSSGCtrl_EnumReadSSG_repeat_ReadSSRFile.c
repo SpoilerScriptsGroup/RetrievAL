@@ -5,6 +5,8 @@
 #include "SSGSubjectProperty.h"
 
 extern DWORD RepeatDepth;
+extern DWORD IndexRoot, IndexTemp;
+extern TSSGSubject dummySSGS;
 
 void __stdcall repeat_ReadSSRFile(
 	TSSGCtrl     *this,
@@ -15,24 +17,41 @@ void __stdcall repeat_ReadSSRFile(
 	DWORD        OuterRepeat,
 	TSSGSubject  *SSGS)
 {
-	vector_string tmpV;
-	vector_dword  indices;
+	vector_string       tmpV;
+	vector_dword        indices;
+	TSSGSubjectProperty *prop = NULL;
 
 	vector_ctor(&indices);
+	if (SSGS == &dummySSGS)
+	{
+		if (prop = IndexTemp == MAXDWORD ? NULL : SubjectProperty + IndexTemp)
+		{
+			prop->OuterRepeat = OuterRepeat;
+			prop->RepeatDepth = RepeatDepth;
+			prop->RepeatIndex = RepeatIndex;
+#if EMBED_BREADTH
+			prop->ParentEntry = *stack_top(ParentStack, TSSDir *);
+#endif
+		}
+		dummySSGS.propertyIndex = IndexTemp;
+	}
+	else
+		dummySSGS.propertyIndex = SSGS->propertyIndex;
 	TSSGCtrl_ReadSSRFile(&tmpV, this, LineS, &indices, SSGS);
+	dummySSGS.propertyIndex = IndexRoot;
+	if (prop && map_end(prop)) TSSGSubjectProperty_dtor(prop, TRUE);
 	if (!vector_empty(&tmpV))
 	{
 		if (vector_size(&indices) > 1)
 		{
-			DWORD               outer;
-			TSSGSubjectProperty *prop;
-			string              *it;
-			LPDWORD             repeat;
-			size_t              elementSize;
+			DWORD   outer;
+			string  *it;
+			LPDWORD repeat;
+			size_t  elementSize;
 
 			if (!RepeatDepth)
 				outer = MAXDWORD;
-			else if (SSGS && SSGS->type && SSGS->propertyIndex != MAXDWORD)
+			else if (SSGS->type && SSGS->propertyIndex != MAXDWORD)
 				outer = SSGS->propertyIndex;
 			else if (prop = GrowSubjectProperty(&outer))
 			{

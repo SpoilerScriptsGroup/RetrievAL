@@ -134,6 +134,7 @@ EXTERN_C uint64_t __msreturn __cdecl _strtoui64(const char *nptr, char **endptr,
 #define SUBJECT_STATUS       1
 #define SCOPE_SUPPORT        1
 #define USING_NAMESPACE_BCB6_STD
+#include "bcb6_std_allocator.h"
 #include "bcb6_std_string.h"
 #include "bcb6_std_map.h"
 #include "TSSGCtrl.h"
@@ -178,7 +179,7 @@ EXTERN_C LPVOID __stdcall GetSectionAddress(HANDLE hProcess, HMODULE hModule, LP
 
 #if defined(_MSC_VER)
 #if REPEAT_INDEX
-#include "SubjectProperty\SSGSubjectProperty.h"
+#include "SSGSubjectProperty.h"
 #endif
 extern HANDLE hHeap;
 #endif
@@ -5792,7 +5793,7 @@ static LPVOID __fastcall AllocateHeapBuffer(LPVOID **lplpHeapBuffer, size_t *lpn
 //---------------------------------------------------------------------
 //「文字列Srcを、一旦逆ポーランド記法にしたあと解析する関数」
 //---------------------------------------------------------------------
-uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string *Src, BOOL IsInteger, va_list ArgPtr)
+uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, const string *const Src, BOOL const bInitialIsInteger, va_list register ArgPtr)
 {
 	#define PROCESS_DESIRED_ACCESS (PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION)
 
@@ -5814,7 +5815,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 #if ADDITIONAL_TAGS || SCOPE_SUPPORT
 	vector_TSSGAttributeElement *attributes;
 #endif
-	BOOL                        bInitialIsInteger;
+	BOOL                        IsInteger;
 	VARIAUNT                    operandZero;
 	HANDLE                      hProcess;
 	HANDLE                      strtok_process;
@@ -5824,6 +5825,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 	wchar_t                     *wcstok_context;
 	unsigned char               *mbstok_context;
 	BOOLEAN                     bCompoundAssign;
+	TSSGSubjectProperty *const  lpProp = GetSubjectProperty(SSGS);
 
 	qwResult               = 0;
 	bCached                = FALSE;
@@ -6120,7 +6122,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 		#define OPERAND_POP()       (!OPERAND_IS_EMPTY() ? *(lpEndOfOperand = lpOperandTop != lpOperandBuffer ? lpOperandTop-- : lpOperandTop) : operandZero)
 		#define OPERAND_CLEAR()     (*(lpOperandTop = lpEndOfOperand = lpOperandBuffer) = operandZero, lpEndOfOperand++)
 
-		bInitialIsInteger = IsInteger;
+		IsInteger = bInitialIsInteger;
 		if (nNumberOfPostfix && !lpPostfixBuffer[0]->Close) switch (lpPostfixBuffer[0]->Tag)
 		{
 		case TAG_PARSE_INT:
@@ -6195,7 +6197,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 			size_t              nPrevNumberOfVariable;
 			size_t              nSize, nCapacity, nForward;
 
-			lpProperty = GetSubjectProperty(SSGS);
+			lpProperty = lpProp;
 			if (!lpProperty)
 				break;
 			if (!lpProperty->RepeatDepth)
@@ -12668,12 +12670,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					Source = vector_begin(File);
 					Finish = vector_end  (File);
 #if EMBED_BREADTH
-					if (Lexical)
-					{
-						const TSSGSubjectProperty *prop;
-						if (!(prop = GetSubjectProperty(SSGS)) || !(Object = &prop->ParentEntry->super))
-							goto PARSING_ERROR;
-					}
+					if (Lexical && (!lpProp || !(Object = &lpProp->ParentEntry->super)))
+						goto PARSING_ERROR;
 #endif
 				}
 				lpParams = NULL;
@@ -12720,7 +12718,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				for (register PVARIABLE v = lpVariable, end = v + nNumberOfVariable; v < end; v++)
 					if (v->Node && !((ScopeVariant *)pair_first(v->Node))->Identifier.sstIndex)
 					{
-						((ScopeVariant *)pair_first(v->Node))->Identifier.sstIndex = -1;
+						((ScopeVariant *)pair_first(v->Node))->Identifier.sstIndex = MAXDWORD;
 						((ScopeVariant *)pair_first(v->Node))->Quad = v->Value.Quad;
 					}
 #endif
@@ -12846,13 +12844,19 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 				} while (0);
 				if (!element && length && endptr != end && (
 #if SCOPE_SUPPORT
-					p[0] == SCOPE_PREFIX ||
+					FixTheProcedure && *p == '.' ||
+					*p == SCOPE_PREFIX ||
 #endif
 					lpNext && (lpNext->Tag == TAG_INC ||
 							   lpNext->Tag == TAG_DEC ||
 							   lpNext->Tag == TAG_ADDRESS_OF)
 					))
 				{
+#if SCOPE_SUPPORT
+					map_iterator it = NULL;
+					map *variantMap = lpProp;
+					ScopeVariant sv = { { p + 1, p + length, NULL, NULL, p + 1, MAXDWORD }, 0, 0 };
+#endif
 					if (!(nNumberOfVariable & 0x0F))
 					{
 						LPVOID lpMem;
@@ -12870,20 +12874,39 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 					element->Value.Quad = 0;
 					element->Value.IsQuad = !IsInteger;
 #if SCOPE_SUPPORT
-					if (attributes && p[0] == SCOPE_PREFIX)
+					if (variantMap && FixTheProcedure && *p == '.')
+					{
+						if (!map_end(variantMap))
+						{
+							if (!(map_end(variantMap) = node_alloc_allocate(sizeof(struct _Rb_tree_node))))
+								goto ALLOC_ERROR;
+							map_end(variantMap)->_M_color  = FALSE;
+							map_end(variantMap)->_M_left   = map_end(variantMap);
+							map_end(variantMap)->_M_parent = NULL;
+							map_end(variantMap)->_M_right  = map_end(variantMap);
+						}
+						it = map_lower_bound(variantMap, &sv.Identifier);
+						if (it != map_end(variantMap) && string_equals(&((ScopeVariant *)pair_first(it))->Identifier, &sv.Identifier))
+						{
+							((ScopeVariant *)pair_first(it))->Identifier.sstIndex = 0;
+							element->Value.Quad    = ((ScopeVariant *)pair_first(it))->Quad;
+							element->Value.IsQuad |= !!element->Value.High;
+							element->Node = it;
+						}
+						else
+							goto INSERT;
+					}
+					else if (attributes && *p == SCOPE_PREFIX)
 					{
 						const COORD coord = TSSGAttributeElement_GetViaCoord(atSCOPE, attributes).dwFontSize;
 						if (coord.X)
 						{
-							TScopeAttribute *scope;
-							map_iterator it;
-							ScopeVariant sv = { { p + 1, p + length, NULL, NULL, p + 1, -1 }, 0, 0 };
 							for (TScopeAttribute **base = &vector_type_at(attributes, TScopeAttribute *, coord.Y),
 								 **cur  = base + coord.X;
 								 --cur >= base; )
 							{
-								it = map_lower_bound(&(scope = *cur)->heapMap, &sv.Identifier);
-								if (it != map_end(&scope->heapMap) && string_equals(&((ScopeVariant *)pair_first(it))->Identifier, &sv.Identifier))
+								it = map_lower_bound(variantMap = &(*cur)->heapMap, &sv.Identifier);
+								if (it != map_end(variantMap) && string_equals(&((ScopeVariant *)pair_first(it))->Identifier, &sv.Identifier))
 								{
 									((ScopeVariant *)pair_first(it))->Identifier.sstIndex = 0;
 									element->Value.Quad    = ((ScopeVariant *)pair_first(it))->Quad;
@@ -12894,7 +12917,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *this, TSSGSubject *SSGS, const string
 							}
 							if (!element->Node)
 							{
-								map_string_quad_insert(&element->Node, &scope->heapMap, it, &sv);
+							INSERT:
+								map_string_quad_insert(&element->Node, variantMap, it, &sv);
 								((ScopeVariant *)pair_first(element->Node))->Identifier.sstIndex = 0;
 							}
 						}
@@ -13405,7 +13429,7 @@ FAILED:
 	for (register PVARIABLE v = lpVariable, end = v + nNumberOfVariable; v < end; v++)
 		if (v->Node && !((ScopeVariant *)pair_first(v->Node))->Identifier.sstIndex)
 		{
-			((ScopeVariant *)pair_first(v->Node))->Identifier.sstIndex = -1;
+			((ScopeVariant *)pair_first(v->Node))->Identifier.sstIndex = MAXDWORD;
 			((ScopeVariant *)pair_first(v->Node))->Quad = v->Value.Quad;
 		}
 #endif

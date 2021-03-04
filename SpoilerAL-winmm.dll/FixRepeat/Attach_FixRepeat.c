@@ -127,17 +127,19 @@ static unsigned __fastcall TSSGCtrl_EnumReadSSR_switch_tmpS(
 {
 	string     Half, Trim;
 	if (string_length(tmpS) == 2 && *(LPWORD)string_c_str(tmpS) == BSWAP16('!]')) return '\0';
-	char const Char = *TStringDivision_Half_WithoutTokenDtor(&Half, &SSGC->strD, tmpS, ",", 1u, 0,
+	char const Char = *TStringDivision_Half_WithoutTokenDtor(
+		&Half, &SSGC->strD, tmpS, ",", 1u, 0,
 #if 0
-															 dtNEST |
+		dtNEST |
 #endif
-															 etTRIM)->_M_start;
+		etTRIM
+	)->_M_start;
 	if (Char != ',')
 	{
-		Trim._M_start = string_begin(&Half) + 1;
-		while (__intrinsic_isblank(*Trim._M_start)) ++Trim._M_start;
-		Trim._M_finish = string_end(&Half);
-		Trim._M_end_of_storage = Trim._M_start;// Non-allocated mark.
+		string_begin(&Trim) = string_begin(&Half) + 1;
+		while (__intrinsic_isblank(*string_begin(&Trim))) string_begin(&Trim)++;
+		string_end(&Trim) = string_end(&Half);
+		string_end_of_storage(&Trim) = string_begin(&Trim);// Non-allocated mark.
 	}
 	switch (Char)
 	{

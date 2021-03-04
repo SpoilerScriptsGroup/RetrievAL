@@ -40,7 +40,14 @@ __declspec(naked) void __fastcall delete_TSSGSubject(TSSGSubject *this)
 		jc      NO_PROP
 
 		mov     edx, SubjectProperty
-		mov     [edx + eax]TSSGSubjectProperty.RepeatDepth, -1
+		mov     [edx + eax]TSSGSubjectProperty.RepeatDepth, MAXDWORD
+		cmp     [edx + eax]TSSGSubjectProperty._M_header, 0
+		je      NO_PROP
+
+		lea     ecx, [edx + eax]
+		mov     edx, TRUE
+		call    TSSGSubjectProperty_dtor
+		mov     ecx, this
 
 	NO_PROP:
 		mov     eax, [ecx]TSSGSubject.VTable

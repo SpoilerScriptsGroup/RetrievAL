@@ -1,3 +1,4 @@
+#include <assert.h>
 #define USING_NAMESPACE_BCB6
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_string.h"
@@ -24,6 +25,7 @@ void __fastcall delete_string(string *s)
 
 void __fastcall string_dtor(string *s)
 {
+	assert(!string_begin(s) || string_end_of_storage(s) - string_begin(s));
 	allocator_deallocate(string_begin(s), string_storage_capacity(s));
 }
 

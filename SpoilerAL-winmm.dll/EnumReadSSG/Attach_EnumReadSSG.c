@@ -136,13 +136,13 @@ static __declspec(naked) TSSGAttributeElement *TSSGCtrl_CheckIO_FEPDouble_GetAtt
 
 static __declspec(naked) void __fastcall THeapAdjustmentAttribute_dtor_heapMap(THeapAdjustmentAttribute *this, struct _Rb_tree_node *root)
 {
-	static void(__cdecl *const tree_ulong_pair_uu_erase)(struct _Rb_tree *this, struct _Rb_tree_node *__x) = (void *)0x004D0A80;
-	static void(__cdecl *const tree_string_double_erase)(struct _Rb_tree *this, struct _Rb_tree_node *__x) = (void *)0x0051C168;
+	extern void(__cdecl *const tree_string_double_M_erase)(struct _Rb_tree *this, struct _Rb_tree_node *__x);
+	static void(__cdecl *const tree_ulong_pair_uu_M_erase)(struct _Rb_tree *this, struct _Rb_tree_node *__x) = (void *)0x004D0A80;
 
 	__asm {
-		mov   eax, tree_ulong_pair_uu_erase
+		mov   eax, tree_ulong_pair_uu_M_erase
 		cmp   [ecx]TSSGAttributeElement.type, atSCOPE
-		cmove eax, tree_string_double_erase
+		cmove eax, tree_string_double_M_erase
 		jmp   eax
 		ud2
 	}

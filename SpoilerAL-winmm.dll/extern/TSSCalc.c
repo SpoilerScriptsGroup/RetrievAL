@@ -1,8 +1,4 @@
-#define USING_NAMESPACE_BCB6
-#define USING_NAMESPACE_BCB6_STD
 #include "TSSCalc.h"
-#include "bcb6_operator.h"
-#include "SSGSubjectProperty.h"
 
 #define MakeSubjectClass_SwitchSubjectTypeTable 0x004EC41F
 

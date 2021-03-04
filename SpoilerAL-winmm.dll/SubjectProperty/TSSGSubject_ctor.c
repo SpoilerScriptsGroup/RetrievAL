@@ -2,17 +2,23 @@
 #include "TSSGSubject.h"
 #include "SSGSubjectProperty.h"
 
-void __fastcall TSSGSubject_ctor(TSSGSubject *this, BOOL prop)
+void __fastcall TSSGSubject_ctor(TSSGSubject *const this, DWORD const prop)
 {// prop is generally given the same value as this
 	this->type = stNONE;
 	this->breadth = 0;
 	this->evaluateAtRead = FALSE;
 	this->stable = MAXWORD;
 	this->lastAddr = NULL;
-	if (prop)
-		AppendSubjectProperty(this);
-	else
+	switch (prop)
+	{
+		extern TSSGSubject dummySSGS;
+	default: prop > MAXWORD || !prop;
 		this->propertyIndex = MAXDWORD;
+		break;
+	case 1:
+		this->propertyIndex = dummySSGS.propertyIndex;
+		break;
+	}
 }
 
 #if 0

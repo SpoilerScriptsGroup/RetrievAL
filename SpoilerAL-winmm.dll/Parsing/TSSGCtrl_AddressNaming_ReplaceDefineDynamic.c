@@ -5,8 +5,9 @@
 void __stdcall ReplaceDefineDynamic(void *SSGS, void *line);
 
 extern BOOL EnableParserFix;
-extern const DWORD F00504284;
+extern const DWORD _TSSGCtrl_GetNameString;
 
+#if 0
 __declspec(naked) void __cdecl TSSGCtrl_AddressNaming_ReplaceDefineDynamic1()
 {
 	__asm
@@ -25,13 +26,15 @@ __declspec(naked) void __cdecl TSSGCtrl_AddressNaming_ReplaceDefineDynamic1()
 		jmp     ReplaceDefineDynamic
 
 	L1:
-		jmp     dword ptr [F00504284]
+		jmp     dword ptr [_TSSGCtrl_GetNameString]
+		ud2
 
 		#undef CallAddress
 		#undef SSGS
 		#undef NameStr
 	}
 }
+#endif
 
 __declspec(naked) void __cdecl TSSGCtrl_AddressNaming_ReplaceDefineDynamic2()
 {

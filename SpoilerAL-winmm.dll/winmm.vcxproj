@@ -72,7 +72,7 @@
       <PreprocessorDefinitions>_WIN32_WINNT=0x0500;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </MASM>
     <PreBuildEvent>
-      <Command>"$(ProjectDir)datetime_h.bat"</Command>
+      <Command>"$(ProjectDir)datetime_h.bat" "$(ProjectDir)datetime.h"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -114,7 +114,7 @@
       <Command>"$(ProjectDir)EditBinEx\Release\EditBinEx.exe" /WaitForFileUnlock /subsystem:windows,5 /OperatingSystemVersion:5.0 /TimeDateStamp:0 "$(TargetPath)"&gt;nul</Command>
     </PostBuildEvent>
     <PreBuildEvent>
-      <Command>"$(ProjectDir)datetime_h.bat"</Command>
+      <Command>"$(ProjectDir)datetime_h.bat" "$(ProjectDir)datetime.h"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

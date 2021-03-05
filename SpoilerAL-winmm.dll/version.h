@@ -7,20 +7,16 @@
 
 #include "datetime.h"
 
-#ifndef CONCAT
-#define CONCATIFY(a, b) a##b
-#define CONCAT(a, b)    CONCATIFY(a, b)
-#endif
+#define CONCATIFY(a, b)     a##b
+#define CONCAT(a, b)        CONCATIFY(a, b)
 
-#ifndef TOSTRING
-#define STRINGIFY(a) #a
-#define TOSTRING(a) STRINGIFY(a)
-#endif
+#define STRINGIFY(a)        #a
+#define TOSTRING(a)         STRINGIFY(a)
 
-#define VERSION_MAJOR    6
-#define VERSION_MINOR    4
-#define VERSION_BUILD    __DATE_YEAR__
-#define VERSION_REVISION CONCAT(__DATE_MONTH__, __DATE_DD__)
+#define VERSION_MAJOR       6
+#define VERSION_MINOR       4
+#define VERSION_BUILD       __DATE_YEAR__
+#define VERSION_REVISION    CONCAT(__DATE_MONTH__, __DATE_DD__)
 
 #define VERSION_STRING \
 	TOSTRING(VERSION_MAJOR) "." \

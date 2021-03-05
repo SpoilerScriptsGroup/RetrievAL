@@ -5,7 +5,21 @@ if "%~1" == "" (
 ) else (
 	set FileName=%1
 )
+::
+:: PowerShell requires clear the environment variable of "env".
+::
 set env=
+::
+:: #define SINCE(year)  ( ((year) - 1) * 365 \
+::                      + ((year) - 1) / 4   \
+::                      - ((year) - 1) / 100 \
+::                      + ((year) - 1) / 400)
+:: #define DAY_SEC      86400           // Seconds per day
+:: #define DAY_HNS      864000000000    // Hundred nano seconds per day
+::
+:: assert(0x0701CE1722770000 == SINCE(1601) * DAY_HNS);
+:: assert(11644473600 == (SINCE(1970) - SINCE(1601)) * UINT64_C(DAY_SEC));
+::
 set command=$d = Get-Date;
 set command=%command% $ft = $d.Ticks - 0x0701CE1722770000;
 set command=%command% $tm = [uint64]($ft / 10000000) - 11644473600;

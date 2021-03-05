@@ -7,23 +7,23 @@ if "%~1" == "" (
 )
 set env=
 set command=$d = Get-Date;
-set command=%command% $d = Get-Date;
 set command=%command% $ft = $d.Ticks - 0x0701CE1722770000;
 set command=%command% $tm = [uint64]($ft / 10000000) - 11644473600;
-set command=%command% Write-Host(\"{0:d4}/{1:d2}/{2:d2} {3:d2}:{4:d2}:{5:d2}.{6:d3} 0x{7:X16} 0x{8:X16}\" -f $d.Year, $d.Month, $d.Day, $d.Hour, $d.Minute, $d.Second, $d.Millisecond, $tm, $ft);
-for /f "usebackq tokens=1-4 delims= " %%a in (`powershell.exe -Command "%command%"`) do (
-	set d=%%a
-	set t=%%b
-	set tm=%%c
-	set ft=%%d
+set command=%command% $s = $d.ToString('yyyy MM dd HH mm ss fff');
+set command=%command% $s += ' 0x' + $tm.ToString('X16');
+set command=%command% $s += ' 0x' + $ft.ToString('X16');
+set command=%command% return $s;
+for /f "usebackq tokens=1-9 delims= " %%a in (`powershell.exe -Command "%command%"`) do (
+	set date_yyyy=%%a
+	set date_mm=%%b
+	set date_dd=%%c
+	set time_hh=%%d
+	set time_mm=%%e
+	set time_ss=%%f
+	set time_fff=%%g
+	set tm=%%h
+	set ft=%%i
 )
-set date_yyyy=%d:~0,4%
-set date_mm=%d:~5,2%
-set date_dd=%d:~8,2%
-set time_hh=%t:~0,2%
-set time_mm=%t:~3,2%
-set time_ss=%t:~6,2%
-set time_fff=%t:~9,3%
 set /a date_year=1%date_yyyy%-10000
 set /a date_month=1%date_mm%-100
 set /a date_day=1%date_dd%-100

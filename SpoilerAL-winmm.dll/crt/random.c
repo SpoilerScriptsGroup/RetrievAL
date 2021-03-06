@@ -323,19 +323,10 @@ static void sfmt_gen_rand_all()
 
 	extern unsigned int __isa_available;
 
-	switch (__isa_available)
-	{
-	default:
+	if (__isa_available >= __ISA_AVAILABLE_AVX2)
 		sfmt_gen_rand_all_avx2();
-		break;
-	case __ISA_AVAILABLE_X86:
-	case __ISA_AVAILABLE_SSE2:
-	case __ISA_AVAILABLE_SSE42:
-	case __ISA_AVAILABLE_AVX:
-	case __ISA_AVAILABLE_ENFSTRG:
+	else
 		sfmt_gen_rand_all_sse2();
-		break;
-	}
 
 	#undef __ISA_AVAILABLE_X86
 	#undef __ISA_AVAILABLE_SSE2

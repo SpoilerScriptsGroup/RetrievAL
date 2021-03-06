@@ -45,28 +45,17 @@ __declspec(naked) static size_t __cdecl wcslenAVX2(const wchar_t *string)
 		test    eax, 1                                      // is aligned to word?
 		jnz     unaligned                                   // jump if not aligned to word
 		and     ecx, 31                                     // get lower 8 bits indicate misalignment
-		jz      aligned_loop_entry                          // jump if aligned to wmmword
+		jz      loop_entry1                                 // jump if aligned to wmmword
 		shl     edx, cl                                     // shift out false bits
 		sub     eax, ecx                                    // align pointer by 32
-		jmp     aligned_loop_entry
-
-		align   16
-	aligned_loop:
-		add     eax, 32                                     // increment pointer by 32
-		or      edx, -1                                     // fill mask bits
-	aligned_loop_entry:
-		vpcmpeqw ymm0, ymm1, ymmword ptr [eax]              // compare 16 words with zero
-		vpmovmskb ecx, ymm0                                 // get one bit for each byte result
-		and     ecx, edx                                    // mask result
-		jz      aligned_loop                                // loop if not found
-		jmp     found
+		jmp     loop_entry1
 
 		align   16
 	unaligned:
 		inc     ecx                                         // add 1 byte
 		or      eax, 31                                     // (align pointer by 32) + 31 byte
 		and     ecx, 31                                     // compute (pointer + 1 byte) % 32
-		jz      unaligned_loop_entry1                       // jump if pointer % 32 == 31
+		jz      loop_entry1                                 // jump if pointer % 32 == 31
 		vmovdqa ymm0, ymmword ptr [eax - 31]                // read 32 bytes aligned
 		vperm2i128 ymm2, ymm0, ymm0, 00001000B              // shift 1 byte for words compare
 		vpslldq ymm0, ymm0, 1
@@ -75,21 +64,19 @@ __declspec(naked) static size_t __cdecl wcslenAVX2(const wchar_t *string)
 		shl     edx, cl                                     // shift out false bits
 		sub     eax, 32                                     // decrement pointer by 32
 		vpcmpeqw ymm0, ymm0, ymm1                           // compare 16 words with zero
-		jmp     unaligned_loop_entry2
+		jmp     loop_entry2
 
 		align   16
-	unaligned_loop:
+	loop_begin:
 		add     eax, 32                                     // increment pointer by 32
 		or      edx, -1                                     // fill mask bits
-	unaligned_loop_entry1:
+	loop_entry1:
 		vpcmpeqw ymm0, ymm1, ymmword ptr [eax]              // compare 16 words with zero
-	unaligned_loop_entry2:
+	loop_entry2:
 		vpmovmskb ecx, ymm0                                 // get one bit for each byte result
 		and     ecx, edx                                    // mask result
-		jz      unaligned_loop                              // loop if not found
+		jz      loop_begin                                  // loop if not found
 
-		align   16
-	found:
 		bsf     ecx, ecx                                    // get first bit index of result
 		mov     edx, dword ptr [string]                     // get pointer to string
 		add     eax, ecx                                    // add byte index

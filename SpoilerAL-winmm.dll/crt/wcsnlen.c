@@ -51,47 +51,23 @@ __declspec(naked) static size_t __cdecl wcsnlenAVX2(const wchar_t *string, size_
 		mov     ecx, edx
 		and     edx, -32
 		and     ecx, 31
-		jz      negate_count_at_aligned
+		jz      negate_count
 		vpcmpeqw ymm0, ymm1, ymmword ptr [edx]
-		vpmovmskb edx, ymm0
-		shr     edx, cl
-		xor     ecx, 31
-		test    edx, edx
-		lea     ecx, [ecx + 1]
-		jnz     found_at_first
-		shr     ecx, 1
-	negate_count_at_aligned:
-		sub     ecx, eax                                    // ecx = negative count
-		jb      aligned_loop
-		pop     esi                                         // restore esi
-		vzeroupper
-	retzero:
-		ret
-
-		align   16
-	aligned_loop:
-		vpcmpeqw ymm0, ymm1, ymmword ptr [esi + ecx * 2]
-		vpmovmskb edx, ymm0
-		test    edx, edx
-		jnz     found
-		add     ecx, 16
-		jnc     aligned_loop
-		pop     esi                                         // restore esi
-		vzeroupper
-		ret
+		jmp     compare
 
 		align   16
 	unaligned:
 		lea     ecx, [edx + 1]
 		and     edx, -32
 		and     ecx, 31
-		jz      negate_count_at_unaligned
+		jz      negate_count
 		vmovdqa ymm0, ymmword ptr [edx]
 		vperm2i128 ymm2, ymm0, ymm0, 00001000B              // shift 1 byte for words compare
 		vpslldq ymm0, ymm0, 1
 		vpsrldq ymm2, ymm2, 15
 		vpor    ymm0, ymm0, ymm2
 		vpcmpeqw ymm0, ymm0, ymm1
+	compare:
 		vpmovmskb edx, ymm0
 		shr     edx, cl
 		xor     ecx, 31
@@ -99,24 +75,19 @@ __declspec(naked) static size_t __cdecl wcsnlenAVX2(const wchar_t *string, size_
 		lea     ecx, [ecx + 1]
 		jnz     found_at_first
 		shr     ecx, 1
-	negate_count_at_unaligned:
+	negate_count:
 		sub     ecx, eax                                    // ecx = negative count
-		jb      unaligned_loop
-		pop     esi                                         // restore esi
-		vzeroupper
-		ret
+		jae     epilog
 
 		align   16
-	unaligned_loop:
+	loop_begin:
 		vpcmpeqw ymm0, ymm1, ymmword ptr [esi + ecx * 2]
 		vpmovmskb edx, ymm0
 		test    edx, edx
 		jnz     found
 		add     ecx, 16
-		jnc     unaligned_loop
-		pop     esi                                         // restore esi
-		vzeroupper
-		ret
+		jnc     loop_begin
+		jmp     epilog
 
 		align   8
 		nop __asm nop __asm nop __asm nop                   // padding 4 byte
@@ -134,6 +105,7 @@ __declspec(naked) static size_t __cdecl wcsnlenAVX2(const wchar_t *string, size_
 	epilog:
 		pop     esi                                         // restore esi
 		vzeroupper
+	retzero:
 		ret
 
 		#undef string

@@ -110,8 +110,8 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrichrAVX2(const wchar_t *b
 		vperm2i128 ymm3, ymm1, ymm1, 10000001B
 		vpsrldq ymm1, ymm1, 1
 		vpslldq ymm3, ymm3, 15
-		vpor    ymm1, ymm1, ymm3
 		vpor    ymm1, ymm1, ymm2
+		vpor    ymm1, ymm1, ymm3
 	compare:
 		vpcmpeqw ymm1, ymm1, ymm0
 		vpmovmskb edx, ymm1

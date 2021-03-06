@@ -7,11 +7,15 @@
 
 #include "datetime.h"
 
+#ifndef CONCAT
 #define CONCATIFY(a, b)     a##b
 #define CONCAT(a, b)        CONCATIFY(a, b)
+#endif
 
+#ifndef TOSTRING
 #define STRINGIFY(a)        #a
 #define TOSTRING(a)         STRINGIFY(a)
+#endif
 
 #define VERSION_MAJOR       6
 #define VERSION_MINOR       4

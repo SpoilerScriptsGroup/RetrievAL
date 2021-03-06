@@ -74,44 +74,23 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrchrAVX2(const wchar_t *bu
 		add     ecx, edx                                    // ecx = end of buffer
 		sub     esi, edx                                    // esi = last ymmword of buffer - count
 		and     ecx, 31
-		jz      aligned_loop
+		jz      loop_begin
 		test    ecx, 1
 		jnz     unaligned
 		vpcmpeqw ymm1, ymm0, ymmword ptr [esi + eax * 2]
-		vpmovmskb edx, ymm1
-		mov     edi, 3FFFFFFFH
-		xor     ecx, 30
-		shr     edi, cl
-		and     edx, edi
-		jnz     has_char_at_last
-		sub     esi, ecx
-		xor     ecx, 30
-		shr     ecx, 1
-		sub     esi, 2
-		sub     eax, ecx
-		ja      aligned_loop
-		jmp     retnull
-
-		align   16
-	aligned_loop:
-		vpcmpeqw ymm1, ymm0, ymmword ptr [esi + eax * 2]
-		vpmovmskb edx, ymm1
-		test    edx, edx
-		jnz     has_char
-		sub     eax, 16
-		ja      aligned_loop
-		jmp     retnull
+		jmp     compare
 
 		align   16
 	unaligned:
 		dec     ecx
-		jz      unaligned_loop
+		jz      loop_begin
 		vmovdqa ymm1, ymmword ptr [esi + eax * 2 - 1]
 		vperm2i128 ymm2, ymm1, ymm1, 10000001B
 		vpsrldq ymm1, ymm1, 1
 		vpslldq ymm2, ymm2, 15
 		vpor    ymm1, ymm1, ymm2
 		vpcmpeqw ymm1, ymm1, ymm0
+	compare:
 		vpmovmskb edx, ymm1
 		mov     edi, 3FFFFFFFH
 		xor     ecx, 30
@@ -123,17 +102,16 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemrchrAVX2(const wchar_t *bu
 		shr     ecx, 1
 		sub     esi, 2
 		sub     eax, ecx
-		ja      unaligned_loop
-		jmp     retnull
+		jbe     retnull
 
 		align   16
-	unaligned_loop:
+	loop_begin:
 		vpcmpeqw ymm1, ymm0, ymmword ptr [esi + eax * 2]
 		vpmovmskb edx, ymm1
 		test    edx, edx
 		jnz     has_char
 		sub     eax, 16
-		ja      unaligned_loop
+		ja      loop_begin
 	retnull:
 		xor     eax, eax
 		pop     edi                                         // restore edi

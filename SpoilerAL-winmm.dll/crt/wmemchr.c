@@ -76,45 +76,24 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrAVX2(const wchar_t *buf
 		test    eax, 1
 		jnz     unaligned
 		and     ecx, 31
-		jz      aligned_loop
+		jz      loop_begin
 		sub     eax, ecx
 		vpcmpeqw ymm1, ymm0, ymmword ptr [eax]
-		vpmovmskb eax, ymm1
-		shr     eax, cl
-		shr     ecx, 1
-		test    eax, eax
-		lea     ecx, [ecx - 16]
-		jnz     found
-		sub     edx, ecx
-		jb      aligned_loop
-		pop     esi                                         // restore esi
-		vzeroupper
-		ret                                                 // __cdecl return
-
-		align   16
-	aligned_loop:
-		vpcmpeqw ymm1, ymm0, ymmword ptr [esi + edx * 2]
-		vpmovmskb eax, ymm1
-		test    eax, eax
-		jnz     found
-		add     edx, 16
-		jnc     aligned_loop
-		pop     esi                                         // restore esi
-		vzeroupper
-		ret                                                 // __cdecl return
+		jmp     compare
 
 		align   16
 	unaligned:
 		inc     ecx
 		and     eax, -32
 		and     ecx, 31
-		jz      unaligned_loop
+		jz      loop_begin
 		vmovdqa ymm1, ymmword ptr [eax]
 		vperm2i128 ymm2, ymm1, ymm1, 00001000B
 		vpslldq ymm1, ymm1, 1
 		vpsrldq ymm2, ymm2, 15
 		vpor    ymm1, ymm1, ymm2
 		vpcmpeqw ymm1, ymm1, ymm0
+	compare:
 		vpmovmskb eax, ymm1
 		shr     eax, cl
 		shr     ecx, 1
@@ -122,19 +101,18 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrAVX2(const wchar_t *buf
 		lea     ecx, [ecx - 16]
 		jnz     found
 		sub     edx, ecx
-		jb      unaligned_loop
-		pop     esi                                         // restore esi
-		vzeroupper
-		ret                                                 // __cdecl return
+		jae     retnull
 
 		align   16
-	unaligned_loop:
+	loop_begin:
 		vpcmpeqw ymm1, ymm0, ymmword ptr [esi + edx * 2]
 		vpmovmskb eax, ymm1
 		test    eax, eax
 		jnz     found
 		add     edx, 16
-		jnc     unaligned_loop
+		jnc     loop_begin
+	retnull:
+		xor     eax, eax
 		pop     esi                                         // restore esi
 		vzeroupper
 		ret                                                 // __cdecl return
@@ -146,13 +124,6 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrAVX2(const wchar_t *buf
 		add     eax, edx
 		jc      retnull
 		lea     eax, [esi + eax * 2]
-		pop     esi                                         // restore esi
-		vzeroupper
-		ret                                                 // __cdecl return
-
-		align   16
-	retnull:
-		xor     eax, eax
 		pop     esi                                         // restore esi
 		vzeroupper
 		ret                                                 // __cdecl return

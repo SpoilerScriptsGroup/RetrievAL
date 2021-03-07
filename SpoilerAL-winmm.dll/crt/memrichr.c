@@ -224,8 +224,8 @@ __declspec(naked) void * __vectorcall internal_memrichrSSE42(const void *buffer,
 		jz      loop_begin
 		xor     ecx, 15
 		pcmpestrm xmm1, xmmword ptr [esi + edi], 00000000B
-		mov     edx, 7FFFH
 		jnc     increment
+		mov     edx, 7FFFH
 		movd    eax, xmm0
 		shr     edx, cl
 		and     eax, edx

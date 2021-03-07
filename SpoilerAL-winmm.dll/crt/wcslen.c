@@ -103,7 +103,7 @@ __declspec(naked) static size_t __cdecl wcslenSSE42(const wchar_t *string)
 		mov     ecx, eax
 		mov     edx, eax
 		and     eax, 15
-		jz      loop_entry
+		jz      loop_begin
 		shr     eax, 1
 		jc      unaligned
 		and     ecx, -16
@@ -116,29 +116,25 @@ __declspec(naked) static size_t __cdecl wcslenSSE42(const wchar_t *string)
 		align   16
 	unaligned:
 		xor     eax, 7
-		jz      loop_entry
+		jz      loop_begin
 		and     ecx, -16
 		movdqa  xmm1, xmmword ptr [ecx]                     // read 16 bytes from string
 		movdqu  xmm2, xmmword ptr [maskbit + eax * 2]       // load the non target bits mask
 		pslldq  xmm1, 1
-		dec     ecx
 	compare:
 		por     xmm1, xmm2                                  // fill the non target bits to 1
 		pcmpistri xmm0, xmm1, 00001001B                     // find null. returns index in ecx
-		jnz     loop_entry                                  // next 16 bytes
-		sub     ecx, 8
-		jmp     last
+		jz      last
 
 		align   16
 	loop_begin:
-		add     eax, 8                                      // increment pointer by 16
-	loop_entry:
 		pcmpistri xmm0, \
 		          xmmword ptr [edx + eax * 2], 00001001B    // find null. returns index in ecx
+		lea     eax, [eax + 8]                              // increment pointer by 16
 		jnz     loop_begin                                  // next 16 bytes
 
 	last:
-		add     eax, ecx
+		lea     eax, [eax + ecx - 8]
 		ret
 
 		#undef string

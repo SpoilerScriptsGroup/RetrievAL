@@ -149,7 +149,6 @@ __declspec(naked) static size_t __cdecl wcsnlenSSE42(const wchar_t *string, size
 		movdqa  xmm1, xmmword ptr [ecx]                     // read 16 bytes from string
 		movdqu  xmm2, xmmword ptr [maskbit + edx * 2]       // load the non target bits mask
 		pslldq  xmm1, 1
-		dec     ecx
 	compare:
 		por     xmm1, xmm2                                  // fill the non target bits to 1
 		pcmpistri xmm0, xmm1, 00001001B                     // find null. returns index in ecx

@@ -185,8 +185,8 @@ __declspec(naked) void * __vectorcall internal_memrchrSSE42(const void *buffer, 
 		and     ecx, 15
 		jz      loop_begin
 		xor     ecx, 15
-		mov     edx, 7FFFH
 		pcmpestrm xmm1, xmmword ptr [esi + edi], 00000000B
+		mov     edx, 7FFFH
 		jnc     increment
 		movd    eax, xmm0
 		shr     edx, cl

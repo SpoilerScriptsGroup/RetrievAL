@@ -3,7 +3,7 @@
 #include <intrin.h>
 #pragma intrinsic(_bittestandset, _bittest)
 
-#ifndef _DEBUG
+#ifdef DISABLE_UCRT
 size_t __cdecl strspn(const char *string, const char *control)
 {
 	unsigned long map[0x100 / 32] = { 0 };
@@ -35,7 +35,7 @@ char * __cdecl _strspnp(const char *string, const char *control)
 
 static unsigned __int64 __fastcall internal_strspnp(const char *string, const char *control);
 
-#ifndef _DEBUG
+#ifdef DISABLE_UCRT
 __declspec(naked) size_t __cdecl strspn(const char *string, const char *control)
 {
 	__asm

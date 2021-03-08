@@ -37,7 +37,7 @@ double __cdecl _nextafter(double x, double y)
 #else
 __declspec(naked) double __cdecl _nextafter(double x, double y)
 {
-#ifdef _DEBUG
+#ifndef DISABLE_UCRT
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
 		__asm   call    _errno                  /* Get C errno variable pointer */ \

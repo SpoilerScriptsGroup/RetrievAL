@@ -121,10 +121,8 @@ EXTERN_C FARPROC * __stdcall GetImportFunction(HANDLE hProcess, HMODULE hModule,
 					memcpy(lpBuffer, (LPCBYTE)lpBuffer + nNameInPage, nSize);
 					if (!ReadProcessMemory(hProcess, (LPCVOID)nNextPage, (LPBYTE)lpBuffer + nSize, nNameInPage, NULL))
 						break;
-#pragma warning(push)
-#pragma warning(disable:6054)
+					#pragma warning(suppress: 6054)
 					if (_mbsicmp((LPCBYTE)lpModuleName, (LPCBYTE)lpBuffer) != 0)
-#pragma warning(pop)
 					{
 						memcpy(lpBuffer, (LPCBYTE)lpBuffer + nSize, nNameInPage);
 						if (!ReadProcessMemory(hProcess, (LPCBYTE)nNextPage + nNameInPage, (LPBYTE)lpBuffer + nNameInPage, nSize, NULL))

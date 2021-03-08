@@ -132,10 +132,8 @@ BOOL __stdcall FillProcessMemory16(
 			else
 			{
 				wmemset((wchar_t *)lpBuffer, wFill, nCount);
-#pragma warning(push)
-#pragma warning(disable:6001)
+				#pragma warning(suppress: 6001)
 				return WriteProcessMemory(hProcess, lpDest, lpBuffer, nSize, NULL);
-#pragma warning(pop)
 			}
 		}
 		else

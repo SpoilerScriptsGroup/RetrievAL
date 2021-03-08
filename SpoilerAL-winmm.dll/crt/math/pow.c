@@ -175,7 +175,7 @@ EXTERN_C __declspec(naked) double __cdecl pow(double x, double y)
 
 EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 {
-#ifdef _DEBUG
+#ifndef DISABLE_UCRT
 	errno_t * __cdecl _errno();
 	#define set_errno(x, n) \
 		__asm   sub     esp, n                  /* Allocate temporary space */ \
@@ -279,7 +279,7 @@ EXTERN_C __declspec(naked) double __cdecl _CIpow(/*st1 x, st0 y*/)
 		align   16
 	L6:
 		fstp    st(1)                           ; Set new stack top and pop
-#ifdef _DEBUG
+#ifndef DISABLE_UCRT
 		mov     byte ptr [esp - 4], dl          ; Save negation flag
 		set_errno(ERANGE, 12)                   ; Set range error (ERANGE)
 		mov     dl, byte ptr [esp - 4]          ; Load negation flag

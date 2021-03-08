@@ -20,7 +20,7 @@ __declspec(naked) double __cdecl _CIacos(/*st0 x*/)
 	#define _one fpconst_one
 	#define _inf fpconst_inf
 
-#ifdef _DEBUG
+#ifndef DISABLE_UCRT
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
 		__asm   call    _errno                  /* Get C errno variable pointer */ \

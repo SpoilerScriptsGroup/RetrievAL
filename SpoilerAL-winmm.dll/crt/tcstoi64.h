@@ -69,7 +69,7 @@ static __forceinline unsigned char _add_u32(unsigned int a, unsigned int b, unsi
 #define __msreturn
 #endif
 
-#if !defined(_DEBUG) && defined(_MSC_VER)
+#if defined(DISABLE_UCRT) && defined(_MSC_VER)
 extern errno_t _terrno;
 #define ERRNO _terrno
 #endif
@@ -96,7 +96,7 @@ unsigned __int64 __msreturn __stdcall INTERNAL_FUNCTION(BOOL is_unsigned, BOOL i
 unsigned __int64 __msreturn __cdecl INTERNAL_FUNCTION(BOOL is_unsigned, errno_t *errnoptr, errno_t reserved1, BOOL is_int64, void *reserved2, const TCHAR *nptr, TCHAR **endptr, int base);
 #endif
 
-#ifndef _DEBUG
+#ifdef DISABLE_UCRT
 
 #define FUNCTION_NAME _tcstol
 #define TYPE          long

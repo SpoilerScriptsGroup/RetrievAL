@@ -124,7 +124,7 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 	static const double       c0   = 3.3218994140625;
 	static const unsigned int c1[] = { 0x15FC9258, 0xF0979A37, 0x00003FEF };	// log2(10) - 3.3218994140625
 
-#ifdef _DEBUG
+#ifndef DISABLE_UCRT
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
 		__asm   call    _errno                  /* Get C errno variable pointer */ \
@@ -205,7 +205,7 @@ EXTERN_C __declspec(naked) double __cdecl ldexp10(double x, int exp)
 		cmp     ah, 40H                         /* Is not Zero ? */
 		jne     L3
 	L2:
-#ifdef _DEBUG
+#ifndef DISABLE_UCRT
 		sub     esp, 12
 		fstp    qword ptr [esp]
 		set_errno(ERANGE)                       /* Set range error (ERANGE) */

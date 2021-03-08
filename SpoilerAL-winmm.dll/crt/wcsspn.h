@@ -1,6 +1,6 @@
 #ifndef _M_IX86
 #ifdef UTF16MAP
-#ifndef _DEBUG
+#ifdef DISABLE_UCRT
 size_t __cdecl wcsspn(const wchar_t *string, const wchar_t *control)
 {
 	const wchar_t *p;
@@ -36,7 +36,7 @@ wchar_t * __cdecl _wcsspnp(const wchar_t *string, const wchar_t *control)
 	return (wchar_t *)string;
 }
 #else
-#ifndef _DEBUG
+#ifdef DISABLE_UCRT
 size_t __cdecl wcsspn(const wchar_t *string, const wchar_t *control)
 {
 	size_t        n;
@@ -68,7 +68,7 @@ wchar_t * __cdecl _wcsspnp(const wchar_t *string, const wchar_t *control)
 #else
 static unsigned __int64 __fastcall internal_wcsspnp(const wchar_t *string, const wchar_t *control);
 
-#ifndef _DEBUG
+#ifdef DISABLE_UCRT
 __declspec(naked) size_t __cdecl wcsspn(const wchar_t *string, const wchar_t *control)
 {
 	__asm

@@ -14,12 +14,8 @@
 
 #pragma intrinsic(__rdtsc)
 
-#ifndef _DEBUG
-#define DISABLE_CRT   1
-#define ENABLE_ASMLIB 1
-#endif
 #pragma comment(linker, "/nodefaultlib:oldnames.lib")
-#if DISABLE_CRT
+#ifdef DISABLE_UCRT
 #pragma comment(linker, "/nodefaultlib:libc.lib")
 #pragma comment(linker, "/nodefaultlib:libcmt.lib")
 #pragma comment(linker, "/nodefaultlib:msvcrt.lib")
@@ -48,7 +44,7 @@ HANDLE         hExecutableHeap = NULL;
 #endif
 HANDLE         hReadOnlyHeap   = NULL;
 
-#if DISABLE_CRT
+#ifdef DISABLE_UCRT
 #define DllMain _DllMainCRTStartup
 #endif
 
@@ -57,7 +53,7 @@ HANDLE         hReadOnlyHeap   = NULL;
  */
 EXTERN_C BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
 {
-#if DISABLE_CRT
+#ifdef DISABLE_UCRT
 	EXTERN_C void __cdecl __isa_available_init();
 #endif
 
@@ -68,7 +64,7 @@ EXTERN_C BOOL APIENTRY DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpRes
 	{
 	case DLL_PROCESS_ATTACH:
 		DisableThreadLibraryCalls(hInstance);
-#if DISABLE_CRT
+#ifdef DISABLE_UCRT
 		__isa_available_init();
 #endif
 		init_verbose(hInstance);
@@ -309,7 +305,7 @@ static BOOL __cdecl ModifyCodeSection()
 	EXTERN_C void __cdecl Attach_FixToggleByteArray();
 	EXTERN_C void __cdecl Attach_OnSSGCtrlCleared();
 	EXTERN_C void __cdecl Attach_LoadFromFile();
-#if ENABLE_ASMLIB
+#ifdef DISABLE_UCRT
 	EXTERN_C void __cdecl OptimizeCRT();
 #endif
 	EXTERN_C void __cdecl OptimizeStringDivision();
@@ -360,7 +356,7 @@ static BOOL __cdecl ModifyCodeSection()
 	Attach_FixToggleByteArray();
 	Attach_OnSSGCtrlCleared();
 	Attach_LoadFromFile();
-#if ENABLE_ASMLIB
+#ifdef DISABLE_UCRT
 	OptimizeCRT();
 #endif
 	OptimizeStringDivision();
@@ -468,7 +464,14 @@ static __inline BOOL ModifyResourceSection()
 	*(LPWORD)0x006673D6 = BSWAP16(0xD653);
 
 	// TProcessAddForm::Panel_T.Caption
-	__movsw((wchar_t *)0x0066795D, /* L"PID等、プロセス記述子を" */L"PID\x7B49\x3001\x30D7\x30ED\x30BB\x30B9\x8A18\x8FF0\x5B50\x3092", 13);
+	// __movsw((wchar_t *)0x0066795D, /* L"PID等、プロセス記述子を" */L"PID\x7B49\x3001\x30D7\x30ED\x30BB\x30B9\x8A18\x8FF0\x5B50\x3092", 13);
+	*(LPDWORD)0x0066795C = BSWAP32(0x00500049);
+	*(LPDWORD)0x00667960 = BSWAP32(0x00440049);
+	*(LPDWORD)0x00667964 = BSWAP32(0x7B0130D7);
+	*(LPDWORD)0x00667968 = BSWAP32(0x30ED30BB);
+	*(LPDWORD)0x0066796C = BSWAP32(0x30B93018);
+	*(LPDWORD)0x00667970 = BSWAP32(0x8AF08F50);
+	*(LPDWORD)0x00667974 = BSWAP32(0x5B923065);
 
 	// TProcessAddForm::Panel_T.ReLoadBtn.Caption
 	// "所得" -> "取得"

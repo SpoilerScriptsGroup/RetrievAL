@@ -10,41 +10,44 @@ if "%~1" == "" (
 ::
 set env=
 ::
-:: #define SINCE(year)  ( ((year) - 1) * 365 \
-::                      + ((year) - 1) / 4   \
-::                      - ((year) - 1) / 100 \
-::                      + ((year) - 1) / 400)
-:: #define DAY_SEC      86400           // Seconds per day
-:: #define DAY_HNS      864000000000    // Hundred nano seconds per day
+:: #define SINCE(year) ( ((year) - 1) * 365 \
+::                     + ((year) - 1) / 4   \
+::                     - ((year) - 1) / 100 \
+::                     + ((year) - 1) / 400)
+:: #define DAY_SEC     86400           // Seconds per day
+:: #define DAY_HNS     864000000000    // Hundred nano seconds per day
 ::
 :: assert(0x0701CE1722770000 == SINCE(1601) * DAY_HNS);
 :: assert(11644473600 == (SINCE(1970) - SINCE(1601)) * UINT64_C(DAY_SEC));
 ::
-set command=$d = Get-Date;
-set command=%command% $ft = $d.Ticks - 0x0701CE1722770000;
-set command=%command% $tm = [uint64]($ft / 10000000) - 11644473600;
-set command=%command% $s = $d.ToString('yyyy MM dd HH mm ss fff');
-set command=%command% $s += ' 0x' + $tm.ToString('X16');
-set command=%command% $s += ' 0x' + $ft.ToString('X16');
-set command=%command% return $s;
+set command=
+set command=%command% $d = Get-Date;
+set command=%command% $ft = $d.Ticks - (Get-TimeZone).BaseUtcOffset.Ticks - 0x0701CE1722770000;
+set command=%command% $tm = [int64]($ft / 10000000) - 11644473600;
+set command=%command% return $d.ToString('yyyyy MM dd HH mm ss fffffff') +
+set command=%command%     ' 0x' + $tm.ToString('X16') +
+set command=%command%     ' 0x' + $ft.ToString('X16');
 for /f "usebackq tokens=1-9 delims= " %%a in (`powershell.exe -Command "%command%"`) do (
-	set date_yyyy=%%a
+	set date_yyyyy=%%a
 	set date_mm=%%b
 	set date_dd=%%c
 	set time_hh=%%d
 	set time_mm=%%e
 	set time_ss=%%f
-	set time_fff=%%g
+	set time_fffffff=%%g
 	set tm=%%h
 	set ft=%%i
 )
-set /a date_year=1%date_yyyy%-10000
+set date_yyyy=%date_yyyyy:~-4%
+set /a date_year=1%date_yyyyy%-100000
 set /a date_month=1%date_mm%-100
 set /a date_day=1%date_dd%-100
 set /a time_hour=1%time_hh%-100
 set /a time_minute=1%time_mm%-100
 set /a time_second=1%time_ss%-100
-set /a time_millisecond=1%time_fff%-1000
+set /a time_millisecond=1%time_fffffff:~,3%-1000
+set /a time_microsecond=1%time_fffffff:~3,3%-1000
+set /a time_nanosecond=%time_fffffff:~-1%*100
 > %FileName% echo #ifndef _DATETIME_H_
 >>%FileName% echo #define _DATETIME_H_
 >>%FileName% echo.
@@ -59,6 +62,8 @@ set /a time_millisecond=1%time_fff%-1000
 >>%FileName% echo #define __TIME_MINUTE__       %time_minute%
 >>%FileName% echo #define __TIME_SECOND__       %time_second%
 >>%FileName% echo #define __TIME_MILLISECOND__  %time_millisecond%
+>>%FileName% echo #define __TIME_MICROSECOND__  %time_microsecond%
+>>%FileName% echo #define __TIME_NANOSECOND__   %time_nanosecond%
 >>%FileName% echo.
 >>%FileName% echo #define __DATE_YYYY__         %date_yyyy%
 >>%FileName% echo #define __DATE_MM__           %date_mm%
@@ -66,7 +71,13 @@ set /a time_millisecond=1%time_fff%-1000
 >>%FileName% echo #define __TIME_HH__           %time_hh%
 >>%FileName% echo #define __TIME_MM__           %time_mm%
 >>%FileName% echo #define __TIME_SS__           %time_ss%
->>%FileName% echo #define __TIME_FFF__          %time_fff%
+>>%FileName% echo #define __TIME_F__            %time_fffffff:~,1%
+>>%FileName% echo #define __TIME_FF__           %time_fffffff:~,2%
+>>%FileName% echo #define __TIME_FFF__          %time_fffffff:~,3%
+>>%FileName% echo #define __TIME_FFFF__         %time_fffffff:~,4%
+>>%FileName% echo #define __TIME_FFFFF__        %time_fffffff:~,5%
+>>%FileName% echo #define __TIME_FFFFFF__       %time_fffffff:~,6%
+>>%FileName% echo #define __TIME_FFFFFFF__      %time_fffffff%
 >>%FileName% echo.
 >>%FileName% echo #define __DATETIME_TIME_T__   %tm%
 >>%FileName% echo #define __DATETIME_FILETIME__ %ft%

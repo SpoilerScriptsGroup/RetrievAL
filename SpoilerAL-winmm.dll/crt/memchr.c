@@ -22,7 +22,7 @@ void * __cdecl memchrSSE2(const void *buffer, int c, size_t count);
 void * __vectorcall internal_memchrSSE2(const void *buffer, __m128 c, size_t count);
 void * __cdecl memchr386(const void *buffer, int c, size_t count);
 void * __fastcall internal_memchr386(const void *buffer, unsigned long c, size_t count);
-#ifndef _DEBUG
+#ifdef DISABLE_UCRT
 static void * __cdecl memchrCPUDispatch(const void *buffer, int c, size_t count);
 
 static void *(__cdecl *memchrDispatch)(const void *buffer, int c, size_t count) = memchrCPUDispatch;
@@ -431,7 +431,7 @@ __declspec(naked) void * __fastcall internal_memchr386(const void *buffer, unsig
 		#undef count
 	}
 }
-#ifndef _DEBUG
+#ifdef DISABLE_UCRT
 
 __declspec(naked) static void * __cdecl memchrCPUDispatch(const void *buffer, int c, size_t count)
 {

@@ -9,10 +9,8 @@ DWORD __stdcall GetOSMajorVersion()
 	if (dwOSMajorVersion)
 		return dwOSMajorVersion;
 	OSVersionInfo.dwOSVersionInfoSize = sizeof(OSVersionInfo);
-#pragma warning(push)
-#pragma warning(disable:4996)
+	#pragma warning(suppress: 4996)
 	if (!GetVersionExW(&OSVersionInfo))
-#pragma warning(pop)
 		return 0;
 	return dwOSMajorVersion = OSVersionInfo.dwMajorVersion;
 }

@@ -2,7 +2,7 @@
 
 __declspec(naked) double __cdecl _scalb(double x, long exp)
 {
-#ifdef _DEBUG
+#ifndef DISABLE_UCRT
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
 		__asm   fstp    qword ptr [esp + 4]     /* Save x */ \

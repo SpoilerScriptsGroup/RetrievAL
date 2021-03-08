@@ -7,7 +7,7 @@ __declspec(naked) double __cdecl atanh(double x)
 	extern const double fpconst_half;
 	#define _half fpconst_half
 
-#ifdef _DEBUG
+#ifndef DISABLE_UCRT
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
 		__asm   call    _errno                  /* Get C errno variable pointer */ \
@@ -45,7 +45,7 @@ __declspec(naked) double __cdecl atanh(double x)
 		cmp     edx, 1                          ; x is NaN ?
 		sbb     eax, 7FF00000H - 3FF00000H      ;
 		jae     L3                              ; Re-direct if x is NaN
-#ifdef _DEBUG
+#ifndef DISABLE_UCRT
 		mov     dword ptr [esp + 4], ecx        ;
 		mov     dword ptr [esp + 8], 7FF80000H  ;
 		set_errno(EDOM)                         ; Set domain error (EDOM)

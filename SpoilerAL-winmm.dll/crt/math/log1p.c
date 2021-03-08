@@ -11,7 +11,7 @@ __declspec(naked) double __cdecl log1p(double x)
 	#define _nan       fpconst_nan
 	#define _one       fpconst_one
 
-#ifdef _DEBUG
+#ifndef DISABLE_UCRT
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
 		__asm   call    _errno                  /* Get C errno variable pointer */ \

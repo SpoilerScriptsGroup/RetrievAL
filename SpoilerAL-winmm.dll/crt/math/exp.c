@@ -131,7 +131,7 @@ EXTERN_C __declspec(naked) double __cdecl _CIexp(/*st0 x*/)
 	static const double       c0   = 1.44268798828125;
 	static const unsigned int c1[] = { 0xC2EEFA20, 0xECA5705F, 0x00003FED };	// log2(e) - 1.44268798828125
 
-#ifdef _DEBUG
+#ifndef DISABLE_UCRT
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
 		__asm   sub     esp, 8                  /* Allocate temporary space */ \

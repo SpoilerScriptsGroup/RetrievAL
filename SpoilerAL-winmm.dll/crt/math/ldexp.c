@@ -50,7 +50,7 @@ double __cdecl ldexp(double x, int exp)
 
 __declspec(naked) double __cdecl ldexp(double x, int exp)
 {
-#ifdef _DEBUG
+#ifndef DISABLE_UCRT
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
 		__asm   fstp    qword ptr [esp + 4]     /* Save x */ \

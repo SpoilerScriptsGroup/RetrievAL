@@ -19,7 +19,7 @@ wchar_t * __cdecl wmemchrSSE42(const wchar_t *buffer, wchar_t c, size_t count);
 wchar_t * __vectorcall internal_wmemchrSSE42(const wchar_t *buffer, __m128 reserved, __m128 c, size_t count);
 wchar_t * __cdecl wmemchrSSE2(const wchar_t *buffer, wchar_t c, size_t count);
 wchar_t * __vectorcall internal_wmemchrSSE2(const wchar_t *buffer, __m128 c, size_t count);
-#ifndef _DEBUG
+#ifdef DISABLE_UCRT
 static wchar_t * __cdecl wmemchr386(const wchar_t *buffer, wchar_t c, size_t count);
 static wchar_t * __cdecl wmemchrCPUDispatch(const wchar_t *buffer, wchar_t c, size_t count);
 
@@ -361,7 +361,7 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrSSE2(const wchar_t *buf
 		#undef count
 	}
 }
-#ifndef _DEBUG
+#ifdef DISABLE_UCRT
 
 // 80386 version
 __declspec(naked) static wchar_t * __cdecl wmemchr386(const wchar_t *buffer, wchar_t c, size_t count)

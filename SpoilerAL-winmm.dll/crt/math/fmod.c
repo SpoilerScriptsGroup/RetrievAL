@@ -19,7 +19,7 @@ __declspec(naked) double __cdecl _CIfmod(/*st1 x, st0 y*/)
 	extern const double fpconst_nan_ind;
 	#define _nan_ind fpconst_nan_ind
 
-#ifdef _DEBUG
+#ifndef DISABLE_UCRT
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
 		__asm   call    _errno                  /* Get C errno variable pointer */ \

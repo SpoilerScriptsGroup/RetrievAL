@@ -18,7 +18,7 @@ __declspec(naked) double __cdecl _CIsqrt(/*st0 x*/)
 	extern const double fpconst_nan_ind;
 	#define _nan_ind fpconst_nan_ind
 
-#ifdef _DEBUG
+#ifndef DISABLE_UCRT
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
 		__asm   call    _errno                  /* Get C errno variable pointer */ \

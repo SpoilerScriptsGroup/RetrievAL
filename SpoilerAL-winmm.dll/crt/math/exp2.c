@@ -5,7 +5,7 @@ __declspec(naked) double __cdecl exp2(double x)
 	extern const double fpconst_one;
 	#define _one fpconst_one
 
-#ifdef _DEBUG
+#ifndef DISABLE_UCRT
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
 		__asm   fstp    qword ptr [esp + 4]     /* Save x */ \

@@ -130,7 +130,7 @@ EXTERN_C __declspec(naked) double __cdecl exp10(double x)
 	static const double       c0   = 3.3218994140625;
 	static const unsigned int c1[] = { 0x15FC9258, 0xF0979A37, 0x00003FEF };	// log2(10) - 3.3218994140625
 
-#ifdef _DEBUG
+#ifndef DISABLE_UCRT
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
 		__asm   call    _errno                  /* Get C errno variable pointer */ \

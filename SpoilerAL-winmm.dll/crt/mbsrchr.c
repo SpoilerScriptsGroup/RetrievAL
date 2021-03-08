@@ -6,7 +6,7 @@ unsigned char * __fastcall internal_mbsrchr_single_byte(const unsigned char *str
 unsigned char * __fastcall internal_mbsrchr_multi_byte(const unsigned char *string, unsigned int c);
 
 #ifndef _M_IX86
-#ifndef _DEBUG
+#ifdef DISABLE_UCRT
 unsigned char * __cdecl _mbsrchr(const unsigned char *string, unsigned int c)
 {
 	if (c < 0x100)
@@ -64,7 +64,7 @@ unsigned char * __fastcall internal_mbsrchr_multi_byte(const unsigned char *stri
 	return result;
 }
 #else
-#ifndef _DEBUG
+#ifdef DISABLE_UCRT
 __declspec(naked) unsigned char * __cdecl _mbsrchr(const unsigned char *string, unsigned int c)
 {
 	__asm

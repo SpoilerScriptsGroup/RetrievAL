@@ -5,7 +5,7 @@ __declspec(naked) double __cdecl remainder(double x, double y)
 	extern const double fpconst_nan;
 	#define _nan fpconst_nan
 
-#ifdef _DEBUG
+#ifndef DISABLE_UCRT
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
 		__asm   call    _errno                  /* Get C errno variable pointer */ \

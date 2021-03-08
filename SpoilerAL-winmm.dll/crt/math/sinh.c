@@ -20,7 +20,7 @@ __declspec(naked) double __cdecl _CIsinh(/*st0 x*/)
 	#define _half fpconst_half
 	#define _one  fpconst_one
 
-#ifdef _DEBUG
+#ifndef DISABLE_UCRT
 	errno_t * __cdecl _errno();
 	#define set_errno(x) \
 		__asm   sub     esp, 8                  /* Allocate temporary space */ \

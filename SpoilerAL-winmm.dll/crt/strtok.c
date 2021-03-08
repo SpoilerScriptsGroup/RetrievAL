@@ -3,7 +3,7 @@
 #undef UNICODE
 #include <string.h>
 #include <tchar.h>
-#ifdef _DEBUG
+#ifndef DISABLE_UCRT
 #define strtok
 #endif
 #include "tcstok.h"

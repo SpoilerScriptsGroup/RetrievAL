@@ -292,9 +292,7 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrSSE2(const wchar_t *buf
 		lea     ecx, [ecx - 8]
 		jnz     found
 		sub     edx, ecx
-		jb      aligned_loop
-		pop     esi                                         // restore esi
-		ret                                                 // __cdecl return
+		jae     retnull
 
 		align   16
 	aligned_loop:
@@ -305,8 +303,7 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrSSE2(const wchar_t *buf
 		jnz     found
 		add     edx, 8
 		jnc     aligned_loop
-		pop     esi                                         // restore esi
-		ret                                                 // __cdecl return
+		jmp     retnull
 
 		align   16
 	unaligned:
@@ -324,9 +321,7 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrSSE2(const wchar_t *buf
 		lea     ecx, [ecx - 8]
 		jnz     found
 		sub     edx, ecx
-		jb      unaligned_loop
-		pop     esi                                         // restore esi
-		ret                                                 // __cdecl return
+		jae     retnull
 
 		align   16
 	unaligned_loop:
@@ -337,6 +332,8 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrSSE2(const wchar_t *buf
 		jnz     found
 		add     edx, 8
 		jnc     unaligned_loop
+	retnull:
+		xor     eax, eax
 		pop     esi                                         // restore esi
 		ret                                                 // __cdecl return
 
@@ -347,12 +344,6 @@ __declspec(naked) wchar_t * __vectorcall internal_wmemchrSSE2(const wchar_t *buf
 		add     eax, edx
 		jc      retnull
 		lea     eax, [esi + eax * 2]
-		pop     esi                                         // restore esi
-		ret                                                 // __cdecl return
-
-		align   16
-	retnull:
-		xor     eax, eax
 		pop     esi                                         // restore esi
 		ret                                                 // __cdecl return
 

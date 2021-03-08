@@ -6,7 +6,7 @@ if "%~1" == "" (
 	set FileName=%1
 )
 ::
-:: PowerShell requires clear the environment variable of "env".
+:: PowerShell requires clear the "env" of environment variable.
 ::
 set env=
 ::
@@ -38,7 +38,6 @@ for /f "usebackq tokens=1-9 delims= " %%a in (`powershell.exe -Command "%command
 	set tm=%%h
 	set ft=%%i
 )
-set date_yyyy=%date_yyyyy:~-4%
 set /a date_year=1%date_yyyyy%-100000
 set /a date_month=1%date_mm%-100
 set /a date_day=1%date_dd%-100
@@ -65,7 +64,7 @@ set /a time_nanosecond=%time_fffffff:~-1%*100
 >>%FileName% echo #define __TIME_MICROSECOND__  %time_microsecond%
 >>%FileName% echo #define __TIME_NANOSECOND__   %time_nanosecond%
 >>%FileName% echo.
->>%FileName% echo #define __DATE_YYYY__         %date_yyyy%
+>>%FileName% echo #define __DATE_YYYY__         %date_yyyyy:~-4%
 >>%FileName% echo #define __DATE_MM__           %date_mm%
 >>%FileName% echo #define __DATE_DD__           %date_dd%
 >>%FileName% echo #define __TIME_HH__           %time_hh%

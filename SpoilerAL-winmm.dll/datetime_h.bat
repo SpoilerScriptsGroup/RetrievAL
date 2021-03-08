@@ -22,8 +22,8 @@ set env=
 ::
 set command=
 set command=%command% $d = Get-Date;
-set command=%command% $ft = $d.Ticks - (Get-TimeZone).BaseUtcOffset.Ticks - 0x0701CE1722770000;
-set command=%command% $tm = [int64]($ft / 10000000) - 11644473600;
+set command=%command% $ft = $d.ToUniversalTime().Ticks - 0x0701CE1722770000;
+set command=%command% $tm = (($ft - $ft %% 10000000) / 10000000) - 11644473600;
 set command=%command% return $d.ToString('yyyyy MM dd HH mm ss fffffff') +
 set command=%command%     ' 0x' + $tm.ToString('X16') +
 set command=%command%     ' 0x' + $ft.ToString('X16');

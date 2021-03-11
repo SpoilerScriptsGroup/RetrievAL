@@ -23,16 +23,14 @@ extern "C" {
 #pragma warning(disable:4273)
 
 void __cdecl srandom(unsigned int seed);
-long int __cdecl random();
-long long __msreturn __cdecl random64();
+uint32_t __cdecl rand32();
+uint64_t __msreturn __cdecl rand64();
 
-#define srand   srandom
-#define rand    (int)(random() & 0x00007FFF)
-
-#define rand8   (uint8_t)random
-#define rand16  (uint16_t)random
-#define rand32  (uint32_t)random
-#define rand64  (uint64_t)random64
+#define srand(seed) srandom(seed)
+#define rand()      (int)(rand32() & 0x00007FFF)
+#define random()    (long int)(rand32() & 0x7FFFFFFF)
+#define rand8()     (uint8_t)rand32()
+#define rand16()    (uint16_t)rand32()
 
 /**
  * This function generates and returns single precision pseudorandom

@@ -916,7 +916,7 @@ __declspec(naked) void __cdecl srandom(unsigned int seed)
 /* This function generates and returns 32-bit pseudorandom number.
    srandom must be called before this function. */
 #if !defined(_M_IX86)
-long int __cdecl random()
+uint32_t __cdecl rand32()
 {
 	if (idx == IDX32(SFMT_N32)) {
 		sfmt_gen_rand_all();
@@ -925,7 +925,7 @@ long int __cdecl random()
 	return sfmt32[LE_POST_INC(idx)];
 }
 #else
-__declspec(naked) long int __cdecl random()
+__declspec(naked) uint32_t __cdecl rand32()
 {
 	__asm
 	{
@@ -956,7 +956,7 @@ __declspec(naked) long int __cdecl random()
 /* This function generates and returns 64-bit pseudorandom number.
    srandom must be called before this function. */
 #if !defined(_M_IX86)
-long long __msreturn __cdecl random64()
+uint64_t __msreturn __cdecl rand64()
 {
 	uint64_t x;
 
@@ -981,7 +981,7 @@ long long __msreturn __cdecl random64()
 	return x;
 }
 #else
-__declspec(naked) long long __msreturn __cdecl random64()
+__declspec(naked) uint64_t __msreturn __cdecl rand64()
 {
 	__asm
 	{
@@ -1047,7 +1047,7 @@ __declspec(naked) uint32_t __cdecl internal_randf32()
 	__asm
 	{
 	loop1:
-		call    random
+		call    rand32
 		mov     ecx, eax
 		add     eax, eax
 		cmp     eax, 0x7F800000 * 2
@@ -1078,7 +1078,7 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64()
 {
 	__asm
 	{
-		call    random64
+		call    rand64
 		push    edx
 		add     edx, edx
 		cmp     edx, 0x7FF00000 * 2
@@ -1086,7 +1086,7 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64()
 
 		align   16
 	loop1:
-		call    random
+		call    rand32
 		mov     edx, eax
 		pop     eax
 		push    edx
@@ -1119,7 +1119,7 @@ __declspec(naked) uint32_t __cdecl internal_randf32ge0lt1()
 	__asm
 	{
 	loop1:
-		call    random
+		call    rand32
 		cmp     eax, 0x3F800000 * 4
 		jae     loop1
 
@@ -1147,7 +1147,7 @@ __declspec(naked) uint32_t __cdecl internal_randf32ge0le1()
 	__asm
 	{
 	loop1:
-		call    random
+		call    rand32
 		cmp     eax, (0x3F800000 + 1) * 4
 		jae     loop1
 
@@ -1175,7 +1175,7 @@ __declspec(naked) uint32_t __cdecl internal_randf32gt0le1()
 	__asm
 	{
 	loop1:
-		call    random
+		call    rand32
 		cmp     eax, 0x3F800000 * 4
 		jae     loop1
 
@@ -1204,7 +1204,7 @@ __declspec(naked) uint32_t __cdecl internal_randf32gt0lt1()
 	__asm
 	{
 	loop1:
-		call    random
+		call    rand32
 		cmp     eax, (0x3F800000 - 1) * 4
 		jae     loop1
 
@@ -1235,7 +1235,7 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64ge0lt1()
 {
 	__asm
 	{
-		call    random64
+		call    rand64
 		mov     ecx, edx
 		and     edx, 0x3FFFFFFF
 		cmp     edx, 0x3FF00000
@@ -1244,7 +1244,7 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64ge0lt1()
 		mov     esi, ecx
 
 	loop1:
-		call    random
+		call    rand32
 		mov     edx, eax
 		mov     eax, esi
 		mov     esi, edx
@@ -1279,7 +1279,7 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64ge0le1()
 {
 	__asm
 	{
-		call    random64
+		call    rand64
 		mov     ecx, edx
 		push    esi
 		and     ecx, 0x3FFFFFFF
@@ -1289,7 +1289,7 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64ge0le1()
 		mov     esi, edx
 
 	loop1:
-		call    random
+		call    rand32
 		mov     ecx, esi
 		mov     esi, eax
 		and     eax, 0x3FFFFFFF
@@ -1327,7 +1327,7 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64gt0le1()
 {
 	__asm
 	{
-		call    random64
+		call    rand64
 		mov     ecx, edx
 		and     edx, 0x3FFFFFFF
 		cmp     edx, 0x3FF00000
@@ -1336,7 +1336,7 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64gt0le1()
 		mov     esi, ecx
 
 	loop1:
-		call    random
+		call    rand32
 		mov     edx, eax
 		mov     eax, esi
 		mov     esi, edx
@@ -1373,7 +1373,7 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64gt0lt1()
 {
 	__asm
 	{
-		call    random64
+		call    rand64
 		push    esi
 		mov     esi, edx
 		and     edx, 0x3FFFFFFF
@@ -1382,7 +1382,7 @@ __declspec(naked) uint64_t __msreturn __cdecl internal_randf64gt0lt1()
 		jb      done
 
 	loop1:
-		call    random
+		call    rand32
 		mov     ecx, esi
 		mov     esi, eax
 		and     eax, 0x3FFFFFFF

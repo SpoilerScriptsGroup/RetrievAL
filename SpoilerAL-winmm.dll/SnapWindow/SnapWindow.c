@@ -78,7 +78,7 @@ static __forceinline void InitThunk(THUNK *thunk, LPVOID thisPtr, WNDPROC Window
 #endif
 	thunk->jmp     = 0x00E0FF48;
 #if !SORTED
-	FlushInstructionCache(GetCurrentProcess(), thunk, offsetof(THUNK, jmp) + 3);
+	FlushInstructionCache(GetCurrentProcess(), thunk, sizeof(THUNK));
 #endif
 #endif
 }
@@ -605,10 +605,8 @@ BOOL __fastcall AttachSnapWindow(HWND hWnd)
 		this->Thunk.thisPtr = this;
 #if defined(_M_IX86)
 		this->Thunk.relproc = (ptrdiff_t)WindowProc - (ptrdiff_t)(&this->Thunk.relproc + 1);
-		FlushInstructionCache(process, &this->Thunk, sizeof(THUNK));
-#elif defined(_M_X64)
-		FlushInstructionCache(process, &this->Thunk, offsetof(THUNK, jmp) + 3);
 #endif
+		FlushInstructionCache(process, &this->Thunk, sizeof(THUNK));
 		SetWindowLongPtrA(this->hWnd, GWLP_WNDPROC, (LONG_PTR)&this->Thunk);
 	}
 #endif

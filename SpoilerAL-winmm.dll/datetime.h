@@ -8,6 +8,8 @@
 #define __DATE_YEAR__         1970
 #define __DATE_MONTH__        1
 #define __DATE_DAY__          1
+#define __DATE_DAYOFWEEK__    4
+#define __DATE_DAYOFYEAR__    1
 #define __TIME_HOUR__         9
 #define __TIME_MINUTE__       0
 #define __TIME_SECOND__       0
@@ -18,6 +20,10 @@
 #define __DATE_YYYY__         1970
 #define __DATE_MM__           01
 #define __DATE_DD__           01
+#define __DATE_MMM__          Jan
+#define __DATE_MMMM__         January
+#define __DATE_DDD__          Thu
+#define __DATE_DDDD__         Thursday
 #define __TIME_HH__           09
 #define __TIME_MM__           00
 #define __TIME_SS__           00

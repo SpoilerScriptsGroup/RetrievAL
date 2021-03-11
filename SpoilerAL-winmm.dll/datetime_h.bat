@@ -21,7 +21,7 @@ set env=
 :: assert(11644473600 == (SINCE(1970) - SINCE(1601)) * UINT64_C(DAY_SEC));
 ::
 set command=
-set command=%command% $now = Get-Date -Year 1970 -Month 1 -Day 1 -Hour 9 -Minute 0 -Second 0 -Millisecond 0;
+set command=%command% $now = Get-Date;
 set command=%command% $ft = $now.ToUniversalTime().Ticks - 0x0701CE1722770000;
 set command=%command% $tm = (($ft - $ft %% 10000000) / 10000000) - 11644473600;
 set command=%command% return $now.ToString('yyyyy MM dd MMMM dddd HH mm ss fffffff', [CultureInfo]'en-US') +

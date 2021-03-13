@@ -422,22 +422,25 @@ static __inline BOOL ModifyResourceSection()
 	*(LPWORD)0x00664385 = BSWAP16(0xD653);
 
 	// TGuideForm::REdit
-	//__movsb((unsigned char *)0x00664900,
-	//	"\x06\x09" "MS Gothic"
-	//	"\x09" "Font.Size" "\x03\x0A\x00"// 10pt
-	//	"\x08" "WantTabs"  "\x09"// true
-	//	"\x08" "WordWrap", 43);
-	*(LPDWORD)0x00664900 = BSWAP16(0x0609) | ((DWORD)BSWAP16('MS') << 16);
-	*(LPDWORD)0x00664904 = BSWAP32(' Got');
-	*(LPDWORD)0x00664908 = BSWAP24('hic') | (0x09 << 24);
-	*(LPDWORD)0x0066490C = BSWAP32('Font');
-	*(LPDWORD)0x00664910 = BSWAP32('.Siz');
-	*(LPDWORD)0x00664914 = 'e' | (BSWAP24(0x030A00) << 8);
-	*(LPDWORD)0x00664918 = 0x08 | (BSWAP24('Wan') << 8);
-	*(LPDWORD)0x0066491C = BSWAP32('tTab');
-	*(LPDWORD)0x00664920 = 's' | ((DWORD)BSWAP16(0x0908) << 8) | ((DWORD)'W' << 24);
-	*(LPDWORD)0x00664924 = BSWAP32('ordW');
-	*(LPDWORD)0x00664928 = BSWAP24('rap') | (0x08 << 24);
+	__movsd((unsigned long *)0x00664874, (unsigned long *)(
+		"dit"
+		"\x05" "Align" "\x07\x08" "alClient"                // Align = alClient
+		"\x05" "Color" "\x07\x06" "clNavy"                  // Color = clNavy
+		"\x0C" "Font.Charset" "\x07\x10" "SHIFTJIS_CHARSET" // Font.Charset = SHIFTJIS_CHARSET
+		"\x0A" "Font.Color" "\x07\x08" "clYellow"           // Font.Color = clYellow
+		"\x0B" "Font.Height" "\x02\xF4"                     // Font.Height = -12
+		"\x09" "Font.Name" "\x06\x09" "MS Gothic"           // Font.Name = 'MS Gothic'
+		"\x09" "Font.Size" "\x03\x0A\x00"                   // Font.Size = 10
+		"\x0A" "Font.Style" "\x0B" "\x00"                   // Font.Style = []
+		"\x0A" "ParentFont" "\x08"                          // ParentFont = False
+		"\x09" "PlainText" "\x09"                           // PlainText = True
+		"\x08" "ReadOnly" "\x09"                            // ReadOnly = True
+		"\x0A" "ScrollBars" "\x07\x06" "ssBoth"             // ScrollBars = ssBoth
+		"\x08" "TabOrder" "\x03\x01\x00"                    // TabOrder = 1
+		"\x07" "TabStop" "\x09"                             // TabStop = True
+		"\x08" "WordWrap" "\x08"                            // WordWrap = False
+		"\x00\x00\x06"), 58);
+
 #if 0
 	__movsb((LPBYTE)0x0066530C,
 			"\x09" "TRichEdit"
@@ -459,6 +462,7 @@ static __inline BOOL ModifyResourceSection()
 			"\x09" "PlainText" "\x09"// true
 			, 31);
 #endif
+
 	// TMemorySettingForm::Panel_C.CRCBtn.Caption
 	// "Š“¾" -> "Žæ“¾"
 	*(LPWORD)0x006673D6 = BSWAP16(0xD653);

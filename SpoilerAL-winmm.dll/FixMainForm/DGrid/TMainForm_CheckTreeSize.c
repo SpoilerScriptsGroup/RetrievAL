@@ -31,7 +31,7 @@ void __cdecl TMainForm_CheckTreeSize(TMainForm *this, BOOLEAN AllWidthCheck)
 	unsigned int uShow, uHide;
 	unsigned int FillHeight;
 
-	#define lpszDagger (LPCSTR)0x0060313B
+	#define lpszCross (LPCSTR)0x0060313B
 
 	// cancel recursive call
 	if (InProcessing)
@@ -47,7 +47,7 @@ void __cdecl TMainForm_CheckTreeSize(TMainForm *this, BOOLEAN AllWidthCheck)
 
 	// •¶ŽšƒTƒCƒYŠî€‚Ì’²®
 	BSCanvas = TBitmap_GetCanvas(this->treeBackScreen);
-	GetTextExtentPoint32A(TCanvas_GetHandle(BSCanvas), lpszDagger, 2, &TextSize);
+	GetTextExtentPoint32A(TCanvas_GetHandle(BSCanvas), lpszCross, 2, &TextSize);
 	this->treeFontWidth = TextSize.cx;
 	RowHeight = TextSize.cy + 8;
 	TDrawGrid_SetDefaultRowHeight(this->DGrid, RowHeight);

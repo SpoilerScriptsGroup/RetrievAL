@@ -212,7 +212,7 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 		push    edx                                     ; 00478031 _ 52
 		push    ecx                                     ; 00478032 _ 51
 		push    LB_SETHORIZONTALEXTENT                  ; 00478033 _ 68, 00000194
-		call    TWinControl_GetHandle                   ; 00478038 _ E8, 0010F4CF
+		call    0058750CH (TWinControl_GetHandle)       ; 00478038 _ E8, 0010F4CF
 		push    eax                                     ; 0047803D _ 50
 		call    SendMessageA                            ; 0047803E _ FF. 15, 00654E60(d)
 		jmp     0047808FH                               ; 00478044 _ EB, 49

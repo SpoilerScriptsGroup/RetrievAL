@@ -11,7 +11,7 @@ __declspec(naked) HWND __fastcall TWinControl_GetHandle(LPCVOID WinControl)
 	}
 }
 
-__declspec(naked) int __fastcall TWinControl_GetTextWidth(LPCVOID WinControl, struct bcb6_std_string *s)
+__declspec(naked) int __fastcall TWinControl_GetTextWidth(LPCVOID WinControl, const struct bcb6_std_string *s)
 {
 	extern const DWORD _TWinControl_GetHandle;
 

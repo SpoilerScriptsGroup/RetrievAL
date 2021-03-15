@@ -11,49 +11,52 @@ __declspec(naked) HWND __fastcall TWinControl_GetHandle(LPCVOID WinControl)
 	}
 }
 
-__declspec(naked) int __fastcall TWinControl_GetTextWidth(LPCVOID WinControl, const struct bcb6_std_string *s)
+int __fastcall TWinControl_GetTextWidth(TWinControl *WinControl, const string *s)
 {
-	extern const DWORD _TWinControl_GetHandle;
+	int       iWidth;
+	TResource *FResource;
+	HWND      hWnd;
+	HDC       hDC;
 
-	__asm
+	iWidth = 0;
+	if (WinControl &&
+		WinControl->FFont &&
+		(FResource = WinControl->FFont->FResource) &&
+		(hWnd = TWinControl_GetHandle(WinControl)) &&
+		(hDC = GetDC(WinControl->FHandle)))
 	{
-		push    esi
-		mov     eax, ecx
-		mov     esi, edx
-		sub     esp, 12
-		test    eax, eax
-		jz      epilog
-		call    dword ptr [_TWinControl_GetHandle]
-		test    eax, eax
-		jz      epilog
-		mov     dword ptr [esp + 8], eax
-		push    eax
-		call    GetDC
-		test    eax, eax
-		jz      epilog
-		mov     ecx, dword ptr [esi]
-		mov     edx, dword ptr [esi + 4]
-		sub     edx, ecx
-		mov     esi, eax
-		push    esp
-		push    edx
-		push    ecx
-		push    eax
-		call    GetTextExtentPoint32A
-		test    eax, eax
-		jz      release
-		mov     eax, dword ptr [esp]
-	release:
-		mov     ecx, dword ptr [esp + 8]
-		mov     edx, esi
-		mov     esi, eax
-		push    edx
-		push    ecx
-		call    ReleaseDC
-		mov     eax, esi
-	epilog:
-		add     esp, 12
-		pop     esi
-		ret
+		HFONT hOldFont;
+
+		if (!FResource->Font.Handle)
+			FResource->Font.Handle = CreateFontA(
+				FResource->Font.Height ?
+					FResource->Font.Height < 0 ?
+						FResource->Font.Height - 1 :
+						FResource->Font.Height + 1 :
+					FResource->Font.Height,
+				0,
+				0,
+				0,
+				!FResource->Font.Style.fsBold ? FW_NORMAL : FW_BOLD,
+				FResource->Font.Style.fsItalic,
+				FResource->Font.Style.fsUnderline,
+				FResource->Font.Style.fsStrikeOut,
+				FResource->Font.Charset,
+				OUT_DEFAULT_PRECIS,
+				CLIP_DEFAULT_PRECIS,
+				DEFAULT_QUALITY,
+				FResource->Font.Pitch,
+				FResource->Font.Name.Data);
+		if (FResource->Font.Handle &&
+			(hOldFont = SelectObject(hDC, FResource->Font.Handle)))
+		{
+			SIZE size;
+
+			if (GetTextExtentPoint32A(hDC, string_c_str(s), string_length(s), &size))
+				iWidth = size.cx;
+			SelectObject(hDC, hOldFont);
+		}
+		ReleaseDC(WinControl->FHandle, hDC);
 	}
+	return iWidth;
 }

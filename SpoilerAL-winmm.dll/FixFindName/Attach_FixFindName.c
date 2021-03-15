@@ -42,64 +42,63 @@ EXTERN_C void __cdecl Attach_FixFindName()
 	/*
 		mov     eax, dword ptr [ebp - 580]              ; 0048493A _ 8B. 85, FFFFFDBC
 		mov     edx, dword ptr [ebp - 648]              ; 00484940 _ 8B. 95, FFFFFD78
-		mov     edi, dword ptr [eax]                    ; 00484946 _ 8B. 38
-		lea     ecx, [ebp - 344]                        ; 00484948 _ 8D. 8D, FFFFFEA8
-		mov     dword ptr [ecx], 0                      ; 0048494E _ C7. 01, 00000000
-		call    dword ptr [edi + 12]                    ; 00484954 _ FF. 57, 0C
-		mov     eax, dword ptr [ebp - 344]              ; 00484957 _ 8B. 85, FFFFFEA8
-		test    eax, eax                                ; 0048495D _ 85. C0
-		jz      004849F4H                               ; 0048495F _ 0F 84, 0000008F
-		mov     edx, dword ptr [eax - 4]                ; 00484965 _ 8B. 50, FC
-		mov     ecx, dword ptr [esi + 764]              ; 00484968 _ 8B. 8E, 000002FC
-		add     edx, eax                                ; 0048496E _ 03. D0
-		push    edx                                     ; 00484970 _ 52
-		push    eax                                     ; 00484971 _ 50
-		mov     edx, esp                                ; 00484972 _ 8B. D4
-		call    TWinControl_GetTextWidth                ; 00484974 _ E8, ????????
-		mov     ecx, dword ptr [ebp - 512]              ; 00484979 _ 8B. 8D, FFFFFE00
-		add     esp, 8                                  ; 0048497F _ 83. C4, 08
-		cmp     eax, ecx                                ; 00484982 _ 3B. C1
-		jbe     004849F4H                               ; 00484984 _ 76, 6E
-		mov     dword ptr [ebp - 512], eax              ; 00484986 _ 89. 85, FFFFFE00
-		jmp     004849F4H                               ; 0048498C _ EB, 66
+		mov     dword ptr [ebp - 344], 0                ; 00484946 _ C7. 85, FFFFFEA8, 00000000
+		lea     ecx, [ebp - 344]                        ; 00484950 _ 8D. 8D, FFFFFEA8
+		call    dword ptr [edi + 12]                    ; 00484956 _ FF. 57, 0C
+		mov     eax, dword ptr [ebp - 344]              ; 00484959 _ 8B. 85, FFFFFEA8
+		test    eax, eax                                ; 0048495F _ 85. C0
+		jz      004849F4H                               ; 00484961 _ 0F 84, 0000008D
+		mov     edx, dword ptr [eax - 4]                ; 00484967 _ 8B. 50, FC
+		mov     ecx, dword ptr [esi + 764]              ; 0048496A _ 8B. 8E, 000002FC
+		add     edx, eax                                ; 00484970 _ 03. D0
+		push    edx                                     ; 00484972 _ 52
+		push    eax                                     ; 00484973 _ 50
+		mov     edx, esp                                ; 00484974 _ 8B. D4
+		call    TWinControl_GetTextWidth                ; 00484976 _ E8, ????????
+		mov     ecx, dword ptr [ebp - 512]              ; 0048497B _ 8B. 8D, FFFFFE00
+		add     esp, 8                                  ; 00484981 _ 83. C4, 08
+		cmp     eax, ecx                                ; 00484984 _ 3B. C1
+		jbe     004849F4H                               ; 00484986 _ 76, 6C
+		mov     dword ptr [ebp - 512], eax              ; 00484988 _ 89. 85, FFFFFE00
+		jmp     004849F4H                               ; 0048498E _ EB, 64
 	*/
 	*(LPWORD )0x0048493A = BSWAP16(0x8B85);
 	*(LPDWORD)0x0048493C = BSWAP32(0xBCFDFFFF);
 	*(LPDWORD)0x00484940 = BSWAP32(0x8B9578FD);
-	*(LPDWORD)0x00484944 = BSWAP32(0xFFFF8B38);
-	*(LPDWORD)0x00484948 = BSWAP32(0x8D8DA8FE);
-	*(LPDWORD)0x0048494C = BSWAP32(0xFFFFC701);
-	*(LPDWORD)0x00484950 = BSWAP32(0x00000000);
-	*(LPDWORD)0x00484954 = BSWAP32(0xFF570C8B);
-	*(LPDWORD)0x00484958 = BSWAP32(0x85A8FEFF);
-	*(LPDWORD)0x0048495C = BSWAP32(0xFF85C00F);
-	*(LPDWORD)0x00484960 = BSWAP32(0x848F0000);
-	*(LPDWORD)0x00484964 = BSWAP32(0x008B50FC);
-	*(LPDWORD)0x00484968 = BSWAP32(0x8B8EFC02);
-	*(LPDWORD)0x0048496C = BSWAP32(0x000003D0);
-	*(LPDWORD)0x00484970 = BSWAP32(0x52508BD4);
-	*(LPBYTE )0x00484974 = 0xE8;
-	*(LPDWORD)0x00484975 = (DWORD)TWinControl_GetTextWidth - (0x00484975 + sizeof(DWORD));
-	*(LPBYTE )0x00484979 = 0x8B;
-	*(LPWORD )0x0048497A = BSWAP16(0x8D00);
-	*(LPDWORD)0x0048497C = BSWAP32(0xFEFFFF83);
-	*(LPDWORD)0x00484980 = BSWAP32(0xC4083BC1);
-	*(LPDWORD)0x00484984 = BSWAP32(0x766E8985);
-	*(LPDWORD)0x00484988 = BSWAP32(0x00FEFFFF);
-	*(LPDWORD)0x0048498C = BSWAP32(0xEB669090);
+	*(LPDWORD)0x00484944 = BSWAP32(0xFFFFC785);
+	*(LPDWORD)0x00484948 = BSWAP32(0xA8FEFFFF);
+	*(LPDWORD)0x0048494C = BSWAP32(0x00000000);
+	*(LPDWORD)0x00484950 = BSWAP32(0x8D8DA8FE);
+	*(LPDWORD)0x00484954 = BSWAP32(0xFFFFFF57);
+	*(LPDWORD)0x00484958 = BSWAP32(0x0C8B85A8);
+	*(LPDWORD)0x0048495C = BSWAP32(0xFEFFFF85);
+	*(LPDWORD)0x00484960 = BSWAP32(0xC00F848D);
+	*(LPDWORD)0x00484964 = BSWAP32(0x0000008B);
+	*(LPDWORD)0x00484968 = BSWAP32(0x50FC8B8E);
+	*(LPDWORD)0x0048496C = BSWAP32(0xFC020000);
+	*(LPDWORD)0x00484970 = BSWAP32(0x03D05250);
+	*(LPWORD )0x00484974 = BSWAP16(0x8BD4);
+	*(LPBYTE )0x00484976 = 0xE8;
+	*(LPDWORD)0x00484977 = (DWORD)TWinControl_GetTextWidth - (0x00484977 + sizeof(DWORD));
+	*(LPBYTE )0x0048497B = 0x8B;
+	*(LPDWORD)0x0048497C = BSWAP32(0x8D00FEFF);
+	*(LPDWORD)0x00484980 = BSWAP32(0xFF83C408);
+	*(LPDWORD)0x00484984 = BSWAP32(0x3BC1766C);
+	*(LPDWORD)0x00484988 = BSWAP32(0x898500FE);
+	*(LPDWORD)0x0048498C = BSWAP32(0xFFFFEB64);
 
 	// findMode = 0;
-	// SendMessageA(FindLBox->Handle, LB_SETHORIZONTALEXTENT, StrSize + 20, 0);
+	// SendMessageA(FindLBox->Handle, LB_SETHORIZONTALEXTENT, StrSize + 2, 0);
 	/*
 		xor     edx, edx                                ; 00484E01 _ 33. D2
 		mov     ecx, dword ptr [ebp - 512]              ; 00484E03 _ 8B. 8D, FFFFFE00
 		mov     eax, dword ptr [esi + 764]              ; 00484E09 _ 8B. 86, 000002FC
-		add     ecx, 20                                 ; 00484E0F _ 83. C1, 14
+		add     ecx, 20                                 ; 00484E0F _ 83. C1, 02
 		mov     dword ptr [esi + 784], edx              ; 00484E12 _ 89. 96, 00000310
 		push    edx                                     ; 00484E18 _ 52
 		push    ecx                                     ; 00484E19 _ 51
 		push    LB_SETHORIZONTALEXTENT                  ; 00484E1A _ 68, 00000194
-		call    0058750CH (TWinControl_GetHandle)       ; 00484E1F _ E8, 001026E8
+		call    0058750CH   ; (TWinControl_GetHandle)   ; 00484E1F _ E8, 001026E8
 		push    eax                                     ; 00484E24 _ 50
 		call    SendMessageA                            ; 00484E25 _ FF. 15, 00654E60(d)
 		jmp     00484E76H                               ; 00484E2B _ EB, 49
@@ -108,7 +107,7 @@ EXTERN_C void __cdecl Attach_FixFindName()
 	*(LPDWORD)0x00484E04 = BSWAP32(0x8D00FEFF);
 	*(LPDWORD)0x00484E08 = BSWAP32(0xFF8B86FC);
 	*(LPDWORD)0x00484E0C = BSWAP32(0x02000083);
-	*(LPDWORD)0x00484E10 = BSWAP32(0xC1148996);
+	*(LPDWORD)0x00484E10 = BSWAP32(0xC1028996);
 	*(LPDWORD)0x00484E14 = BSWAP32(0x10030000);
 	*(LPDWORD)0x00484E18 = BSWAP32(0x52516894);
 	*(LPDWORD)0x00484E1C = BSWAP32(0x010000E8);

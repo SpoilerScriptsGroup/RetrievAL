@@ -88,34 +88,36 @@ EXTERN_C void __cdecl Attach_FixFindName()
 	*(LPDWORD)0x0048498C = BSWAP32(0xFFFFEB64);
 
 	// findMode = 0;
-	// SendMessageA(FindLBox->Handle, LB_SETHORIZONTALEXTENT, StrSize + 2, 0);
+	// SendMessageA(FindLBox->Handle, LB_SETHORIZONTALEXTENT, StrSize + (StrSize ? 2 : 0), 0);
 	/*
-		xor     edx, edx                                ; 00484E01 _ 33. D2
-		mov     ecx, dword ptr [ebp - 512]              ; 00484E03 _ 8B. 8D, FFFFFE00
-		mov     eax, dword ptr [esi + 764]              ; 00484E09 _ 8B. 86, 000002FC
-		add     ecx, 20                                 ; 00484E0F _ 83. C1, 02
-		mov     dword ptr [esi + 784], edx              ; 00484E12 _ 89. 96, 00000310
-		push    edx                                     ; 00484E18 _ 52
-		push    ecx                                     ; 00484E19 _ 51
-		push    LB_SETHORIZONTALEXTENT                  ; 00484E1A _ 68, 00000194
-		call    0058750CH   ; (TWinControl_GetHandle)   ; 00484E1F _ E8, 001026E8
-		push    eax                                     ; 00484E24 _ 50
-		call    SendMessageA                            ; 00484E25 _ FF. 15, 00654E60(d)
-		jmp     00484E76H                               ; 00484E2B _ EB, 49
+		mov     ecx, dword ptr [ebp - 512]              ; 00484E01 _ 8B. 8D, FFFFFE00
+		mov     eax, dword ptr [esi + 764]              ; 00484E07 _ 8B. 86, 000002FC
+		test    ecx, ecx                                ; 00484E0D _ 85. C9
+		jz      00484E10H                               ; 00484E0F _ 74, 03
+		add     ecx, 2                                  ; 00484E11 _ 83. C1, 02
+		xor     edx, edx                                ; 00484E14 _ 33. D2
+		mov     dword ptr [esi + 784], edx              ; 00484E16 _ 89. 96, 00000310
+		push    edx                                     ; 00484E1C _ 52
+		push    ecx                                     ; 00484E1D _ 51
+		push    LB_SETHORIZONTALEXTENT                  ; 00484E1E _ 68, 00000194
+		call    0058750CH   ; (TWinControl_GetHandle)   ; 00484E23 _ E8, 001026E4
+		push    eax                                     ; 00484E28 _ 50
+		call    SendMessageA                            ; 00484E29 _ FF. 15, 00654E60(d)
+		jmp     00484E76H                               ; 00484E2F _ EB, 45
 	*/
-	*(LPDWORD)0x00484E00 = BSWAP32(0xFF33D28B);
-	*(LPDWORD)0x00484E04 = BSWAP32(0x8D00FEFF);
-	*(LPDWORD)0x00484E08 = BSWAP32(0xFF8B86FC);
-	*(LPDWORD)0x00484E0C = BSWAP32(0x02000083);
-	*(LPDWORD)0x00484E10 = BSWAP32(0xC1028996);
-	*(LPDWORD)0x00484E14 = BSWAP32(0x10030000);
-	*(LPDWORD)0x00484E18 = BSWAP32(0x52516894);
-	*(LPDWORD)0x00484E1C = BSWAP32(0x010000E8);
-	*(LPDWORD)0x00484E20 = BSWAP32(0xE8261000);
-	*(LPDWORD)0x00484E24 = BSWAP32(0x50FF1560);
-	*(LPDWORD)0x00484E28 = BSWAP32(0x4E6500EB);
-	*(LPDWORD)0x00484E2C = BSWAP32(0x49909090);
-	*(LPWORD )0x00484E30 = BSWAP16(0x9090);
+	*(LPDWORD)0x00484E00 = BSWAP32(0xFF8B8D00);
+	*(LPDWORD)0x00484E04 = BSWAP32(0xFEFFFF8B);
+	*(LPDWORD)0x00484E08 = BSWAP32(0x86FC0200);
+	*(LPDWORD)0x00484E0C = BSWAP32(0x0085C974);
+	*(LPDWORD)0x00484E10 = BSWAP32(0x0383C102);
+	*(LPDWORD)0x00484E14 = BSWAP32(0x33D28996);
+	*(LPDWORD)0x00484E18 = BSWAP32(0x10030000);
+	*(LPDWORD)0x00484E1C = BSWAP32(0x52516894);
+	*(LPDWORD)0x00484E20 = BSWAP32(0x010000E8);
+	*(LPDWORD)0x00484E24 = BSWAP32(0xE4261000);
+	*(LPDWORD)0x00484E28 = BSWAP32(0x50FF1560);
+	*(LPDWORD)0x00484E2C = BSWAP32(0x4E6500EB);
+	*(LPWORD )0x00484E30 = BSWAP16(0x4590);
 
 	// TFindNameForm::EnumSubjectNameFind
 	// if (StrSize < (i = TWinControl_GetTextWidth(FindLBox, &Name))) StrSize = i;

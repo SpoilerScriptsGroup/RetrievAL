@@ -135,37 +135,41 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	*(LPDWORD)0x00474D80 = BSWAP32(0xA5000000);
 	*(LPBYTE )0x00474D84 = 0x90;
 
-	// KeyDGrid->DefaultColWidth = KeyLength + 2;
+	// KeyDGrid->DefaultColWidth = KeyLength + (KeyLength ? 2 : 0);
 	/*
 		mov     edx, dword ptr [ebp - 544]              ; 00474EB5 _ 8B. 95, FFFFFDE0
 		mov     eax, dword ptr [esi + 828]              ; 00474EBB _ 8B. 86, 0000033C
-		add     edx, 20                                 ; 00474EC1 _ 83. C2, 02
-		call    0055902CH                               ; 00474EC4 _ E8, 000E4163
-		jmp     00474F07H                               ; 00474EC9 _ EB, 3C
+		test    edx, edx                                ; 00474EC1 _ 85. D2
+		jz      00474EC8H                               ; 00474EC3 _ 74, 03
+		add     edx, 2                                  ; 00474EC5 _ 83. C2, 02
+		call    0055902CH                               ; 00474EC8 _ E8, 000E415F
+		jmp     00474F07H                               ; 00474ECD _ EB, 38
 	*/
 	*(LPDWORD)0x00474EB4 = BSWAP32(0x018B95E0);
 	*(LPDWORD)0x00474EB8 = BSWAP32(0xFDFFFF8B);
 	*(LPDWORD)0x00474EBC = BSWAP32(0x863C0300);
-	*(LPDWORD)0x00474EC0 = BSWAP32(0x0083C202);
-	*(LPDWORD)0x00474EC4 = BSWAP32(0xE863410E);
-	*(LPDWORD)0x00474EC8 = BSWAP32(0x00EB3C90);
-	*(LPDWORD)0x00474ECC = BSWAP32(0x90909090);
+	*(LPDWORD)0x00474EC0 = BSWAP32(0x0085D274);
+	*(LPDWORD)0x00474EC4 = BSWAP32(0x0383C202);
+	*(LPDWORD)0x00474EC8 = BSWAP32(0xE85F410E);
+	*(LPDWORD)0x00474ECC = BSWAP32(0x00EB3890);
 
-	// TitleDGrid->DefaultColWidth = TitleLength + 2;
+	// TitleDGrid->DefaultColWidth = TitleLength + (TitleLength ? 2 : 0);
 	/*
 		mov     edx, dword ptr [ebp - 548]              ; 00474F41 _ 8B. 95, FFFFFDDC
 		mov     eax, dword ptr [esi + 824]              ; 00474F47 _ 8B. 86, 00000338
-		add     edx, 20                                 ; 00474F4D _ 83. C2, 02
-		call    0055902CH                               ; 00474F50 _ E8, 000E40D7
-		jmp     00474F93H                               ; 00474F55 _ EB, 3C
+		test    edx, edx                                ; 00474F4D _ 85. D2
+		jz      00474F54H                               ; 00474F4F _ 74, 03
+		add     edx, 2                                  ; 00474F51 _ 83. C2, 02
+		call    0055902CH                               ; 00474F54 _ E8, 000E40D3
+		jmp     00474F93H                               ; 00474F59 _ EB, 38
 	*/
 	*(LPDWORD)0x00474F40 = BSWAP32(0x018B95DC);
 	*(LPDWORD)0x00474F44 = BSWAP32(0xFDFFFF8B);
 	*(LPDWORD)0x00474F48 = BSWAP32(0x86380300);
-	*(LPDWORD)0x00474F4C = BSWAP32(0x0083C202);
-	*(LPDWORD)0x00474F50 = BSWAP32(0xE8D7400E);
-	*(LPDWORD)0x00474F54 = BSWAP32(0x00EB3C90);
-	*(LPDWORD)0x00474F58 = BSWAP32(0x90909090);
+	*(LPDWORD)0x00474F4C = BSWAP32(0x0085D274);
+	*(LPDWORD)0x00474F50 = BSWAP32(0x0383C202);
+	*(LPDWORD)0x00474F54 = BSWAP32(0xE8D3400E);
+	*(LPDWORD)0x00474F58 = BSWAP32(0x00EB3890);
 
 	// TTitleSelectForm::CnvString
 	*(LPBYTE )0x00476940 = JMP_REL32;
@@ -202,33 +206,36 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	*(LPBYTE )0x00477CA4 = 0x90;
 
 	// findMode = 0;
-	// SendMessageA(FindLBox->Handle, LB_SETHORIZONTALEXTENT, StrSize + 2, 0);
+	// SendMessageA(FindLBox->Handle, LB_SETHORIZONTALEXTENT, StrSize + (StrSize ? 2 : 0), 0);
 	/*
-		xor     edx, edx                                ; 0047801A _ 33. D2
-		mov     ecx, dword ptr [ebp - 408]              ; 0047801C _ 8B. 8D, FFFFFE68
-		mov     eax, dword ptr [ebx + 816]              ; 00478022 _ 8B. 83, 00000330
-		add     ecx, 20                                 ; 00478028 _ 83. C1, 02
-		mov     dword ptr [ebx + 888], edx              ; 0047802B _ 89. 93, 00000378
-		push    edx                                     ; 00478031 _ 52
-		push    ecx                                     ; 00478032 _ 51
-		push    LB_SETHORIZONTALEXTENT                  ; 00478033 _ 68, 00000194
-		call    0058750CH   ; (TWinControl_GetHandle)   ; 00478038 _ E8, 0010F4CF
-		push    eax                                     ; 0047803D _ 50
-		call    SendMessageA                            ; 0047803E _ FF. 15, 00654E60(d)
-		jmp     0047808FH                               ; 00478044 _ EB, 49
+		mov     ecx, dword ptr [ebp - 408]              ; 0047801A _ 8B. 8D, FFFFFE68
+		mov     eax, dword ptr [ebx + 816]              ; 00478020 _ 8B. 83, 00000330
+		test    ecx, ecx                                ; 00478026 _ 85. C9
+		jz      00478029H                               ; 00478028 _ 74, 03
+		add     ecx, 2                                  ; 0047802A _ 83. C1, 02
+		xor     edx, edx                                ; 0047802D _ 33. D2
+		mov     dword ptr [ebx + 888], edx              ; 0047802F _ 89. 93, 00000378
+		push    edx                                     ; 00478035 _ 52
+		push    ecx                                     ; 00478036 _ 51
+		push    LB_SETHORIZONTALEXTENT                  ; 00478037 _ 68, 00000194
+		call    0058750CH   ; (TWinControl_GetHandle)   ; 0047803C _ E8, 0010F4CB
+		push    eax                                     ; 00478041 _ 50
+		call    SendMessageA                            ; 00478042 _ FF. 15, 00654E60(d)
+		jmp     0047808FH                               ; 00478048 _ EB, 45
 	*/
-	*(LPDWORD)0x0047801C = BSWAP32(0x8B8D68FE);
-	*(LPDWORD)0x00478020 = BSWAP32(0xFFFF8B83);
-	*(LPDWORD)0x00478024 = BSWAP32(0x30030000);
-	*(LPDWORD)0x00478028 = BSWAP32(0x83C10289);
-	*(LPDWORD)0x0047802C = BSWAP32(0x93780300);
-	*(LPDWORD)0x00478030 = BSWAP32(0x00525168);
-	*(LPDWORD)0x00478034 = BSWAP32(0x94010000);
-	*(LPDWORD)0x00478038 = BSWAP32(0xE8CFF410);
-	*(LPDWORD)0x0047803C = BSWAP32(0x0050FF15);
-	*(LPDWORD)0x00478040 = BSWAP32(0x604E6500);
-	*(LPDWORD)0x00478044 = BSWAP32(0xEB499090);
-	*(LPDWORD)0x00478048 = BSWAP32(0x9090908B);
+	*(LPWORD )0x0047801A = BSWAP16(0x8B8D);
+	*(LPDWORD)0x0047801C = BSWAP32(0x68FEFFFF);
+	*(LPDWORD)0x00478020 = BSWAP32(0x8B833003);
+	*(LPDWORD)0x00478024 = BSWAP32(0x000085C9);
+	*(LPDWORD)0x00478028 = BSWAP32(0x740383C1);
+	*(LPDWORD)0x0047802C = BSWAP32(0x0233D289);
+	*(LPDWORD)0x00478030 = BSWAP32(0x93780300);
+	*(LPDWORD)0x00478034 = BSWAP32(0x00525168);
+	*(LPDWORD)0x00478038 = BSWAP32(0x94010000);
+	*(LPDWORD)0x0047803C = BSWAP32(0xE8CBF410);
+	*(LPDWORD)0x00478040 = BSWAP32(0x0050FF15);
+	*(LPDWORD)0x00478044 = BSWAP32(0x604E6500);
+	*(LPDWORD)0x00478048 = BSWAP32(0xEB45908B);
 
 	// TTitleSelectForm::TitleDGridMouseMove
 	/*

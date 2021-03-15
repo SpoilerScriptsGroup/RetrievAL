@@ -301,30 +301,32 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*/
 	*(LPBYTE )0x0043A67C = 0x8F;
 
-    // SendMessageA(ListLBox->Handle, LB_SETHORIZONTALEXTENT, StrSize + 2, 0);
+    // SendMessageA(ListLBox->Handle, LB_SETHORIZONTALEXTENT, StrSize + (StrSize ? 2 : 0), 0);
 	/*
 		mov     ecx, dword ptr [ebp - 748]              ; 0043A68E _ 8B. 8D, FFFFFD14
 		mov     eax, dword ptr [ebx + 1000]             ; 0043A694 _ 8B. 83, 000003E8
-		add     ecx, 20                                 ; 0043A69A _ 83. C1, 02
-		push    0                                       ; 0043A69D _ 6A, 00
-		push    ecx                                     ; 0043A69F _ 51
-		push    LB_SETHORIZONTALEXTENT                  ; 0043A6A0 _ 68, 00000194
-		call    0058750CH   ; (TWinControl_GetHandle)   ; 0043A6A5 _ E8, 0014CE62
-		push    eax                                     ; 0043A6AA _ 50
-		call    SendMessageA                            ; 0043A6AB _ FF. 15, 00654E60(d)
-		jmp     0043A6F7H                               ; 0043A6B1 _ EB, 44
+		test    ecx, ecx                                ; 0043A69A _ 85. C9
+		jz      0043A6A1H                               ; 0043A69C _ 74, 03
+		add     ecx, 2                                  ; 0043A69E _ 83. C1, 02
+		push    0                                       ; 0043A6A1 _ 6A, 00
+		push    ecx                                     ; 0043A6A3 _ 51
+		push    LB_SETHORIZONTALEXTENT                  ; 0043A6A4 _ 68, 00000194
+		call    0058750CH   ; (TWinControl_GetHandle)   ; 0043A6A9 _ E8, 0014CE5E
+		push    eax                                     ; 0043A6AE _ 50
+		call    SendMessageA                            ; 0043A6AF _ FF. 15, 00654E60(d)
+		jmp     0043A6F7H                               ; 0043A6B5 _ EB, 40
 	*/
 	*(LPWORD )0x0043A68E = BSWAP16(0x8B8D);
 	*(LPDWORD)0x0043A690 = BSWAP32(0x14FDFFFF);
 	*(LPDWORD)0x0043A694 = BSWAP32(0x8B83E803);
-	*(LPDWORD)0x0043A698 = BSWAP32(0x000083C1);
-	*(LPDWORD)0x0043A69C = BSWAP32(0x026A0051);
-	*(LPDWORD)0x0043A6A0 = BSWAP32(0x68940100);
-	*(LPDWORD)0x0043A6A4 = BSWAP32(0x00E862CE);
-	*(LPDWORD)0x0043A6A8 = BSWAP32(0x140050FF);
-	*(LPDWORD)0x0043A6AC = BSWAP32(0x15604E65);
-	*(LPDWORD)0x0043A6B0 = BSWAP32(0x00EB4490);
-	*(LPWORD )0x0043A6B4 = BSWAP16(0x909090E8);
+	*(LPDWORD)0x0043A698 = BSWAP32(0x000085C9);
+	*(LPDWORD)0x0043A69C = BSWAP32(0x740383C1);
+	*(LPDWORD)0x0043A6A0 = BSWAP32(0x026A0051);
+	*(LPDWORD)0x0043A6A4 = BSWAP32(0x68940100);
+	*(LPDWORD)0x0043A6A8 = BSWAP32(0x00E85ECE);
+	*(LPDWORD)0x0043A6AC = BSWAP32(0x140050FF);
+	*(LPDWORD)0x0043A6B0 = BSWAP32(0x15604E65);
+	*(LPDWORD)0x0043A6B4 = BSWAP32(0x00EB40E8);
 
 	*(LPWORD )0x0043A88E = BSWAP16(0x8B8B);// mov ecx, dword ptr [ebx + ...
 	*(LPDWORD)0x0043A890 = offsetof(TMainForm, selectSubject);
@@ -365,30 +367,32 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*/
 	*(LPBYTE )0x0043B2D4 = 0x8F;
 
-    // SendMessageA(MultiLBox->Handle, LB_SETHORIZONTALEXTENT, StrSize + 2, 0);
+    // SendMessageA(MultiLBox->Handle, LB_SETHORIZONTALEXTENT, StrSize + (StrSize ? 2 : 0), 0);
 	/*
 		mov     ecx, dword ptr [ebp - 988]              ; 0043C963 _ 8B. 8D, FFFFFC24
 		mov     eax, dword ptr [ebx + 996]              ; 0043C969 _ 8B. 83, 000003E4
-		add     ecx, 20                                 ; 0043C96F _ 83. C1, 02
-		push    0                                       ; 0043C972 _ 6A, 00
-		push    ecx                                     ; 0043C974 _ 51
-		push    LB_SETHORIZONTALEXTENT                  ; 0043C975 _ 68, 00000194
-		call    0058750CH   ; (TWinControl_GetHandle)   ; 0043C97A _ E8, 0014AB8D
-		push    eax                                     ; 0043C97F _ 50
-		call    SendMessageA                            ; 0043C980 _ FF. 15, 00654E60(d)
-		jmp     0043C9CFH                               ; 0043C986 _ EB, 47
+		test    ecx, ecx                                ; 0043C96F _ 85. C9
+		jz      0043C973H                               ; 0043C971 _ 74, 03
+		add     ecx, 2                                  ; 0043C973 _ 83. C1, 02
+		push    0                                       ; 0043C976 _ 6A, 00
+		push    ecx                                     ; 0043C978 _ 51
+		push    LB_SETHORIZONTALEXTENT                  ; 0043C979 _ 68, 00000194
+		call    0058750CH   ; (TWinControl_GetHandle)   ; 0043C97E _ E8, 0014AB89
+		push    eax                                     ; 0043C983 _ 50
+		call    SendMessageA                            ; 0043C984 _ FF. 15, 00654E60(d)
+		jmp     0043C9CFH                               ; 0043C98A _ EB, 43
 	*/
 	*(LPBYTE )0x0043C963 = 0x8B;
 	*(LPDWORD)0x0043C964 = BSWAP32(0x8D24FCFF);
 	*(LPDWORD)0x0043C968 = BSWAP32(0xFF8B83E4);
-	*(LPDWORD)0x0043C96C = BSWAP32(0x03000083);
-	*(LPDWORD)0x0043C970 = BSWAP32(0xC1026A00);
-	*(LPDWORD)0x0043C974 = BSWAP32(0x51689401);
-	*(LPDWORD)0x0043C978 = BSWAP32(0x0000E88D);
-	*(LPDWORD)0x0043C97C = BSWAP32(0xAB140050);
-	*(LPDWORD)0x0043C980 = BSWAP32(0xFF15604E);
-	*(LPDWORD)0x0043C984 = BSWAP32(0x6500EB47);
-	*(LPDWORD)0x0043C988 = BSWAP32(0x90909090);
+	*(LPDWORD)0x0043C96C = BSWAP32(0x03000085);
+	*(LPDWORD)0x0043C970 = BSWAP32(0xC9740383);
+	*(LPDWORD)0x0043C974 = BSWAP32(0xC1026A00);
+	*(LPDWORD)0x0043C978 = BSWAP32(0x51689401);
+	*(LPDWORD)0x0043C97C = BSWAP32(0x0000E889);
+	*(LPDWORD)0x0043C980 = BSWAP32(0xAB140050);
+	*(LPDWORD)0x0043C984 = BSWAP32(0xFF15604E);
+	*(LPDWORD)0x0043C988 = BSWAP32(0x6500EB43);
 
 	// TMainForm::ToggleCBoxClick
 	*(LPBYTE )0x0043D52D = CALL_REL32;

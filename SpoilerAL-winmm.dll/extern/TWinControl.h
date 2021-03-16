@@ -2,7 +2,6 @@
 
 #include "TControl.h"
 #include "TCanvas.h"
-#include "bcb6_std_string.h"
 
 typedef struct BevelEdges
 {
@@ -293,4 +292,3 @@ typedef struct Form
 #pragma pack(pop)
 
 EXTERN_C HWND __fastcall TWinControl_GetHandle(LPCVOID WinControl);
-EXTERN_C int __fastcall TWinControl_GetTextWidth(LPCVOID WinControl, const bcb6_std_string *s);

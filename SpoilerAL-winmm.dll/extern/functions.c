@@ -17,6 +17,7 @@ const DWORD F00469A5C                     = 0x00469A5C;
 const DWORD F0048292C                     = 0x0048292C;
 const DWORD F00483678                     = 0x00483678;
 const DWORD F004836B4                     = 0x004836B4;
+const DWORD _TFindNameForm_FormClose      = 0x00483ABC;
 const DWORD F0048C1F8                     = 0x0048C1F8;
 const DWORD F0048E0D8                     = 0x0048E0D8;
 const DWORD F0048FA48                     = 0x0048FA48;

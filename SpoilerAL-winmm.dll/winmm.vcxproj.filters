@@ -1305,6 +1305,9 @@
     <ClCompile Include="FixFindName\TFindNameForm_FindStartBtnClick_FixGetSelectSubject.c">
       <Filter>FixFindName</Filter>
     </ClCompile>
+    <ClCompile Include="FixFindName\TFindNameForm_FormClose.c">
+      <Filter>FixFindName</Filter>
+    </ClCompile>
     <ClCompile Include="FixGetDistractionString\Attach_FixGetDistractionString.c">
       <Filter>FixGetDistractionString</Filter>
     </ClCompile>
@@ -1421,6 +1424,9 @@
     </ClCompile>
     <ClCompile Include="FixMainForm\DGrid\TSSGSubject_Write_WithDrawTree.c">
       <Filter>FixMainForm\DGrid</Filter>
+    </ClCompile>
+    <ClCompile Include="FixMainForm\GetTextWidth.c">
+      <Filter>FixMainForm</Filter>
     </ClCompile>
     <ClCompile Include="FixMainForm\MainForm\TMainForm_CalcButtonPushFunc.c">
       <Filter>FixMainForm\MainForm</Filter>
@@ -1546,6 +1552,12 @@
       <Filter>FixTitleSelectForm</Filter>
     </ClCompile>
     <ClCompile Include="FixTitleSelectForm\LCMapStringJISX0213.c">
+      <Filter>FixTitleSelectForm</Filter>
+    </ClCompile>
+    <ClCompile Include="FixTitleSelectForm\TTitleSelectForm_FormClose.c">
+      <Filter>FixTitleSelectForm</Filter>
+    </ClCompile>
+    <ClCompile Include="FixTitleSelectForm\TTitleSelectForm_FormCreate.c">
       <Filter>FixTitleSelectForm</Filter>
     </ClCompile>
     <ClCompile Include="FixToggleByteArray\Attach_FixToggleByteArray.c">

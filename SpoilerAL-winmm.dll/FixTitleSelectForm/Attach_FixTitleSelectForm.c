@@ -4,6 +4,10 @@
 #include "TTitleSelectForm.h"
 #include "TFindNameForm.h"
 
+EXTERN_C int __fastcall GetTextWidth(TWinControl *WinControl, const string *s);
+EXTERN_C void __cdecl TTitleSelectForm_FormCreate();
+EXTERN_C void __cdecl TTitleSelectForm_FormClose();
+
 static void __fastcall TTitleSelectForm_FindSSG_DistractionVec_ctor(vector_string *const DistractionVec)
 {
 	*DistractionVec = *MainForm->DistractionVec;
@@ -52,12 +56,12 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	// TTitleSelectForm::SortCmbBoxChange
 	*(LPDWORD)0x00473D63 = (DWORD)TTitleSelectForm_SortFunc;
 
-	// if (TitleLength < (i = TWinControl_GetTextWidth(TitleDGrid, &it->GetTitle()))) TitleLength = i;
+	// if (TitleLength < (i = GetTextWidth(TitleDGrid, &it->GetTitle()))) TitleLength = i;
 	/*
 		add     esp, 12                                 ; 0047429A _ 83. C4, 0C
 		lea     edx, [ebp - 84]                         ; 0047429D _ 8D. 55, AC
 		mov     ecx, dword ptr [esi + 824]              ; 004742A0 _ 8B. 8E, 00000338
-		call    TWinControl_GetTextWidth                ; 004742A6 _ E8, ????????
+		call    GetTextWidth                            ; 004742A6 _ E8, ????????
 		cmp     eax, dword ptr [ebp - 548]              ; 004742AB _ 3B. 85, FFFFFDDC
 		jbe     004742CEH                               ; 004742B1 _ 76, 1B
 		mov     dword ptr [ebp - 548], eax              ; 004742B3 _ 89. 85, FFFFFDDC
@@ -68,7 +72,7 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	*(LPDWORD)0x004742A0 = BSWAP32(0x8B8E3803);
 	*(LPWORD )0x004742A4 = BSWAP16(0x0000);
 	*(LPBYTE )0x004742A6 = 0xE8;
-	*(LPDWORD)0x004742A7 = (DWORD)TWinControl_GetTextWidth - (0x004742A7 + sizeof(DWORD));
+	*(LPDWORD)0x004742A7 = (DWORD)GetTextWidth - (0x004742A7 + sizeof(DWORD));
 	*(LPBYTE )0x004742AB = 0x3B;
 	*(LPDWORD)0x004742AC = BSWAP32(0x85DCFDFF);
 	*(LPDWORD)0x004742B0 = BSWAP32(0xFF761B89);
@@ -81,11 +85,11 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	*(LPWORD )0x00474306 = BSWAP16(0xE9AD);
 	*(LPDWORD)0x00474308 = BSWAP32(0x00000090);
 
-	// if(KeyLength < (i = TWinControl_GetTextWidth(KeyDGrid, &tmpKey))) KeyLength = i;
+	// if(KeyLength < (i = GetTextWidth(KeyDGrid, &tmpKey))) KeyLength = i;
 	/*
 		mov     ecx, dword ptr [esi + 828]              ; 00474A28 _ 8B. 8E, 0000033C
 		lea     edx, [ebp - 48]                         ; 00474A2E _ 8D. 55, D0
-		call    TWinControl_GetTextWidth                ; 00474A31 _ E8, ????????
+		call    GetTextWidth                            ; 00474A31 _ E8, ????????
 		cmp     eax, dword ptr [ebp - 544]              ; 00474A36 _ 3B. 85, FFFFFDE0
 		jbe     00474A45H                               ; 00474A3C _ 76, 07
 		mov     dword ptr [ebp - 544], eax              ; 00474A3E _ 89. 85, FFFFFDE0
@@ -96,7 +100,7 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	*(LPDWORD)0x00474A28 = BSWAP32(0x8B8E3C03);
 	*(LPDWORD)0x00474A2C = BSWAP32(0x00008D55);
 	*(LPWORD )0x00474A30 = BSWAP16(0xD0E8);
-	*(LPDWORD)0x00474A32 = (DWORD)TWinControl_GetTextWidth - (0x00474A32 + sizeof(DWORD));
+	*(LPDWORD)0x00474A32 = (DWORD)GetTextWidth - (0x00474A32 + sizeof(DWORD));
 	*(LPWORD )0x00474A36 = BSWAP16(0x3B85);
 	*(LPDWORD)0x00474A38 = BSWAP32(0xE0FDFFFF);
 	*(LPDWORD)0x00474A3C = BSWAP32(0x76078985);
@@ -104,12 +108,12 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	*(LPDWORD)0x00474A44 = BSWAP32(0x908D45D0);
 	*(LPDWORD)0x00474A48 = BSWAP32(0x8D48AC3B);
 
-	// if (TitleLength < (i = TWinControl_GetTextWidth(TitleDGrid, &it->GetTitle()))) TitleLength = i;
+	// if (TitleLength < (i = GetTextWidth(TitleDGrid, &it->GetTitle()))) TitleLength = i;
 	/*
 		add     esp, 12                                 ; 00474D07 _ 83. C4, 0C
 		lea     edx, [ebp - 264]                        ; 00474D0A _ 8D. 95, FFFFFEF8
 		mov     ecx, dword ptr [esi + 824]              ; 00474D10 _ 8B. 8E, 00000338
-		call    TWinControl_GetTextWidth                ; 00474D16 _ E8, ????????
+		call    GetTextWidth                            ; 00474D16 _ E8, ????????
 		cmp     eax, dword ptr [ebp - 548]              ; 00474D1B _ 3B. 85, FFFFFDDC
 		jbe     00474D3EH                               ; 00474D21 _ 76, 1B
 		mov     dword ptr [ebp - 548], eax              ; 00474D23 _ 89. 85, FFFFFDDC
@@ -121,7 +125,7 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	*(LPDWORD)0x00474D10 = BSWAP32(0x8B8E3803);
 	*(LPWORD )0x00474D14 = BSWAP16(0x0000);
 	*(LPBYTE )0x00474D16 = 0xE8;
-	*(LPDWORD)0x00474D17 = (DWORD)TWinControl_GetTextWidth - (0x00474D17 + sizeof(DWORD));
+	*(LPDWORD)0x00474D17 = (DWORD)GetTextWidth - (0x00474D17 + sizeof(DWORD));
 	*(LPBYTE )0x00474D1B = 0x3B;
 	*(LPDWORD)0x00474D1C = BSWAP32(0x85DCFDFF);
 	*(LPDWORD)0x00474D20 = BSWAP32(0xFF761B89);
@@ -177,12 +181,12 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	*(LPBYTE )0x00476945 = NOP;
 
 	// TTitleSelectForm::FindEditChange
-	// if (StrSize < (i = TWinControl_GetTextWidth(FindLBox, &toScriptVec->at(i)->GetTitle()))) StrSize = i;
+	// if (StrSize < (i = GetTextWidth(FindLBox, &toScriptVec->at(i)->GetTitle()))) StrSize = i;
 	/*
 		add     esp, 12                                 ; 00477C10 _ 83. C4, 0C
 		lea     edx, [ebp - 208]                        ; 00477C13 _ 8D. 95, FFFFFF30
 		mov     ecx, dword ptr [ebx + 816]              ; 00477C19 _ 8B. 8B, 00000330
-		call    TWinControl_GetTextWidth                ; 00477C1F _ E8, ????????
+		call    GetTextWidth                            ; 00477C1F _ E8, ????????
 		cmp     eax, dword ptr [ebp - 408]              ; 00477C24 _ 3B. 85, FFFFFE68
 		jbe     00477C47H                               ; 00477C2A _ 76, 1B
 		mov     dword ptr [ebp - 408], eax              ; 00477C2C _ 89. 85, FFFFFE68
@@ -192,7 +196,7 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	*(LPDWORD)0x00477C14 = BSWAP32(0x9530FFFF);
 	*(LPDWORD)0x00477C18 = BSWAP32(0xFF8B8B30);
 	*(LPDWORD)0x00477C1C = BSWAP32(0x030000E8);
-	*(LPDWORD)0x00477C20 = (DWORD)TWinControl_GetTextWidth - (0x00477C20 + sizeof(DWORD));
+	*(LPDWORD)0x00477C20 = (DWORD)GetTextWidth - (0x00477C20 + sizeof(DWORD));
 	*(LPDWORD)0x00477C24 = BSWAP32(0x3B8568FE);
 	*(LPDWORD)0x00477C28 = BSWAP32(0xFFFF761B);
 	*(LPDWORD)0x00477C2C = BSWAP32(0x898568FE);
@@ -211,7 +215,7 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 		mov     ecx, dword ptr [ebp - 408]              ; 0047801A _ 8B. 8D, FFFFFE68
 		mov     eax, dword ptr [ebx + 816]              ; 00478020 _ 8B. 83, 00000330
 		test    ecx, ecx                                ; 00478026 _ 85. C9
-		jz      00478029H                               ; 00478028 _ 74, 03
+		jz      0047802DH                               ; 00478028 _ 74, 03
 		add     ecx, 2                                  ; 0047802A _ 83. C1, 02
 		xor     edx, edx                                ; 0047802D _ 33. D2
 		mov     dword ptr [ebx + 888], edx              ; 0047802F _ 89. 93, 00000378
@@ -254,4 +258,10 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	*(LPBYTE )0x00486528 = JMP_REL32;
 	*(LPDWORD)0x00486529 = (DWORD)TFindNameForm_CnvString - (0x00486529 + sizeof(DWORD));
 	*(LPBYTE )0x0048652D = NOP;
+
+	// TTitleSelectForm::FormCreate
+	*(LPDWORD)0x0061AD08 = (DWORD)TTitleSelectForm_FormCreate;
+
+	// TTitleSelectForm::FormClose
+	*(LPDWORD)0x0061AD19 = (DWORD)TTitleSelectForm_FormClose;
 }

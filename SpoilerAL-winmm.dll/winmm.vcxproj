@@ -1097,6 +1097,7 @@
     <ClCompile Include="FixEraseElement\TSSGAttributeSelector_EraseElement.c" />
     <ClCompile Include="FixFindName\Attach_FixFindName.c" />
     <ClCompile Include="FixFindName\TFindNameForm_FindStartBtnClick_FixGetSelectSubject.c" />
+    <ClCompile Include="FixFindName\TFindNameForm_FormClose.c" />
     <ClCompile Include="FixGetDistractionString\Attach_FixGetDistractionString.c" />
     <ClCompile Include="FixGetDistractionString\TSSGScriptStruct_EscapeDistraction.c" />
     <ClCompile Include="FixGetModuleFromName\Attach_FixGetModuleFromName.c" />
@@ -1139,6 +1140,7 @@
     <ClCompile Include="FixMainForm\DGrid\TMainForm_OnDGridLButtonDown.c" />
     <ClCompile Include="FixMainForm\DGrid\TMainForm_OnDGridLButtonUp.c" />
     <ClCompile Include="FixMainForm\DGrid\TSSGSubject_Write_WithDrawTree.c" />
+    <ClCompile Include="FixMainForm\GetTextWidth.c" />
     <ClCompile Include="FixMainForm\MainForm\TMainForm_CalcButtonPushFunc.c" />
     <ClCompile Include="FixMainForm\MainForm\TMainForm_ChangeSubjectPanel_FixToggleStringEnterVisible.c" />
     <ClCompile Include="FixMainForm\MainForm\TMainForm_DrawTreeCell_ModifyNowValue.c" />
@@ -1181,6 +1183,8 @@
     <ClCompile Include="FixSplitElement\SplitElement.c" />
     <ClCompile Include="FixTitleSelectForm\Attach_FixTitleSelectForm.c" />
     <ClCompile Include="FixTitleSelectForm\LCMapStringJISX0213.c" />
+    <ClCompile Include="FixTitleSelectForm\TTitleSelectForm_FormClose.c" />
+    <ClCompile Include="FixTitleSelectForm\TTitleSelectForm_FormCreate.c" />
     <ClCompile Include="FixToggleByteArray\Attach_FixToggleByteArray.c" />
     <ClCompile Include="FixToggleByteArray\FixToggleByteArray.c" />
     <ClCompile Include="FixTraceAndCopy\Attach_FixTraceAndCopy.c" />

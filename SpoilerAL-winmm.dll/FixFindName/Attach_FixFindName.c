@@ -1,11 +1,14 @@
 #include <windows.h>
 #include <dhcpsapi.h>
+#define USING_NAMESPACE_BCB6_STD
 #include "TFindNameForm.h"
 #include "TMainForm.h"
 #undef MainForm
 #include "intrinsic.h"
 
-TSSGSubject * __fastcall TFindNameForm_FindStartBtnClick_FixGetSelectSubject(TMainForm *);
+EXTERN_C int __fastcall GetTextWidth(TWinControl *WinControl, const string *s);
+EXTERN_C void __cdecl TFindNameForm_FormClose();
+EXTERN_C TSSGSubject * __fastcall TFindNameForm_FindStartBtnClick_FixGetSelectSubject(TMainForm *);
 
 __declspec(naked)
 static DWORD_DWORD __fastcall TFindNameForm_FindLBoxClick_ListLBox_set_TopIndex(
@@ -38,7 +41,7 @@ EXTERN_C void __cdecl Attach_FixFindName()
 	*(LPBYTE )0x00484144 = NOP;
 
 	// string s = (string)SList->Strings[i].c_str();
-	// if (StrSize < (i = TWinControl_GetTextWidth(FindLBox, &s))) StrSize = i;
+	// if (StrSize < (i = GetTextWidth(FindLBox, &s))) StrSize = i;
 	/*
 		mov     eax, dword ptr [ebp - 580]              ; 0048493A _ 8B. 85, FFFFFDBC
 		mov     edx, dword ptr [ebp - 648]              ; 00484940 _ 8B. 95, FFFFFD78
@@ -54,7 +57,7 @@ EXTERN_C void __cdecl Attach_FixFindName()
 		push    edx                                     ; 00484972 _ 52
 		push    eax                                     ; 00484973 _ 50
 		mov     edx, esp                                ; 00484974 _ 8B. D4
-		call    TWinControl_GetTextWidth                ; 00484976 _ E8, ????????
+		call    GetTextWidth                            ; 00484976 _ E8, ????????
 		mov     ecx, dword ptr [ebp - 512]              ; 0048497B _ 8B. 8D, FFFFFE00
 		add     esp, 8                                  ; 00484981 _ 83. C4, 08
 		cmp     eax, ecx                                ; 00484984 _ 3B. C1
@@ -79,7 +82,7 @@ EXTERN_C void __cdecl Attach_FixFindName()
 	*(LPDWORD)0x00484970 = BSWAP32(0x03D05250);
 	*(LPWORD )0x00484974 = BSWAP16(0x8BD4);
 	*(LPBYTE )0x00484976 = 0xE8;
-	*(LPDWORD)0x00484977 = (DWORD)TWinControl_GetTextWidth - (0x00484977 + sizeof(DWORD));
+	*(LPDWORD)0x00484977 = (DWORD)GetTextWidth - (0x00484977 + sizeof(DWORD));
 	*(LPBYTE )0x0048497B = 0x8B;
 	*(LPDWORD)0x0048497C = BSWAP32(0x8D00FEFF);
 	*(LPDWORD)0x00484980 = BSWAP32(0xFF83C408);
@@ -93,7 +96,7 @@ EXTERN_C void __cdecl Attach_FixFindName()
 		mov     ecx, dword ptr [ebp - 512]              ; 00484E01 _ 8B. 8D, FFFFFE00
 		mov     eax, dword ptr [esi + 764]              ; 00484E07 _ 8B. 86, 000002FC
 		test    ecx, ecx                                ; 00484E0D _ 85. C9
-		jz      00484E10H                               ; 00484E0F _ 74, 03
+		jz      00484E14H                               ; 00484E0F _ 74, 03
 		add     ecx, 2                                  ; 00484E11 _ 83. C1, 02
 		xor     edx, edx                                ; 00484E14 _ 33. D2
 		mov     dword ptr [esi + 784], edx              ; 00484E16 _ 89. 96, 00000310
@@ -120,11 +123,11 @@ EXTERN_C void __cdecl Attach_FixFindName()
 	*(LPWORD )0x00484E30 = BSWAP16(0x4590);
 
 	// TFindNameForm::EnumSubjectNameFind
-	// if (StrSize < (i = TWinControl_GetTextWidth(FindLBox, &Name))) StrSize = i;
+	// if (StrSize < (i = GetTextWidth(FindLBox, &Name))) StrSize = i;
 	/*
 		mov     ecx, dword ptr [esi + 764]              ; 00485A04 _ 8B. 8E, 000002FC
 		lea     edx, [ebp - 24]                         ; 00485A0A _ 8D. 55, E8
-		call    TWinControl_GetTextWidth                ; 00485A0D _ E8, ????????
+		call    GetTextWidth                            ; 00485A0D _ E8, ????????
 		mov     ecx, dword ptr [ebp + 24]               ; 00485A12 _ 8B. 4D, 18
 		cmp     eax, dword ptr [ecx]                    ; 00485A15 _ 3B. 01
 		jbe     00485A1CH                               ; 00485A17 _ 76, 03
@@ -134,7 +137,7 @@ EXTERN_C void __cdecl Attach_FixFindName()
 	*(LPDWORD)0x00485A04 = BSWAP32(0x8B8EFC02);
 	*(LPDWORD)0x00485A08 = BSWAP32(0x00008D55);
 	*(LPWORD )0x00485A0C = BSWAP16(0xE8E8);
-	*(LPDWORD)0x00485A0E = (DWORD)TWinControl_GetTextWidth - (0x00485A0E + sizeof(DWORD));
+	*(LPDWORD)0x00485A0E = (DWORD)GetTextWidth - (0x00485A0E + sizeof(DWORD));
 	*(LPWORD )0x00485A12 = BSWAP16(0x8B4D);
 	*(LPDWORD)0x00485A14 = BSWAP32(0x183B0176);
 	*(LPDWORD)0x00485A18 = BSWAP32(0x03890190);
@@ -143,4 +146,7 @@ EXTERN_C void __cdecl Attach_FixFindName()
 	*(LPBYTE )0x0048682D = PUSH_EBX;
 	*(LPBYTE )0x0048682E = CALL_REL32;
 	*(LPDWORD)0x0048682F = (DWORD)TFindNameForm_FindLBoxClick_ListLBox_set_TopIndex - (0x0048682F + sizeof(DWORD));
+
+	// TFindNameForm::FormClose
+	//*(LPDWORD)0x0061DB0F = (DWORD)TFindNameForm_FormClose;
 }

@@ -5,6 +5,7 @@
 #include "TSSString.h"
 #include "TMainForm.h"
 
+EXTERN_C int __fastcall GetTextWidth(TWinControl *WinControl, const string *s);
 EXTERN_C void __cdecl TMainForm_ctor();
 EXTERN_C void __cdecl TMainForm_FormClose_Header();
 EXTERN_C void __cdecl TMainForm_dtor();
@@ -273,13 +274,13 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 
 	*(LPDWORD)(0x0043A59D + 1) = (DWORD)TMainForm_SubjectAccess_break_ListLBox - (0x0043A59D + 1 + sizeof(DWORD));
 
-	// if (StrSize < (i = TWinControl_GetTextWidth(ListLBox, VIt))) StrSize = i;
+	// if (StrSize < (i = GetTextWidth(ListLBox, VIt))) StrSize = i;
 	/*
 		cmp     edi, edx                                ; 0043A608 _ 3B. FA
 		je      0043A67DH                               ; 0043A60A _ 74, 71
 		mov     edx, edi                                ; 0043A60C _ 8B. D7
 		mov     ecx, dword ptr [ebx + 1000]             ; 0043A60E _ 8B. 8B, 000003E8
-		call    TWinControl_GetTextWidth                ; 0043A614 _ E8, ????????
+		call    GetTextWidth                            ; 0043A614 _ E8, ????????
 		cmp     eax, dword ptr [ebp - 748]              ; 0043A619 _ 3B. 85, FFFFFD14
 		jbe     0043A628H                               ; 0043A61F _ 76, 07
 		mov     dword ptr [ebp - 748], eax              ; 0043A621 _ 89. 85, FFFFFD14
@@ -289,7 +290,7 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPDWORD)0x0043A60C = BSWAP32(0x8BD78B8B);
 	*(LPDWORD)0x0043A610 = BSWAP32(0xE8030000);
 	*(LPBYTE )0x0043A614 = 0xE8;
-	*(LPDWORD)0x0043A615 = (DWORD)TWinControl_GetTextWidth - (0x0043A615 + sizeof(DWORD));
+	*(LPDWORD)0x0043A615 = (DWORD)GetTextWidth - (0x0043A615 + sizeof(DWORD));
 	*(LPBYTE )0x0043A619 = 0x3B;
 	*(LPWORD )0x0043A61A = BSWAP16(0x8514);
 	*(LPDWORD)0x0043A61C = BSWAP32(0xFDFFFF76);
@@ -339,13 +340,13 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 
 	*(LPDWORD)(0x0043B1F5 + 1) = (DWORD)TMainForm_SubjectAccess_break_MultiLBox - (0x0043B1F5 + 1 + sizeof(DWORD));
 
-	// if (StrSize < (i = TWinControl_GetTextWidth(MultiLBox, VIt))) StrSize = i;
+	// if (StrSize < (i = GetTextWidth(MultiLBox, VIt))) StrSize = i;
 	/*
 		cmp     edi, edx                                ; 0043B260 _ 3B. FA
 		je      0043B2D5H                               ; 0043B262 _ 74, 71
 		mov     edx, edi                                ; 0043B264 _ 8B. D7
 		mov     ecx, dword ptr [ebx + 996]              ; 0043B266 _ 8B. 8B, 000003E4
-		call    TWinControl_GetTextWidth                ; 0043B26C _ E8, ????????
+		call    GetTextWidth                            ; 0043B26C _ E8, ????????
 		cmp     eax, dword ptr [ebp - 988]              ; 0043B271 _ 3B. 85, FFFFFC24
 		jbe     0043B280H                               ; 0043B277 _ 76, 07
 		mov     dword ptr [ebp - 988], eax              ; 0043B279 _ 89. 85, FFFFFC24
@@ -355,7 +356,7 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPDWORD)0x0043B264 = BSWAP32(0x8BD78B8B);
 	*(LPDWORD)0x0043B268 = BSWAP32(0xE4030000);
 	*(LPBYTE )0x0043B26C = 0xE8;
-	*(LPDWORD)0x0043B26D = (DWORD)TWinControl_GetTextWidth - (0x0043B26D + sizeof(DWORD));
+	*(LPDWORD)0x0043B26D = (DWORD)GetTextWidth - (0x0043B26D + sizeof(DWORD));
 	*(LPBYTE )0x0043B271 = 0x3B;
 	*(LPWORD )0x0043B272 = BSWAP16(0x8524);
 	*(LPDWORD)0x0043B274 = BSWAP32(0xFCFFFF76);
@@ -372,7 +373,7 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 		mov     ecx, dword ptr [ebp - 988]              ; 0043C963 _ 8B. 8D, FFFFFC24
 		mov     eax, dword ptr [ebx + 996]              ; 0043C969 _ 8B. 83, 000003E4
 		test    ecx, ecx                                ; 0043C96F _ 85. C9
-		jz      0043C973H                               ; 0043C971 _ 74, 03
+		jz      0043C976H                               ; 0043C971 _ 74, 03
 		add     ecx, 2                                  ; 0043C973 _ 83. C1, 02
 		push    0                                       ; 0043C976 _ 6A, 00
 		push    ecx                                     ; 0043C978 _ 51

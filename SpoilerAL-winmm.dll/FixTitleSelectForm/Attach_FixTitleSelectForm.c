@@ -92,7 +92,7 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 		cmp     eax, dword ptr [ebp - 544]              ; 00474A36 _ 3B. 85, FFFFFDE0
 		jbe     00474A4FH                               ; 00474A3C _ 76, 11
 		mov     dword ptr [ebp - 544], eax              ; 00474A3E _ 89. 85, FFFFFDE0
-		jmp     00474A4FH                               ; 00474A44 _ EB, 05
+		jmp     00474A4FH                               ; 00474A44 _ EB, 09
 	*/
 	*(LPDWORD)0x00474A28 = BSWAP32(0x8B8E3C03);
 	*(LPDWORD)0x00474A2C = BSWAP32(0x00008D55);
@@ -102,7 +102,7 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	*(LPDWORD)0x00474A38 = BSWAP32(0xE0FDFFFF);
 	*(LPDWORD)0x00474A3C = BSWAP32(0x76118985);
 	*(LPDWORD)0x00474A40 = BSWAP32(0xE0FDFFFF);
-	*(LPDWORD)0x00474A44 = BSWAP32(0xEB059090);
+	*(LPDWORD)0x00474A44 = BSWAP32(0xEB099090);
 
 	// if (TitleLength < (i = GetTextWidth(TitleDGrid, &it->GetTitle()))) TitleLength = i;
 	/*

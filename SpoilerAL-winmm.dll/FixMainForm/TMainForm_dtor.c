@@ -1,5 +1,4 @@
 #include <windows.h>
-#include <assert.h>
 #include "bcb6_operator.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "TWinControl.h"
@@ -40,17 +39,8 @@ __declspec(naked) void __cdecl TMainForm_dtor()
 
 static void __fastcall dtor(TMainForm *this)
 {
-	TResource *Resource;
-	HFONT     hFont;
-
 	verbose(VRB_INFO, "TMainForm::dtor - begin");
 
-	assert(this->ListLBox->FFont->FResource == this->MultiLBox->FFont->FResource);
-	if (hFont = (Resource = this->MultiLBox->FFont->FResource)->Font.Handle)
-	{
-		Resource->Font.Handle = NULL;
-		DeleteObject(hFont);
-	}
 	vector_string_dtor(this->DistractionVec);
 	bcb6_operator_delete(this->DistractionVec);
 	ClearGuideBuffer();

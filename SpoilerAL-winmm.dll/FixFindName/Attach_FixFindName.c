@@ -7,7 +7,6 @@
 #include "intrinsic.h"
 
 EXTERN_C int __fastcall GetTextWidth(TWinControl *WinControl, const string *s);
-EXTERN_C void __cdecl TFindNameForm_FormClose();
 EXTERN_C TSSGSubject * __fastcall TFindNameForm_FindStartBtnClick_FixGetSelectSubject(TMainForm *);
 
 __declspec(naked)
@@ -146,7 +145,4 @@ EXTERN_C void __cdecl Attach_FixFindName()
 	*(LPBYTE )0x0048682D = PUSH_EBX;
 	*(LPBYTE )0x0048682E = CALL_REL32;
 	*(LPDWORD)0x0048682F = (DWORD)TFindNameForm_FindLBoxClick_ListLBox_set_TopIndex - (0x0048682F + sizeof(DWORD));
-
-	// TFindNameForm::FormClose
-	//*(LPDWORD)0x0061DB0F = (DWORD)TFindNameForm_FormClose;
 }

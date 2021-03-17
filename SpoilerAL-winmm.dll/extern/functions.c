@@ -46,6 +46,7 @@ const DWORD _TSSGCtrl_Parsing             = 0x005113F8;
 const DWORD F0054B87C                     = 0x0054B87C;
 const DWORD F00559D94                     = 0x00559D94;
 const DWORD F00559DB8                     = 0x00559DB8;
+const DWORD _TFont_SetName                = 0x0055D578;
 const DWORD F0055E418                     = 0x0055E418;
 const DWORD F0055E74C                     = 0x0055E74C;
 const DWORD F00562CF0                     = 0x00562CF0;
@@ -61,7 +62,6 @@ _imp____InitExceptBlockLDTC
 #else
 __InitExceptBlockLDTC
 #endif
-= 0x005D54CC;
-const DWORD _TFont_SetName                = 0x0055D578;
+                                          = 0x005D54CC;
 const DWORD vcl_System_AnsiString_ctor_sz = 0x005E0D50;
 const DWORD vcl_System_AnsiString_dtor    = 0x005E0EA8;

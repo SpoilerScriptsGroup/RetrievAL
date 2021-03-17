@@ -24,6 +24,16 @@ __declspec(naked) void __fastcall TCanvas_Lock(LPVOID this)
 	}
 }
 
+__declspec(naked) void __fastcall TCanvas_TextWidth(LPVOID this, LPCSTR Text)
+{
+	__asm
+	{
+		mov     eax, ecx
+		mov     ecx, 0055E588H
+		jmp     ecx
+	}
+}
+
 __declspec(naked) void __fastcall TCanvas_Unlock(LPVOID this)
 {
 	__asm
@@ -44,7 +54,7 @@ __declspec(naked) HDC __fastcall TCanvas_GetHandle(LPVOID this)
 	}
 }
 
-__declspec(naked) void __fastcall TCanvas_TextOut(LPVOID *this, int X, int Y, LPCSTR Text)
+__declspec(naked) void __stdcall TCanvas_TextOut(LPVOID *this, int X, int Y, LPCSTR Text)
 {
 	__asm
 	{

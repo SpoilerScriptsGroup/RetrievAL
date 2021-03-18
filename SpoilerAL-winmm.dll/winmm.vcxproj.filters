@@ -1206,6 +1206,9 @@
     <ClCompile Include="extern\TEdit.c">
       <Filter>extern</Filter>
     </ClCompile>
+    <ClCompile Include="extern\TFont.c">
+      <Filter>extern</Filter>
+    </ClCompile>
     <ClCompile Include="extern\TListBox.c">
       <Filter>extern</Filter>
     </ClCompile>
@@ -1421,9 +1424,6 @@
     </ClCompile>
     <ClCompile Include="FixMainForm\DGrid\TSSGSubject_Write_WithDrawTree.c">
       <Filter>FixMainForm\DGrid</Filter>
-    </ClCompile>
-    <ClCompile Include="FixMainForm\GetTextWidth.c">
-      <Filter>FixMainForm</Filter>
     </ClCompile>
     <ClCompile Include="FixMainForm\MainForm\TMainForm_CalcButtonPushFunc.c">
       <Filter>FixMainForm\MainForm</Filter>
@@ -2367,9 +2367,6 @@
     <ClInclude Include="extern\bcb6_std_vector_template.h">
       <Filter>extern</Filter>
     </ClInclude>
-    <ClInclude Include="extern\xx.h">
-      <Filter>extern</Filter>
-    </ClInclude>
     <ClInclude Include="extern\TApplication.h">
       <Filter>extern</Filter>
     </ClInclude>
@@ -2377,6 +2374,9 @@
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\TBrush.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\TCalcImage.h">
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\TCalcValBox.h">
@@ -2401,6 +2401,9 @@
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\TFindNameForm.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\TFont.h">
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\TGuideForm.h">
@@ -2488,6 +2491,9 @@
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="extern\TWinControl.h">
+      <Filter>extern</Filter>
+    </ClInclude>
+    <ClInclude Include="extern\xx.h">
       <Filter>extern</Filter>
     </ClInclude>
     <ClInclude Include="HintWindow\commctrl.h">
@@ -2639,9 +2645,6 @@
     </ClInclude>
     <ClInclude Include="WaitCursor\WaitCursor.h">
       <Filter>WaitCursor</Filter>
-    </ClInclude>
-    <ClInclude Include="extern\TCalcImage.h">
-      <Filter>extern</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -104,7 +104,16 @@ typedef struct UnDockEvent
 typedef struct WinControl
 {
 	DEFINE_TWINCONTROL;
-} TWinControl, TPanel, TListBox, TComboBox, TEdit, TRichEdit, TInplaceEdit, TPageControl, TTabSheet, TRadioGroup;
+} TWinControl, TPanel, TComboBox, TEdit, TRichEdit, TInplaceEdit, TPageControl, TTabSheet, TRadioGroup;
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+typedef struct ListBox
+{
+	DEFINE_TWINCONTROL;
+	BYTE                        padding_TListBox[32];
+	TCanvas                    *FCanvas;
+} TListBox;
 #pragma pack(pop)
 
 typedef Word TScrollBarInc;

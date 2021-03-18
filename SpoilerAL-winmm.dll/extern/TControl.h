@@ -141,13 +141,16 @@ typedef enum FontStyles// : unsigned char
 	fsStrikeOut = 0x08,
 } TFontStyles;
 
-typedef struct FontStylesBase
+typedef union FontStylesBase
 {
-	bool fsBold      : 1;
-	bool fsItalic    : 1;
-	bool fsUnderline : 1;
-	bool fsStrikeOut : 1;
-	__int8 : 0;
+	struct {
+		bool fsBold      : 1;
+		bool fsItalic    : 1;
+		bool fsUnderline : 1;
+		bool fsStrikeOut : 1;
+		__int8 : 0;
+	};
+	unsigned __int8 Value;
 } TFontStylesBase;
 
 typedef Byte TFontCharset;

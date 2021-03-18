@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <assert.h>
 #include "bcb6_operator.h"
 #define USING_NAMESPACE_BCB6_STD
 #include "TWinControl.h"

@@ -4,7 +4,9 @@
 #include "TWinControl.h"
 #include "TMainForm.h"
 #undef MainForm
+#include "TFont.h"
 #include "verbose.h"
+#include "SnapWindow.h"
 
 void __cdecl InitializeProcessMonitor();
 void __stdcall InitializeMenuId(TMainForm *MainForm);
@@ -14,8 +16,6 @@ void __stdcall ModifyVersionString(TMainForm *MainForm);
 LRESULT CALLBACK TMainForm_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK TMainForm_DGridProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void __cdecl InitializeWaitCursor();
-
-#include "SnapWindow.h"
 
 extern WNDPROC TMainForm_PrevWindowProc;
 extern WNDPROC TMainForm_PrevDGridProc;
@@ -43,11 +43,9 @@ static void __fastcall ctor(TMainForm *this)
 	TMainForm_PrevWindowProc = (WNDPROC)SetWindowLongPtrA(TWinControl_GetHandle(this), GWLP_WNDPROC, (LONG_PTR)TMainForm_WindowProc);
 	TMainForm_PrevDGridProc = (WNDPROC)SetWindowLongPtrA(TWinControl_GetHandle(this->DGrid), GWLP_WNDPROC, (LONG_PTR)TMainForm_DGridProc);
 	InitializeWaitCursor();
-
 #if SNAPWINDOW
 	AttachSnapWindow(TWinControl_GetHandle(this));
 #endif
-
 	this->DistractionVec = bcb6_operator_new(sizeof(vector_string));
 	vector_ctor(this->DistractionVec);
 	verbose(VRB_INFO, "TMainForm::ctor - end");

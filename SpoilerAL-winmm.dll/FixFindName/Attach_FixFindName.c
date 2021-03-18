@@ -6,7 +6,6 @@
 #undef MainForm
 #include "intrinsic.h"
 
-EXTERN_C int __fastcall GetTextWidth(TWinControl *WinControl, const string *s);
 EXTERN_C TSSGSubject * __fastcall TFindNameForm_FindStartBtnClick_FixGetSelectSubject(TMainForm *);
 
 __declspec(naked)
@@ -39,30 +38,24 @@ EXTERN_C void __cdecl Attach_FixFindName()
 	*(LPDWORD)0x00484140 = (DWORD)TFindNameForm_FindStartBtnClick_FixGetSelectSubject - (0x00484140 + sizeof(DWORD));
 	*(LPBYTE )0x00484144 = NOP;
 
-	// string s = (string)SList->Strings[i].c_str();
-	// if (StrSize < (i = GetTextWidth(FindLBox, &s))) StrSize = i;
+	// if (StrSize < (i = FindLBox->Canvas->TextWidth(SList->Strings[i].c_str()))) StrSize = i;
 	/*
 		mov     eax, dword ptr [ebp - 580]              ; 0048493A _ 8B. 85, FFFFFDBC
 		mov     edx, dword ptr [ebp - 648]              ; 00484940 _ 8B. 95, FFFFFD78
 		mov     dword ptr [ebp - 344], 0                ; 00484946 _ C7. 85, FFFFFEA8, 00000000
 		lea     ecx, [ebp - 344]                        ; 00484950 _ 8D. 8D, FFFFFEA8
 		call    dword ptr [edi + 12]                    ; 00484956 _ FF. 57, 0C
-		mov     eax, dword ptr [ebp - 344]              ; 00484959 _ 8B. 85, FFFFFEA8
-		test    eax, eax                                ; 0048495F _ 85. C0
-		jz      004849F4H                               ; 00484961 _ 0F 84, 0000008D
-		mov     edx, dword ptr [eax - 4]                ; 00484967 _ 8B. 50, FC
-		mov     ecx, dword ptr [esi + 764]              ; 0048496A _ 8B. 8E, 000002FC
-		add     edx, eax                                ; 00484970 _ 03. D0
-		push    edx                                     ; 00484972 _ 52
-		push    eax                                     ; 00484973 _ 50
-		mov     edx, esp                                ; 00484974 _ 8B. D4
-		call    GetTextWidth                            ; 00484976 _ E8, ????????
-		mov     ecx, dword ptr [ebp - 512]              ; 0048497B _ 8B. 8D, FFFFFE00
-		add     esp, 8                                  ; 00484981 _ 83. C4, 08
-		cmp     eax, ecx                                ; 00484984 _ 3B. C1
-		jbe     004849F4H                               ; 00484986 _ 76, 6C
-		mov     dword ptr [ebp - 512], eax              ; 00484988 _ 89. 85, FFFFFE00
-		jmp     004849F4H                               ; 0048498E _ EB, 64
+		mov     eax, dword ptr [esi + 764]              ; 00484959 _ 8B. 86, 000002FC
+		lea     edx, [ebp - 344]                        ; 0048495F _ 8D. 95, FFFFFEA8
+		mov     eax, dword ptr [eax + 552]              ; 00484965 _ 8B. 80, 00000228
+		mov     ecx, dword ptr [edx]                    ; 0048496B _ 8B. 0A
+		test    ecx, ecx                                ; 0048496D _ 85. C9
+		jz      004849F4H                               ; 0048496F _ 0F 84, 0000007F
+		call    0055E588H   ; (TCanvas_TextWidth)       ; 00484975 _ E8, 000D9C0E
+		cmp     dword ptr [ebp - 512], eax              ; 0048497A _ 39. 85, FFFFFE00
+		jae     004849F4H                               ; 00484980 _ 73, 72
+		mov     dword ptr [ebp - 512], eax              ; 00484982 _ 89. 85, FFFFFE00
+		jmp     004849F4H                               ; 00484988 _ EB, 6A
 	*/
 	*(LPWORD )0x0048493A = BSWAP16(0x8B85);
 	*(LPDWORD)0x0048493C = BSWAP32(0xBCFDFFFF);
@@ -72,22 +65,19 @@ EXTERN_C void __cdecl Attach_FixFindName()
 	*(LPDWORD)0x0048494C = BSWAP32(0x00000000);
 	*(LPDWORD)0x00484950 = BSWAP32(0x8D8DA8FE);
 	*(LPDWORD)0x00484954 = BSWAP32(0xFFFFFF57);
-	*(LPDWORD)0x00484958 = BSWAP32(0x0C8B85A8);
-	*(LPDWORD)0x0048495C = BSWAP32(0xFEFFFF85);
-	*(LPDWORD)0x00484960 = BSWAP32(0xC00F848D);
-	*(LPDWORD)0x00484964 = BSWAP32(0x0000008B);
-	*(LPDWORD)0x00484968 = BSWAP32(0x50FC8B8E);
-	*(LPDWORD)0x0048496C = BSWAP32(0xFC020000);
-	*(LPDWORD)0x00484970 = BSWAP32(0x03D05250);
-	*(LPWORD )0x00484974 = BSWAP16(0x8BD4);
-	*(LPBYTE )0x00484976 = 0xE8;
-	*(LPDWORD)0x00484977 = (DWORD)GetTextWidth - (0x00484977 + sizeof(DWORD));
-	*(LPBYTE )0x0048497B = 0x8B;
-	*(LPDWORD)0x0048497C = BSWAP32(0x8D00FEFF);
-	*(LPDWORD)0x00484980 = BSWAP32(0xFF83C408);
-	*(LPDWORD)0x00484984 = BSWAP32(0x3BC1766C);
-	*(LPDWORD)0x00484988 = BSWAP32(0x898500FE);
-	*(LPDWORD)0x0048498C = BSWAP32(0xFFFFEB64);
+	*(LPDWORD)0x00484958 = BSWAP32(0x0C8B86FC);
+	*(LPDWORD)0x0048495C = BSWAP32(0x0200008D);
+	*(LPDWORD)0x00484960 = BSWAP32(0x95A8FEFF);
+	*(LPDWORD)0x00484964 = BSWAP32(0xFF8B8028);
+	*(LPDWORD)0x00484968 = BSWAP32(0x0200008B);
+	*(LPDWORD)0x0048496C = BSWAP32(0x0A85C90F);
+	*(LPDWORD)0x00484970 = BSWAP32(0x847F0000);
+	*(LPDWORD)0x00484974 = BSWAP32(0x00E80E9C);
+	*(LPDWORD)0x00484978 = BSWAP32(0x0D003985);
+	*(LPDWORD)0x0048497C = BSWAP32(0x00FEFFFF);
+	*(LPDWORD)0x00484980 = BSWAP32(0x73728985);
+	*(LPDWORD)0x00484984 = BSWAP32(0x00FEFFFF);
+	*(LPWORD )0x00484988 = BSWAP16(0xEB6A);
 
 	// findMode = 0;
 	// SendMessageA(FindLBox->Handle, LB_SETHORIZONTALEXTENT, StrSize + (StrSize ? 2 : 0), 0);
@@ -122,24 +112,27 @@ EXTERN_C void __cdecl Attach_FixFindName()
 	*(LPWORD )0x00484E30 = BSWAP16(0x4590);
 
 	// TFindNameForm::EnumSubjectNameFind
-	// if (StrSize < (i = GetTextWidth(FindLBox, &Name))) StrSize = i;
+	// if (StrSize < (i = FindLBox->Canvas->TextWidth(Name.c_str()))) StrSize = i;
 	/*
-		mov     ecx, dword ptr [esi + 764]              ; 00485A04 _ 8B. 8E, 000002FC
-		lea     edx, [ebp - 24]                         ; 00485A0A _ 8D. 55, E8
-		call    GetTextWidth                            ; 00485A0D _ E8, ????????
-		mov     ecx, dword ptr [ebp + 24]               ; 00485A12 _ 8B. 4D, 18
-		cmp     eax, dword ptr [ecx]                    ; 00485A15 _ 3B. 01
-		jbe     00485A1CH                               ; 00485A17 _ 76, 03
-		mov     dword ptr [ecx], eax                    ; 00485A19 _ 89. 01
-		nop                                             ; 00485A1B _ 90
+		mov     ecx, dword ptr [esi + 764]              ; 00485A04 _ 8B. 86, 000002FC
+		mov     edx, dword ptr [ebp - 24]               ; 00485A0A _ 8B. 55, E8
+		mov     ecx, dword ptr [ecx + 552]              ; 00485A0D _ 8B. 89, 00000228
+		call    TCanvas_TextWidth                       ; 00485A13 _ E8, ????????
+		mov     ecx, dword ptr [ebp + 24]               ; 00485A18 _ 8B. 4D, 18
+		cmp     dword ptr [ecx], eax                    ; 00485A1B _ 39. 01
+		jae     00485A40H                               ; 00485A1D _ 73, 21
+		mov     dword ptr [ecx], eax                    ; 00485A1F _ 89. 01
+		jmp     00485A40H                               ; 00485A21 _ EB, 1D
 	*/
 	*(LPDWORD)0x00485A04 = BSWAP32(0x8B8EFC02);
-	*(LPDWORD)0x00485A08 = BSWAP32(0x00008D55);
-	*(LPWORD )0x00485A0C = BSWAP16(0xE8E8);
-	*(LPDWORD)0x00485A0E = (DWORD)GetTextWidth - (0x00485A0E + sizeof(DWORD));
-	*(LPWORD )0x00485A12 = BSWAP16(0x8B4D);
-	*(LPDWORD)0x00485A14 = BSWAP32(0x183B0176);
-	*(LPDWORD)0x00485A18 = BSWAP32(0x03890190);
+	*(LPDWORD)0x00485A08 = BSWAP32(0x00008B55);
+	*(LPDWORD)0x00485A0C = BSWAP32(0xE88B8928);
+	*(LPDWORD)0x00485A10 = BSWAP32(0x020000E8);
+	*(LPDWORD)0x00485A14 = (DWORD)TCanvas_TextWidth - (0x00485A14 + sizeof(DWORD));
+	*(LPDWORD)0x00485A18 = BSWAP32(0x8B4D1839);
+	*(LPDWORD)0x00485A1C = BSWAP32(0x01732189);
+	*(LPDWORD)0x00485A20 = BSWAP32(0x01EB1D90);
+	*(LPBYTE )0x00485A24 = 0x90;
 
 	// TFindNameForm::FindLBoxClick
 	*(LPBYTE )0x0048682D = PUSH_EBX;

@@ -51,4 +51,4 @@ EXTERN_C void __fastcall TCanvas_Lock(LPVOID this);
 EXTERN_C int __fastcall TCanvas_TextWidth(LPVOID this, LPCSTR Text);
 EXTERN_C void __fastcall TCanvas_Unlock(LPVOID this);
 EXTERN_C HDC  __fastcall TCanvas_GetHandle(LPVOID this);
-EXTERN_C void __stdcall TCanvas_TextOut(LPVOID *this, int X, int Y, LPCSTR Text);
+EXTERN_C void __stdcall TCanvas_TextOut(LPVOID this, int X, int Y, LPCSTR Text);

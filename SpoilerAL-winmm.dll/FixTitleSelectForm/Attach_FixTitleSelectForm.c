@@ -4,7 +4,6 @@
 #include "TTitleSelectForm.h"
 #include "TFindNameForm.h"
 
-EXTERN_C int __fastcall GetTextWidth(TWinControl *WinControl, const string *s);
 EXTERN_C void __cdecl TTitleSelectForm_FormCreate();
 
 static void __fastcall TTitleSelectForm_FindSSG_DistractionVec_ctor(vector_string *const DistractionVec)
@@ -55,28 +54,37 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	// TTitleSelectForm::SortCmbBoxChange
 	*(LPDWORD)0x00473D63 = (DWORD)TTitleSelectForm_SortFunc;
 
-	// if (TitleLength < (i = GetTextWidth(TitleDGrid, &it->GetTitle()))) TitleLength = i;
+	// if ((i = TitleDGrid->Canvas->TextWidth(it->GetTitle().c_str())) && TitleLength < (i += 18)) TitleLength = i;
 	/*
-		add     esp, 12                                 ; 0047429A _ 83. C4, 0C
-		lea     edx, [ebp - 84]                         ; 0047429D _ 8D. 55, AC
-		mov     ecx, dword ptr [esi + 824]              ; 004742A0 _ 8B. 8E, 00000338
-		call    GetTextWidth                            ; 004742A6 _ E8, ????????
-		cmp     eax, dword ptr [ebp - 548]              ; 004742AB _ 3B. 85, FFFFFDDC
-		jbe     004742CEH                               ; 004742B1 _ 76, 1B
-		mov     dword ptr [ebp - 548], eax              ; 004742B3 _ 89. 85, FFFFFDDC
-		jmp     004742CEH                               ; 004742B9 _ EB, 13
+		mov     ecx, dword ptr [esi + 824]              ; 0047429A _ 8B. 8E, 00000338
+		add     esp, 12                                 ; 004742A0 _ 83. C4, 0C
+		mov     ecx, dword ptr [ecx + 520]              ; 004742A3 _ 8B. 89, 00000208
+		mov     edx, dword ptr [ebp - 84]               ; 004742A9 _ 8B. 55, AC
+		call    TCanvas_TextWidth                       ; 004742AC _ E8, ????????
+		test    eax, eax                                ; 004742B1 _ 85. C0
+		jz      004742CEH                               ; 004742B3 _ 74, 19
+		mov     ecx, dword ptr [ebp - 548]              ; 004742B5 _ 8B. 8D, FFFFFDDC
+		add     eax, 18                                 ; 004742BB _ 83. C0, 12
+		cmp     ecx, eax                                ; 004742BE _ 3B. C8
+		jae     004742CEH                               ; 004742C0 _ 73, 0C
+		mov     dword ptr [ebp - 548], eax              ; 004742C2 _ 89. 85, FFFFFDDC
+		jmp     004742CEH                               ; 004742C8 _ EB, 04
 	*/
-	*(LPWORD )0x0047429A = BSWAP16(0x83C4);
-	*(LPDWORD)0x0047429C = BSWAP32(0x0C8D55AC);
-	*(LPDWORD)0x004742A0 = BSWAP32(0x8B8E3803);
-	*(LPWORD )0x004742A4 = BSWAP16(0x0000);
-	*(LPBYTE )0x004742A6 = 0xE8;
-	*(LPDWORD)0x004742A7 = (DWORD)GetTextWidth - (0x004742A7 + sizeof(DWORD));
-	*(LPBYTE )0x004742AB = 0x3B;
-	*(LPDWORD)0x004742AC = BSWAP32(0x85DCFDFF);
-	*(LPDWORD)0x004742B0 = BSWAP32(0xFF761B89);
-	*(LPDWORD)0x004742B4 = BSWAP32(0x85DCFDFF);
-	*(LPDWORD)0x004742B8 = BSWAP32(0xFFEB133B);
+	*(LPWORD )0x0047429A = BSWAP16(0x8B8E);
+	*(LPDWORD)0x0047429C = BSWAP32(0x38030000);
+	*(LPDWORD)0x004742A0 = BSWAP32(0x83C40C8B);
+	*(LPDWORD)0x004742A4 = BSWAP32(0x89080200);
+	*(LPDWORD)0x004742A8 = BSWAP32(0x008B55AC);
+	*(LPBYTE )0x004742AC = 0xE8;
+	*(LPDWORD)0x004742AD = (DWORD)TCanvas_TextWidth - (0x004742AD + sizeof(DWORD));
+	*(LPBYTE )0x004742B1 = 0x85;
+	*(LPWORD )0x004742B2 = BSWAP16(0xC074);
+	*(LPDWORD)0x004742B4 = BSWAP32(0x198B8DDC);
+	*(LPDWORD)0x004742B8 = BSWAP32(0xFDFFFF83);
+	*(LPDWORD)0x004742BC = BSWAP32(0xC0123BC8);
+	*(LPDWORD)0x004742C0 = BSWAP32(0x730C8985);
+	*(LPDWORD)0x004742C4 = BSWAP32(0xDCFDFFFF);
+	*(LPDWORD)0x004742C8 = BSWAP32(0xEB0490FF);
 
 	/*
 		jmp     004743B8H                               ; 00474306 _ E9, 000000AD
@@ -84,49 +92,63 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	*(LPWORD )0x00474306 = BSWAP16(0xE9AD);
 	*(LPDWORD)0x00474308 = BSWAP32(0x00000090);
 
-	// if(KeyLength < (i = GetTextWidth(KeyDGrid, &tmpKey))) KeyLength = i;
+	// if ((i = KeyDGrid->Canvas->TextWidth(tmpKey.c_str())) && KeyLength < (i += 3)) KeyLength = i;
 	/*
 		mov     ecx, dword ptr [esi + 828]              ; 00474A28 _ 8B. 8E, 0000033C
-		lea     edx, [ebp - 48]                         ; 00474A2E _ 8D. 55, D0
-		call    GetTextWidth                            ; 00474A31 _ E8, ????????
-		cmp     eax, dword ptr [ebp - 544]              ; 00474A36 _ 3B. 85, FFFFFDE0
-		jbe     00474A4FH                               ; 00474A3C _ 76, 11
-		mov     dword ptr [ebp - 544], eax              ; 00474A3E _ 89. 85, FFFFFDE0
-		jmp     00474A4FH                               ; 00474A44 _ EB, 09
+		mov     edx, dword ptr [ebp - 48]               ; 00474A2E _ 8B. 55, D0
+		mov     ecx, dword ptr [ecx + 520]              ; 00474A31 _ 8B. 89, 00000208
+		call    TCanvas_TextWidth                       ; 00474A37 _ E8, ????????
+		test    eax, eax                                ; 00474A3C _ 85. C0
+		jz      00474A4FH                               ; 00474A3E _ 74, 0F
+		add     eax, 3                                  ; 00474A40 _ 83. C0, 03
+		lea     ecx, [ebp - 544]                        ; 00474A43 _ 8D. 8D, FFFFFDE0
+		cmp     dword ptr [ecx], eax                    ; 00474A49 _ 39. 01
+		jae     00474A4FH                               ; 00474A4B _ 73, 02
+		mov     dword ptr [ecx], eax                    ; 00474A4D _ 89. 01
 	*/
 	*(LPDWORD)0x00474A28 = BSWAP32(0x8B8E3C03);
-	*(LPDWORD)0x00474A2C = BSWAP32(0x00008D55);
-	*(LPWORD )0x00474A30 = BSWAP16(0xD0E8);
-	*(LPDWORD)0x00474A32 = (DWORD)GetTextWidth - (0x00474A32 + sizeof(DWORD));
-	*(LPWORD )0x00474A36 = BSWAP16(0x3B85);
-	*(LPDWORD)0x00474A38 = BSWAP32(0xE0FDFFFF);
-	*(LPDWORD)0x00474A3C = BSWAP32(0x76118985);
-	*(LPDWORD)0x00474A40 = BSWAP32(0xE0FDFFFF);
-	*(LPDWORD)0x00474A44 = BSWAP32(0xEB099090);
+	*(LPDWORD)0x00474A2C = BSWAP32(0x00008B55);
+	*(LPDWORD)0x00474A30 = BSWAP32(0xD08B8908);
+	*(LPDWORD)0x00474A34 = BSWAP32(0x020000E8);
+	*(LPDWORD)0x00474A38 = (DWORD)TCanvas_TextWidth - (0x00474A38 + sizeof(DWORD));
+	*(LPDWORD)0x00474A3C = BSWAP32(0x85C0740F);
+	*(LPDWORD)0x00474A40 = BSWAP32(0x83C0038D);
+	*(LPDWORD)0x00474A44 = BSWAP32(0x8DE0FDFF);
+	*(LPDWORD)0x00474A48 = BSWAP32(0xFF390173);
+	*(LPDWORD)0x00474A4C = BSWAP32(0x0289018B);
 
-	// if (TitleLength < (i = GetTextWidth(TitleDGrid, &it->GetTitle()))) TitleLength = i;
+	// if ((i = TitleDGrid->Canvas->TextWidth(it->GetTitle().c_str())) && TitleLength < (i += 18)) TitleLength = i;
 	/*
-		add     esp, 12                                 ; 00474D07 _ 83. C4, 0C
-		lea     edx, [ebp - 264]                        ; 00474D0A _ 8D. 95, FFFFFEF8
-		mov     ecx, dword ptr [esi + 824]              ; 00474D10 _ 8B. 8E, 00000338
-		call    GetTextWidth                            ; 00474D16 _ E8, ????????
-		cmp     eax, dword ptr [ebp - 548]              ; 00474D1B _ 3B. 85, FFFFFDDC
-		jbe     00474D3EH                               ; 00474D21 _ 76, 1B
-		mov     dword ptr [ebp - 548], eax              ; 00474D23 _ 89. 85, FFFFFDDC
-		jmp     00474D3EH                               ; 00474D29 _ EB, 13
+		mov     ecx, dword ptr [esi + 824]              ; 00474D07 _ 8B. 8E, 00000338
+		add     esp, 12                                 ; 00474D0D _ 83. C4, 0C
+		mov     ecx, dword ptr [ecx + 520]              ; 00474D10 _ 8B. 89, 00000208
+		mov     edx, dword ptr [ebp - 264]              ; 00474D16 _ 8B. 95, FFFFFEF8
+		call    TCanvas_TextWidth                       ; 00474D1C _ E8, ????????
+		test    eax, eax                                ; 00474D21 _ 85. C0
+		jz      00474D3EH                               ; 00474D23 _ 74, 19
+		mov     ecx, dword ptr [ebp - 548]              ; 00474D25 _ 8B. 8D, FFFFFDDC
+		add     eax, 18                                 ; 00474D2B _ 83. C0, 12
+		cmp     ecx, eax                                ; 00474D2E _ 3B. C8
+		jae     00474D3EH                               ; 00474D30 _ 73, 0C
+		mov     dword ptr [ebp - 548], eax              ; 00474D32 _ 89. 85, FFFFFDDC
+		jmp     00474D3EH                               ; 00474D38 _ EB, 04
 	*/
-	*(LPBYTE )0x00474D07 = 0x83;
-	*(LPDWORD)0x00474D08 = BSWAP32(0xC40C8D95);
-	*(LPDWORD)0x00474D0C = BSWAP32(0xF8FEFFFF);
-	*(LPDWORD)0x00474D10 = BSWAP32(0x8B8E3803);
-	*(LPWORD )0x00474D14 = BSWAP16(0x0000);
-	*(LPBYTE )0x00474D16 = 0xE8;
-	*(LPDWORD)0x00474D17 = (DWORD)GetTextWidth - (0x00474D17 + sizeof(DWORD));
-	*(LPBYTE )0x00474D1B = 0x3B;
-	*(LPDWORD)0x00474D1C = BSWAP32(0x85DCFDFF);
-	*(LPDWORD)0x00474D20 = BSWAP32(0xFF761B89);
-	*(LPDWORD)0x00474D24 = BSWAP32(0x85DCFDFF);
-	*(LPDWORD)0x00474D28 = BSWAP32(0xFFEB133B);
+	*(LPBYTE )0x00474D07 = 0x8B;
+	*(LPDWORD)0x00474D08 = BSWAP32(0x8E380300);
+	*(LPDWORD)0x00474D0C = BSWAP32(0x0083C40C);
+	*(LPDWORD)0x00474D10 = BSWAP32(0x8B890802);
+	*(LPDWORD)0x00474D14 = BSWAP32(0x00008B95);
+	*(LPDWORD)0x00474D18 = BSWAP32(0xF8FEFFFF);
+	*(LPBYTE )0x00474D1C = 0xE8;
+	*(LPDWORD)0x00474D1D = (DWORD)TCanvas_TextWidth - (0x00474D1D + sizeof(DWORD));
+	*(LPBYTE )0x00474D21 = 0x85;
+	*(LPWORD )0x00474D22 = BSWAP16(0xC074);
+	*(LPDWORD)0x00474D24 = BSWAP32(0x198B8DDC);
+	*(LPDWORD)0x00474D28 = BSWAP32(0xFDFFFF83);
+	*(LPDWORD)0x00474D2C = BSWAP32(0xC0123BC8);
+	*(LPDWORD)0x00474D30 = BSWAP32(0x730C8985);
+	*(LPDWORD)0x00474D34 = BSWAP32(0xDCFDFFFF);
+	*(LPDWORD)0x00474D38 = BSWAP32(0xEB0490FF);
 
 	/*
 		jmp     00474E29H                               ; 00474D7F _ E9, 000000A5
@@ -135,43 +157,60 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	*(LPDWORD)0x00474D80 = BSWAP32(0xA5000000);
 	*(LPBYTE )0x00474D84 = 0x90;
 
-	// KeyDGrid->DefaultColWidth = KeyLength + (KeyLength ? 2 : 0);
+	// if (TitleLength < KeyLength) TitleLength = KeyLength;
+	/*
+		mov     edx, dword ptr [ebp - 544]              ; 00474E42 _ 8B. 95, FFFFFDE0
+		mov     eax, dword ptr [ebp - 548]              ; 00474E48 _ 8B. 85, FFFFFDDC
+		cmp     eax, edx                                ; 00474E4E _ 3B. C2
+		jae     00474E58H                               ; 00474E50 _ 73, 06
+		mov     dword ptr [ebp - 548], edx              ; 00474E52 _ 89. 95, FFFFFDDC
+		lea     ecx, [ebp - 132]                        ; 00474E58 _ 8D. 8D, FFFFFF7C
+		call    string_dtor                             ; 00474E5E _ E8, ????????
+		jmp     00474EB5H                               ; 00474E63 _ EB, 50
+	*/
+	*(LPWORD )0x00474E42 = BSWAP16(0x8B95);
+	*(LPDWORD)0x00474E44 = BSWAP32(0xE0FDFFFF);
+	*(LPDWORD)0x00474E48 = BSWAP32(0x8B85DCFD);
+	*(LPDWORD)0x00474E4C = BSWAP32(0xFFFF3BC2);
+	*(LPDWORD)0x00474E50 = BSWAP32(0x73068995);
+	*(LPDWORD)0x00474E54 = BSWAP32(0xDCFDFFFF);
+	*(LPDWORD)0x00474E58 = BSWAP32(0x8D8D7CFF);
+	*(LPWORD )0x00474E5C = BSWAP16(0xFFFF);
+	*(LPBYTE )0x00474E5E = 0xE8;
+	*(LPDWORD)0x00474E5F = (DWORD)string_dtor - (0x00474E5F + sizeof(DWORD));
+	*(LPBYTE )0x00474E63 = 0xEB;
+	*(LPDWORD)0x00474E64 = BSWAP32(0x50909090);
+	*(LPBYTE )0x00474E68 = 0x90;
+
+	// KeyDGrid->DefaultColWidth = KeyLength;
 	/*
 		mov     edx, dword ptr [ebp - 544]              ; 00474EAF _ 8B. 95, FFFFFDE0
 		mov     eax, dword ptr [esi + 828]              ; 00474EB5 _ 8B. 86, 0000033C
-		test    edx, edx                                ; 00474EBB _ 85. D2
-		jz      00474EC2H                               ; 00474EBD _ 74, 03
-		add     edx, 2                                  ; 00474EBF _ 83. C2, 02
-		call    0055902CH                               ; 00474EC2 _ E8, 000E4165
-		jmp     00474F07H                               ; 00474EC7 _ EB, 3E
+		call    0055902CH                               ; 00474EBB _ E8, 000E416C
+		jmp     00474F07H                               ; 00474EC0 _ EB, 45
 	*/
 	*(LPBYTE )0x00474EAF = 0x8B;
 	*(LPDWORD)0x00474EB0 = BSWAP32(0x95E0FDFF);
 	*(LPDWORD)0x00474EB4 = BSWAP32(0xFF8B863C);
-	*(LPDWORD)0x00474EB8 = BSWAP32(0x03000085);
-	*(LPDWORD)0x00474EBC = BSWAP32(0xD2740383);
-	*(LPDWORD)0x00474EC0 = BSWAP32(0xC202E865);
-	*(LPDWORD)0x00474EC4 = BSWAP32(0x410E00EB);
-	*(LPWORD )0x00474EC8 = BSWAP16(0x3E90);
+	*(LPDWORD)0x00474EB8 = BSWAP32(0x030000E8);
+	*(LPDWORD)0x00474EBC = BSWAP32(0x6C410E00);
+	*(LPDWORD)0x00474EC0 = BSWAP32(0xEB459090);
+	*(LPBYTE )0x00474EC4 = 0x90;
 
-	// TitleDGrid->DefaultColWidth = TitleLength + (TitleLength ? 2 : 0);
+	// TitleDGrid->DefaultColWidth = TitleLength;
 	/*
 		mov     edx, dword ptr [ebp - 548]              ; 00474F3B _ 8B. 95, FFFFFDDC
 		mov     eax, dword ptr [esi + 824]              ; 00474F41 _ 8B. 86, 00000338
-		test    edx, edx                                ; 00474F47 _ 85. D2
-		jz      00474F4EH                               ; 00474F49 _ 74, 03
-		add     edx, 2                                  ; 00474F4B _ 83. C2, 02
-		call    0055902CH                               ; 00474F4E _ E8, 000E40D9
-		jmp     00474F93H                               ; 00474F53 _ EB, 3E
+		call    0055902CH                               ; 00474F47 _ E8, 000E40E0
+		jmp     00474F93H                               ; 00474F4C _ EB, 45
 	*/
 	*(LPBYTE )0x00474F3B = 0x8B;
 	*(LPDWORD)0x00474F3C = BSWAP32(0x95DCFDFF);
 	*(LPDWORD)0x00474F40 = BSWAP32(0xFF8B8638);
-	*(LPDWORD)0x00474F44 = BSWAP32(0x03000085);
-	*(LPDWORD)0x00474F48 = BSWAP32(0xD2740383);
-	*(LPDWORD)0x00474F4C = BSWAP32(0xC202E8D9);
-	*(LPDWORD)0x00474F50 = BSWAP32(0x400E00EB);
-	*(LPWORD )0x00474F54 = BSWAP16(0x3E90);
+	*(LPDWORD)0x00474F44 = BSWAP32(0x030000E8);
+	*(LPDWORD)0x00474F48 = BSWAP32(0xE0400E00);
+	*(LPDWORD)0x00474F4C = BSWAP32(0xEB459090);
+	*(LPBYTE )0x00474F50 = 0x90;
 
 	// TTitleSelectForm::CnvString
 	*(LPBYTE )0x00476940 = JMP_REL32;
@@ -179,26 +218,30 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	*(LPBYTE )0x00476945 = NOP;
 
 	// TTitleSelectForm::FindEditChange
-	// if (StrSize < (i = GetTextWidth(FindLBox, &toScriptVec->at(i)->GetTitle()))) StrSize = i;
+	// if (StrSize < (i = FindLBox->Canvas->TextWidth(toScriptVec->at(i)->GetTitle().c_str()))) StrSize = i;
 	/*
-		add     esp, 12                                 ; 00477C10 _ 83. C4, 0C
-		lea     edx, [ebp - 208]                        ; 00477C13 _ 8D. 95, FFFFFF30
-		mov     ecx, dword ptr [ebx + 816]              ; 00477C19 _ 8B. 8B, 00000330
-		call    GetTextWidth                            ; 00477C1F _ E8, ????????
-		cmp     eax, dword ptr [ebp - 408]              ; 00477C24 _ 3B. 85, FFFFFE68
-		jbe     00477C47H                               ; 00477C2A _ 76, 1B
-		mov     dword ptr [ebp - 408], eax              ; 00477C2C _ 89. 85, FFFFFE68
-		jmp     00477C47H                               ; 00477C32 _ EB, 13
+		mov     ecx, dword ptr [ebx + 816]              ; 00477C10 _ 8B. 8B, 00000330
+		add     esp, 12                                 ; 00477C16 _ 83. C4, 0C
+		mov     ecx, dword ptr [ecx + 552]              ; 00477C19 _ 8B. 89, 00000228
+		mov     edx, dword ptr [ebp - 208]              ; 00477C1F _ 8B. 95, FFFFFF30
+		call    TCanvas_TextWidth                       ; 00477C25 _ E8, ????????
+		cmp     dword ptr [ebp - 408], eax              ; 00477C2A _ 39. 85, FFFFFE68
+		jae     00477C47H                               ; 00477C30 _ 73, 15
+		mov     dword ptr [ebp - 408], eax              ; 00477C32 _ 89. 85, FFFFFE68
+		jmp     00477C47H                               ; 00477C38 _ EB, 0D
 	*/
-	*(LPDWORD)0x00477C10 = BSWAP32(0x83C40C8D);
-	*(LPDWORD)0x00477C14 = BSWAP32(0x9530FFFF);
-	*(LPDWORD)0x00477C18 = BSWAP32(0xFF8B8B30);
-	*(LPDWORD)0x00477C1C = BSWAP32(0x030000E8);
-	*(LPDWORD)0x00477C20 = (DWORD)GetTextWidth - (0x00477C20 + sizeof(DWORD));
-	*(LPDWORD)0x00477C24 = BSWAP32(0x3B8568FE);
-	*(LPDWORD)0x00477C28 = BSWAP32(0xFFFF761B);
-	*(LPDWORD)0x00477C2C = BSWAP32(0x898568FE);
-	*(LPDWORD)0x00477C30 = BSWAP32(0xFFFFEB13);
+	*(LPDWORD)0x00477C10 = BSWAP32(0x8B8B3003);
+	*(LPDWORD)0x00477C14 = BSWAP32(0x000083C4);
+	*(LPDWORD)0x00477C18 = BSWAP32(0x0C8B8928);
+	*(LPDWORD)0x00477C1C = BSWAP32(0x0200008B);
+	*(LPDWORD)0x00477C20 = BSWAP32(0x9530FFFF);
+	*(LPWORD )0x00477C24 = BSWAP16(0xFFE8);
+	*(LPDWORD)0x00477C26 = (DWORD)TCanvas_TextWidth - (0x00477C26 + sizeof(DWORD));
+	*(LPWORD )0x00477C2A = BSWAP16(0x3985);
+	*(LPDWORD)0x00477C2C = BSWAP32(0x68FEFFFF);
+	*(LPDWORD)0x00477C30 = BSWAP32(0x73158985);
+	*(LPDWORD)0x00477C34 = BSWAP32(0x68FEFFFF);
+	*(LPWORD )0x00477C38 = BSWAP16(0xEB0D);
 
 	/*
 		jmp     00477DC1H                               ; 00477C9F _ E9, 0000011D

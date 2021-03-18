@@ -5,7 +5,6 @@
 #include "TSSString.h"
 #include "TMainForm.h"
 
-EXTERN_C int __fastcall GetTextWidth(TWinControl *WinControl, const string *s);
 EXTERN_C void __cdecl TMainForm_ctor();
 EXTERN_C void __cdecl TMainForm_FormClose_Header();
 EXTERN_C void __cdecl TMainForm_dtor();
@@ -274,33 +273,40 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 
 	*(LPDWORD)(0x0043A59D + 1) = (DWORD)TMainForm_SubjectAccess_break_ListLBox - (0x0043A59D + 1 + sizeof(DWORD));
 
-	// if (StrSize < (i = GetTextWidth(ListLBox, VIt))) StrSize = i;
+	// if (StrSize < (i = ListLBox->Canvas->TextWidth(VIt->c_str()))) StrSize = i;
 	/*
-		cmp     edi, edx                                ; 0043A608 _ 3B. FA
-		je      0043A67DH                               ; 0043A60A _ 74, 71
-		mov     edx, edi                                ; 0043A60C _ 8B. D7
-		mov     ecx, dword ptr [ebx + 1000]             ; 0043A60E _ 8B. 8B, 000003E8
-		call    GetTextWidth                            ; 0043A614 _ E8, ????????
-		cmp     eax, dword ptr [ebp - 748]              ; 0043A619 _ 3B. 85, FFFFFD14
-		jbe     0043A628H                               ; 0043A61F _ 76, 07
+		mov     edx, dword ptr [eax + 4]                ; 0043A5F9 _ 8B. 50, 04
+		mov     dword ptr [ebp - 752], edx              ; 0043A5FC _ 89. 95, FFFFFD10
+		cmp     edi, edx                                ; 0043A602 _ 3B. FA
+		je      0043A67DH                               ; 0043A604 _ 74, 71
+		mov     ecx, dword ptr [ebx + 1000]             ; 0043A606 _ 8B. 8B, 000003E8
+		mov     edx, dword ptr [edi]                    ; 0043A60C _ 8B. 17
+		mov     ecx, dword ptr [ecx + 552]              ; 0043A60E _ 8B. 89, 00000228
+		call    TCanvas_TextWidth                       ; 0043A614 _ E8, ????????
+		cmp     dword ptr [ebp - 748], eax              ; 0043A619 _ 39. 85, FFFFFD14
+		jae     0043A628H                               ; 0043A61F _ 73, 07
 		mov     dword ptr [ebp - 748], eax              ; 0043A621 _ 89. 85, FFFFFD14
 		nop                                             ; 0043A627 _ 90
 	*/
-	*(LPDWORD)0x0043A608 = BSWAP32(0x3BFA7471);
-	*(LPDWORD)0x0043A60C = BSWAP32(0x8BD78B8B);
-	*(LPDWORD)0x0043A610 = BSWAP32(0xE8030000);
+	*(LPDWORD)0x0043A5F8 = BSWAP32(0x388B5004);
+	*(LPDWORD)0x0043A5FC = BSWAP32(0x899510FD);
+	*(LPDWORD)0x0043A600 = BSWAP32(0xFFFF3BFA);
+	*(LPDWORD)0x0043A604 = BSWAP32(0x74718B8B);
+	*(LPDWORD)0x0043A608 = BSWAP32(0xE8030000);
+	*(LPDWORD)0x0043A60C = BSWAP32(0x8B178B89);
+	*(LPDWORD)0x0043A610 = BSWAP32(0x28020000);
 	*(LPBYTE )0x0043A614 = 0xE8;
-	*(LPDWORD)0x0043A615 = (DWORD)GetTextWidth - (0x0043A615 + sizeof(DWORD));
-	*(LPBYTE )0x0043A619 = 0x3B;
+	*(LPDWORD)0x0043A615 = (DWORD)TCanvas_TextWidth - (0x0043A615 + sizeof(DWORD));
+	*(LPBYTE )0x0043A619 = 0x39;
 	*(LPWORD )0x0043A61A = BSWAP16(0x8514);
-	*(LPDWORD)0x0043A61C = BSWAP32(0xFDFFFF76);
+	*(LPDWORD)0x0043A61C = BSWAP32(0xFDFFFF73);
 	*(LPDWORD)0x0043A620 = BSWAP32(0x07898514);
 	*(LPDWORD)0x0043A624 = BSWAP32(0xFDFFFF90);
 
 	/*
-		jne     0043A60CH                               ; 0043A67B _ 75, 8F
+		jne     0043A606H                               ; 0043A67B _ 75, 89
 	*/
-	*(LPBYTE )0x0043A67C = 0x8F;
+	*(LPBYTE )0x0043A67C = 0x89;
 
     // SendMessageA(ListLBox->Handle, LB_SETHORIZONTALEXTENT, StrSize + (StrSize ? 2 : 0), 0);
 	/*
@@ -340,33 +346,40 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 
 	*(LPDWORD)(0x0043B1F5 + 1) = (DWORD)TMainForm_SubjectAccess_break_MultiLBox - (0x0043B1F5 + 1 + sizeof(DWORD));
 
-	// if (StrSize < (i = GetTextWidth(MultiLBox, VIt))) StrSize = i;
+	// if (StrSize < (i = MultiLBox->Canvas->TextWidth(VIt->c_str()))) StrSize = i;
 	/*
-		cmp     edi, edx                                ; 0043B260 _ 3B. FA
-		je      0043B2D5H                               ; 0043B262 _ 74, 71
-		mov     edx, edi                                ; 0043B264 _ 8B. D7
-		mov     ecx, dword ptr [ebx + 996]              ; 0043B266 _ 8B. 8B, 000003E4
-		call    GetTextWidth                            ; 0043B26C _ E8, ????????
-		cmp     eax, dword ptr [ebp - 988]              ; 0043B271 _ 3B. 85, FFFFFC24
-		jbe     0043B280H                               ; 0043B277 _ 76, 07
+		mov     edx, dword ptr [eax + 4]                ; 0043B251 _ 8B. 50, 04
+		mov     dword ptr [ebp - 992], edx              ; 0043B254 _ 89. 95, FFFFFC20
+		cmp     edi, edx                                ; 0043B25A _ 3B. FA
+		je      0043B2D5H                               ; 0043B25C _ 74, 77
+		mov     ecx, dword ptr [ebx + 996]              ; 0043B25E _ 8B. 8B, 000003E4
+		mov     edx, dword ptr [edi]                    ; 0043B264 _ 8B. 17
+		mov     ecx, dword ptr [ecx + 552]              ; 0043B266 _ 8B. 89, 00000228
+		call    TCanvas_TextWidth                       ; 0043B26C _ E8, ????????
+		cmp     dword ptr [ebp - 988], eax              ; 0043B271 _ 39. 85, FFFFFC24
+		jae     0043B280H                               ; 0043B277 _ 73, 07
 		mov     dword ptr [ebp - 988], eax              ; 0043B279 _ 89. 85, FFFFFC24
 		nop                                             ; 0043B27F _ 90
 	*/
-	*(LPDWORD)0x0043B260 = BSWAP32(0x3BFA7471);
-	*(LPDWORD)0x0043B264 = BSWAP32(0x8BD78B8B);
-	*(LPDWORD)0x0043B268 = BSWAP32(0xE4030000);
+	*(LPDWORD)0x0043B250 = BSWAP32(0x388B5004);
+	*(LPDWORD)0x0043B254 = BSWAP32(0x899520FC);
+	*(LPDWORD)0x0043B258 = BSWAP32(0xFFFF3BFA);
+	*(LPDWORD)0x0043B25C = BSWAP32(0x74778B8B);
+	*(LPDWORD)0x0043B260 = BSWAP32(0xE4030000);
+	*(LPDWORD)0x0043B264 = BSWAP32(0x8B178B89);
+	*(LPDWORD)0x0043B268 = BSWAP32(0x28020000);
 	*(LPBYTE )0x0043B26C = 0xE8;
-	*(LPDWORD)0x0043B26D = (DWORD)GetTextWidth - (0x0043B26D + sizeof(DWORD));
-	*(LPBYTE )0x0043B271 = 0x3B;
+	*(LPDWORD)0x0043B26D = (DWORD)TCanvas_TextWidth - (0x0043B26D + sizeof(DWORD));
+	*(LPBYTE )0x0043B271 = 0x39;
 	*(LPWORD )0x0043B272 = BSWAP16(0x8524);
-	*(LPDWORD)0x0043B274 = BSWAP32(0xFCFFFF76);
+	*(LPDWORD)0x0043B274 = BSWAP32(0xFCFFFF73);
 	*(LPDWORD)0x0043B278 = BSWAP32(0x07898524);
 	*(LPDWORD)0x0043B27C = BSWAP32(0xFCFFFF90);
 
 	/*
-		jne     0043B264H                               ; 0043B2D3 _ 75, 8F
+		jne     0043B25EH                               ; 0043B2D3 _ 75, 88
 	*/
-	*(LPBYTE )0x0043B2D4 = 0x8F;
+	*(LPBYTE )0x0043B2D4 = 0x88;
 
     // SendMessageA(MultiLBox->Handle, LB_SETHORIZONTALEXTENT, StrSize + (StrSize ? 2 : 0), 0);
 	/*

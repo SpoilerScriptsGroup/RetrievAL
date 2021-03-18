@@ -66,7 +66,7 @@ __declspec(naked) HDC __fastcall TCanvas_GetHandle(LPVOID this)
 	}
 }
 
-__declspec(naked) void __stdcall TCanvas_TextOut(LPVOID *this, int X, int Y, LPCSTR Text)
+__declspec(naked) void __stdcall TCanvas_TextOut(LPVOID this, int X, int Y, LPCSTR Text)
 {
 	extern const DWORD _TCanvas_TextOut;
 

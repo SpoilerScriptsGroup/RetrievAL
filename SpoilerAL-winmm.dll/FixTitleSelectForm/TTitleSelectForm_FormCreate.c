@@ -2,6 +2,7 @@
 #include <assert.h>
 #define USING_NAMESPACE_BCB6_STD
 #include "TTitleSelectForm.h"
+#include "TFont.h"
 
 __declspec(naked) void __cdecl TTitleSelectForm_FormCreate()
 {
@@ -21,7 +22,8 @@ __declspec(naked) void __cdecl TTitleSelectForm_FormCreate()
 
 static TTitleSelectForm * __fastcall FormCreate(TTitleSelectForm *this)
 {
-	this->TitleDGrid->FFont->FResource->Font.Height = -17;
-	assert(this->KeyDGrid->FFont->FResource == this->TitleDGrid->FFont->FResource);
+	TFont_Assign(this->FindLBox->FCanvas->FFont, this->FindLBox->FFont);
+	TFont_Assign(this->KeyDGrid->FCanvas->FFont, this->KeyDGrid->FFont);
+	TFont_Assign(this->TitleDGrid->FCanvas->FFont, this->TitleDGrid->FFont);
 	return this;
 }

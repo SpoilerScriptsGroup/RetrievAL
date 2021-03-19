@@ -1062,6 +1062,7 @@
     <ClCompile Include="extern\TCanvas.c" />
     <ClCompile Include="extern\TCheckBox.c" />
     <ClCompile Include="extern\TComboBox.c" />
+    <ClCompile Include="extern\TControl.c" />
     <ClCompile Include="extern\TDrawGrid.c" />
     <ClCompile Include="extern\TEdit.c" />
     <ClCompile Include="extern\TFont.c" />

@@ -13,7 +13,7 @@ __declspec(naked) void __fastcall TFont_Assign(TFont *this, TFont *Source)
 	}
 }
 
-__declspec(naked) void __fastcall TFont_SetColor(TFont *this, TColor Color)
+__declspec(naked) void __fastcall TFont_SetColor(TFont *this, COLORREF Color)
 {
 	__asm
 	{
@@ -27,9 +27,9 @@ __declspec(naked) int __fastcall TFont_GetHeight(TFont *this)
 {
 	__asm
 	{
-		mov     edx, 0055D530H
-		mov     eax, ecx
-		jmp     edx
+		mov     eax, dword ptr [ecx + 16]
+		mov     eax, dword ptr [eax + 20]
+		ret
 	}
 }
 
@@ -93,13 +93,14 @@ __declspec(naked) void __fastcall TFont_SetSize(TFont *this, int Size)
 	}
 }
 
-__declspec(naked) int __fastcall TFont_GetStyle(TFont *this)
+__declspec(naked) TFontStyles __fastcall TFont_GetStyle(TFont *this)
 {
 	__asm
 	{
-		mov     edx, 0055D610H
-		mov     eax, ecx
-		jmp     edx
+		mov     ecx, dword ptr [ecx + 16]
+		xor     eax, eax
+		mov     al, byte ptr [ecx + 25]
+		ret
 	}
 }
 
@@ -117,13 +118,14 @@ __declspec(naked) TFontPitch __fastcall TFont_GetPitch(TFont *this)
 {
 	__asm
 	{
-		mov     edx, 0055D648H
-		mov     eax, ecx
-		jmp     edx
+		mov     ecx, dword ptr [ecx + 16]
+		xor     eax, eax
+		mov     al, byte ptr [ecx + 24]
+		ret
 	}
 }
 
-__declspec(naked) void __fastcall TFont_SetPitch(TFont *this, int Pitch)
+__declspec(naked) void __fastcall TFont_SetPitch(TFont *this, TFontPitch Pitch)
 {
 	__asm
 	{
@@ -137,9 +139,10 @@ __declspec(naked) TFontCharset __fastcall TFont_GetCharset(TFont *this)
 {
 	__asm
 	{
-		mov     edx, 0055D678H
-		mov     eax, ecx
-		jmp     edx
+		mov     ecx, dword ptr [ecx + 16]
+		xor     eax, eax
+		mov     al, byte ptr [ecx + 26]
+		ret
 	}
 }
 

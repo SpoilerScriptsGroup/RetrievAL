@@ -1200,6 +1200,9 @@
     <ClCompile Include="extern\TComboBox.c">
       <Filter>extern</Filter>
     </ClCompile>
+    <ClCompile Include="extern\TControl.c">
+      <Filter>extern</Filter>
+    </ClCompile>
     <ClCompile Include="extern\TDrawGrid.c">
       <Filter>extern</Filter>
     </ClCompile>

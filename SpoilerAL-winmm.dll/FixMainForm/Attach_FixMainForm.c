@@ -219,6 +219,7 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPBYTE )0x004026C8 = CALL_REL32;
 	*(LPDWORD)0x004026C9 = (DWORD)TMainForm_FormClose_Header - (0x004026C9 + sizeof(DWORD));
 	*(LPBYTE )0x004026CD = NOP;
+
 #if 0
 	// TMainForm::FormCreate
 	//   StringNowValEdit->SetBounds(8, 32, 200, 20);
@@ -236,6 +237,7 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	//   LockCBox   ->Width = W;
 	*(LPDWORD)0x00446CAD = offsetof(TMainForm, StringNewValEdit);
 #endif
+
 	// TMainForm::~TMainForm
 	*(LPBYTE )0x0045FDE9 = JMP_REL32;
 	*(LPDWORD)0x0045FDEA = (DWORD)TMainForm_dtor - (0x0045FDEA + sizeof(DWORD));
@@ -280,9 +282,9 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 		cmp     edi, edx                                ; 0043A602 _ 3B. FA
 		je      0043A67DH                               ; 0043A604 _ 74, 71
 		mov     ecx, dword ptr [ebx + 1000]             ; 0043A606 _ 8B. 8B, 000003E8
-		mov     edx, dword ptr [edi]                    ; 0043A60C _ 8B. 17
+		mov     edx, edi                                ; 0043A60C _ 8B. D7
 		mov     ecx, dword ptr [ecx + 552]              ; 0043A60E _ 8B. 89, 00000228
-		call    TCanvas_TextWidth                       ; 0043A614 _ E8, ????????
+		call    TCanvas_TextWidth_std_string            ; 0043A614 _ E8, ????????
 		cmp     dword ptr [ebp - 748], eax              ; 0043A619 _ 39. 85, FFFFFD14
 		jae     0043A628H                               ; 0043A61F _ 73, 07
 		mov     dword ptr [ebp - 748], eax              ; 0043A621 _ 89. 85, FFFFFD14
@@ -293,10 +295,10 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPDWORD)0x0043A600 = BSWAP32(0xFFFF3BFA);
 	*(LPDWORD)0x0043A604 = BSWAP32(0x74718B8B);
 	*(LPDWORD)0x0043A608 = BSWAP32(0xE8030000);
-	*(LPDWORD)0x0043A60C = BSWAP32(0x8B178B89);
+	*(LPDWORD)0x0043A60C = BSWAP32(0x8BD78B89);
 	*(LPDWORD)0x0043A610 = BSWAP32(0x28020000);
 	*(LPBYTE )0x0043A614 = 0xE8;
-	*(LPDWORD)0x0043A615 = (DWORD)TCanvas_TextWidth - (0x0043A615 + sizeof(DWORD));
+	*(LPDWORD)0x0043A615 = (DWORD)TCanvas_TextWidth_std_string - (0x0043A615 + sizeof(DWORD));
 	*(LPBYTE )0x0043A619 = 0x39;
 	*(LPWORD )0x0043A61A = BSWAP16(0x8514);
 	*(LPDWORD)0x0043A61C = BSWAP32(0xFDFFFF73);
@@ -353,9 +355,9 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 		cmp     edi, edx                                ; 0043B25A _ 3B. FA
 		je      0043B2D5H                               ; 0043B25C _ 74, 77
 		mov     ecx, dword ptr [ebx + 996]              ; 0043B25E _ 8B. 8B, 000003E4
-		mov     edx, dword ptr [edi]                    ; 0043B264 _ 8B. 17
+		mov     edx, edi                                ; 0043B264 _ 8B. D7
 		mov     ecx, dword ptr [ecx + 552]              ; 0043B266 _ 8B. 89, 00000228
-		call    TCanvas_TextWidth                       ; 0043B26C _ E8, ????????
+		call    TCanvas_TextWidth_std_string            ; 0043B26C _ E8, ????????
 		cmp     dword ptr [ebp - 988], eax              ; 0043B271 _ 39. 85, FFFFFC24
 		jae     0043B280H                               ; 0043B277 _ 73, 07
 		mov     dword ptr [ebp - 988], eax              ; 0043B279 _ 89. 85, FFFFFC24
@@ -366,10 +368,10 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPDWORD)0x0043B258 = BSWAP32(0xFFFF3BFA);
 	*(LPDWORD)0x0043B25C = BSWAP32(0x74778B8B);
 	*(LPDWORD)0x0043B260 = BSWAP32(0xE4030000);
-	*(LPDWORD)0x0043B264 = BSWAP32(0x8B178B89);
+	*(LPDWORD)0x0043B264 = BSWAP32(0x8BD78B89);
 	*(LPDWORD)0x0043B268 = BSWAP32(0x28020000);
 	*(LPBYTE )0x0043B26C = 0xE8;
-	*(LPDWORD)0x0043B26D = (DWORD)TCanvas_TextWidth - (0x0043B26D + sizeof(DWORD));
+	*(LPDWORD)0x0043B26D = (DWORD)TCanvas_TextWidth_std_string - (0x0043B26D + sizeof(DWORD));
 	*(LPBYTE )0x0043B271 = 0x39;
 	*(LPWORD )0x0043B272 = BSWAP16(0x8524);
 	*(LPDWORD)0x0043B274 = BSWAP32(0xFCFFFF73);
@@ -377,9 +379,9 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPDWORD)0x0043B27C = BSWAP32(0xFCFFFF90);
 
 	/*
-		jne     0043B25EH                               ; 0043B2D3 _ 75, 88
+		jne     0043B25EH                               ; 0043B2D3 _ 75, 89
 	*/
-	*(LPBYTE )0x0043B2D4 = 0x88;
+	*(LPBYTE )0x0043B2D4 = 0x89;
 
     // SendMessageA(MultiLBox->Handle, LB_SETHORIZONTALEXTENT, StrSize + (StrSize ? 2 : 0), 0);
 	/*

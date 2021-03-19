@@ -115,9 +115,9 @@ EXTERN_C void __cdecl Attach_FixFindName()
 	// if (StrSize < (i = FindLBox->Canvas->TextWidth(Name.c_str()))) StrSize = i;
 	/*
 		mov     ecx, dword ptr [esi + 764]              ; 00485A04 _ 8B. 86, 000002FC
-		mov     edx, dword ptr [ebp - 24]               ; 00485A0A _ 8B. 55, E8
+		lea     edx, [ebp - 24]                         ; 00485A0A _ 8D. 55, E8
 		mov     ecx, dword ptr [ecx + 552]              ; 00485A0D _ 8B. 89, 00000228
-		call    TCanvas_TextWidth                       ; 00485A13 _ E8, ????????
+		call    TCanvas_TextWidth_std_string            ; 00485A13 _ E8, ????????
 		mov     ecx, dword ptr [ebp + 24]               ; 00485A18 _ 8B. 4D, 18
 		cmp     dword ptr [ecx], eax                    ; 00485A1B _ 39. 01
 		jae     00485A40H                               ; 00485A1D _ 73, 21
@@ -125,10 +125,10 @@ EXTERN_C void __cdecl Attach_FixFindName()
 		jmp     00485A40H                               ; 00485A21 _ EB, 1D
 	*/
 	*(LPDWORD)0x00485A04 = BSWAP32(0x8B8EFC02);
-	*(LPDWORD)0x00485A08 = BSWAP32(0x00008B55);
+	*(LPDWORD)0x00485A08 = BSWAP32(0x00008D55);
 	*(LPDWORD)0x00485A0C = BSWAP32(0xE88B8928);
 	*(LPDWORD)0x00485A10 = BSWAP32(0x020000E8);
-	*(LPDWORD)0x00485A14 = (DWORD)TCanvas_TextWidth - (0x00485A14 + sizeof(DWORD));
+	*(LPDWORD)0x00485A14 = (DWORD)TCanvas_TextWidth_std_string - (0x00485A14 + sizeof(DWORD));
 	*(LPDWORD)0x00485A18 = BSWAP32(0x8B4D1839);
 	*(LPDWORD)0x00485A1C = BSWAP32(0x01732189);
 	*(LPDWORD)0x00485A20 = BSWAP32(0x01EB1D90);

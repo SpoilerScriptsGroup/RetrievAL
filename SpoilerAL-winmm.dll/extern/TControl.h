@@ -7,8 +7,22 @@ typedef unsigned char        Byte;             // 0..255
 typedef unsigned short       Word;             // 0..65535
 typedef unsigned long        DWord;            // 0..4294967295
 typedef char *AnsiString;
-typedef CRGB TColor;
 typedef RECT TRect;
+
+#define DEFINE_CRGB \
+    BYTE bRed;      \
+    BYTE bGreen;    \
+    BYTE bBlue;     \
+    BYTE bExtra
+
+typedef union Color
+{
+	struct
+	{
+		DEFINE_CRGB;
+	};
+	COLORREF Value;
+} TColor;
 
 typedef struct Object
 {
@@ -76,7 +90,7 @@ typedef struct WndMethod
 } TWndMethod;
 
 typedef struct ControlStyle
-{ 
+{
 	bool csAcceptsControls   : 1;
 	bool csCaptureMouse      : 1;
 	bool csDesignInteractive : 1;
@@ -184,7 +198,7 @@ typedef struct Resource {
 typedef struct _TFont {
 #pragma region TGraphicsObject
 	LPCVOID            *VTable;
-	__int32 : 32;      
+	__int32 : 32;
 	TNotifyEvent        FOnChange;
 	TResource          *FResource;
 	CRITICAL_SECTION   *FOwnerLock;
@@ -391,3 +405,11 @@ typedef struct Control
 #define TControl_GetWidth(this) ((TControl *)(this))->FWidth
 #define TControl_GetHeight(this) ((TControl *)(this))->FHeight
 #define TControl_GetVisible(this) ((TControl *)(this))->FVisible
+
+EXTERN_C void __fastcall TControl_SetLeft(TControl *this, int Left);
+EXTERN_C void __fastcall TControl_SetTop(TControl *this, int Top);
+EXTERN_C void __fastcall TControl_SetWidth(TControl *this, int Width);
+EXTERN_C void __fastcall TControl_SetHeight(TControl *this, int Height);
+EXTERN_C void __fastcall TControl_SetHelpContext(TControl *this, THelpContext HelpContext);
+EXTERN_C void __fastcall TControl_SetHelpKeyword(TControl *this, LPCSTR HelpKeyword);
+EXTERN_C void __fastcall TControl_SetCursor(TControl *this, TCursor Cursor);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "TControl.h"
+#include "bcb6_std_string.h"
 
 typedef struct CanvasState
 {
@@ -46,9 +47,14 @@ typedef struct ControlCanvas
 } TControlCanvas;
 #pragma pack(pop)
 
-EXTERN_C void __fastcall TCanvas_FillRect(LPVOID this, const RECT *rect);
-EXTERN_C void __fastcall TCanvas_Lock(LPVOID this);
-EXTERN_C int __fastcall TCanvas_TextWidth(LPVOID this, LPCSTR Text);
-EXTERN_C void __fastcall TCanvas_Unlock(LPVOID this);
-EXTERN_C HDC  __fastcall TCanvas_GetHandle(LPVOID this);
-EXTERN_C void __stdcall TCanvas_TextOut(LPVOID this, int X, int Y, LPCSTR Text);
+EXTERN_C void __fastcall TCanvas_FillRect(TCanvas *this, const RECT *rect);
+EXTERN_C void __fastcall TCanvas_Lock(TCanvas *this);
+EXTERN_C int __fastcall TCanvas_TextWidth(TCanvas *this, LPCSTR Text);
+EXTERN_C int __fastcall TCanvas_TextWidth_with_length(TCanvas *this, LPCSTR Text, size_t length);
+EXTERN_C int __fastcall TCanvas_TextWidth_std_string(TCanvas *this, const bcb6_std_string *Text);
+EXTERN_C void __fastcall TCanvas_Unlock(TCanvas *this);
+EXTERN_C void __fastcall TCanvas_SetFont(TCanvas *this, TFont *Font);
+EXTERN_C void __fastcall TCanvas_SetPen(TCanvas *this, TPen *Pen);
+EXTERN_C void __fastcall TCanvas_SetBrush(TCanvas *this, TBrush *Brush);
+EXTERN_C HDC  __fastcall TCanvas_GetHandle(TCanvas *this);
+EXTERN_C void __stdcall TCanvas_TextOut(TCanvas *this, int X, int Y, LPCSTR Text);

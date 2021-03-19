@@ -166,7 +166,7 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 		mov     dword ptr [ebp - 548], edx              ; 00474E52 _ 89. 95, FFFFFDDC
 		lea     ecx, [ebp - 132]                        ; 00474E58 _ 8D. 8D, FFFFFF7C
 		call    string_dtor                             ; 00474E5E _ E8, ????????
-		jmp     00474EB5H                               ; 00474E63 _ EB, 50
+		jmp     00474EAFH                               ; 00474E63 _ EB, 4A
 	*/
 	*(LPWORD )0x00474E42 = BSWAP16(0x8B95);
 	*(LPDWORD)0x00474E44 = BSWAP32(0xE0FDFFFF);
@@ -179,7 +179,7 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	*(LPBYTE )0x00474E5E = 0xE8;
 	*(LPDWORD)0x00474E5F = (DWORD)string_dtor - (0x00474E5F + sizeof(DWORD));
 	*(LPBYTE )0x00474E63 = 0xEB;
-	*(LPDWORD)0x00474E64 = BSWAP32(0x50909090);
+	*(LPDWORD)0x00474E64 = BSWAP32(0x4A909090);
 	*(LPBYTE )0x00474E68 = 0x90;
 
 	// KeyDGrid->DefaultColWidth = KeyLength;

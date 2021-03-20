@@ -34,8 +34,8 @@ __declspec(naked) int __fastcall TListBox_ItemAtPos(LPVOID ListBox, LPPOINT Pos,
 {
 	__asm
 	{
-		mov     eax, dword ptr [esp]
 		push    ecx
+		mov     eax, dword ptr [esp + 4]
 		mov     ecx, dword ptr [esp + 8]
 		mov     dword ptr [esp + 4], 00545F58H
 		mov     dword ptr [esp + 8], eax

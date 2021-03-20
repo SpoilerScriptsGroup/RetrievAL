@@ -44,5 +44,5 @@ typedef struct _TCheckBox
 } TCheckBox;
 #pragma pack(pop)
 
-EXTERN_C void __fastcall TCheckBox_SetChecked(LPVOID this, BOOLEAN Value);
 EXTERN_C BOOLEAN __fastcall TCheckBox_GetChecked(LPVOID this);
+EXTERN_C void __fastcall TCheckBox_SetChecked(LPVOID this, BOOLEAN Value);

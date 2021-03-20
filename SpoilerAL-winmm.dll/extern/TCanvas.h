@@ -51,7 +51,7 @@ EXTERN_C void __fastcall TCanvas_FillRect(TCanvas *this, const RECT *rect);
 EXTERN_C void __fastcall TCanvas_Lock(TCanvas *this);
 EXTERN_C int __fastcall TCanvas_TextWidth(TCanvas *this, LPCSTR Text);
 EXTERN_C int __fastcall TCanvas_TextWidth_with_length(TCanvas *this, LPCSTR Text, size_t length);
-EXTERN_C int __fastcall TCanvas_TextWidth_std_string(TCanvas *this, const bcb6_std_string *Text);
+EXTERN_C int __fastcall TCanvas_TextWidth_stdstr(TCanvas *this, const bcb6_std_string *Text);
 EXTERN_C void __fastcall TCanvas_Unlock(TCanvas *this);
 EXTERN_C void __fastcall TCanvas_SetFont(TCanvas *this, TFont *Font);
 EXTERN_C void __fastcall TCanvas_SetPen(TCanvas *this, TPen *Pen);

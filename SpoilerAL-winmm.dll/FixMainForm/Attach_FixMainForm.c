@@ -284,7 +284,7 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 		mov     ecx, dword ptr [ebx + 1000]             ; 0043A606 _ 8B. 8B, 000003E8
 		mov     edx, edi                                ; 0043A60C _ 8B. D7
 		mov     ecx, dword ptr [ecx + 552]              ; 0043A60E _ 8B. 89, 00000228
-		call    TCanvas_TextWidth_std_string            ; 0043A614 _ E8, ????????
+		call    TCanvas_TextWidth_stdstr                ; 0043A614 _ E8, ????????
 		cmp     dword ptr [ebp - 748], eax              ; 0043A619 _ 39. 85, FFFFFD14
 		jae     0043A628H                               ; 0043A61F _ 73, 07
 		mov     dword ptr [ebp - 748], eax              ; 0043A621 _ 89. 85, FFFFFD14
@@ -298,7 +298,7 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPDWORD)0x0043A60C = BSWAP32(0x8BD78B89);
 	*(LPDWORD)0x0043A610 = BSWAP32(0x28020000);
 	*(LPBYTE )0x0043A614 = 0xE8;
-	*(LPDWORD)0x0043A615 = (DWORD)TCanvas_TextWidth_std_string - (0x0043A615 + sizeof(DWORD));
+	*(LPDWORD)0x0043A615 = (DWORD)TCanvas_TextWidth_stdstr - (0x0043A615 + sizeof(DWORD));
 	*(LPBYTE )0x0043A619 = 0x39;
 	*(LPWORD )0x0043A61A = BSWAP16(0x8514);
 	*(LPDWORD)0x0043A61C = BSWAP32(0xFDFFFF73);
@@ -357,7 +357,7 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 		mov     ecx, dword ptr [ebx + 996]              ; 0043B25E _ 8B. 8B, 000003E4
 		mov     edx, edi                                ; 0043B264 _ 8B. D7
 		mov     ecx, dword ptr [ecx + 552]              ; 0043B266 _ 8B. 89, 00000228
-		call    TCanvas_TextWidth_std_string            ; 0043B26C _ E8, ????????
+		call    TCanvas_TextWidth_stdstr                ; 0043B26C _ E8, ????????
 		cmp     dword ptr [ebp - 988], eax              ; 0043B271 _ 39. 85, FFFFFC24
 		jae     0043B280H                               ; 0043B277 _ 73, 07
 		mov     dword ptr [ebp - 988], eax              ; 0043B279 _ 89. 85, FFFFFC24
@@ -371,7 +371,7 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPDWORD)0x0043B264 = BSWAP32(0x8BD78B89);
 	*(LPDWORD)0x0043B268 = BSWAP32(0x28020000);
 	*(LPBYTE )0x0043B26C = 0xE8;
-	*(LPDWORD)0x0043B26D = (DWORD)TCanvas_TextWidth_std_string - (0x0043B26D + sizeof(DWORD));
+	*(LPDWORD)0x0043B26D = (DWORD)TCanvas_TextWidth_stdstr - (0x0043B26D + sizeof(DWORD));
 	*(LPBYTE )0x0043B271 = 0x39;
 	*(LPWORD )0x0043B272 = BSWAP16(0x8524);
 	*(LPDWORD)0x0043B274 = BSWAP32(0xFCFFFF73);

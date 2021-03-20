@@ -8,8 +8,8 @@ __declspec(naked) void __fastcall TCalcImage_DrawBtn(TCalcImage *this, long No, 
 {
 	__asm
 	{
-		mov     eax, dword ptr [esp]
 		push    ecx
+		mov     eax, dword ptr [esp + 4]
 		mov     ecx, dword ptr [esp + 8]
 		mov     dword ptr [esp + 4], 0048292CH
 		mov     dword ptr [esp + 8], eax
@@ -23,8 +23,8 @@ __declspec(naked) void __fastcall _TCalcImage_FOnMouseUp(TCalcImage *this, LPVOI
 {
 	__asm
 	{
-		mov     eax, dword ptr [esp]
 		push    ecx
+		mov     eax, dword ptr [esp + 4]
 		mov     ecx, dword ptr [esp + 8]
 		mov     dword ptr [esp + 4], 00482F5CH
 		mov     dword ptr [esp + 8], eax
@@ -38,8 +38,8 @@ __declspec(naked) void __fastcall _TCalcImage_FOnMouseDown(TCalcImage *this, LPV
 {
 	__asm
 	{
-		mov     eax, dword ptr [esp]
 		push    ecx
+		mov     eax, dword ptr [esp + 4]
 		mov     ecx, dword ptr [esp + 8]
 		mov     dword ptr [esp + 4], 00482FD4H
 		mov     dword ptr [esp + 8], eax

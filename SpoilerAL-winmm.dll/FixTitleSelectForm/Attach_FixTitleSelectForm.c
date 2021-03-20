@@ -60,7 +60,7 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 		add     esp, 12                                 ; 004742A0 _ 83. C4, 0C
 		mov     ecx, dword ptr [ecx + 520]              ; 004742A3 _ 8B. 89, 00000208
 		lea     edx, [ebp - 84]                         ; 004742A9 _ 8D. 55, AC
-		call    TCanvas_TextWidth_std_string            ; 004742AC _ E8, ????????
+		call    TCanvas_TextWidth_stdstr                ; 004742AC _ E8, ????????
 		test    eax, eax                                ; 004742B1 _ 85. C0
 		jz      004742CEH                               ; 004742B3 _ 74, 19
 		mov     ecx, dword ptr [ebp - 548]              ; 004742B5 _ 8B. 8D, FFFFFDDC
@@ -76,7 +76,7 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	*(LPDWORD)0x004742A4 = BSWAP32(0x89080200);
 	*(LPDWORD)0x004742A8 = BSWAP32(0x008D55AC);
 	*(LPBYTE )0x004742AC = 0xE8;
-	*(LPDWORD)0x004742AD = (DWORD)TCanvas_TextWidth_std_string - (0x004742AD + sizeof(DWORD));
+	*(LPDWORD)0x004742AD = (DWORD)TCanvas_TextWidth_stdstr - (0x004742AD + sizeof(DWORD));
 	*(LPBYTE )0x004742B1 = 0x85;
 	*(LPWORD )0x004742B2 = BSWAP16(0xC074);
 	*(LPDWORD)0x004742B4 = BSWAP32(0x198B8DDC);
@@ -97,7 +97,7 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 		mov     ecx, dword ptr [esi + 828]              ; 00474A28 _ 8B. 8E, 0000033C
 		lea     edx, [ebp - 48]                         ; 00474A2E _ 8D. 55, D0
 		mov     ecx, dword ptr [ecx + 520]              ; 00474A31 _ 8B. 89, 00000208
-		call    TCanvas_TextWidth_std_string            ; 00474A37 _ E8, ????????
+		call    TCanvas_TextWidth_stdstr                ; 00474A37 _ E8, ????????
 		test    eax, eax                                ; 00474A3C _ 85. C0
 		jz      00474A4FH                               ; 00474A3E _ 74, 0F
 		add     eax, 3                                  ; 00474A40 _ 83. C0, 03
@@ -110,7 +110,7 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	*(LPDWORD)0x00474A2C = BSWAP32(0x00008D55);
 	*(LPDWORD)0x00474A30 = BSWAP32(0xD08B8908);
 	*(LPDWORD)0x00474A34 = BSWAP32(0x020000E8);
-	*(LPDWORD)0x00474A38 = (DWORD)TCanvas_TextWidth_std_string - (0x00474A38 + sizeof(DWORD));
+	*(LPDWORD)0x00474A38 = (DWORD)TCanvas_TextWidth_stdstr - (0x00474A38 + sizeof(DWORD));
 	*(LPDWORD)0x00474A3C = BSWAP32(0x85C0740F);
 	*(LPDWORD)0x00474A40 = BSWAP32(0x83C0038D);
 	*(LPDWORD)0x00474A44 = BSWAP32(0x8DE0FDFF);
@@ -123,7 +123,7 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 		add     esp, 12                                 ; 00474D0D _ 83. C4, 0C
 		mov     ecx, dword ptr [ecx + 520]              ; 00474D10 _ 8B. 89, 00000208
 		lea     edx, [ebp - 264]                        ; 00474D16 _ 8D. 95, FFFFFEF8
-		call    TCanvas_TextWidth_std_string            ; 00474D1C _ E8, ????????
+		call    TCanvas_TextWidth_stdstr                ; 00474D1C _ E8, ????????
 		test    eax, eax                                ; 00474D21 _ 85. C0
 		jz      00474D3EH                               ; 00474D23 _ 74, 19
 		mov     ecx, dword ptr [ebp - 548]              ; 00474D25 _ 8B. 8D, FFFFFDDC
@@ -140,7 +140,7 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	*(LPDWORD)0x00474D14 = BSWAP32(0x00008D95);
 	*(LPDWORD)0x00474D18 = BSWAP32(0xF8FEFFFF);
 	*(LPBYTE )0x00474D1C = 0xE8;
-	*(LPDWORD)0x00474D1D = (DWORD)TCanvas_TextWidth_std_string - (0x00474D1D + sizeof(DWORD));
+	*(LPDWORD)0x00474D1D = (DWORD)TCanvas_TextWidth_stdstr - (0x00474D1D + sizeof(DWORD));
 	*(LPBYTE )0x00474D21 = 0x85;
 	*(LPWORD )0x00474D22 = BSWAP16(0xC074);
 	*(LPDWORD)0x00474D24 = BSWAP32(0x198B8DDC);
@@ -224,7 +224,7 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 		add     esp, 12                                 ; 00477C16 _ 83. C4, 0C
 		mov     ecx, dword ptr [ecx + 552]              ; 00477C19 _ 8B. 89, 00000228
 		lea     edx, [ebp - 208]                        ; 00477C1F _ 8D. 95, FFFFFF30
-		call    TCanvas_TextWidth_std_string            ; 00477C25 _ E8, ????????
+		call    TCanvas_TextWidth_stdstr                ; 00477C25 _ E8, ????????
 		cmp     dword ptr [ebp - 408], eax              ; 00477C2A _ 39. 85, FFFFFE68
 		jae     00477C47H                               ; 00477C30 _ 73, 15
 		mov     dword ptr [ebp - 408], eax              ; 00477C32 _ 89. 85, FFFFFE68
@@ -236,7 +236,7 @@ EXTERN_C void __cdecl Attach_FixTitleSelectForm()
 	*(LPDWORD)0x00477C1C = BSWAP32(0x0200008D);
 	*(LPDWORD)0x00477C20 = BSWAP32(0x9530FFFF);
 	*(LPWORD )0x00477C24 = BSWAP16(0xFFE8);
-	*(LPDWORD)0x00477C26 = (DWORD)TCanvas_TextWidth_std_string - (0x00477C26 + sizeof(DWORD));
+	*(LPDWORD)0x00477C26 = (DWORD)TCanvas_TextWidth_stdstr - (0x00477C26 + sizeof(DWORD));
 	*(LPWORD )0x00477C2A = BSWAP16(0x3985);
 	*(LPDWORD)0x00477C2C = BSWAP32(0x68FEFFFF);
 	*(LPDWORD)0x00477C30 = BSWAP32(0x73158985);

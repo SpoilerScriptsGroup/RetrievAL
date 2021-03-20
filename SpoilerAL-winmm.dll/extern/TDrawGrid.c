@@ -64,8 +64,8 @@ __declspec(naked) void __fastcall TDrawGrid_SetRowHeights(TDrawGrid *DrawGrid, c
 {
 	__asm
 	{
-		mov     eax, dword ptr [esp]
 		push    ecx
+		mov     eax, dword ptr [esp + 4]
 		mov     ecx, dword ptr [esp + 8]
 		mov     dword ptr [esp + 4], 005592F0H
 		mov     dword ptr [esp + 8], eax
@@ -98,8 +98,8 @@ __declspec(naked) void __fastcall _TDrawGrid_MouseToCell(TDrawGrid *DrawGrid, in
 {
 	__asm
 	{
-		mov     eax, dword ptr [esp]
 		push    ecx
+		mov     eax, dword ptr [esp + 4]
 		mov     ecx, dword ptr [esp + 8]
 		mov     dword ptr [esp + 4], 00559DB8H
 		mov     dword ptr [esp + 8], eax

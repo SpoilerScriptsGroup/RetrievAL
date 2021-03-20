@@ -93,7 +93,7 @@ __declspec(naked) int __fastcall TCanvas_TextWidth_with_length(TCanvas *this, LP
 	}
 }
 
-__declspec(naked) int __fastcall TCanvas_TextWidth_std_string(TCanvas *this, const string *Text)
+__declspec(naked) int __fastcall TCanvas_TextWidth_stdstr(TCanvas *this, const string *Text)
 {
 	extern const DWORD F0055E820;
 

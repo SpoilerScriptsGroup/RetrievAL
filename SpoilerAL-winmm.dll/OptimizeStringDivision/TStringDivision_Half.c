@@ -107,6 +107,30 @@ string * __stdcall TStringDivision_Half_WithoutTokenDtor(
 				if (nest)
 					nest--;
 				break;
+			case '*':
+				if (!(Option & dtBYTEARRAY)) goto DEFAULT;
+				// "*[", "*]"
+				switch (p[0])
+				{
+				case '[':
+					switch (p[1])
+					{
+					case '.':
+					case ':':
+					case '_':
+					case '~':
+						p += 2;
+						break;
+					}
+					nest++;
+					p++;
+					break;
+				case ']':
+					if (p++, nest)
+						nest--;
+					break;
+				}
+				break;
 			case '<':
 				// "<#", "<@", "#>", "@>"
 				switch (c = *p)

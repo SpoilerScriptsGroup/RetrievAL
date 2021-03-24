@@ -1,20 +1,14 @@
 @echo off
 
 setlocal EnableDelayedExpansion
-if not defined inProcessing (
-	set inProcessing=1
-	if "%~1" == "" (
-		set FileName=winmm.def
-	) else (
-		set FileName=%1
-	)
-	echo Creating %FileName%...
-	%0 >%FileName%
-	endlocal
-	goto :eof
+if "%~1" == "" (
+	set FileName=winmm.def
+) else (
+	set FileName=%1
 )
-echo LIBRARY winmm
-echo EXPORTS
+echo Creating %FileName%...
+> %FileName% echo LIBRARY winmm
+>>%FileName% echo EXPORTS
 set exportNameLen=0
 set functionNameLen=0
 set ordinalLen=0
@@ -76,7 +70,7 @@ for /f "tokens=1,2,4 delims=(," %%a in (export.h) do (
 			set noname= NONAME
 		)
 		set exportName=!exportName:~0,%exportNameLen%!
-		echo 	!exportName! !functionName! @ !ordinal!!noname!
+		>>%FileName% echo 	!exportName! !functionName! @ !ordinal!!noname!
 	)
 )
 endlocal

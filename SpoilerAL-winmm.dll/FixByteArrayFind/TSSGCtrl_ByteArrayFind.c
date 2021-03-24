@@ -46,7 +46,6 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 
 		switch (c = *(prev = p++))
 		{
-#if 0// Address coding must be preceded by '$'
 		case '\'':
 		case '"':
 			// string literals, character literals
@@ -73,7 +72,6 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 				break;
 			}
 			break;
-#endif
 		case '$':
 			// "$0", "$1", "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$$"
 			switch (*p)
@@ -106,27 +104,22 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 				break;
 			}
 			break;
-#if 0
 		case '(':
-#endif
-		case '{':// unresolved {define}
+		case '{':
 			// "(", "{"
 			nest++;
 			break;
-#if 0
 		case ')':
-#endif
-		case '}':// unresolved {define}
+		case '}':
 			// ")", "}"
 			if (nest)
 				nest--;
 			break;
 		case '*':
 			// "*<", "*[", "*{", "*>", "*]", "*}"
-			switch (*p)
+			switch (p[0])
 			{
 			case '[':
-#if 0
 				switch (p[1])
 				{
 				case '.':
@@ -137,7 +130,6 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 					break;
 				}
 				/* FALLTHROUGH */
-#endif
 			case '<':
 			case '{':
 				nest++;
@@ -162,6 +154,7 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 			// "<#", "<@", "<_", "#>", "@>"
 			switch (*p)
 			{
+#if 0
 			case '#': case '@':
 				for (p++, comparand = c; p < end; )
 				{
@@ -187,6 +180,7 @@ unsigned long __cdecl TSSGCtrl_ByteArrayFind(
 					break;
 				}
 				break;
+#endif
 			case '_':
 				nest++;
 				p++;

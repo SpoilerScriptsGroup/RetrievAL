@@ -1,22 +1,16 @@
 @echo off
 
 setlocal EnableDelayedExpansion
-if not defined inProcessing (
-	set inProcessing=1
-	if "%~1" == "" (
-		set FileName=export.asm
-	) else (
-		set FileName=%1
-	)
-	echo Creating %FileName%...
-	%0 >%FileName%
-	endlocal
-	goto :eof
+if "%~1" == "" (
+	set FileName=export.asm
+) else (
+	set FileName=%1
 )
-echo .386
-echo .model flat, c
-echo.
-echo public ExportAddresses
+echo Creating %FileName%...
+> %FileName% echo .386
+>>%FileName% echo .model flat, c
+>>%FileName% echo.
+>>%FileName% echo public ExportAddresses
 for /f "tokens=1,2,3 delims=(," %%a in (export.h) do (
 	set name=%%b
 	if defined name (
@@ -27,16 +21,16 @@ for /f "tokens=1,2,3 delims=(," %%a in (export.h) do (
 			if defined name (
 				set suffix=%%c
 				set suffix=!suffix: =!
-				echo public _imp__!name!!suffix!
+				>>%FileName% echo public _imp__!name!!suffix!
 			)
 		)
 	)
 )
-echo.
-echo .data
-echo.
-echo align 4
-echo ExportAddresses label dword
+>>%FileName% echo.
+>>%FileName% echo .data
+>>%FileName% echo.
+>>%FileName% echo align 4
+>>%FileName% echo ExportAddresses label dword
 set len=0
 for /f "tokens=2,3 delims=(," %%a in (export.h) do (
 	set name=%%a
@@ -61,10 +55,10 @@ for /f "tokens=2,3 delims=(," %%a in (export.h) do (
 	set suffix=!suffix: =!
 	set name=!name!!suffix!!pad!
 	set name=!name:~0,%len%!
-	echo _imp__!name! dword ?
+	>>%FileName% echo _imp__!name! dword ?
 )
-echo.
-echo end
+>>%FileName% echo.
+>>%FileName% echo end
 endlocal
 goto :eof
 

@@ -485,14 +485,13 @@ EXTERN_C void __cdecl Attach_Parsing()
 	*(LPBYTE )(0x005102E0 + 2) = 0x0C;// stack size to discard
 
 	*(LPBYTE )(0x00510308 + 0) = JMP_REL8;// Force continue even if processCtrl.Open failed.
-
-	// TSSGCtrl::Funneling
 #if 0
-	*(LPBYTE )(0x00510429 + 1) = dtNEST;
-#endif
 
 	// TSSGCtrl::Funneling
+	*(LPBYTE )(0x00510429 + 1) = dtNEST;
+	//   strD.List(List->at(i), ",", &tmpV);
 	*(LPDWORD)(0x005104A1 + 1) = (DWORD)TSSGCtrl_Funneling_ReplaceDefineDynamic - (0x005104A1 + 1 + sizeof(DWORD));
+#endif
 
 	// TSSGCtrl::Funneling
 	*(LPDWORD)(0x00510617 + 1) = (DWORD)TSSGCtrl_Funneling_GetAddress - (0x00510617 + 1 + sizeof(DWORD));

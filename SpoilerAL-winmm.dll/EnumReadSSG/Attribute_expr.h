@@ -9,20 +9,16 @@
 
 extern HANDLE hHeap;
 
-__inline void Attribute_expr(TSSGCtrl *this, LPCSTR Code, LPCSTR EndOfCode)
+__inline void Attribute_expr(TSSGCtrl *this, LPCSTR Code, LPCSTR EndOfCode, TPrologueAttribute *var)
 {
-	size_t nCodeLength;
+	size_t const nCodeLength = EndOfCode - Code;
 
-	if (!(nCodeLength = EndOfCode - Code))
-		return;
-	for (TPrologueAttribute **it = vector_begin(this->attributeSelector.nowAttributeVec), **end = vector_end(this->attributeSelector.nowAttributeVec); it < end; it++)
+	do
 	{
 		string *lpPrevCode;
 		size_t nPrevCodeLength;
 
-		if ((*it)->type != atPROLOGUE)
-			continue;
-		lpPrevCode = &(*it)->code;
+		lpPrevCode = &var->code;
 		nPrevCodeLength = string_length(lpPrevCode);
 		// semicolon(;) is not the lead and trail byte of codepage 932.
 		// it can scan from backward.
@@ -40,13 +36,14 @@ __inline void Attribute_expr(TSSGCtrl *this, LPCSTR Code, LPCSTR EndOfCode)
 			length = nPrevCodeLength + nCodeLength;
 			if (!length || *(lpszCode + length - 1) != ';')
 				*(LPWORD)(lpszCode + length++) = BSWAP16(';\0');
-			TEndWithAttribute_Setting(*it, lpszCode, length);
+			TEndWithAttribute_Setting(var, lpszCode, length);
 			HeapFree(hHeap, 0, lpszCode);
 		}
 		else
 		{
-			TEndWithAttribute_Setting(*it, Code, nCodeLength);
+			TEndWithAttribute_Setting(var, Code, nCodeLength);
 		}
 		break;
 	}
+	while (0);
 }

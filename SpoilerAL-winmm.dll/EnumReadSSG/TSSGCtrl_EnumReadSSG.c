@@ -65,6 +65,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 	#define stack_PTSSDir_push(Stack, Value) stack_ptr_push((stack_ptr *)(Stack), Value)
 	#define stack_PTSSDir_pop(Stack)         stack_ptr_pop((stack_ptr *)(Stack))
 
+	string expr = { NULL };
 	size_t invalid = FALSE, condition = TRUE;
 	for (string *it = vector_begin(SSGFile); it != vector_end(SSGFile); ++it)
 	{
@@ -119,6 +120,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 			VARIABLE_OPEN,
 			VARIABLE_CLOSE,
 			EXPR,
+			EXPR_CLOSE,
 			DEFINE,
 			UNDEF,
 			ALLOCATE,
@@ -315,10 +317,10 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 				break;
 			// [expr]
 			case BSWAP32('expr'):
-				if (invalid || close || length < 5)
+				if (invalid || length < 5)
 					continue;
 				p += 4;
-				tag = EXPR;
+				tag = EXPR + close;
 				break;
 			default:
 				continue;
@@ -635,6 +637,7 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 					SSGS->folder = stack_PTSSDir_top(ParentStack);
 					SSGS->propertyIndex = OuterRepeat;
 					if (prop) prop->DirectChild++;
+					if (!string_empty(&expr)) Parsing(this, SSGS, &expr, 0);
 				}
 
 				if (SSGS->type == stDIR)
@@ -1262,7 +1265,24 @@ void __cdecl TSSGCtrl_EnumReadSSG(
 
 		// [expr]
 		case EXPR:
-			Attribute_expr(this, p, string_end(it));
+			{
+				TPrologueAttribute *var;
+				if (!(string_end(it) - p))
+					string_ctor_null(&expr);
+				else if (
+					var = (void *)TSSGAttributeElement_GetViaCoord(
+						atPROLOGUE,
+						TSSGAttributeSelector_GetNowAtteributeVec(&this->attributeSelector)).nFont
+					)
+					Attribute_expr(this, p, string_end(it), var);
+				else
+					expr = (string) { p, string_end(it), ._M_end_of_storage = p };
+			}
+			break;
+
+		// [/expr]
+		case EXPR_CLOSE:
+			string_ctor_null(&expr);
 			break;
 
 		// [define ...]

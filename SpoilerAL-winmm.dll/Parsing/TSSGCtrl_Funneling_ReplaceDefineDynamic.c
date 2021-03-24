@@ -6,6 +6,7 @@ void __stdcall ByteArrayReplaceDefine(void *SSGS, void *line);
 
 extern BOOL EnableParserFix;
 
+#if 0
 __declspec(naked) void __cdecl TSSGCtrl_Funneling_ReplaceDefineDynamic()
 {
 	__asm
@@ -49,3 +50,4 @@ __declspec(naked) void __cdecl TSSGCtrl_Funneling_ReplaceDefineDynamic()
 		#undef SSGS
 	}
 }
+#endif

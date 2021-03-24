@@ -18,7 +18,6 @@
 extern HANDLE hHeap;
 size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity);
 
-#if 0
 #ifdef __BORLANDC__
 string __cdecl SplitElement(LPVOID SSGC_strD, string *Src, string Token, DWORD Index, DWORD Option)
 #else
@@ -61,6 +60,7 @@ string * __cdecl SplitElement(string *Result, LPVOID SSGC_strD, string *Src, str
 	}
 	else
 	{
+#if 0
 		size_t                      length, capacity;
 		unsigned long               bits;
 		TSSGAttributeSelector       *attributeSelector;
@@ -103,6 +103,10 @@ string * __cdecl SplitElement(string *Result, LPVOID SSGC_strD, string *Src, str
 		begin = buffer;
 		end = buffer + length;
 		*(LPDWORD)end = 0;
+#else
+		begin = p;
+		end = string_end(Src);
+#endif
 		p = begin + 1;
 		while (__intrinsic_isspace(*p))
 			p++;
@@ -124,6 +128,19 @@ string * __cdecl SplitElement(string *Result, LPVOID SSGC_strD, string *Src, str
 				{
 					if (c == '=')
 						token = p;
+					else if (c == '*' && p[1] == '[')
+					{// loop byte array
+						switch (p[2])
+						{// except operators
+						case '.':
+						case ':':
+						case '_':
+						case '~':
+							p += 3;
+							continue;
+						}
+						break;
+					}
 					p++;
 				}
 				else
@@ -158,10 +175,14 @@ string * __cdecl SplitElement(string *Result, LPVOID SSGC_strD, string *Src, str
 		} while (p < end);
 		if (token)
 			goto FOUND_TOKEN;
+#if 0
 	FAILED2:
 		HeapFree(hHeap, 0, buffer);
 	}
 FAILED1:
+#else
+	}
+#endif
 #ifdef __BORLANDC__
 	return "";
 #else
@@ -184,4 +205,3 @@ FOUND_TOKEN:
 #endif
 	return Result;
 }
-#endif

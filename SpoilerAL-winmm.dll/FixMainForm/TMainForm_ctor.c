@@ -48,5 +48,6 @@ static void __fastcall ctor(TMainForm *this)
 #endif
 	this->DistractionVec = bcb6_operator_new(sizeof(vector_string));
 	vector_ctor(this->DistractionVec);
+
 	verbose(VRB_INFO, "TMainForm::ctor - end");
 }

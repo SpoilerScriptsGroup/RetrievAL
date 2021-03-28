@@ -31,7 +31,7 @@ static LPCSTR ExportNames[] = {
 	#include "export.h"
 	NULL,
 };
-#if 0
+#ifdef _WIN64
 extern FARPROC ExportAddresses[_countof(ExportNames) - 1];
 #else
 static FARPROC ExportAddresses[_countof(ExportNames) - 1];
@@ -524,6 +524,7 @@ static __inline void Detach()
 	}
 }
 
+#ifndef _WIN64
 /***********************************************************************
  *      Export functions
  */
@@ -534,4 +535,5 @@ __declspec(naked) void __cdecl _exp_##name()                   \
 }
 #define UNNAMED NAMED
 #include "export.h"
+#endif
 

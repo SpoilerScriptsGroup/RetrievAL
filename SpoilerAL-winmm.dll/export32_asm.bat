@@ -2,7 +2,7 @@
 
 setlocal EnableDelayedExpansion
 if "%~1" == "" (
-	set FileName=export.asm
+	set FileName=export32.asm
 ) else (
 	set FileName=%1
 )

@@ -2128,7 +2128,7 @@
     <MASM Include="DwmAPI\DwmGetWindowAttribute.asm">
       <Filter>DwmAPI</Filter>
     </MASM>
-    <MASM Include="export.asm">
+    <MASM Include="export32.asm">
       <Filter>ソース ファイル</Filter>
     </MASM>
     <MASM Include="Kernel32\GetProcessId.asm">

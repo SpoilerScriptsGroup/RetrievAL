@@ -17,6 +17,7 @@ static __declspec(naked) int __stdcall SysUtils_GetExceptionObject_LoadResString
 	LPSTR     lpBuffer,
 	int       cchBufferMax)
 {// EExternalException.CreateFmt(SExternalException, [P.ExceptionCode])
+	static const wchar_t modName[] = L"ntdll";
 	__asm {
 		cmp  dword ptr [esp + 0x041C], 0x005C3109
 		je   EXTERN
@@ -65,8 +66,17 @@ static __declspec(naked) int __stdcall SysUtils_GetExceptionObject_LoadResString
 		push edx
 		push 0
 		push eax
+		test eax, eax
+		jns  WINERR
+		push offset modName
+		call GetModuleHandleW
+		push eax
+		push FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_HMODULE
+		jmp  DOCALL
+	WINERR:
 		push 0
 		push FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM
+	DOCALL:
 		call FormatMessageA
 		test eax, eax
 		jz   REVERT

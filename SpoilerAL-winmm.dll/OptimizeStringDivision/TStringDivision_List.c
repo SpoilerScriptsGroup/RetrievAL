@@ -99,7 +99,10 @@ unsigned long __cdecl TStringDivision_List(
 							if (*p != '!')
 								continue;
 							if (tokenLength == 2 && *(LPWORD)token == BSWAP16('[!'))
+							{
+								prev = p - 1;
 								goto MATCHED;
+							}
 							p++;
 							break;
 						case '\\':

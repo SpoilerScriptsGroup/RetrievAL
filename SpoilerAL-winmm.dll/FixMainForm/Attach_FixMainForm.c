@@ -280,7 +280,7 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 		mov     edx, dword ptr [eax + 4]                ; 0043A5F9 _ 8B. 50, 04
 		mov     dword ptr [ebp - 752], edx              ; 0043A5FC _ 89. 95, FFFFFD10
 		cmp     edi, edx                                ; 0043A602 _ 3B. FA
-		je      0043A67DH                               ; 0043A604 _ 74, 71
+		je      0043A67DH                               ; 0043A604 _ 74, 77
 		mov     ecx, dword ptr [ebx + 1000]             ; 0043A606 _ 8B. 8B, 000003E8
 		mov     edx, edi                                ; 0043A60C _ 8B. D7
 		mov     ecx, dword ptr [ecx + 552]              ; 0043A60E _ 8B. 89, 00000228
@@ -293,7 +293,7 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPDWORD)0x0043A5F8 = BSWAP32(0x388B5004);
 	*(LPDWORD)0x0043A5FC = BSWAP32(0x899510FD);
 	*(LPDWORD)0x0043A600 = BSWAP32(0xFFFF3BFA);
-	*(LPDWORD)0x0043A604 = BSWAP32(0x74718B8B);
+	*(LPDWORD)0x0043A604 = BSWAP32(0x74778B8B);
 	*(LPDWORD)0x0043A608 = BSWAP32(0xE8030000);
 	*(LPDWORD)0x0043A60C = BSWAP32(0x8BD78B89);
 	*(LPDWORD)0x0043A610 = BSWAP32(0x28020000);

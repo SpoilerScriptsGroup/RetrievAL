@@ -38,9 +38,10 @@ static void __fastcall SetCode(TSSGSubject *SSGS, string *s)
 }
 
 __declspec(naked)
-static void __fastcall TMainForm_FormatNameString(TSSGCtrl *this, TSSGSubject *SSGS
+static void __fastcall TMainForm_FormatNameString(
+	TSSGCtrl *this, TSSGSubject *SSGS
 #ifdef _M_IX86
-												  , string *retVal, const string* nowValHeadStr
+	, string *retVal, const string* nowValHeadStr
 #endif
 )
 {

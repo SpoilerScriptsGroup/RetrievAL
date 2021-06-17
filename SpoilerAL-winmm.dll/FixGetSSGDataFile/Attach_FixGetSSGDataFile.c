@@ -14,8 +14,6 @@ static string * __stdcall TSSGCtrl_GetSSGDataFile_Half(
 	char   const *const __s,
 	void   const *const __a)
 {
-	extern BOOL EnableParserFix;
-
 	TSSGCtrl    *const This  = (va_arg(pFrame, void *), va_arg(pFrame, void *), va_arg(pFrame, void *));
 	TSSGSubject *const SSGS  =  va_arg(pFrame, void *);
 	string      *const FName = &va_arg(pFrame, string);
@@ -108,6 +106,7 @@ static void __fastcall TSSGCtrl_SetSSGDataFile_IsSSL(
 	register string* VIt,
 	string*    const VEnd)
 {
+	extern BOOL EnableParserFix;
 	extern BOOL FixTheProcedure;
 
 	vector_string names;
@@ -123,7 +122,7 @@ static void __fastcall TSSGCtrl_SetSSGDataFile_IsSSL(
 			continue;
 		memmove(string_begin(VIt), string_begin(VIt) + 7, (string_end(VIt) -= 7) - string_begin(VIt) + 1);
 		vector_string_clear(&names);
-		if (FunctionableGroup(VIt, &func) || !FixTheProcedure)
+		if (!EnableParserFix || FunctionableGroup(VIt, &func) || !FixTheProcedure)
 			vector_string_push_back(&names, VIt);
 		else
 		{

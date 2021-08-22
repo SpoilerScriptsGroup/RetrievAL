@@ -45,6 +45,17 @@ static __declspec(naked) LPCVOID /* bcc */__fastcall TMainForm_M_ProcessAddClick
 	}
 }
 
+static void CALLBACK TimerProc(
+	const HWND                        hWnd,
+	const UINT                        uMsg,
+	const struct FunctionTimer *const nIDEvent,
+	const TIMERPROC                   lpTimerFunc)
+{
+	static void (CALLBACK *const OnTimer)(UINT ID, UINT Message, DWORD UserVal, DWORD Val1, DWORD Val2) = (void *)0x004A1F60;
+
+	OnTimer((UINT)nIDEvent, uMsg, (WPARAM)nIDEvent, (DWORD)hWnd, (DWORD)lpTimerFunc);
+}
+
 static size_t __fastcall TMainForm_M_ProcessAddClick_mrOk(
 	TMainForm *const this,
 	string    *const tmpS,
@@ -253,6 +264,35 @@ EXTERN_C void __cdecl Attach_ProcessMonitor()
 
 	// TSearchForm::AddressLBoxDblClick
 	*(LPDWORD)0x00497048 = (DWORD)TSearchForm_AddressLBoxDblClick_SubjectAccess - (0x00497048 + sizeof(DWORD));
+
+	// TFunctionTimer::Start
+	*(LPBYTE )0x004A1EF3 = 0xA1;// devCaps.wPeriodMax = MainForm->GetHandle()
+	*(LPDWORD)0x004A1EF4 = _MainForm;
+	*(LPDWORD)0x004A1EF8 = BSWAP32(0x0F1F00 << 8 | CALL_REL);
+	*(LPDWORD)0x004A1EFC = 0x0058750C - (0x004A1EFC + sizeof(DWORD));
+	*(LPWORD )0x004A1F00 = BSWAP16(0x8943);
+	*(LPBYTE )0x004A1F02 = offsetof(struct FunctionTimer, devCaps.wPeriodMax);
+
+	*(LPBYTE )0x004A1F03 =         0x68       ;// uElapse  = Interval
+	*(LPDWORD)0x004A1F04 = (DWORD)TimerProc   ;// nIDEvent = this
+	*(LPDWORD)0x004A1F08 = BSWAP32(0x565350 << 8 | CALL_REL);
+	*(LPDWORD)0x004A1F0C = (DWORD)SetTimer - (0x004A1F0C + sizeof(DWORD));
+	*(LPDWORD)0x004A1F10 = BSWAP32(0x85C00F45);// test   eax, eax
+	*(LPWORD )0x004A1F14 = BSWAP16(0xC389    );// cmovnz eax, nIDEvent
+	*(LPBYTE )0x004A1F16 =         0x43       ;// mov    [this]TFunctionTimer.timerID, eax
+	*(LPBYTE )0x004A1F17 = offsetof(struct FunctionTimer, timerID);
+	*(LPDWORD)0x004A1F18 = BSWAP32(0xF7D81BC0);// neg eax; sbb eax, eax
+	*(LPBYTE )0x004A1F1C =         0x40       ;// inc eax
+
+	// TFunctionTimer::Stop
+	*(LPBYTE )0x004A1F41 = 0xFF;// push uIDEvent = *ID
+	*(LPWORD )0x004A1F42 = BSWAP16(0x36FF);
+	*(LPBYTE )0x004A1F44 = 0x73;// push hWnd = devCaps.wPeriodMax
+	*(LPBYTE )0x004A1F45 = offsetof(struct FunctionTimer, devCaps.wPeriodMax);
+	*(LPBYTE )0x004A1F46 = CALL_REL;
+	*(LPDWORD)0x004A1F47 = (DWORD)KillTimer - (0x004A1F47 + sizeof(DWORD));
+	*(LPBYTE )0x004A1F4E = 0x06;// ecx => eax
+	*(LPWORD )0x004A1F54 = BSWAP16(0x8D0D);
 
 	// TProcessCtrl::Clear
 	//   entry.th32ProcessID=NULL; => entry.th32ProcessID=-1;

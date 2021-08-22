@@ -14,11 +14,12 @@ __declspec(naked) void __cdecl TMainForm_M_TitleSelectClick_OpenSSG()
 {
 	__asm
 	{
-		push    8
+		push    atDIR
 		push    ebx
 		call    TMainForm_ChangeSubjectPanel
 		add     esp, 8
-		mov     dword ptr [ebx + 554H], -2
+		mov     [ebx]TMainForm.nowSelectSubjectIndex, -2
 		jmp     dword ptr [F004FCE80]
+		ud2
 	}
 }

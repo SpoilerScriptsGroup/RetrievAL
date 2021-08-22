@@ -143,6 +143,9 @@ static BOOL __cdecl Attach()
 	if (VerifyEntryModule(lpModuleName, lpProfileName))
 	{
 		#define lpDirectoryPath lpModuleName
+		
+		BOOL Info = FALSE;
+		SetUserObjectInformationW(GetCurrentProcess(), UOI_TIMERPROC_EXCEPTION_SUPPRESSION, &Info, sizeof(Info));
 
 		verbose(VRB_INFO, "_DllMainCRTStartup - begin Attach");
 		lpDirectoryPath[nLength] = L'\0';
@@ -434,7 +437,7 @@ static __inline BOOL ModifyResourceSection()
 		"\x0A" "Font.Style" "\x0B" "\x00"                   // Font.Style = []
 		"\x0A" "ParentFont" "\x08"                          // ParentFont = False
 		"\x09" "PlainText" "\x09"                           // PlainText = True
-		"\x08" "ReadOnly" "\x09"                            // ReadOnly = True
+		"\x08" "ReadOnly" "\x08"                            // ReadOnly = False
 		"\x0A" "ScrollBars" "\x07\x06" "ssBoth"             // ScrollBars = ssBoth
 		"\x08" "TabOrder" "\x03\x01\x00"                    // TabOrder = 1
 		"\x07" "TabStop" "\x09"                             // TabStop = True

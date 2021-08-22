@@ -4,12 +4,13 @@
 
 static __declspec(naked) TMainForm* __fastcall TMainForm_DGridDrawCell_DrawTreeCell(int ARow, TDrawGrid *DGrid)
 {
-	static const LPCVOID listener = NULL;
-	__asm {// Don't change eax!
+	__asm
+	{// Don't change eax!
 		lea    ecx, [eax]TMainForm.ssgActionListner
-		cmp    [eax]TMainForm.userMode, 4
-		cmovae ecx, listener// quiet mode
-		mov    [eax]TMainForm.ssgCtrl.ssgActionListner, ecx
+		cmp    [eax]TMainForm.userMode, 3
+		jbe    CANVAS
+		mov    [eax]TMainForm.ssgCtrl.ssgActionListner, 0
+	CANVAS:
 		mov    ecx, [edx]TDrawGrid.FCanvas
 		ret
 	}// Must make ecx into TCanvas*
@@ -30,13 +31,8 @@ static void __fastcall TSSGCtrl_GoLockWrite_forBegin(
 	string   *const tmpS)
 {
 	string_ctor_null(tmpS);
-	switch (TMainForm_GetUserMode(MainForm))
-	{// quiet mode
-	case 4:
-	case 5:
+	if (TMainForm_GetUserMode(MainForm) < 5)
 		This->ssgActionListner = NULL;
-		break;
-	}
 }
 
 static void __fastcall TSSGCtrl_GoLockWrite_forEnd(

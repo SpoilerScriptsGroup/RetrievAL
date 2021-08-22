@@ -23,13 +23,14 @@ enum Repeat
 #pragma pack(push, 1)
 typedef struct _TSSGCtrl
 {
-	struct _TFunctionTimer {
-		unsigned long (*nowTimerFunc)(unsigned long);
-		MMRESULT timerID;
-		TIMECAPS devCaps;
+	struct FunctionTimer
+	{
+		unsigned long(*nowTimerFunc)(unsigned long ThisPointer);
+		MMRESULT      timerID;
+		TIMECAPS      devCaps;
 		unsigned long oldTime, nowTime, interval;
-	} funcTimer;
-	__int32 : 32;
+		unsigned long thisPointer;
+	}                      funcTimer;
 	TSSGAttributeSelector  attributeSelector;
 	LPVOID                 adjustmentListner;
 	LPVOID                 ssgActionListner;

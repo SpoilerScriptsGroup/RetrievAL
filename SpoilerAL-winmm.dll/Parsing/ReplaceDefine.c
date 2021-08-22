@@ -62,11 +62,6 @@ size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LP
 				{
 					c = *(++p);
 				} while (__intrinsic_isspace(c));
-				if (c == '_')
-					do
-					{
-						c = *(++p);
-					} while (__intrinsic_isspace(c));
 				if (c != 'L')
 					continue;
 				if (*(++p) != '{' || __intrinsic_isspace(p[1]))

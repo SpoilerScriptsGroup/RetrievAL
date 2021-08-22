@@ -58,27 +58,30 @@ static __declspec(naked) void __cdecl TMainForm_SubjectAccess_break_ListLBox()
 	}
 }
 
-static HWND __fastcall TMainForm_SubjectAccess_GetCautionHandle(TMainForm *const this, TSSString *const SSGS)
-{
-	return SSGS->cautious ? TWinControl_GetHandle(this->CautionREdit) : NULL;
-}
-
 static __declspec(naked) void __cdecl TMainForm_SubjectAccess_CautiousString() {
 	__asm {// TSSString *SSGS
 		mov  edx, dword ptr [ebp - 0x02FC]
-		mov  ecx, ebx
-		call TMainForm_SubjectAccess_GetCautionHandle
-		test eax, eax
-		jnz  CAUTION
-		rep ret
+		cmp  [edx]TSSString.cautious, 0
+		jne  CAUTION
+
+		mov  ecx, [ebx]TMainForm.StringNewValEdit
+		mov  eax, [ecx]TWinControl.FHandle
+		push [ebp - 0xEC]TSSArgString.value
+		push 0
+		push WM_SETTEXT
+		push eax
+		call SendMessageA
+		ret
 
 		align 16
-	CAUTION:// TSSArgString.value.c_str()
+	CAUTION:// Must access via getter because risk of not yet assigned.
+		mov  ecx, [ebx]TMainForm.CautionREdit
+		call TWinControl_GetHandle
 		push 0
 		push SB_TOP
 		push WM_VSCROLL
 		push eax
-		push dword ptr [ebp - 0xE4]
+		push [ebp - 0xEC]TSSArgString.value
 		push 0
 		push WM_SETTEXT
 		push eax
@@ -192,6 +195,18 @@ static __declspec(naked) long __cdecl TMainForm_DrawTreeCell_shadowModeStub() {
 		mov   eax, [ebx]TMainForm.shadowMode
 		ret
 	}
+}
+
+static unsigned long __fastcall TMainForm_M_MemorySettingClick_SetLockTimerInterval(
+	TMainForm *const This,
+	long       const Interval
+)
+{
+	static unsigned long(__cdecl *const Start)(void *This, unsigned long Interval, ULONG_PTR TimerFunc, unsigned long ThisPointer) = (void *)0x004A1EB8;
+
+	if (Interval != This->ssgCtrl.lockTimerInterval && This->ssgCtrl.lockMap._M_node_count)
+		Start(&This->ssgCtrl.funcTimer, Interval, /* TSSGCtrl::GoLockWrite */0x004FE9F0, (unsigned long)&This->ssgCtrl);
+	return Interval;
 }
 
 #define JB_REL32              (WORD )0x820F
@@ -625,6 +640,12 @@ EXTERN_C void __cdecl Attach_FixMainForm()
 	*(LPDWORD)(0x00449220 + 2) = 0x004497BE - (0x00449220 + 2 + sizeof(DWORD));
 
 	*(LPDWORD)(0x0044993B + 1) = (DWORD)TMainForm_M_TitleSelectClick_OpenSSG - (0x0044993B + 1 + sizeof(DWORD));
+	
+	// TMainForm::M_MemorySettingClick
+	*(LPWORD )0x0044A152 = BSWAP16(0x8BCE                    );// mov  ecx, this
+	*(LPDWORD)0x0044A154 = BSWAP32(0x6BD264 << 8 | CALL_REL32);// imul edx, Position, 100
+	*(LPDWORD)0x0044A158 = (DWORD)TMainForm_M_MemorySettingClick_SetLockTimerInterval - (0x0044A158 + sizeof(DWORD));
+	*(LPBYTE )0x0044A15C = NOP;
 
 	// TMainForm::M_CustomizeClick
 	/*

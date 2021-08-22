@@ -221,6 +221,7 @@ __declspec(naked) void __cdecl TSSBitList_Read_GetAddressStr()
 		call    SubjectStringTable_GetString
 		mov     dword ptr [esp + 12], eax
 		jmp     dword ptr [TSSGCtrl_GetAddress]
+		ud2
 	}
 }
 
@@ -285,6 +286,7 @@ __declspec(naked) void __cdecl TSSGCtrl_MakeADJFile_GetAddressStr()
 		mov     eax, dword ptr [esp + 8]
 		mov     eax, dword ptr [eax]
 		jmp     dword ptr [eax + 8 * 4]
+		ud2
 	}
 }
 
@@ -385,6 +387,7 @@ __declspec(naked) void __cdecl TSSTrace_Write_GetFileName()
 		pop     eax
 		push    1
 		jmp     eax
+		ud2
 
 		#undef this
 	}
@@ -400,8 +403,9 @@ __declspec(naked) void __cdecl TSSGSubject_GetSubjectName_GetSubjectName()
 		call    SubjectStringTable_GetString
 		pop     ecx
 		push    eax
-		push    ebx
+		push    this
 		jmp     ecx
+		ud2
 
 		#undef this
 	}

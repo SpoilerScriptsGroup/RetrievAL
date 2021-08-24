@@ -131,7 +131,7 @@ EXTERN_C uint64_t __msreturn __cdecl _strtoui64(const char *nptr, char **endptr,
 #define ALLOCATE_SUPPORT     1
 #define LOCAL_MEMORY_SUPPORT 1
 #define REPEAT_INDEX         1
-#define SUBJECT_STATUS       1
+#define SUBJECT_STATUS       4
 #define SCOPE_SUPPORT        1
 #define USING_NAMESPACE_BCB6_STD
 #include "bcb6_std_allocator.h"
@@ -4209,7 +4209,7 @@ static MARKUP * __stdcall Markup(IN LPSTR lpSrc, IN size_t nSrcLength, OUT size_
 
 				char *p, *end, *next;
 				UINT bound;
-				
+
 #if 1
 				if (lpMarkup - 2 >= lpMarkupArray
 					&& (lpMarkup[-1].Tag == TAG_ADD || lpMarkup[-1].Tag == TAG_SUB) && !(lpMarkup[-1].Type & OS_LEFT_ASSIGN)
@@ -5842,6 +5842,7 @@ static LPVOID __fastcall AllocateHeapBuffer(LPVOID **lplpHeapBuffer, size_t *lpn
 //---------------------------------------------------------------------
 //「文字列Srcを、一旦逆ポーランド記法にしたあと解析する関数」
 //---------------------------------------------------------------------
+#pragma function(log10)
 uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, const string *const Src, BOOL const bInitialIsInteger, va_list register ArgPtr)
 {
 	#define PROCESS_DESIRED_ACCESS (PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION)
@@ -5856,6 +5857,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, 
 	VARIAUNT                    *lpOperandBuffer, *lpOperandTop, *lpEndOfOperand;
 	VARIABLE                    *lpVariable;
 	size_t                      nNumberOfVariable;
+#if SCOPE_SUPPORT
+	size_t                      nNumberOfDefaults;
+#endif
 	LPVOID                      *lpHeapBuffer;
 	size_t                      nNumberOfHeapBuffer;
 #if REPEAT_INDEX
@@ -5886,6 +5890,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, 
 	lpOperandBuffer        = NULL;
 	lpVariable             = NULL;
 	nNumberOfVariable      = 0;
+#if SCOPE_SUPPORT
+	nNumberOfDefaults      = 0;
+#endif
 	lpHeapBuffer           = NULL;
 	nNumberOfHeapBuffer    = 0;
 #if REPEAT_INDEX
@@ -5897,7 +5904,10 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, 
 		char   *p, *end;
 		size_t nNumberOfMarkup;
 		size_t nNumberOfPostfix;
-		size_t length;
+		size_t register length;
+#if REPEAT_INDEX
+		TSSGSubjectProperty *lpProperty;
+#endif
 
 		do	/* do { ... } while (0); */
 		{
@@ -5919,7 +5929,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, 
 #if ADDITIONAL_TAGS
 			if (!(attributes = TSSGSubject_GetAttribute(SSGS)))// check for TSSGCtrl::LoopSSRFile
 				attributes = TSSGAttributeSelector_GetNowAtteributeVec(&this->attributeSelector);
-			variable = attributes ? (void *)TSSGAttributeElement_GetViaCoord(atPROLOGUE, attributes).nFont : NULL;
+			variable = TSSGCtrl_GetAttribute(this, SSGS, atPROLOGUE);
 #endif
 			p = string_begin(Src);
 			if (string_length(Src) >= sizeof(size_t) * 2 && *(size_t *)string_begin(Src) == BOM)
@@ -6173,12 +6183,8 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, 
 			#undef BOM
 		} while (0);
 
-		lpOperandBuffer = (VARIAUNT *)HeapAlloc(hHeap, 0, sizeof(VARIAUNT) * (2 + nNumberOfPostfix));
+		lpOperandBuffer = (VARIAUNT *)HeapAlloc(hHeap, 0, (1 + nNumberOfPostfix) * sizeof(VARIAUNT));
 		if (!lpOperandBuffer)
-			goto ALLOC_ERROR;
-
-		lpVariable = (VARIABLE *)HeapAlloc(hPrivateHeap, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, sizeof(VARIABLE) * 0x10);
-		if (!lpVariable)
 			goto ALLOC_ERROR;
 
 		#define OPERAND_IS_EMPTY()  (lpEndOfOperand == lpOperandBuffer)
@@ -6199,120 +6205,34 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, 
 		operandZero.Quad = 0;
 		operandZero.IsQuad = !IsInteger;
 		OPERAND_CLEAR();
-#if SUBJECT_STATUS
-		lpVariable[0].Length = 4;
-		lpVariable[0].String = "Addr";
-		lpVariable[1].Length = 4;
-		lpVariable[1].String = "Read";
-		lpVariable[2].Length = 4;
-		lpVariable[2].String = "Size";
-		lpVariable[3].Length = 4;
-		lpVariable[3].String = "Type";
-		if (IsInteger)
-		{
-			lpVariable[0].Value.Quad = (uint64_t)SSGS->lastAddr;
-			lpVariable[0].Value.IsQuad = sizeof(SSGS->lastAddr) > sizeof(uint32_t);
-			lpVariable[1].Value.Quad = (uint64_t)SSGS->evaluateAtRead;
-			lpVariable[1].Value.IsQuad = sizeof(SSGS->evaluateAtRead) > sizeof(uint32_t);
-			lpVariable[2].Value.Quad = (uint64_t)TSSGSubject_GetSize(SSGS);
-			lpVariable[2].Value.IsQuad = sizeof(unsigned long) > sizeof(uint32_t);
-			lpVariable[3].Value.Quad = (uint64_t)SSGS->type;
-			lpVariable[3].Value.IsQuad = sizeof(SSGS->type) > sizeof(uint32_t);
-		}
-		else
-		{
-			lpVariable[0].Value.Real = (double)(size_t)SSGS->lastAddr;
-			lpVariable[0].Value.IsQuad = TRUE;
-			lpVariable[1].Value.Real = (double)SSGS->evaluateAtRead;
-			lpVariable[1].Value.IsQuad = TRUE;
-			lpVariable[2].Value.Real = (double)TSSGSubject_GetSize(SSGS);
-			lpVariable[2].Value.IsQuad = TRUE;
-			lpVariable[3].Value.Real = (double)SSGS->type;
-			lpVariable[3].Value.IsQuad = TRUE;
-		}
-		nNumberOfVariable = 4;
-#endif
-		while (length = va_arg(ArgPtr, size_t))
-		{
-#if !SUBJECT_STATUS
-			if (nNumberOfVariable)
-#endif
-			if (!(nNumberOfVariable & 0x0F))
-			{
-				LPVOID lpMem;
-				size_t nBytes;
-
-				nBytes = (nNumberOfVariable + 0x10) * sizeof(VARIABLE);
-				lpMem = HeapReAlloc(hPrivateHeap, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, lpVariable, nBytes);
-				if (!lpMem)
-					goto ALLOC_ERROR;
-				lpVariable = (VARIABLE *)lpMem;
-			}
-			lpVariable[nNumberOfVariable].Length = length;
-			lpVariable[nNumberOfVariable].String = va_arg(ArgPtr, LPCSTR);
-			lpVariable[nNumberOfVariable].Value.Quad = va_arg(ArgPtr, uint64_t);
-			lpVariable[nNumberOfVariable].Value.IsQuad = !!lpVariable[nNumberOfVariable].Value.High || !IsInteger;
-			nNumberOfVariable++;
-		}
+		
+		for (length = 0; ((size_t *)ArgPtr)[length << 2]; ++length);
+		length += SUBJECT_STATUS;
 #if REPEAT_INDEX
-		do	/* do { ... } while (0); */
+		if (lpProperty = GetSubjectProperty(SSGS))
+			length += lpProperty->RepeatDepth << 1;
+#endif
+		lpVariable = (VARIABLE *)HeapAlloc(hPrivateHeap, HEAP_NO_SERIALIZE, (length + nNumberOfPostfix) * sizeof(VARIABLE));
+		if (!lpVariable)
+			goto ALLOC_ERROR;
+#if REPEAT_INDEX
+		if (lpProperty && lpProperty->RepeatDepth) do/* do { ... } while (0); */
 		{
-			TSSGSubjectProperty *lpProperty;
-			size_t              nPrevNumberOfVariable;
-			size_t              nSize, nCapacity, nForward;
+			size_t nPrevNumberOfVariable;
+			size_t nSize, nCapacity, nForward;
 
-			lpProperty = GetSubjectProperty(SSGS);
-			if (!lpProperty)
-				break;
-			if (!lpProperty->RepeatDepth)
-				break;
-			lpVariableStringBuffer = (LPSTR)HeapAlloc(hHeap, 0, 32);
+			nCapacity = 11 + (size_t)log10(lpProperty->RepeatDepth) & -4;
+			lpVariableStringBuffer = (LPSTR)HeapAlloc(hHeap, 0, nCapacity * lpProperty->RepeatDepth << 1);
 			if (!lpVariableStringBuffer)
 				goto ALLOC_ERROR;
 			nPrevNumberOfVariable = nNumberOfVariable;
 			p = lpVariableStringBuffer;
-			nSize = 0;
-			nCapacity = 32;
+			nSize = nNumberOfVariable += lpProperty->RepeatDepth << 1;
 			nForward = -1;
 			do
 			{
 				size_t nVariableLength;
 
-				if (nCapacity < nSize + (3 + 10 + 1) + (6 + 10 + 1))
-				{
-					LPVOID lpMem;
-
-					lpMem = HeapReAlloc(hHeap, 0, lpVariableStringBuffer, nCapacity <<= 1);
-					if (!lpMem)
-						goto ALLOC_ERROR;
-					p += (size_t)lpMem - (size_t)lpVariableStringBuffer;
-					lpVariableStringBuffer = (LPSTR)lpMem;
-				}
-				*(uint32_t *)p = BSWAP32('Idx\0');
-				_ultoa(lpProperty->RepeatDepth, p + 3, 10);
-#if !SUBJECT_STATUS
-				if (nNumberOfVariable)
-#endif
-				if (!(nNumberOfVariable & 0x0F))
-				{
-					LPVOID lpMem;
-					size_t nBytes;
-
-					nBytes = (nNumberOfVariable + 0x10) * sizeof(VARIABLE);
-					lpMem = HeapReAlloc(hPrivateHeap, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, lpVariable, nBytes);
-					if (!lpMem)
-						goto ALLOC_ERROR;
-					lpVariable = (VARIABLE *)lpMem;
-				}
-				lpVariable[nNumberOfVariable].Length = nVariableLength = strlen(p + 3) + 3;
-				nSize += ++nVariableLength;
-				lpVariable[nNumberOfVariable].String = (LPSTR)(p - lpVariableStringBuffer);
-				p += nVariableLength;
-				if (!(lpVariable[nNumberOfVariable].Value.IsQuad = !IsInteger))
-					lpVariable[nNumberOfVariable].Value.Quad = lpProperty->RepeatIndex;
-				else
-					lpVariable[nNumberOfVariable].Value.Real = (double)lpProperty->RepeatIndex;
-				nNumberOfVariable++;
 				if (++nForward)
 				{
 					*(uint32_t *) p      = BSWAP32('FwdI');
@@ -6325,33 +6245,73 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, 
 					*(uint32_t *)p = BSWAP32('Idx\0');
 					nVariableLength = 3;
 				}
-#if !SUBJECT_STATUS
-				if (nNumberOfVariable)
-#endif
-				if (!(nNumberOfVariable & 0x0F))
-				{
-					LPVOID lpMem;
-					size_t nBytes;
-
-					nBytes = (nNumberOfVariable + 0x10) * sizeof(VARIABLE);
-					lpMem = HeapReAlloc(hPrivateHeap, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, lpVariable, nBytes);
-					if (!lpMem)
-						goto ALLOC_ERROR;
-					lpVariable = (VARIABLE *)lpMem;
-				}
-				lpVariable[nNumberOfVariable].Length = nVariableLength;
-				nSize += ++nVariableLength;
-				lpVariable[nNumberOfVariable].String = (LPSTR)(p - lpVariableStringBuffer);
-				p += nVariableLength;
-				if (!(lpVariable[nNumberOfVariable].Value.IsQuad = !IsInteger))
-					lpVariable[nNumberOfVariable].Value.Quad = lpProperty->RepeatIndex;
+				--nSize;
+				lpVariable[nSize].Length = nVariableLength;
+				lpVariable[nSize].String = p;
+				if (!(lpVariable[nSize].Value.IsQuad = !IsInteger))
+					lpVariable[nSize].Value.Quad = lpProperty->RepeatIndex;
 				else
-					lpVariable[nNumberOfVariable].Value.Real = (double)lpProperty->RepeatIndex;
-				nNumberOfVariable++;
-			} while ((lpProperty = GetOuterRepeat(lpProperty)) && lpProperty->RepeatDepth);
-			for (size_t i = nPrevNumberOfVariable; i < nNumberOfVariable; i++)
-				lpVariable[i].String += (size_t)lpVariableStringBuffer;
+					lpVariable[nSize].Value.Real = (double)lpProperty->RepeatIndex;
+				p += nCapacity;
+
+				*(uint32_t *)p = BSWAP32('Idx\0');
+				_ultoa(lpProperty->RepeatDepth, p + 3, 10);
+				--nSize;
+				lpVariable[nSize].Length = nVariableLength = strlen(p + 3) + 3;
+				lpVariable[nSize].String = p;
+				if (!(lpVariable[nSize].Value.IsQuad = !IsInteger))
+					lpVariable[nSize].Value.Quad = lpProperty->RepeatIndex;
+				else
+					lpVariable[nSize].Value.Real = (double)lpProperty->RepeatIndex;
+				p += nCapacity;
+			} while ((lpProperty = GetOuterRepeat(lpProperty)));
 		} while (0);
+#endif
+#if SUBJECT_STATUS
+		length = (nNumberOfVariable += SUBJECT_STATUS) - 1;
+		lpVariable[length - 0].Length = 4;
+		lpVariable[length - 0].String = "Addr";
+		lpVariable[length - 1].Length = 4;
+		lpVariable[length - 1].String = "Read";
+		lpVariable[length - 2].Length = 4;
+		lpVariable[length - 2].String = "Size";
+		lpVariable[length - 3].Length = 4;
+		lpVariable[length - 3].String = "Type";
+		if (IsInteger)
+		{
+			lpVariable[length - 0].Value.Quad = (uint64_t)SSGS->lastAddr;
+			lpVariable[length - 0].Value.IsQuad = sizeof(SSGS->lastAddr) > sizeof(uint32_t);
+			lpVariable[length - 1].Value.Quad = (uint64_t)SSGS->evaluateAtRead;
+			lpVariable[length - 1].Value.IsQuad = sizeof(SSGS->evaluateAtRead) > sizeof(uint32_t);
+			lpVariable[length - 2].Value.Quad = (uint64_t)TSSGSubject_GetSize(SSGS);
+			lpVariable[length - 2].Value.IsQuad = sizeof(unsigned long) > sizeof(uint32_t);
+			lpVariable[length - 3].Value.Quad = (uint64_t)SSGS->type;
+			lpVariable[length - 3].Value.IsQuad = sizeof(SSGS->type) > sizeof(uint32_t);
+		}
+		else
+		{
+			lpVariable[length - 0].Value.Real = (double)(size_t)SSGS->lastAddr;
+			lpVariable[length - 0].Value.IsQuad = TRUE;
+			lpVariable[length - 1].Value.Real = (double)SSGS->evaluateAtRead;
+			lpVariable[length - 1].Value.IsQuad = TRUE;
+			lpVariable[length - 2].Value.Real = (double)TSSGSubject_GetSize(SSGS);
+			lpVariable[length - 2].Value.IsQuad = TRUE;
+			lpVariable[length - 3].Value.Real = (double)SSGS->type;
+			lpVariable[length - 3].Value.IsQuad = TRUE;
+		}
+#endif
+		while (length = va_arg(ArgPtr, size_t))
+		{
+			lpVariable[nNumberOfVariable].Length = length;
+			lpVariable[nNumberOfVariable].String = va_arg(ArgPtr, LPCSTR);
+			lpVariable[nNumberOfVariable].Value.Quad = va_arg(ArgPtr, uint64_t);
+			lpVariable[nNumberOfVariable].Value.IsQuad = !!lpVariable[nNumberOfVariable].Value.High || !IsInteger;
+			nNumberOfVariable++;
+		}
+#if SCOPE_SUPPORT
+		nNumberOfDefaults = nNumberOfVariable;
+		for (register PVARIABLE v = lpVariable, end = v + nNumberOfDefaults; v < end; ++v)
+			v->Node = NULL;
 #endif
 		lpEndOfPostfix = (lpPostfix = lpPostfixBuffer) + nNumberOfPostfix;
 	}
@@ -7936,20 +7896,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, 
 				}
 				else
 				{
-					if (!(nNumberOfVariable & 0x0F))
-					{
-						LPVOID lpMem;
-						size_t nBytes;
-
-						nBytes = (nNumberOfVariable + 0x10) * sizeof(VARIABLE);
-						lpMem = HeapReAlloc(hPrivateHeap, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, lpVariable, nBytes);
-						if (!lpMem)
-							goto ALLOC_ERROR;
-						lpVariable = (VARIABLE *)lpMem;
-					}
 					lpVariable[nNumberOfVariable].Length = length;
 					lpVariable[nNumberOfVariable].String = p;
 					lpVariable[nNumberOfVariable].Value = *lpOperandTop;
+#if SCOPE_SUPPORT
+					lpVariable[nNumberOfVariable].Node = NULL;
+#endif
 					nNumberOfVariable++;
 				}
 				lpPostfix++;
@@ -9087,7 +9039,11 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, 
 #endif
 							address = lpProcessMemory[i].Address
 								? HeapReAlloc(hPrivateHeap,
-											  HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY | HEAP_REALLOC_IN_PLACE_ONLY * (allocSize <= lpProcessMemory[i].Size),
+											  HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY
+#if 0
+											  | HEAP_REALLOC_IN_PLACE_ONLY * (allocSize <= lpProcessMemory[i].Size)
+#endif
+											  ,
 											  lpProcessMemory[i].Address,
 											  allocSize)
 								: HeapAlloc(hPrivateHeap, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, allocSize);
@@ -12767,7 +12723,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, 
 					arg->Length = 0;
 				}
 #if SCOPE_SUPPORT
-				for (register PVARIABLE v = lpVariable, end = v + nNumberOfVariable; v < end; v++)
+				for (register PVARIABLE v = lpVariable + nNumberOfDefaults, end = lpVariable + nNumberOfVariable; v < end; ++v)
 					if (v->Node && !((ScopeVariant *)pair_first(v->Node))->Identifier.sstIndex)
 					{
 						((ScopeVariant *)pair_first(v->Node))->Identifier.sstIndex = MAXDWORD;
@@ -12786,7 +12742,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, 
 				lpOperandTop->Quad = InternalParsing(this, Object, Source, IsInteger, lpParams ? (va_list)lpParams : (va_list)&Terminator);
 				lpOperandTop->IsQuad = !IsInteger || lpOperandTop->High;
 #if SCOPE_SUPPORT
-				for (register PVARIABLE v = lpVariable, end = v + nNumberOfVariable; v < end; v++)
+				for (register PVARIABLE v = lpVariable + nNumberOfDefaults, end = lpVariable + nNumberOfVariable; v < end; ++v)
 					if (v->Node)
 					{
 						((ScopeVariant *)pair_first(v->Node))->Identifier.sstIndex = 0;
@@ -12831,7 +12787,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, 
 				do	/* do { ... } while (0); */
 				{
 					size_t prefixLength;
-					size_t i;
+					ptrdiff_t i;
 
 					if (!length ||
 						lpNext && (lpNext->Tag <= TAG_MNAME && lpNext->Tag >= TAG_MODULENAME || lpNext->Tag == TAG_GOTO))
@@ -12900,22 +12856,22 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, 
 #if SCOPE_SUPPORT
 					scope = (*p == SCOPE_PREFIX) | (FixTheProcedure && *p == '.') << 1;
 #endif
-					for (i = 0; i < nNumberOfVariable; i++)
+					for (i = nNumberOfVariable; --i >= 0; )
 					{
 						if (lpVariable[i].Length != length)
 							continue;
 						if (memcmp(lpVariable[i].String, p, length) != 0)
 							continue;
-						if (vv)
+						if (!vv)
+							element = lpVariable + i;
+						else
 						{
 							lpAddress = IsInteger ? (void *)lpVariable[i].Value.Quad : (void *)(uint64_t)lpVariable[i].Value.Real;
 							if (IsBadReadPtr(lpAddress, sizeof(*p)))
 								goto READ_ERROR;
-							if (!(length = strlen(p = lpAddress)))
-								break;
-							goto REPARSE;
+							if (length = strlen(p = lpAddress))
+								goto REPARSE;
 						}
-						element = lpVariable + i;
 						break;
 					}
 				} while (0);
@@ -12934,23 +12890,13 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, 
 					TSSGSubject *ss = SSGS->type ? SSGS : &SSGS->folder->super;
 					map *variantMap = &ss->fields;
 #endif
-					if (!(nNumberOfVariable & 0x0F))
-					{
-						LPVOID lpMem;
-						size_t nBytes;
-
-						nBytes = (nNumberOfVariable + 0x10) * sizeof(VARIABLE);
-						lpMem = HeapReAlloc(hPrivateHeap, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, lpVariable, nBytes);
-						if (!lpMem)
-							goto ALLOC_ERROR;
-						lpVariable = (VARIABLE *)lpMem;
-					}
 					element = lpVariable + nNumberOfVariable++;
 					element->Length = length;
 					element->String = p;
 					element->Value.Quad = 0;
 					element->Value.IsQuad = !IsInteger;
 #if SCOPE_SUPPORT
+					element->Node = NULL;
 					switch (scope)
 					{
 					case TRUE:
@@ -13133,20 +13079,12 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, 
 						break;
 					if (!element)
 					{
-						if (!(nNumberOfVariable & 0x0F))
-						{
-							LPVOID lpMem;
-							size_t nBytes;
-
-							nBytes = (nNumberOfVariable + 0x10) * sizeof(VARIABLE);
-							lpMem = HeapReAlloc(hPrivateHeap, HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY, lpVariable, nBytes);
-							if (!lpMem)
-								goto ALLOC_ERROR;
-							lpVariable = (VARIABLE *)lpMem;
-						}
 						element = lpVariable + nNumberOfVariable++;
 						element->Length = length;
 						element->String = p;
+#if SCOPE_SUPPORT
+						element->Node = NULL;
+#endif
 					}
 					element->Value = *lpOperandTop;
 					lpPostfix++;
@@ -13502,7 +13440,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, 
 	qwResult = lpOperandTop->Quad;
 FAILED:
 #if SCOPE_SUPPORT
-	for (register PVARIABLE v = lpVariable, end = v + nNumberOfVariable; v < end; v++)
+	for (register PVARIABLE v = lpVariable + nNumberOfDefaults, end = lpVariable + nNumberOfVariable; v < end; ++v)
 		if (v->Node && !((ScopeVariant *)pair_first(v->Node))->Identifier.sstIndex)
 		{
 			((ScopeVariant *)pair_first(v->Node))->Identifier.sstIndex = MAXDWORD;

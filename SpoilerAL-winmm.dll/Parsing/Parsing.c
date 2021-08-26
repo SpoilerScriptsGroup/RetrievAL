@@ -12853,9 +12853,6 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, 
 					}
 					if (endptr == end || (vv = FixTheProcedure && *p == '$') && (p++, !--length))
 						break;
-#if SCOPE_SUPPORT
-					scope = (*p == SCOPE_PREFIX) | (FixTheProcedure && *p == '.') << 1;
-#endif
 					for (i = nNumberOfVariable; --i >= 0; )
 					{
 						if (lpVariable[i].Length != length)
@@ -12877,7 +12874,7 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, 
 				} while (0);
 				if (!element && length && endptr != end && (
 #if SCOPE_SUPPORT
-					scope ||
+					(scope = (*p == SCOPE_PREFIX) | (FixTheProcedure && *p == '.') << 1) ||
 #endif
 					lpNext && (lpNext->Tag == TAG_INC ||
 							   lpNext->Tag == TAG_DEC ||
@@ -12886,8 +12883,9 @@ uint64_t __cdecl InternalParsing(TSSGCtrl *const this, TSSGSubject *const SSGS, 
 				{
 #if SCOPE_SUPPORT
 					map_iterator it = NULL;
-					ScopeVariant sv = { { p + 1, p + length, ._M_end_of_storage = p + 1 }, 0, 0 };
-					TSSGSubject *ss = SSGS->type ? SSGS : &SSGS->folder->super;
+					BOOL const dots = *(LPWORD)p == '..';
+					ScopeVariant sv = { { p + 1 + dots, p + length, ._M_end_of_storage = p + 1 + dots }, 0, 0 };
+					TSSGSubject *ss = SSGS->type && !dots ? SSGS : &SSGS->folder->super;
 					map *variantMap = &ss->fields;
 #endif
 					element = lpVariable + nNumberOfVariable++;

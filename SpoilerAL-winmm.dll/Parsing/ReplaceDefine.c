@@ -28,20 +28,22 @@ extern HANDLE hHeap;
 
 void __stdcall ReplaceDefineByAttributeVector(vector_TSSGAttributeElement *attributes, string *line);
 
+#pragma warning(suppress: 4102)
 size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LPSTR *line, size_t length, size_t capacity)
 {
 	LPSTR p;
 	char  c;
+	BOOL  code;
 
 	p = *line;
-#if LOCAL_MEMORY_SUPPORT
+#if FALSE && LOCAL_MEMORY_SUPPORT
 	if (*p == '_')
 		do
 			c = *(++p);
 		while (__intrinsic_isspace(c));
 	if (*p == 'L' && *(++p) == '{' && !__intrinsic_isspace(p[1]))
 		goto INSERT_SPACE;
-#endif
+#endif// Address cording header was trimmed by Parsing.
 	while (c = *p)
 	{
 		if (!__intrinsic_isleadbyte(c))
@@ -53,19 +55,53 @@ size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LP
 			switch (c)
 			{
 			case '<':
-				if ((c = *(++p)) != '#' && c != '@')
-					continue;
-				/* FALLTHROUGH */
+				switch (c = *++p)
+				{
+				case '#':
+				case '@':
+					for (BYTE b; b = *++p; )
+					{
+						if (b != c) switch (b)
+						{
+						case '\\':
+						case_unsigned_leadbyte:
+							p++;
+						}
+						else if (p[1] == '>')
+						{
+							p += 2;
+							break;
+						}
+					}
+				}
+				continue;
 			case '(':
 			case ',':
 				do
-				{
 					c = *(++p);
-				} while (__intrinsic_isspace(c));
-				if (c != 'L')
+				while (__intrinsic_isspace(c));
+				if (code = c == '_')
+				{
+					do
+						c = *(++p);
+					while (__intrinsic_isspace(c));
+				}
+				switch (c) {
+				case 'L':
+					if ((c = *++p) == '{' && !code && !__intrinsic_isspace(p[1]))
+						break;
+					while (__intrinsic_isspace(c))
+						c = *++p;
+					if (c != '{')
+						continue;
+					/* FallThrough */
+				case '{':
+					if (code || __intrinsic_isspace(p[1]))
+						p++;// Skip code if before Parsing.
+					/* FallThrough */
+				default:
 					continue;
-				if (*(++p) != '{' || __intrinsic_isspace(p[1]))
-					continue;
+				}
 			INSERT_SPACE:
 				if (++length == capacity)
 				{

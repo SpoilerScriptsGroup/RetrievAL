@@ -316,6 +316,7 @@ static void __fastcall TSSDir_GetSubjectVec_onOpen(TSSGSubject *const SSGS, TSSG
 				RepeatDepth = 0;
 				repeat_ReadSSRFile(SSGC, &ParentStack, NULL, Code, 0, MAXDWORD, SSGS);
 			}
+			RepeatDepth = 0;
 			stack_ptr_dtor(&ParentStack, FALSE);
 		}
 		TSSGAttributeSelector_EndElementCheck(TSSGCtrl_GetAttributeSelector(SSGC));

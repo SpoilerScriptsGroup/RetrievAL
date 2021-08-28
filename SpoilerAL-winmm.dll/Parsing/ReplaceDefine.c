@@ -8,6 +8,7 @@
 #include "TSSGAttributeElement.h"
 #include "TSSGAttributeSelector.h"
 #include "TSSGSubject.h"
+#include "TMainForm.h"
 typedef vector vector_TSSGAttributeElement;
 #else
 #pragma warn -8060
@@ -33,7 +34,7 @@ size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LP
 {
 	LPSTR p;
 	char  c;
-	BOOL  code;
+	BOOL  code, dynamic = !TSSGCtrl_GetAttributeSelector(&MainForm->ssgCtrl)->nowAttributeList;
 
 	p = *line;
 #if FALSE && LOCAL_MEMORY_SUPPORT
@@ -96,7 +97,7 @@ size_t __stdcall ReplaceDefineByHeap(vector_TSSGAttributeElement *attributes, LP
 						continue;
 					/* FallThrough */
 				case '{':
-					if (code || __intrinsic_isspace(p[1]))
+					if (code && dynamic || __intrinsic_isspace(p[1]))
 						p++;// Skip code if before Parsing.
 					/* FallThrough */
 				default:

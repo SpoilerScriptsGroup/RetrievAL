@@ -12,6 +12,7 @@ BOOL EnableParserFix = FALSE;
 BOOL FixTheProcedure = FALSE;
 UINT ExtensionTSSDir = 0;
 UINT MultiStageAttrs = 0;
+BOOL TrimSubjectName = TRUE;
 
 #pragma intrinsic(memcmp)
 
@@ -21,6 +22,7 @@ void __fastcall CheckSSGVersion(const char *p, size_t size)
 	FixTheProcedure = FALSE;
 	ExtensionTSSDir = 0;
 	MultiStageAttrs = 0;
+	TrimSubjectName = TRUE;
 	if (size >= 21 + OLD_VERSION_LENGTH &&
 		*(LPDWORD) p       == BSWAP32('SSG ') &&
 		*(LPDWORD)(p +  4) == BSWAP32('for ') &&

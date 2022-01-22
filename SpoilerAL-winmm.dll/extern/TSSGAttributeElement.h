@@ -91,13 +91,7 @@ EXTERN_C void __fastcall delete_TSSGAttributeElement(TSSGAttributeElement *this)
 //----------------------------------------------------------------------------
 #pragma pack(push, 1)
 typedef struct _TDirAttribute {
-	union {
-		struct {
-			AeVtbl *VTable;
-			AeType type;
-		};
-		TSSGAttributeElement super;
-	};
+	TSSGAttributeElement;
 	unsigned long level;
 	size_t        identity;
 	void          *arbitrary;
@@ -127,13 +121,7 @@ EXTERN_C void __fastcall delete_TDirAttribute(TDirAttribute *this);
 //----------------------------------------------------------------------------
 #pragma pack(push, 1)
 typedef struct _TSizeAttribute {
-	union {
-		struct {
-			AeVtbl *VTable;
-			AeType type;
-		};
-		TSSGAttributeElement super;
-	};
+	TSSGAttributeElement;
 	unsigned long size;
 } TSizeAttribute;
 #pragma pack(pop)
@@ -159,13 +147,7 @@ EXTERN_C void __fastcall delete_TSizeAttribute(TSizeAttribute *this);
 //----------------------------------------------------------------------------
 #pragma pack(push, 1)
 typedef struct _TReplaceAttribute {
-	union {
-		struct {
-			AeVtbl *VTable;
-			AeType type;
-		};
-		TSSGAttributeElement super;
-	};
+	TSSGAttributeElement;
 	bcb6_std_string offsetCode;
 	bcb6_std_string fileName;
 	unsigned long   offsetNum;
@@ -198,13 +180,7 @@ EXTERN_C void(__cdecl * const TReplaceAttribute_Setting)(TReplaceAttribute *, TS
 //----------------------------------------------------------------------------
 #pragma pack(push, 1)
 typedef struct _TFunnelAttribute {
-	union {
-		struct {
-			AeVtbl *VTable;
-			AeType type;
-		};
-		TSSGAttributeElement super;
-	};
+	TSSGAttributeElement;
 	bcb6_std_string fileName;
 } TFunnelAttribute;
 #pragma pack(pop)
@@ -231,13 +207,7 @@ EXTERN_C void __fastcall delete_TFunnelAttribute(TFunnelAttribute *this);
 //----------------------------------------------------------------------------
 #pragma pack(push, 1)
 typedef struct _TIO_FEPAttribute {
-	union {
-		struct {
-			AeVtbl *VTable;
-			AeType type;
-		};
-		TSSGAttributeElement super;
-	};
+	TSSGAttributeElement;
 	bcb6_std_string inputCode;
 	bcb6_std_string outputCode;
 } TIO_FEPAttribute, TDefineAttribute;
@@ -270,13 +240,7 @@ EXTERN_C void(__cdecl * const TIO_FEPAttribute_Setting)(TIO_FEPAttribute *this, 
 //----------------------------------------------------------------------------
 #pragma pack(push, 1)
 typedef struct _TEndWithAttribute {
-	union {
-		struct {
-			AeVtbl *VTable;
-			AeType type;
-		};
-		TSSGAttributeElement super;
-	};
+	TSSGAttributeElement;
 	bcb6_std_string code;
 } TEndWithAttribute, TPrologueAttribute;
 #pragma pack(pop)
@@ -307,13 +271,7 @@ EXTERN_C void __fastcall delete_TEndWithAttribute(TEndWithAttribute *this);
 //----------------------------------------------------------------------------
 #pragma pack(push, 1)
 typedef struct _TEnabledAttribute {
-	union {
-		struct {
-			AeVtbl *VTable;
-			AeType type;
-		};
-		TSSGAttributeElement super;
-	};
+	TSSGAttributeElement;
 	bcb6_std_string code;
 } TEnabledAttribute;
 #pragma pack(pop)
@@ -340,13 +298,7 @@ EXTERN_C void __fastcall delete_TEnabledAttribute(TEnabledAttribute *this);
 //----------------------------------------------------------------------------
 #pragma pack(push, 1)
 typedef struct _TChildRWAttribute {
-	union {
-		struct {
-			AeVtbl *VTable;
-			AeType type;
-		};
-		TSSGAttributeElement super;
-	};
+	TSSGAttributeElement;
 	unsigned char prohibit;
 	bool          spAccept;
 	bool          spIgnore;
@@ -378,13 +330,7 @@ EXTERN_C void __cdecl TChildRWAttribute_Setting(TChildRWAttribute *this, TString
 //----------------------------------------------------------------------------
 #pragma pack(push, 1)
 typedef struct _TCautionAttribute {
-	union {
-		struct {
-			AeVtbl *VTable;
-			AeType type;
-		};
-		TSSGAttributeElement super;
-	};
+	TSSGAttributeElement;
 	bcb6_std_string fileName;
 } TCautionAttribute;
 #pragma pack(pop)
@@ -411,13 +357,7 @@ EXTERN_C void __fastcall delete_TCautionAttribute(TCautionAttribute *this);
 //----------------------------------------------------------------------------
 #pragma pack(push, 1)
 typedef struct _TAdjustCheckAttribute {
-	union {
-		struct {
-			AeVtbl *VTable;
-			AeType type;
-		};
-		TSSGAttributeElement super;
-	};
+	TSSGAttributeElement;
 	bool    check;
 	bool    mustCheck;
 	__int16 : 16;
@@ -445,13 +385,7 @@ EXTERN_C void(__cdecl * const TAdjustCheckAttribute_Setting)(TAdjustCheckAttribu
 //----------------------------------------------------------------------------
 #pragma pack(push, 1)
 typedef struct _TAdjustmentAttribute {
-	union {
-		struct {
-			AeVtbl *VTable;
-			AeType type;
-		};
-		TSSGAttributeElement super;
-	};
+	TSSGAttributeElement;
 	union
 	{
 		AdjState  status;
@@ -481,13 +415,7 @@ __inline TAdjustmentAttribute *TRepeatAttribute_ctor(TAdjustmentAttribute *this)
 //----------------------------------------------------------------------------
 #pragma pack(push, 1)
 typedef struct _THeapAdjustmentAttribute {
-	union {
-		struct {
-			AeVtbl *VTable;
-			AeType type;
-		};
-		TAdjustmentAttribute super;
-	};
+	TAdjustmentAttribute;
 	bcb6_std_map heapMap;
 } THeapAdjustmentAttribute, TScopeAttribute;
 #pragma pack(pop)
@@ -513,13 +441,7 @@ typedef struct value_type
 //----------------------------------------------------------------------------
 #pragma pack(push, 1)
 typedef struct _TCRCAdjustmentAttribute {
-	union {
-		struct {
-			AeVtbl *VTable;
-			AeType type;
-		};
-		TSimpleAdjustmentAttribute super;
-	};
+	TSimpleAdjustmentAttribute;
 	bcb6_std_map crcMap;
 } TCRCAdjustmentAttribute;
 #pragma pack(pop)
@@ -528,13 +450,7 @@ typedef struct _TCRCAdjustmentAttribute {
 //----------------------------------------------------------------------------
 #pragma pack(push, 1)
 typedef struct _TSearchAdjustmentAttribute {
-	union {
-		struct {
-			AeVtbl *VTable;
-			AeType type;
-		};
-		TSimpleAdjustmentAttribute super;
-	};
+	TSimpleAdjustmentAttribute;
 	bcb6_std_string startAddressStr;
 	bcb6_std_string minAddressStr;
 	bcb6_std_string maxAddressStr;
@@ -549,13 +465,7 @@ typedef struct _TSearchAdjustmentAttribute {
 //----------------------------------------------------------------------------
 #pragma pack(push, 1)
 typedef struct _TDialogAdjustmentAttribute {
-	union {
-		struct {
-			AeVtbl *VTable;
-			AeType type;
-		};
-		TSearchAdjustmentAttribute super;
-	};
+	TSearchAdjustmentAttribute;
 	bcb6_std_string        fileName;
 	bcb6_std_string        valStr;
 	bool                   isMemoWordWrap;

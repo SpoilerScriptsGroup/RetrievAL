@@ -2001,15 +2001,22 @@ static string* __cdecl TSSGCtrl_AddressAttributeFilter_GetOffsetCode(string* con
 }
 
 static string* __cdecl TSSGCtrl_AddressNaming_Trim(string* const Trim, TStringDivision const *const strD, const string* const NameStr) {
+	extern BOOL TrimSubjectName;
 	*Trim = *NameStr;
 	{
 		register LPCSTR p = string_begin(Trim);
-		while (__intrinsic_isblank(*p)) ++p;
+		if (TrimSubjectName)
+			while (__intrinsic_isblank(*p)) ++p;
+		else
+			while (*p == '\t') ++p;
 		string_begin(Trim) = (LPSTR)p;
 	}
 	{
 		register LPCSTR p = string_end(Trim);
-		while (p > string_begin(Trim) && __intrinsic_isblank(p[-1])) --p;
+		if (TrimSubjectName)
+			while (p > string_begin(Trim) && __intrinsic_isblank(p[-1])) --p;
+		else
+			while (p > string_begin(Trim) && p[-1] == '\t') --p;
 		string_end(Trim) = (LPSTR)p;
 	}
 	string_end_of_storage(Trim) = string_begin(Trim);// Non-allocated mark.

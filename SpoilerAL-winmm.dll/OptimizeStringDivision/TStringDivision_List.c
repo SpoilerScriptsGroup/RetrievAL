@@ -12,11 +12,14 @@ unsigned long __cdecl TStringDivision_List(
 	OUT    vector_string   *List,
 	IN     unsigned long   Option)
 {
+	extern BOOL TrimSubjectName;
 	LPCBYTE split;
 	size_t  tokenLength;
 
 	vector_string_clear(List);
 	split = string_c_str(Src);
+	if (!TrimSubjectName && (string_length(&Token) == 1 && *string_c_str(&Token) == '/') && Option == (dtESCAPE | etREPLACE | etTRIM))
+		Option &= ~etTRIM;
 	if ((tokenLength = string_length(&Token)) && string_length(Src) >= tokenLength)
 	{
 		LPCBYTE token, end, p;

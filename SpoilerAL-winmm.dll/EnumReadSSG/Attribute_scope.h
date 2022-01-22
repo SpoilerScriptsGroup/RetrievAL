@@ -28,7 +28,7 @@ DWORD_DWORD __fastcall TSSGCtrl_ReadSSG_rootSubject_SetAttribute(
 	TDirAttribute   const *NewAElem)
 {
 	TScopeAttribute *scope = new_TScopeAttribute();
-	scope->super.adjustVal = 0;// global scope setup
+	scope->adjustVal = 0;// global scope setup
 	nowAttributeVec = TSSGAttributeSelector_AddElement(attributeSelector, scope);
 	nowAttributeVec->allocator_type[0] = NULL;
 	return (DWORD_DWORD) { (DWORD)nowAttributeVec, (DWORD)this->rootSubject };
@@ -40,7 +40,7 @@ __inline void Attribute_scope_open(TSSGCtrl *const this, string *const code)
 	vector_string tmpV = { NULL };
 
 	TScopeAttribute *scope = new_TScopeAttribute();
-	scope->super.adjustVal = -(intptr_t)scope;// guarantee unique
+	scope->adjustVal = -(intptr_t)scope;// guarantee unique
 
 	ReplaceDefine(&this->attributeSelector, code);
 	TStringDivision_Half_WithoutTokenDtor(&label, &this->strD, code, ":", 1u, 0, etTRIM);
@@ -48,7 +48,7 @@ __inline void Attribute_scope_open(TSSGCtrl *const this, string *const code)
 	{
 		LPSTR last;
 		ULONG val = strtoul(string_c_str(&label), &last, 0);
-		scope->super.adjustVal = last != string_end(&label) ? SubjectStringTable_insert(&label) : val;
+		scope->adjustVal = last != string_end(&label) ? SubjectStringTable_insert(&label) : val;
 	}
 	string_dtor(&label);
 

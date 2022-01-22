@@ -2169,8 +2169,8 @@ static uint32_t fltfmt(TCHAR *buffer, uint32_t count, uint32_t length, long_doub
 #endif
 
 			p = end = cvtbuf + cvtlen;
-			while (*(--p) == '0' && p != cvtbuf);
-			if (++p != end)
+			while (p > cvtbuf + decpt && p[-1] == '0') p--;
+			if (p != end)
 			{
 				int32_t diff;
 

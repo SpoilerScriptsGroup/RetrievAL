@@ -27,56 +27,39 @@ static __declspec(naked) int __stdcall SysUtils_GetExceptionObject_LoadResString
 
 		align 16
 	EXTERN:
-		mov  ecx, [ebp - 0x04]
+		mov  ecx, [ebp - 0x04]// P: PExceptionRecord
+		lea  edx, [ecx]EXCEPTION_RECORD32.ExceptionInformation
 		mov  eax, [ecx]EXCEPTION_RECORD32.ExceptionCode
 		cmp  eax, CPP_EXCEPT_CODE
-		jne  NTSTAT
+		jne  FORMAT
 
-		lea  edx, [esp + 0x0C]
 		push 0
 		mov  eax, esp
 		push 0
 		mov  ecx, esp
-		push STRSAFE_IGNORE_NULLS | STRSAFE_NULL_ON_FAILURE
+		push STRSAFE_FILL_BEHIND_NULL
 		push ecx
 		push eax
-		push dword ptr [edx + size PVOID]
-		mov  ecx, [ebp - 0x04]
-		push [ecx]EXCEPTION_RECORD32.ExceptionInformation
-		push dword ptr [edx + size PVOID]
 		push dword ptr [edx]
-		call StringCchCopyNExA
+		push dword ptr [esp + 24 + 0x10]
+		push dword ptr [esp + 24 + 0x10]
+		call StringCchCopyExA
 		pop  ecx
 		pop  eax
-		mov  eax, [esp + 0x10]
-		sub  eax, ecx
+		sub  eax, [esp + 0x0C]//lpBuffer
 		ret  16
 
 		align 16
-	NTSTAT:
-		test eax, eax
-		jns  FORMAT
-		push eax
-		call RtlNtStatusToDosError
 	FORMAT:
-		mov  edx, [esp + 0x0C]
-		mov  ecx, [esp + 0x10]
-		push 0
-		push ecx
 		push edx
+		push dword ptr [esp + 4 + 0x10]
+		push dword ptr [esp + 4 + 0x10]
 		push 0
 		push eax
-		test eax, eax
-		jns  WINERR
 		push offset modName
 		call GetModuleHandleW
 		push eax
-		push FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_HMODULE
-		jmp  DOCALL
-	WINERR:
-		push 0
-		push FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM
-	DOCALL:
+		push FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ARGUMENT_ARRAY
 		call FormatMessageA
 		test eax, eax
 		jz   REVERT
